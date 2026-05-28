@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoSustain — Register</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card auth-card--wide">
+
+      <div class="auth-brand">GeoSustain</div>
+      <p class="auth-subtitle">AI-Driven Geospatial Decision Support System</p>
+      <h2 class="auth-title">Create Account</h2>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="flash flash--{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      {% if google_oauth_enabled %}
+        <a class="btn-google" href="{{ url_for('google_login') }}">
+          <span class="google-mark">G</span> Sign up with Google
+        </a>
+        <div class="auth-divider"><span>or create with email</span></div>
+      {% endif %}
+
+      <form method="POST" action="{{ url_for('register') }}" novalidate>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="username">Username</label>
+            <input id="username" name="username" type="text"
+                   placeholder="e.g. juan_dela_cruz" required
+                   value="{{ username or '' }}" autocomplete="username">
+          </div>
+          <div class="field">
+            <label for="email">Email Address</label>
+            <input id="email" name="email" type="email"
+                   placeholder="you@example.com" required
+                   value="{{ email or '' }}" autocomplete="email">
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="role">I am a …</label>
+          <select id="role" name="role">
+            <option value="farmer"  {% if role == 'farmer'  %}selected{% endif %}>Farmer / Agricultural Practitioner</option>
+            <option value="analyst" {% if role == 'analyst' %}selected{% endif %}>Analyst / Planner</option>
+          </select>
+        </div>
+
+        <div class="field-row">
+          <div class="field">
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password"
+                   placeholder="At least 6 characters" required
+                   autocomplete="new-password">
+          </div>
+          <div class="field">
+            <label for="confirm_password">Confirm Password</label>
+            <input id="confirm_password" name="confirm_password" type="password"
+                   placeholder="Repeat password" required
+                   autocomplete="new-password">
+          </div>
+        </div>
+
+        <button class="btn-primary" type="submit">Create Account</button>
+      </form>
+
+      <p class="auth-link">
+        Already have an account?
+        <a href="{{ url_for('login') }}">Sign in</a>
+      </p>
+    </div>
+
+    <div class="auth-panel">
+      <div class="auth-panel-inner">
+        <h1>Panabo City<br>Agricultural Intelligence</h1>
+        <p>Join farmers and independent analysts/planners using
+           satellite data and AI to make smarter land decisions.</p>
+        <ul>
+          <li>🛰️ Satellite NDVI Analysis</li>
+          <li>🌱 AI Crop Recommendations</li>
+          <li>🌧️ Live Weather Integration</li>
+          <li>🗺️ Interactive GIS Mapping</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

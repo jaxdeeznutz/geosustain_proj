@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoSustain — Verify Email</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='auth.css') }}">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-brand">GeoSustain</div>
+      <p class="auth-subtitle">Secure account verification</p>
+      <h2 class="auth-title">Verify your email</h2>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+          <div class="flash flash--{{ category }}">{{ message }}</div>
+        {% endfor %}
+      {% endwith %}
+
+      <p class="verify-copy">GeoSustain mobile now uses Firebase email verification links. Open the link sent to <strong>{{ email }}</strong> from the mobile app.</p>
+
+      <form method="POST" action="{{ url_for('verify_email') }}" novalidate>
+        <input type="hidden" name="email" value="{{ email }}">
+        <div class="field">
+          <label for="code">Verification Code</label>
+          <input id="code" class="code-input" name="code" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" placeholder="000000" required autocomplete="one-time-code">
+        </div>
+        <button class="btn-primary" type="submit">Verify Email</button>
+      </form>
+
+      <form method="POST" action="{{ url_for('resend_verification') }}" class="resend-form">
+        <input type="hidden" name="email" value="{{ email }}">
+        <button class="btn-secondary" type="submit">Resend Code</button>
+      </form>
+
+      <p class="auth-link"><a href="{{ url_for('login') }}">Back to sign in</a></p>
+    </div>
+
+    <div class="auth-panel">
+      <div class="auth-panel-inner">
+        <h1>Email Verification<br>for safer access</h1>
+        <p>After verification, your analyses, saved reports, and GeoSustain profile stay connected to your real account.</p>
+        <ul>
+          <li>🔐 Firebase verification link</li>
+          <li>📩 Email-based account security</li>
+          <li>🌱 Protected agricultural records</li>
+          <li>🛰️ Ready for Google sign-in</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

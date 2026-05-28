@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoSustain — Analysis History</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    .history-wrap   { padding: 28px 32px; max-width: 1200px; margin: 0 auto; }
+    .history-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:24px; }
+    .history-header h1 { margin:0; color:#1b6f4f; font-size:22px; }
+    .btn-back       { background:#1f9c65; color:#fff; border:none; border-radius:10px;
+                      padding:8px 18px; font-weight:700; cursor:pointer; text-decoration:none;
+                      font-size:14px; }
+    .history-table  { width:100%; border-collapse:collapse; font-size:14px; }
+    .history-table th { background:#eef1ef; color:#3d5a4c; font-weight:700; padding:10px 14px;
+                         text-align:left; border-bottom:2px solid #d0ddd6; }
+    .history-table td { padding:10px 14px; border-bottom:1px solid #e8eeeb; vertical-align:middle; }
+    .history-table tr:hover td { background:#f6faf8; }
+    .pill           { display:inline-block; padding:3px 10px; border-radius:999px;
+                      font-size:12px; font-weight:700; }
+    .pill.high      { background:#d4f5e5; color:#1a6b42; }
+    .pill.moderate  { background:#fef9e7; color:#7d6520; }
+    .pill.low       { background:#fdecea; color:#8c2a24; }
+    .pill.no        { background:#eef1ef; color:#5a6e65; }
+    .empty-state    { text-align:center; padding:60px 0; color:#7a8f85; }
+    .topbar-auth    { display:flex; justify-content:space-between; align-items:center;
+                      background:#fff; border-bottom:1px solid #dde5e0;
+                      padding:14px 32px; }
+    .topbar-auth .brand  { color:#1f7a55; font-size:22px; font-weight:800; }
+    .topbar-auth .user-info { font-size:14px; color:#52655c; }
+    .topbar-auth a   { color:#1f9c65; font-weight:600; text-decoration:none; }
+  </style>
+</head>
+<body style="background:#f4f6f5; margin:0; font-family:'Inter',sans-serif;">
+
+  <div class="topbar-auth">
+    <div class="brand">GeoSustain</div>
+    <div class="user-info">
+      Signed in as <strong>{{ user.username }}</strong>
+      ({{ user.role.replace('_',' ').title() }})
+      &nbsp;|&nbsp;
+      <a href="{{ url_for('dashboard') }}">Dashboard</a>
+      &nbsp;|&nbsp;
+      <a href="{{ url_for('logout') }}">Sign Out</a>
+    </div>
+  </div>
+
+  <div class="history-wrap">
+    <div class="history-header">
+      <h1>📋 Analysis History</h1>
+      <a class="btn-back" href="{{ url_for('dashboard') }}">← Back to Dashboard</a>
+    </div>
+
+    {% if history %}
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Date & Time</th>
+          <th>Location (Lat, Lon)</th>
+          <th>Crop / Status</th>
+          <th>Suitability</th>
+          <th>NDVI</th>
+          <th>Rainfall</th>
+          <th>Temp</th>
+          <th>Soil pH</th>
+          <th>Season</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in history %}
+        <tr>
+          <td>{{ loop.index }}</td>
+          <td>{{ row.analyzed_at.strftime('%b %d, %Y %H:%M') if row.analyzed_at else '--' }}</td>
+          <td>{{ '%.4f'|format(row.center_lat) }}, {{ '%.4f'|format(row.center_lon) }}</td>
+          <td><strong>{{ row.predicted_crop or row.recommendation_title or '--' }}</strong></td>
+          <td>
+            {% if row.is_crop_recommended and row.suitability_level %}
+              {% set lvl = row.suitability_level %}
+              <span class="pill {{ 'high' if 'HIGHLY' in lvl else ('moderate' if 'MODERATELY' in lvl else 'low') }}">
+                {{ lvl }}
+              </span>
+            {% else %}
+              <span class="pill no">Not Applicable</span>
+            {% endif %}
+          </td>
+          <td>{{ '%.3f'|format(row.ndvi) if row.ndvi is not none else '--' }}</td>
+          <td>{{ '%.1f mm'|format(row.rainfall_mm) if row.rainfall_mm is not none else '--' }}</td>
+          <td>{{ '%.1f °C'|format(row.temperature_c) if row.temperature_c is not none else '--' }}</td>
+          <td>{{ 'pH %.1f'|format(row.soil_ph) if row.soil_ph is not none else '--' }}</td>
+          <td style="font-size:12px;">{{ row.season_name or '--' }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <p style="font-size:48px;">🗺️</p>
+      <p style="font-size:18px; font-weight:700;">No analyses yet.</p>
+      <p>Go to the <a href="{{ url_for('dashboard') }}" style="color:#1f9c65; font-weight:700;">dashboard</a>
+         and draw a polygon to run your first analysis.</p>
+    </div>
+    {% endif %}
+  </div>
+
+</body>
+</html>

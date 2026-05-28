@@ -1,0 +1,822 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Inter", sans-serif;
+  background: #f4f6f5;
+  color: #1d2a23;
+}
+
+.layout {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: #eef1ef;
+  border-right: 1px solid #d7dfda;
+  padding: 24px 18px;
+}
+
+.brand {
+  color: #1f7a55;
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 30px;
+}
+
+.menu {
+  display: grid;
+  gap: 10px;
+}
+
+.menu-item {
+  text-decoration: none;
+  color: #61756b;
+  font-weight: 600;
+  padding: 12px 14px;
+  border-radius: 10px;
+}
+
+.menu-item.active,
+.menu-item:hover {
+  background: #dce9e2;
+  color: #1f7a55;
+}
+
+.main {
+  padding: 24px;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.topbar h1 {
+  margin: 0;
+  color: #1b6f4f;
+  font-size: 26px;
+  letter-spacing: 1px;
+}
+
+.location {
+  color: #52655c;
+  font-weight: 500;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 18px;
+}
+
+.card {
+  background: #fff;
+  border-radius: 18px;
+  padding: 18px;
+  box-shadow: 0 8px 20px rgba(24, 43, 35, 0.06);
+}
+
+/* ── Map card ── */
+.map-card {
+  min-height: 640px;
+  position: relative;
+  overflow: hidden;
+  background: #2d3f35;
+}
+
+#fieldMap {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.map-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(43, 215, 135, 0.18), transparent 45%),
+    radial-gradient(circle at 70% 60%, rgba(224, 174, 43, 0.18), transparent 40%),
+    linear-gradient(0deg, rgba(9, 24, 16, 0.52) 12%, rgba(9, 24, 16, 0.14) 42%, rgba(9, 24, 16, 0) 72%);
+}
+
+.map-overlay {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  pointer-events: none;
+  background: rgba(255, 255, 255, 0.9);
+  color: #335846;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.map-btn {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #1f7a55;
+  background: #ffffff;
+  cursor: pointer;
+}
+
+.map-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+
+.map-btn.secondary {
+  color: #51665b;
+}
+
+.map-btn.active {
+  background: #1f7a55;
+  color: #ffffff;
+}
+
+.map-card.heat-off::after {
+  background: linear-gradient(0deg, rgba(9, 24, 16, 0.28) 12%, rgba(9, 24, 16, 0.06) 42%, rgba(9, 24, 16, 0) 72%);
+}
+
+.map-title {
+  position: absolute;
+  left: 18px;
+  bottom: 16px;
+  z-index: 3;
+  pointer-events: none;
+  color: #f7fff8;
+}
+
+.map-title h2 {
+  margin: 0;
+}
+
+.map-title p {
+  margin: 6px 0 0;
+  color: #d4e5da;
+}
+
+.last-analysis {
+  font-size: 12px;
+  color: #c9ddd0;
+  font-weight: 600;
+}
+
+/* ── Weather card ── */
+.weather-card h3,
+.crop-card h3,
+.soil-card h3 {
+  margin-top: 0;
+  font-size: 14px;
+  color: #557064;
+  letter-spacing: 0.5px;
+}
+
+.temp {
+  font-size: 44px;
+  font-weight: 800;
+  margin: 8px 0;
+}
+
+.metric-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 16px;
+  color: #50655b;
+}
+
+.progress {
+  background: #e7ece9;
+  border-radius: 999px;
+  height: 9px;
+  overflow: hidden;
+}
+
+#humidityBar {
+  height: 100%;
+  width: 0;
+  background: #1f7a55;
+}
+
+.advice {
+  margin-top: 16px;
+  background: #f8f2e8;
+  border: 1px solid #e7dccb;
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.advice h4 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: #846f46;
+}
+
+.advice p {
+  margin: 0;
+  font-size: 13px;
+  color: #5f543f;
+}
+
+/* ── Crop card ── */
+.crop-card {
+  background: linear-gradient(145deg, #1f9c65, #178457);
+  color: #f5fff8;
+}
+
+.crop-card h3 {
+  color: #cbf0dc;
+}
+
+.crop-card h2 {
+  font-size: 38px;
+  margin: 10px 0 6px;
+  line-height: 1.1;
+}
+
+/* Badge row: compatibility + suitability side by side */
+.badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 4px;
+  align-items: center;
+}
+
+.compatibility-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+  color: #f2fff8;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+/* Suitability level badge — three colour states */
+.suitability-badge {
+  display: inline-block;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.suitability-badge.high {
+  background: rgba(50, 255, 150, 0.22);
+  color: #d8fff0;
+}
+
+.suitability-badge.moderate {
+  background: rgba(255, 220, 50, 0.22);
+  color: #fff8d0;
+}
+
+.suitability-badge.low {
+  background: rgba(255, 100, 80, 0.22);
+  color: #ffd8d0;
+}
+
+.recommendation-line {
+  margin: 0 0 6px;
+  color: #dff8eb;
+  font-weight: 700;
+  font-size: 14px;
+}
+
+/* Short italicised note explaining why the crop suits this location */
+.suitability-note {
+  margin: 0 0 10px;
+  color: #c8f0dc;
+  font-size: 12px;
+  font-style: italic;
+}
+
+/* Non-arable advisory bullets */
+.land-use-list {
+  margin: 0 0 10px 18px;
+  padding: 0;
+  color: #e9fff4;
+  font-size: 13px;
+}
+
+.land-use-list li {
+  margin: 3px 0;
+}
+
+/* Alternative crop suggestions */
+.alt-crops-list {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+}
+
+.alt-crops-heading {
+  margin: 6px 0 4px;
+  font-size: 12px;
+  color: #cbf0dc;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.alt-crops-list li {
+  font-size: 13px;
+  color: #e2fff2;
+  padding: 4px 0;
+  border-top: 1px solid rgba(255,255,255,0.1);
+}
+
+.stat-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.stat-grid div {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+.stat-grid span {
+  display: block;
+  color: #d6f7e6;
+  font-size: 12px;
+}
+
+.stat-grid strong {
+  font-size: 16px;
+}
+
+
+
+/* ── Infrastructure suitability card ── */
+.infrastructure-card {
+  background: #fff;
+  color: #1d2a23;
+  border: 1px solid #e1ebe6;
+}
+
+.infra-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.infrastructure-card h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #557064;
+  letter-spacing: 0.5px;
+}
+
+#infraScore {
+  font-weight: 800;
+  color: #1f7a55;
+}
+
+.infra-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  background: #eef1ef;
+  color: #557064;
+  margin-bottom: 10px;
+}
+
+.infra-badge.high { background: #dff7ea; color: #117342; }
+.infra-badge.moderate { background: #fff3cc; color: #8a6500; }
+.infra-badge.low { background: #ffe0dd; color: #a2342a; }
+.infra-badge.neutral { background: #eef1ef; color: #557064; }
+
+.infrastructure-card h2 {
+  margin: 2px 0 8px;
+  font-size: 26px;
+  color: #143f2c;
+}
+
+#infraRecommendation {
+  margin: 0 0 14px;
+  color: #5b6f65;
+  line-height: 1.45;
+}
+
+.infra-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.infra-stat-grid div {
+  background: #f4faf7;
+  border: 1px solid #dce9e2;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.infra-stat-grid span {
+  display: block;
+  font-size: 12px;
+  color: #6a7b73;
+  margin-bottom: 5px;
+}
+
+.infra-stat-grid strong {
+  display: block;
+  font-size: 14px;
+  color: #143f2c;
+}
+
+/* ── Soil card ── */
+.soil-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.soil-grid {
+  display: grid;
+  grid-template-columns: 1fr 170px;
+  gap: 14px;
+}
+
+.nutrient {
+  display: grid;
+  grid-template-columns: 90px 1fr 36px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 11px;
+}
+
+.bar {
+  background: #eff3f1;
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+#nBar, #pBar, #kBar {
+  height: 100%;
+  width: 0;
+}
+
+#nBar { background: #179a65; }
+#pBar { background: #8e6c5d; }
+#kBar { background: #a0862f; }
+
+.ndvi {
+  margin-top: 14px;
+  font-size: 14px;
+}
+
+/* ── Soil pH donut ── */
+.ph-donut-wrap {
+  display: grid;
+  place-items: center;
+}
+
+.ph-donut {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background: conic-gradient(#1f9c65 0 110deg, #8c6b5f 110deg 220deg, #9c7d12 220deg 360deg);
+  display: grid;
+  place-items: center;
+}
+
+.ph-center {
+  width: 104px;
+  height: 104px;
+  border-radius: 50%;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.ph-center strong {
+  font-size: 34px;
+  line-height: 1;
+}
+
+.ph-center span {
+  font-size: 11px;
+  color: #6a756f;
+  font-weight: 700;
+}
+
+/* ── Live GEE observation strip ── */
+.live-section {
+  grid-column: 1 / span 2;
+}
+
+.live-section h3 {
+  margin: 0 0 12px;
+  color: #5e6f67;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+.live-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+.live-card {
+  background: #fff;
+  border-radius: 14px;
+  padding: 12px;
+  box-shadow: 0 8px 20px rgba(24, 43, 35, 0.05);
+}
+
+.live-card span {
+  display: block;
+  color: #66776f;
+  font-size: 12px;
+}
+
+.live-card strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 22px;
+}
+
+/* ── Responsive ── */
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+  .sidebar {
+    display: none;
+  }
+  .grid {
+    grid-template-columns: 1fr;
+  }
+  .live-section {
+    grid-column: auto;
+  }
+  .live-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .soil-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ── Authenticated topbar additions ── */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-pill {
+  background: #eef1ef;
+  border: 1px solid #d0ddd6;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d5a4c;
+}
+
+.topbar-link {
+  color: #1f9c65;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.topbar-link:hover {
+  text-decoration: underline;
+}
+
+.sidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+/* ── Manual coordinate input panel ── */
+.coord-panel {
+  position: absolute;
+  bottom: 90px;
+  left: 18px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: rgba(255, 255, 255, 0.93);
+  border-radius: 14px;
+  padding: 10px 14px;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(4px);
+  max-width: 540px;
+}
+
+.coord-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #2d5a40;
+  white-space: nowrap;
+}
+
+.coord-panel input[type="number"] {
+  border: 1.5px solid #c5d9cc;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #1d2a23;
+  background: #f5faf7;
+  width: 165px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.coord-panel input[type="number"]:focus {
+  border-color: #1f9c65;
+  background: #fff;
+}
+
+/* hide browser spinners */
+.coord-panel input[type="number"]::-webkit-inner-spin-button,
+.coord-panel input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+/* ── Topbar auth additions ── */
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.user-pill {
+  background: #eef1ef;
+  border: 1px solid #d0ddd6;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #3d5a4c;
+}
+
+.topbar-link {
+  color: #1f9c65;
+  text-decoration: none;
+  font-weight: 700;
+}
+
+.topbar-link:hover { text-decoration: underline; }
+
+.sidebar { display: flex; flex-direction: column; }
+
+/* ── Sidebar coordinate panel (inside weather card) ── */
+.sidebar-coord-panel {
+  margin-top: 16px;
+  border-top: 1.5px solid #e0ebe5;
+  padding-top: 14px;
+}
+
+.sidebar-coord-panel h4 {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #557064;
+  margin: 0 0 10px 0;
+}
+
+.sidebar-coord-panel input[type="number"] {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  border: 1.5px solid #c5d9cf;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  color: #1f3a2e;
+  background: #f4faf7;
+  outline: none;
+  margin-bottom: 8px;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.sidebar-coord-panel input[type="number"]::placeholder {
+  color: #94b0a4;
+}
+
+.sidebar-coord-panel input[type="number"]:focus {
+  border-color: #1f9c65;
+  background: #eaf6f0;
+}
+
+.sidebar-coord-panel input[type="number"]::-webkit-inner-spin-button,
+.sidebar-coord-panel input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+}
+
+.analyze-coord-btn {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 9px 12px;
+  background: #1f9c65;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.15s;
+}
+
+.analyze-coord-btn:hover {
+  background: #177a4f;
+}
+
+/* Web analyst dashboard polish */
+.main {
+  max-width: 1480px;
+  width: 100%;
+}
+.sidebar {
+  background: linear-gradient(180deg, #eef8f1 0%, #f7faf7 100%);
+}
+.brand::after {
+  content: "Analyst Dashboard";
+  display: block;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: #789185;
+  margin-top: 4px;
+}
+.card {
+  border: 1px solid #e4eee8;
+}
+@media (min-width: 1280px) {
+  .grid {
+    grid-template-columns: minmax(680px, 2fr) minmax(360px, 1fr);
+  }
+  .map-card {
+    min-height: 700px;
+  }
+}
+@media (max-width: 760px) {
+  .main {
+    padding: 14px;
+  }
+  .topbar {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+  .topbar-right {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .map-card {
+    min-height: 520px;
+  }
+  .map-overlay {
+    max-height: 170px;
+    overflow: auto;
+  }
+  .crop-card h2 {
+    font-size: 30px;
+  }
+  .infra-stat-grid,
+  .stat-grid {
+    grid-template-columns: 1fr;
+  }
+}

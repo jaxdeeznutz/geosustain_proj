@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GeoSustain Analyst Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="layout">
+    <aside class="sidebar">
+      <div class="brand">GeoSustain</div>
+      <nav class="menu">
+        <a class="menu-item active" href="{{ url_for('dashboard') }}">Analyst Overview</a>
+        <a class="menu-item" href="#">Crop Trends</a>
+        <a class="menu-item" href="#">Environmental Risk</a>
+        <a class="menu-item" href="#">Weather</a>
+        <a class="menu-item" href="{{ url_for('history') }}">Analysis History</a>
+        <a class="menu-item" href="{{ url_for('logout') }}" style="margin-top:auto; color:#c0392b;">Sign Out</a>
+      </nav>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <h1>GEOSUSTAIN WEB ANALYST</h1>
+        <div class="topbar-right">
+          <span class="location">Panabo City, Davao del Norte</span>
+          <span class="user-pill">
+            👤 {{ user.username }}
+            &nbsp;·&nbsp;
+            <a href="{{ url_for('history') }}" class="topbar-link">History</a>
+            &nbsp;·&nbsp;
+            <a href="{{ url_for('logout') }}" class="topbar-link">Sign Out</a>
+          </span>
+        </div>
+      </header>
+
+      <section class="grid">
+
+        <!-- ── Map card ── -->
+        <article class="card map-card">
+          <div id="fieldMap" aria-label="Field map"></div>
+
+          <!-- Top overlay: badges + map control buttons -->
+          <div class="map-overlay">
+            <div class="badge" id="vegBadge">Vegetated: --%</div>
+            <div class="badge" id="infraBadge">Infrastructure: --%</div>
+            <div class="badge" id="selectedAreaBadge">Selected Area: -- ha</div>
+            <button id="satelliteToggleBtn" class="map-btn active" type="button">Satellite</button>
+            <button id="streetToggleBtn"    class="map-btn"        type="button">Street</button>
+            <button id="heatToggleBtn"      class="map-btn"        type="button">Heat Tint: On</button>
+            <button id="startDrawBtn"       class="map-btn"        type="button">Draw Boundary</button>
+            <button id="analyzeAreaBtn"     class="map-btn"        type="button">Analyze Selection</button>
+            <button id="clearDrawBtn"       class="map-btn secondary" type="button">Reset</button>
+          </div>
+
+          <!-- Bottom title -->
+          <div class="map-title">
+            <h2>Panabo Field Sector A-12</h2>
+            <p>Analyst dashboard for crop, rainfall, and land suitability review</p>
+            <p id="lastAnalysisAt" class="last-analysis">Last analysis: --</p>
+          </div>
+        </article>
+
+        <!-- ── Weather card ── -->
+        <article class="card weather-card">
+          <h3>PANABO CONTEXT</h3>
+          <div class="temp"><span id="temperatureC">--</span>°C</div>
+          <p id="weatherDescription">Loading weather...</p>
+          <div class="metric-row">
+            <span>Humidity</span>
+            <strong id="humidity">--%</strong>
+          </div>
+          <div class="progress">
+            <div id="humidityBar"></div>
+          </div>
+          <div class="advice">
+            <h4>SEASONAL ADVICE</h4>
+            <p id="seasonAdvice">Fetching seasonal recommendation...</p>
+          </div>
+
+          <!-- ── Coordinate input panel ── -->
+          <div class="sidebar-coord-panel">
+            <h4>📍 ENTER COORDINATES</h4>
+            <input id="manualLat" type="number" step="0.0001"
+                   placeholder="Latitude  e.g. 7.3012" min="7.20" max="7.41">
+            <input id="manualLon" type="number" step="0.0001"
+                   placeholder="Longitude  e.g. 125.63" min="125.50" max="125.72">
+            <button id="analyzeCoordBtn" class="analyze-coord-btn" type="button">Analyze Point</button>
+          </div>
+        </article>
+
+        <!-- ── Crop recommendation card ── -->
+        <article class="card crop-card">
+          <h3 id="recommendationHeader">AREA CROP SUITABILITY</h3>
+
+          <div class="badge-row">
+            <div id="compatibilityBadge" class="compatibility-badge">--% Compatibility</div>
+            <div id="suitabilityBadge"   class="suitability-badge"  style="display:none;"></div>
+          </div>
+
+          <h2 id="cropName">--</h2>
+          <p id="landStatus">Analyzing land status...</p>
+          <p id="recommendationLine" class="recommendation-line"></p>
+          <p id="suitabilityNote"    class="suitability-note" style="display:none;"></p>
+
+          <ul id="landUseList"  class="land-use-list"></ul>
+          <ul id="altCropsList" class="alt-crops-list"></ul>
+
+          <div class="stat-grid">
+            <div><span>Rainfall</span><strong id="rainfall">-- mm</strong></div>
+            <div><span>Elevation</span><strong id="elevation">-- m</strong></div>
+          </div>
+        </article>
+
+
+
+        <!-- ── Infrastructure suitability card ── -->
+        <article class="card infrastructure-card">
+          <div class="infra-head">
+            <h3>Infrastructure Suitability</h3>
+            <span id="infraScore">--%</span>
+          </div>
+
+          <div class="infra-badge" id="infraSuitability">NOT YET ANALYZED</div>
+          <h2 id="infraStatus">--</h2>
+          <p id="infraRecommendation">Analyze a point or selected boundary to evaluate infrastructure suitability.</p>
+
+          <div class="infra-stat-grid">
+            <div><span>Slope</span><strong id="slopePct">--%</strong></div>
+            <div><span>Elevation</span><strong id="infraElevation">-- m</strong></div>
+            <div><span>Risk</span><strong id="infraRisk">--</strong></div>
+          </div>
+        </article>
+
+        <!-- ── Soil card ── -->
+        <article class="card soil-card">
+          <div class="soil-head">
+            <h3>Soil Nutrient Analysis</h3>
+            <span id="soilPh">pH --</span>
+          </div>
+          <div class="soil-grid">
+            <div>
+              <div class="nutrient">
+                <span>Nitrogen</span>
+                <div class="bar"><div id="nBar"></div></div>
+                <strong id="nitrogen">--</strong>
+              </div>
+              <div class="nutrient">
+                <span>Phosphorus</span>
+                <div class="bar"><div id="pBar"></div></div>
+                <strong id="phosphorus">--</strong>
+              </div>
+              <div class="nutrient">
+                <span>Potassium</span>
+                <div class="bar"><div id="kBar"></div></div>
+                <strong id="potassium">--</strong>
+              </div>
+            </div>
+            <div class="ph-donut-wrap">
+              <div id="phDonut" class="ph-donut">
+                <div class="ph-center">
+                  <strong id="phDonutValue">--</strong>
+                  <span>SOIL PH</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <p class="ndvi">NDVI: <strong id="ndvi">--</strong></p>
+        </article>
+
+        <!-- ── Live GEE observations ── -->
+        <section class="live-section">
+          <h3>LIVE EARTH OBSERVATION (GEE)</h3>
+          <div class="live-grid">
+            <article class="live-card"><span>Rainfall (monthly)</span><strong id="liveRainfall">-- mm</strong></article>
+            <article class="live-card"><span>Surface Temp</span><strong id="surfaceTemp">-- °C</strong></article>
+            <article class="live-card"><span>Humidity</span><strong id="liveHumidity">-- %</strong></article>
+            <article class="live-card"><span>Wind Speed</span><strong id="windSpeed">-- m/s</strong></article>
+            <article class="live-card"><span>Cloud Cover</span><strong id="cloudCover">-- %</strong></article>
+            <article class="live-card"><span>NDVI</span><strong id="liveNdvi">--</strong></article>
+          </div>
+        </section>
+
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
