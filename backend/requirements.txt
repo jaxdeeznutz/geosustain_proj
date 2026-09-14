@@ -1,0 +1,14 @@
+email-validator
+bcrypt
+python-multipart
+uvicorn[standard]
+fastapi
+psycopg2-binary
+earthengine-api
+joblib
+requests
+scikit-learn
+pandas
+itsdangerous
+jinja2
+google-auth

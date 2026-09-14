@@ -1,0 +1,68 @@
+{
+  "project_info": {
+    "project_number": "984347631724",
+    "project_id": "geosustain-4c722",
+    "storage_bucket": "geosustain-4c722.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:984347631724:android:b70ce4e3cbfd5f9f017849",
+        "android_client_info": {
+          "package_name": "com.example.geosustain"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "984347631724-clqg2er32hn5jdev5ffiq0n35g1kovs3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8E55YXDTfqJEolT3gauPeqT6C60avBCQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "984347631724-clqg2er32hn5jdev5ffiq0n35g1kovs3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:984347631724:android:80a3dbc996316c06017849",
+        "android_client_info": {
+          "package_name": "com.example.geosustain_clean_arranged"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "984347631724-clqg2er32hn5jdev5ffiq0n35g1kovs3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC8E55YXDTfqJEolT3gauPeqT6C60avBCQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "984347631724-clqg2er32hn5jdev5ffiq0n35g1kovs3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
