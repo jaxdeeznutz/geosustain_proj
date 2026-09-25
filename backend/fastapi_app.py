@@ -1,15 +1,13 @@
 import os
 import json
-import secrets
-import smtplib
 import urllib.parse
 import urllib.request
-from email.message import EmailMessage
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional, Tuple
 
 import bcrypt
+from password_auth import verify_password
 import requests
 from fastapi import FastAPI, Request, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
@@ -23,8 +21,6 @@ from starlette.middleware.sessions import SessionMiddleware
 from database import (
     init_db,
     create_user,
-    set_email_verification_code,
-    mark_email_verified,
     get_user_by_email,
     get_user_by_id,
     save_analysis_session,
@@ -38,9 +34,6 @@ from database import (
     update_user_profile,
     deactivate_user,
     delete_user,
-    upsert_pending_registration,
-    get_pending_registration,
-    delete_pending_registration,
     get_planner_queue,
     get_planner_session_detail,
     verify_analysis_session,
@@ -64,7 +57,6 @@ except Exception as exc:
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SECRET_KEY = os.getenv("SECRET_KEY", "geosustain-secret-change-in-production")
 MOBILE_TOKEN_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
-VERIFICATION_CODE_MAX_AGE_MINUTES = int(os.getenv("VERIFICATION_CODE_MAX_AGE_MINUTES", "10"))
 
 
 
@@ -413,90 +405,8 @@ def render_template(request: Request, template: str, context: Optional[Dict[str,
     return templates.TemplateResponse(request, template, ctx)
 
 
-def verify_password(password: str, password_hash: str) -> bool:
-    try:
-        return bcrypt.checkpw(password.encode("utf-8"), password_hash.encode("utf-8"))
-    except Exception:
-        return False
-
-
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
-
-
-def generate_verification_code() -> str:
-    return f"{secrets.randbelow(1_000_000):06d}"
-
-
-def send_verification_email(email: str, code: str) -> bool:
-    """Send a real verification-code email via SMTP (Gmail by default).
-
-    Configure with these env vars on Render (or wherever the backend runs):
-      SMTP_HOST      (default: smtp.gmail.com)
-      SMTP_PORT      (default: 587)
-      SMTP_USER      the sending Gmail address, e.g. geosustain.app@gmail.com
-      SMTP_PASSWORD  a Gmail "app password" (NOT the regular account password —
-                      Gmail requires 2-Step Verification enabled, then
-                      generate one at https://myaccount.google.com/apppasswords)
-      SMTP_FROM      (optional) display "from" address, defaults to SMTP_USER
-
-    Returns False (never raises) on any failure, so a transient email outage
-    degrades gracefully — the caller can offer "resend" rather than crash.
-    """
-    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
-    smtp_port = int(os.getenv("SMTP_PORT", "587"))
-    smtp_user = os.getenv("SMTP_USER", "").strip()
-    smtp_password = os.getenv("SMTP_PASSWORD", "").strip()
-    smtp_from = os.getenv("SMTP_FROM", smtp_user).strip()
-
-    if not smtp_user or not smtp_password:
-        print(f"[EMAIL NOT SENT] SMTP_USER/SMTP_PASSWORD not configured — verification code for {email} was not delivered.")
-        return False
-
-    message = EmailMessage()
-    message["Subject"] = "Your GeoSustain verification code"
-    message["From"] = smtp_from
-    message["To"] = email
-    message.set_content(
-        f"Your GeoSustain verification code is: {code}\n\n"
-        f"This code expires in {VERIFICATION_CODE_MAX_AGE_MINUTES} minutes.\n\n"
-        "If you did not request this, you can safely ignore this email."
-    )
-    message.add_alternative(
-        f"""\
-        <div style="font-family: sans-serif; max-width: 420px; margin: auto;">
-          <h2 style="color:#08733F;">GeoSustain</h2>
-          <p>Your verification code is:</p>
-          <p style="font-size: 28px; font-weight: 700; letter-spacing: 4px;">{code}</p>
-          <p style="color:#666; font-size: 13px;">This code expires in {VERIFICATION_CODE_MAX_AGE_MINUTES} minutes. If you did not request this, you can safely ignore this email.</p>
-        </div>
-        """,
-        subtype="html",
-    )
-
-    try:
-        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
-            server.starttls()
-            server.login(smtp_user, smtp_password)
-            server.send_message(message)
-        return True
-    except Exception as exc:
-        print(f"Sending verification email to {email} failed: {exc}")
-        return False
-
-def issue_and_send_verification_code(email: str) -> bool:
-    code = generate_verification_code()
-    code_hash = hash_password(code)
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=VERIFICATION_CODE_MAX_AGE_MINUTES)
-    set_email_verification_code(email, code_hash, expires_at)
-    return send_verification_email(email, code)
-
-
-def make_verification_code_payload():
-    code = generate_verification_code()
-    code_hash = hash_password(code)
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=VERIFICATION_CODE_MAX_AGE_MINUTES)
-    return code, code_hash, expires_at
 
 
 def sign_in_user(request: Request, user) -> None:
@@ -1052,10 +962,6 @@ class LoginBody(BaseModel):
     password: str = ""
 
 
-class EmailOnlyBody(BaseModel):
-    email: str
-
-
 class AnalysisBody(BaseModel):
     lat: Optional[float] = None
     lon: Optional[float] = None
@@ -1122,13 +1028,9 @@ async def login_submit(request: Request):
         flash(request, "Invalid email or password.", "error")
         return render_template(request, "login.html")
 
-    if not user.get("email_verified"):
-        try:
-            issue_and_send_verification_code(email)
-        except Exception as exc:
-            print(f"Failed to send verification code: {exc}")
-        flash(request, "Please verify your email before signing in. We sent you a new code.", "warning")
-        return RedirectResponse(f"/verify-email?email={urllib.parse.quote(email)}", status_code=302)
+    if user.get("is_active") is False:
+        flash(request, "This account is deactivated.", "error")
+        return render_template(request, "login.html")
 
     sign_in_user(request, user)
     return RedirectResponse("/dashboard", status_code=302)
@@ -1157,6 +1059,8 @@ async def register_submit(request: Request):
         errors.append("A valid email is required.")
     if not password or len(password) < 6:
         errors.append("Password must be at least 6 characters.")
+    if len(password.encode("utf-8")) > 72:
+        errors.append("Password must be at most 72 UTF-8 bytes.")
     if password != confirm:
         errors.append("Passwords do not match.")
     if role not in ("farmer", "analyst", "planner"):
@@ -1174,78 +1078,15 @@ async def register_submit(request: Request):
         flash(request, "Registration failed. Please try again.", "error")
         return render_template(request, "register.html")
 
-    try:
-        sent = issue_and_send_verification_code(email)
-        if sent:
-            flash(request, "Account created! We sent a verification code to your email.", "success")
-        else:
-            flash(request, "Account created, but the verification email could not be sent — email delivery may not be configured on the server yet. Please try resending.", "warning")
-    except Exception as exc:
-        print(f"Failed to send verification email: {exc}")
-        flash(request, "Account created, but something went wrong sending your verification email. Please try resending.", "warning")
-    return RedirectResponse(f"/verify-email?email={urllib.parse.quote(email)}", status_code=302)
+    flash(request, "Account created! Please log in.", "success")
+    return RedirectResponse("/login", status_code=302)
 
 
-
-@app.get("/verify-email", response_class=HTMLResponse, name="verify_email")
-def verify_email_page(request: Request, email: str = ""):
-    return render_template(request, "verify_email.html", {"email": email})
-
-
-@app.post("/verify-email", name="verify_email")
-async def verify_email_submit(request: Request):
-    form = await request.form()
-    email = str(form.get("email", "")).strip().lower()
-    code = str(form.get("code", "")).strip().replace(" ", "")
-
-    user = get_user_by_email(email)
-    if not user:
-        flash(request, "We could not find that account.", "error")
-        return render_template(request, "verify_email.html", {"email": email})
-    if user.get("email_verified"):
-        sign_in_user(request, user)
-        return RedirectResponse("/dashboard", status_code=302)
-    if not code or len(code) != 6 or not code.isdigit():
-        flash(request, "Open the Firebase verification link sent to your email.", "error")
-        return render_template(request, "verify_email.html", {"email": email})
-
-    expires_at = user.get("verification_expires_at")
-    if not user.get("verification_code_hash") or not expires_at:
-        flash(request, "Your verification code is missing. Please request a new code.", "error")
-        return render_template(request, "verify_email.html", {"email": email})
-    if expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if expires_at < datetime.now(timezone.utc):
-        flash(request, "Your verification code expired. Please request a new one.", "error")
-        return render_template(request, "verify_email.html", {"email": email})
-    if not verify_password(code, user["verification_code_hash"]):
-        flash(request, "Incorrect verification code.", "error")
-        return render_template(request, "verify_email.html", {"email": email})
-
-    verified_user = mark_email_verified(email)
-    sign_in_user(request, verified_user)
-    flash(request, "Email verified successfully. Welcome to GeoSustain!", "success")
-    return RedirectResponse("/dashboard", status_code=302)
-
-
-@app.post("/resend-verification", name="resend_verification")
-async def resend_verification(request: Request):
-    form = await request.form()
-    email = str(form.get("email", "")).strip().lower()
-    user = get_user_by_email(email)
-    if not user:
-        flash(request, "We could not find that account.", "error")
-        return render_template(request, "verify_email.html", {"email": email})
-    if user.get("email_verified"):
-        flash(request, "This email is already verified. You can sign in now.", "success")
-        return RedirectResponse("/login", status_code=302)
-    try:
-        sent = issue_and_send_verification_code(email)
-        flash(request, "We sent a new verification code." if sent else "Could not send the email right now — email delivery may not be configured on the server. Please try again shortly.", "success" if sent else "warning")
-    except Exception as exc:
-        print(f"Failed to resend verification email: {exc}")
-        flash(request, "Something went wrong sending your verification email. Please try again.", "error")
-    return render_template(request, "verify_email.html", {"email": email})
+@app.get("/verify-email")
+@app.post("/verify-email")
+@app.post("/resend-verification")
+def retired_email_verification():
+    return RedirectResponse("/login", status_code=303)
 
 
 @app.get("/logout", name="logout")
@@ -1323,119 +1164,37 @@ def mobile_register(body: RegisterBody):
     username = body.username.strip()
     email = body.email.lower().strip()
 
-    existing = get_user_by_email(email)
-    if existing and existing.get("email_verified"):
-        return JSONResponse({"error": "An account with this email already exists. Please log in instead."}, status_code=409)
-
-    code, code_hash, expires_at = make_verification_code_payload()
-    upsert_pending_registration(username, email, hash_password(body.password), role, code_hash, expires_at)
-    sent = send_verification_email(email, code)
-    return {
-        "message": "We sent a verification code to your email." if sent
-        else "Your account is pending, but the verification email could not be sent. Please try resending it.",
-        "email": email,
-        "email_sent": sent,
-    }
+    if len(username) < 3 or "@" not in email:
+        return JSONResponse({"error": "Enter a valid username and email."}, status_code=400)
+    if len(body.password.encode("utf-8")) > 72:
+        return JSONResponse({"error": "Password must be at most 72 UTF-8 bytes."}, status_code=400)
+    if get_user_by_email(email):
+        return JSONResponse({"error": "Email is already registered. Please log in."}, status_code=409)
+    user = create_user(username, email, hash_password(body.password), role, auth_provider="email")
+    if not user:
+        return JSONResponse({"error": "Email is already registered. Please log in."}, status_code=409)
+    return {"message": "Account created. Please log in.", "email": email, "requires_verification": False}
 
 
 @app.post("/api/mobile/login")
 def mobile_login(body: LoginBody):
-    user = get_user_by_email(body.email.lower())
+    user = get_user_by_email(body.email.strip().lower())
     if not user or not verify_password(body.password, user["password_hash"]):
         return JSONResponse({"error": "Invalid email or password."}, status_code=401)
     if user.get("is_active") is False:
         return JSONResponse({"error": "This account is deactivated."}, status_code=403)
-    if not user.get("email_verified"):
-        return JSONResponse(
-            {"error": "Please verify your email first. Check your inbox for the verification code.", "requires_verification": True},
-            status_code=403,
-        )
     return {"user": user_public_dict(user), "token": generate_mobile_token(user)}
 
 
 
 
-class VerifyEmailBody(BaseModel):
-    email: str
-    code: str
-
-
 @app.post("/api/mobile/verify-email")
-def mobile_verify_email(body: VerifyEmailBody):
-    email = body.email.lower().strip()
-    code = body.code.strip().replace(" ", "")
-
-    pending = get_pending_registration(email)
-    if pending:
-        expires_at = pending.get("verification_expires_at")
-        if expires_at and expires_at.tzinfo is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        if not pending.get("verification_code_hash") or not expires_at or expires_at < datetime.now(timezone.utc):
-            return JSONResponse({"error": "Verification code expired. Please request a new one."}, status_code=400)
-        if not verify_password(code, pending["verification_code_hash"]):
-            return JSONResponse({"error": "Incorrect verification code."}, status_code=400)
-
-        if get_user_by_email(email):
-            delete_pending_registration(email)
-            return JSONResponse({"error": "Email is already registered."}, status_code=400)
-        user = create_user(
-            pending["username"],
-            email,
-            pending["password_hash"],
-            pending.get("role") or "farmer",
-            email_verified=True,
-            auth_provider="email",
-        )
-        if not user:
-            return JSONResponse({"error": "Could not create account after verification."}, status_code=500)
-        delete_pending_registration(email)
-        return {"user": user_public_dict(user), "token": generate_mobile_token(user), "message": "Account verified and created."}
-
-    user = get_user_by_email(email)
-    if not user:
-        return JSONResponse({"error": "No pending registration found. Please create an account first."}, status_code=404)
-    if user.get("email_verified"):
-        return {"user": user_public_dict(user), "token": generate_mobile_token(user)}
-    expires_at = user.get("verification_expires_at")
-    if expires_at and expires_at.tzinfo is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if not user.get("verification_code_hash") or not expires_at or expires_at < datetime.now(timezone.utc):
-        return JSONResponse({"error": "Verification code expired. Please request a new one."}, status_code=400)
-    if not verify_password(code, user["verification_code_hash"]):
-        return JSONResponse({"error": "Incorrect verification code."}, status_code=400)
-    verified_user = mark_email_verified(email)
-    return {"user": user_public_dict(verified_user), "token": generate_mobile_token(verified_user)}
-
-
-def _resend_verification_code(email: str):
-    email = email.lower().strip()
-    pending = get_pending_registration(email)
-    if pending:
-        code, code_hash, expires_at = make_verification_code_payload()
-        upsert_pending_registration(
-            pending["username"], email, pending["password_hash"],
-            pending.get("role") or "farmer", code_hash, expires_at,
-        )
-        sent = send_verification_email(email, code)
-        return {"message": "Verification code resent." if sent else "Could not send the email right now. Please try again shortly.", "email_sent": sent}
-
-    user = get_user_by_email(email)
-    if not user:
-        return JSONResponse({"error": "No pending registration or account found for this email."}, status_code=404)
-    if user.get("email_verified"):
-        return {"message": "This email is already verified.", "already_verified": True}
-    sent = issue_and_send_verification_code(email)
-    return {"message": "Verification code resent." if sent else "Could not send the email right now. Please try again shortly.", "email_sent": sent}
-
-
+@app.post("/api/mobile/verify-code")
 @app.post("/api/mobile/send-verification")
-def mobile_send_verification(body: EmailOnlyBody):
-    return _resend_verification_code(body.email)
-
-
 @app.post("/api/mobile/resend-verification")
-def mobile_resend_verification(body: EmailOnlyBody):
-    return _resend_verification_code(body.email)
+def retired_mobile_verification():
+    # Never issue a token from an email address or obsolete OTP alone.
+    return JSONResponse({"error": "Email verification is no longer required. Please log in with your password."}, status_code=410)
 
 
 @app.get("/api/mobile/me")

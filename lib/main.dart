@@ -330,14 +330,6 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (_) => const ShellPage()),
       );
     } catch (e) {
-      final message = e.toString().replaceFirst('Exception: ', '');
-      if (message.toLowerCase().contains('verify your email')) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => VerifyEmailPage(email: email)),
-        );
-        return;
-      }
       showMessage(e);
     } finally {
       if (mounted) setState(() => loading = false);
@@ -544,7 +536,7 @@ class _RegisterPageState extends State<RegisterPage> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => VerifyEmailPage(email: email)),
+        MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     } catch (e) {
       showMessage(e.toString().replaceFirst('Exception: ', ''));
@@ -712,170 +704,6 @@ InputDecoration _fieldDecoration({String? hint}) => InputDecoration(
     borderSide: BorderSide.none,
   ),
 );
-
-class VerifyEmailPage extends StatefulWidget {
-  final String email;
-
-  const VerifyEmailPage({super.key, required this.email});
-
-  @override
-  State<VerifyEmailPage> createState() => _VerifyEmailPageState();
-}
-
-class _VerifyEmailPageState extends State<VerifyEmailPage> {
-  final api = ApiService();
-  final codeController = TextEditingController();
-  bool resending = false;
-  bool verifying = false;
-
-  Future<void> verify() async {
-    final code = codeController.text.trim();
-    if (code.length < 4) {
-      message('Enter the verification code we emailed you.');
-      return;
-    }
-    setState(() => verifying = true);
-    try {
-      await api.verifyEmail(email: widget.email, code: code);
-      if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const ShellPage()),
-        (_) => false,
-      );
-    } catch (e) {
-      message(e.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => verifying = false);
-    }
-  }
-
-  Future<void> resend() async {
-    setState(() => resending = true);
-    try {
-      final result = await api.resendVerificationCode(widget.email);
-      final sent = result['email_sent'] == true;
-      message(
-        sent
-            ? 'A new verification code was sent to ${widget.email}.'
-            : 'We could not send the email right now. Please try again shortly.',
-      );
-    } catch (e) {
-      message(e.toString().replaceFirst('Exception: ', ''));
-    } finally {
-      if (mounted) setState(() => resending = false);
-    }
-  }
-
-  void message(String text) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return FarmerAuthScaffold(
-      onBack: () => Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const LoginPage()),
-        (_) => false,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Icon(Icons.mark_email_read_rounded, color: green, size: 54),
-          const SizedBox(height: 16),
-          const Text(
-            'Check your email',
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              color: Color(0xFF1F2A22),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'We sent a verification code to ${widget.email}. Enter it below to finish creating your account.',
-            textAlign: TextAlign.center,
-            style: const TextStyle(color: Colors.black54, height: 1.35),
-          ),
-          const SizedBox(height: 26),
-          const Text(
-            'Verification Code',
-            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-          ),
-          const SizedBox(height: 6),
-          TextField(
-            controller: codeController,
-            keyboardType: TextInputType.number,
-            textAlign: TextAlign.center,
-            maxLength: 6,
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w900,
-              letterSpacing: 6,
-            ),
-            decoration: _fieldDecoration(
-              hint: '000000',
-            ).copyWith(counterText: ''),
-          ),
-          const SizedBox(height: 10),
-          FilledButton(
-            onPressed: verifying ? null : verify,
-            style: FilledButton.styleFrom(
-              backgroundColor: green,
-              minimumSize: const Size.fromHeight(52),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: verifying
-                ? const SizedBox(
-                    height: 20,
-                    width: 20,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2.4,
-                      color: Colors.white,
-                    ),
-                  )
-                : const Text(
-                    'Verify Email',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-                  ),
-          ),
-          const SizedBox(height: 12),
-          OutlinedButton(
-            onPressed: resending ? null : resend,
-            style: OutlinedButton.styleFrom(
-              minimumSize: const Size.fromHeight(48),
-              foregroundColor: green,
-              side: const BorderSide(color: green),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            child: Text(resending ? 'Sending...' : 'Resend Code'),
-          ),
-          const SizedBox(height: 6),
-          Center(
-            child: TextButton(
-              onPressed: () => Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (_) => const LoginPage()),
-                (_) => false,
-              ),
-              child: const Text(
-                'Back to login',
-                style: TextStyle(color: Colors.black54),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
 /// Converts a raw exception (network failure, timeout, or a server error
 /// message already wrapped in an Exception) into a short, non-technical

@@ -468,7 +468,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                 DataColumn(label: Text('User')),
                 DataColumn(label: Text('Role')),
                 DataColumn(label: Text('Status')),
-                DataColumn(label: Text('Verified')),
+                DataColumn(label: Text('Sign-in method')),
                 DataColumn(label: Text('Created')),
                 DataColumn(label: Text('Actions')),
               ],
@@ -534,16 +534,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                 : Colors.red.shade50,
                           ),
                         ),
-                        DataCell(
-                          Icon(
-                            u['email_verified'] == true
-                                ? Icons.check_circle
-                                : Icons.error_outline,
-                            color: u['email_verified'] == true
-                                ? green
-                                : Colors.orange,
-                          ),
-                        ),
+                        DataCell(Text('${u['auth_provider'] ?? 'email'}')),
                         DataCell(
                           Text('${u['created_at'] ?? ''}'.split('T').first),
                         ),

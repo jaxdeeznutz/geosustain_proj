@@ -134,41 +134,6 @@ class ApiService {
     return data;
   }
 
-  Future<Map<String, dynamic>> verifyEmail({
-    required String email,
-    required String code,
-  }) async {
-    final response = await _client
-        .post(
-          Uri.parse('$baseUrl/api/mobile/verify-email'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'email': email, 'code': code}),
-        )
-        .timeout(const Duration(seconds: 60));
-    final data = _decodeJson(response);
-    if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Verification failed'));
-    }
-    final token = data['token'];
-    if (token != null) await saveToken('$token');
-    return data;
-  }
-
-  Future<Map<String, dynamic>> resendVerificationCode(String email) async {
-    final response = await _client
-        .post(
-          Uri.parse('$baseUrl/api/mobile/resend-verification'),
-          headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'email': email}),
-        )
-        .timeout(const Duration(seconds: 60));
-    final data = _decodeJson(response);
-    if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not resend the code'));
-    }
-    return data;
-  }
-
   Future<String> reverseGeocodePlace(double lat, double lon) async {
     final token = await getToken();
     final uri = Uri.parse(

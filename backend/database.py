@@ -334,7 +334,7 @@ def create_user(username: str, email: str, password_hash: str, role: str = "farm
                 VALUES (%s, %s, %s, %s, %s, %s, %s)
                 RETURNING id, username, email, role, location, profile_photo, is_active, email_verified, auth_provider, created_at
                 """,
-                (username, email, password_hash, role, email_verified, auth_provider, google_sub),
+                (username.strip(), email.strip().lower(), password_hash, role, email_verified, auth_provider, google_sub),
             )
             user = cur.fetchone()
         conn.commit()
@@ -476,7 +476,7 @@ def get_user_by_email(email: str):
     conn = get_conn()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM users WHERE email = %s", (email,))
+            cur.execute("SELECT * FROM users WHERE LOWER(BTRIM(email)) = LOWER(BTRIM(%s))", (email,))
             row = cur.fetchone()
         return dict(row) if row else None
     finally:

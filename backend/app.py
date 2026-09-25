@@ -1,7 +1,5 @@
 import os
 from concurrent.futures import ThreadPoolExecutor, as_completed
-import secrets
-from datetime import datetime, timezone, timedelta
 from flask import (
     Flask, render_template, request, redirect,
     url_for, session, jsonify, flash,
@@ -14,11 +12,11 @@ try:
 except ImportError:
     CORS = None
 from database import (
-    init_db, create_user, get_user_by_email, get_user_by_id, save_analysis_session, get_user_history, set_email_verification_code,
-    mark_email_verified, upsert_pending_registration, get_pending_registration, delete_pending_registration,
+    init_db, create_user, get_user_by_email, get_user_by_id, save_analysis_session, get_user_history,
 )
 from rainfallDatasets import analyze_location
 from functools import wraps
+from password_auth import verify_password
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY", "geosustain-secret-change-in-production")
@@ -28,7 +26,6 @@ if CORS:
 
 token_serializer = URLSafeTimedSerializer(app.secret_key)
 MOBILE_TOKEN_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
-VERIFICATION_CODE_MAX_AGE_MINUTES = int(os.getenv("VERIFICATION_CODE_MAX_AGE_MINUTES", "10"))
 
 with app.app_context():
     init_db()
@@ -120,8 +117,12 @@ def login():
             return render_template("login.html")
 
         user = get_user_by_email(email)
-        if not user or not bcrypt.check_password_hash(user["password_hash"], password):
+        if not user or not verify_password(password, user["password_hash"]):
             flash("Invalid email or password.", "error")
+            return render_template("login.html")
+
+        if user.get("is_active") is False:
+            flash("This account is deactivated.", "error")
             return render_template("login.html")
 
         session["user_id"]   = user["id"]
@@ -152,6 +153,8 @@ def register():
             errors.append("A valid email is required.")
         if not password or len(password) < 6:
             errors.append("Password must be at least 6 characters.")
+        if len(password.encode("utf-8")) > 72:
+            errors.append("Password must be at most 72 UTF-8 bytes.")
         if password != confirm:
             errors.append("Passwords do not match.")
         if role not in ("farmer", "analyst"):
@@ -403,64 +406,6 @@ def analysis():
 # ---------------------------------------------------------------------------
 # Email verification helpers for mobile JSON API
 # ---------------------------------------------------------------------------
-def generate_verification_code():
-    return f"{secrets.randbelow(1_000_000):06d}"
-
-
-def send_verification_email(email, code):
-    print(f"[LEGACY EMAIL CODE DISABLED] Firebase handles email verification for {email}.")
-    return False
-
-def issue_and_send_verification_code(email):
-    code = generate_verification_code()
-    code_hash = bcrypt.generate_password_hash(code).decode("utf-8")
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=VERIFICATION_CODE_MAX_AGE_MINUTES)
-    set_email_verification_code(email, code_hash, expires_at)
-    return send_verification_email(email, code)
-
-
-def make_verification_code_payload():
-    code = generate_verification_code()
-    code_hash = bcrypt.generate_password_hash(code).decode("utf-8")
-    expires_at = datetime.now(timezone.utc) + timedelta(minutes=VERIFICATION_CODE_MAX_AGE_MINUTES)
-    return code, code_hash, expires_at
-
-
-def _send_mobile_verification_response(email):
-    email = (email or "").strip().lower()
-    pending = get_pending_registration(email)
-    if pending:
-        try:
-            code, code_hash, expires_at = make_verification_code_payload()
-            upsert_pending_registration(pending["username"], email, pending["password_hash"], pending.get("role") or "farmer", code_hash, expires_at)
-            sent = send_verification_email(email, code)
-        except Exception as exc:
-            app.logger.warning(f"Mobile pending verification resend failed: {exc}")
-            return jsonify({"error": "Firebase email verification is now used. Please resend the verification link from the app."}), 500
-        return jsonify({
-            "message": "Firebase verification link sent." if sent else "Verification code generated. Firebase email verification is enabled, so check backend logs for the code.",
-            "sent": bool(sent),
-            "pending": True,
-        })
-
-    user = get_user_by_email(email)
-    if not user:
-        return jsonify({"error": "No pending registration found. Please create an account first."}), 404
-    if user.get("email_verified"):
-        return jsonify({"message": "Email is already verified."})
-    try:
-        sent = issue_and_send_verification_code(email)
-    except Exception as exc:
-        app.logger.warning(f"Mobile resend verification failed: {exc}")
-        return jsonify({"error": "Firebase email verification is now used. Please resend the verification link from the app."}), 500
-    return jsonify({
-        "message": "Firebase verification link sent." if sent else "Verification code generated. Firebase email verification is enabled, so check backend logs for the code.",
-        "sent": bool(sent),
-    })
-
-# ---------------------------------------------------------------------------
-# Mobile JSON API routes
-# ---------------------------------------------------------------------------
 @app.route("/api/mobile/register", methods=["POST"])
 def mobile_register():
     body = request.get_json(silent=True) or {}
@@ -476,6 +421,8 @@ def mobile_register():
         errors.append("A valid email is required.")
     if not password or len(password) < 6:
         errors.append("Password must be at least 6 characters.")
+    if len(password.encode("utf-8")) > 72:
+        errors.append("Password must be at most 72 UTF-8 bytes.")
     if role not in ("farmer", "analyst"):
         role = "farmer"
     if get_user_by_email(email):
@@ -483,21 +430,10 @@ def mobile_register():
     if errors:
         return jsonify({"errors": errors}), 400
 
-    try:
-        code, code_hash, expires_at = make_verification_code_payload()
-        pw_hash = bcrypt.generate_password_hash(password).decode("utf-8")
-        upsert_pending_registration(username, email, pw_hash, role, code_hash, expires_at)
-        sent = send_verification_email(email, code)
-    except Exception as exc:
-        app.logger.warning(f"Mobile pending registration failed: {exc}")
-        return jsonify({"error": "Firebase email verification is now used. Please resend the verification link from the app."}), 500
-
-    return jsonify({
-        "requires_verification": True,
-        "pending": True,
-        "sent": bool(sent),
-        "message": "Firebase verification link sent. Your account will be created after verification.",
-    }), 201
+    user = create_user(username, email, bcrypt.generate_password_hash(password).decode("utf-8"), role)
+    if not user:
+        return jsonify({"error": "Email is already registered."}), 409
+    return jsonify({"message": "Account created. Please log in.", "requires_verification": False}), 201
 
 
 @app.route("/api/mobile/login", methods=["POST"])
@@ -506,70 +442,19 @@ def mobile_login():
     email = body.get("email", "").strip().lower()
     password = body.get("password", "")
     user = get_user_by_email(email)
-    if not user or not bcrypt.check_password_hash(user["password_hash"], password):
+    if not user or not verify_password(password, user["password_hash"]):
         return jsonify({"error": "Invalid email or password."}), 401
     if user.get("is_active") is False:
         return jsonify({"error": "This account is deactivated."}), 403
-    if not user.get("email_verified"):
-        try:
-            issue_and_send_verification_code(email)
-        except Exception as exc:
-            app.logger.warning(f"Mobile verification resend failed: {exc}")
-        return jsonify({"error": "Please verify your email first.", "requires_verification": True}), 403
     return jsonify({"user": user_public_dict(user), "token": generate_mobile_token(user)})
 
 
 @app.route("/api/mobile/send-verification", methods=["POST"])
-def mobile_send_verification():
-    body = request.get_json(silent=True) or {}
-    return _send_mobile_verification_response(body.get("email"))
-
-
 @app.route("/api/mobile/resend-verification", methods=["POST"])
-def mobile_resend_verification():
-    body = request.get_json(silent=True) or {}
-    return _send_mobile_verification_response(body.get("email"))
-
-
 @app.route("/api/mobile/verify-email", methods=["POST"])
 @app.route("/api/mobile/verify-code", methods=["POST"])
-def mobile_verify_email():
-    body = request.get_json(silent=True) or {}
-    email = body.get("email", "").strip().lower()
-    code = body.get("code", "").strip().replace(" ", "")
-
-    pending = get_pending_registration(email)
-    if pending:
-        expires_at = pending.get("verification_expires_at")
-        if expires_at and getattr(expires_at, "tzinfo", None) is None:
-            expires_at = expires_at.replace(tzinfo=timezone.utc)
-        if not pending.get("verification_code_hash") or not expires_at or expires_at < datetime.now(timezone.utc):
-            return jsonify({"error": "Verification code expired. Please request a new one."}), 400
-        if not bcrypt.check_password_hash(pending["verification_code_hash"], code):
-            return jsonify({"error": "Incorrect verification code."}), 400
-        if get_user_by_email(email):
-            delete_pending_registration(email)
-            return jsonify({"error": "Email is already registered."}), 400
-        user = create_user(pending["username"], email, pending["password_hash"], pending.get("role") or "farmer", email_verified=True, auth_provider="email")
-        if not user:
-            return jsonify({"error": "Could not create account after verification."}), 500
-        delete_pending_registration(email)
-        return jsonify({"user": user_public_dict(user), "token": generate_mobile_token(user), "message": "Account verified and created."})
-
-    user = get_user_by_email(email)
-    if not user:
-        return jsonify({"error": "No pending registration found. Please create an account first."}), 404
-    if user.get("email_verified"):
-        return jsonify({"user": user_public_dict(user), "token": generate_mobile_token(user)})
-    expires_at = user.get("verification_expires_at")
-    if expires_at and getattr(expires_at, "tzinfo", None) is None:
-        expires_at = expires_at.replace(tzinfo=timezone.utc)
-    if not user.get("verification_code_hash") or not expires_at or expires_at < datetime.now(timezone.utc):
-        return jsonify({"error": "Verification code expired. Please request a new one."}), 400
-    if not bcrypt.check_password_hash(user["verification_code_hash"], code):
-        return jsonify({"error": "Incorrect verification code."}), 400
-    verified_user = mark_email_verified(email)
-    return jsonify({"user": user_public_dict(verified_user), "token": generate_mobile_token(verified_user)})
+def retired_mobile_verification():
+    return jsonify({"error": "Email verification is no longer required. Please log in with your password."}), 410
 
 
 @app.route("/api/mobile/me", methods=["GET"])

@@ -40,7 +40,7 @@ Use `backend/.env.example` as a guide and retain your existing values for:
 - `SECRET_KEY`: your existing strong deployment signing secret. Changing it invalidates existing sessions/tokens.
 - `OPENWEATHER_API_KEY`: existing weather key.
 - `GEE_PROJECT_ID` and `GEE_SERVICE_ACCOUNT_JSON`, or locally authenticated Earth Engine credentials.
-- Your existing OTP email settings; see `OTP_RENDER_SETUP.md`.
+- Email/password authentication uses PostgreSQL and bcrypt. No Firebase or SMTP configuration is required. See `PASSWORD_AUTH_UPDATE.md` for the existing-account migration.
 
 **Before deploying the cleaned backend to Render, ensure `OPENWEATHER_API_KEY` is configured in Render Environment.** The local `.env` is intentionally ignored by Git. The old public source-code fallback key has been removed. Consider rotating that previously embedded key separately.
 

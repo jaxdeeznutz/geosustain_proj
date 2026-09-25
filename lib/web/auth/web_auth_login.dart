@@ -101,7 +101,7 @@ class WebAuthLoginShell extends StatelessWidget {
                   ),
                   const Spacer(),
                   const Text(
-                    'Secure analyst access • Verified email + password • PostgreSQL-backed system',
+                    'Secure analyst access • Email + password • PostgreSQL-backed system',
                     style: TextStyle(
                       color: Colors.black45,
                       fontWeight: FontWeight.w700,
