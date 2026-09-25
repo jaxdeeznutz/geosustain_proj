@@ -1,0 +1,5 @@
+# Optional: only for the older Flask app.py, not the active FastAPI service.
+-r requirements.txt
+Flask
+flask-bcrypt
+flask-cors

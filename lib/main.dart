@@ -1,15 +1,10 @@
-library geosustain_mobile;
+library;
 
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
-import 'dart:typed_data';
-import 'dart:ui' as ui;
 
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
-import 'firebase_options.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -44,11 +39,6 @@ part 'web/screens/web_planner_queue_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
   runApp(const GeoSustainApp());
 }
 
@@ -58,7 +48,6 @@ const softGreen = Color(0xFFEAF6EF);
 const bg = Color(0xFFF7FAF7);
 const cream = Color(0xFFFFF6EB);
 const panaboCenter = LatLng(7.2915, 125.6255);
-
 
 class AuthBackground extends StatelessWidget {
   final Widget child;
@@ -85,7 +74,7 @@ class AuthBackground extends StatelessWidget {
               width: 190,
               height: 190,
               decoration: BoxDecoration(
-                color: green.withOpacity(0.12),
+                color: green.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
             ),
@@ -97,7 +86,7 @@ class AuthBackground extends StatelessWidget {
               width: 190,
               height: 190,
               decoration: BoxDecoration(
-                color: green.withOpacity(0.10),
+                color: green.withValues(alpha: 0.10),
                 shape: BoxShape.circle,
               ),
             ),
@@ -118,11 +107,11 @@ class AuthCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(28),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.96),
+        color: Colors.white.withValues(alpha: 0.96),
         borderRadius: BorderRadius.circular(28),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.07),
+            color: Colors.black.withValues(alpha: 0.07),
             blurRadius: 28,
             offset: const Offset(0, 14),
           ),
@@ -152,30 +141,39 @@ class GeoSustainApp extends StatelessWidget {
           centerTitle: true,
           elevation: 0,
           titleTextStyle: TextStyle(
-              fontSize: 18, fontWeight: FontWeight.w800, color: green),
+            fontSize: 18,
+            fontWeight: FontWeight.w800,
+            color: green,
+          ),
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 14,
+          ),
           border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFFE1E8E2))),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFE1E8E2)),
+          ),
           enabledBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFFE1E8E2))),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: Color(0xFFE1E8E2)),
+          ),
           focusedBorder: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: green, width: 1.5)),
+            borderRadius: BorderRadius.circular(14),
+            borderSide: const BorderSide(color: green, width: 1.5),
+          ),
         ),
         filledButtonTheme: FilledButtonThemeData(
           style: FilledButton.styleFrom(
             backgroundColor: green,
             foregroundColor: Colors.white,
             minimumSize: const Size.fromHeight(52),
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             textStyle: const TextStyle(fontWeight: FontWeight.w800),
           ),
         ),
@@ -193,6 +191,87 @@ class GeoSustainApp extends StatelessWidget {
   }
 }
 
+class FarmerAuthScaffold extends StatelessWidget {
+  final Widget child;
+  final VoidCallback? onBack;
+  const FarmerAuthScaffold({super.key, required this.child, this.onBack});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: green,
+      body: SafeArea(
+        child: Column(
+          children: [
+            SizedBox(
+              height: 40,
+              child: onBack != null
+                  ? Align(
+                      alignment: Alignment.centerLeft,
+                      child: IconButton(
+                        onPressed: onBack,
+                        icon: const Icon(
+                          Icons.arrow_back_rounded,
+                          color: Colors.white,
+                        ),
+                      ),
+                    )
+                  : null,
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(24, 4, 24, 26),
+              child: Column(
+                children: [
+                  Container(
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.16),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(
+                      Icons.eco_rounded,
+                      color: Colors.white,
+                      size: 38,
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  const Text(
+                    'GeoSustain',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  const Text(
+                    'Sustainable Farming, Guided by AI',
+                    style: TextStyle(color: Colors.white70, fontSize: 13),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                decoration: const BoxDecoration(
+                  color: Color(0xFFFBF8F2),
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+                ),
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(24, 32, 24, 28),
+                  child: child,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
   @override
@@ -204,12 +283,17 @@ class _LoginPageState extends State<LoginPage> {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   bool loading = false;
+  bool obscurePassword = true;
 
   bool get _isWebDashboardViewport => MediaQuery.of(context).size.width >= 900;
 
   bool _isAnalystRoleFrom(Map<String, dynamic> user) {
-    final role = '${user['role'] ?? user['account_type'] ?? 'farmer'}'.toLowerCase();
-    return role.contains('analyst') || role.contains('planner') || role.contains('agricultural_planning_analyst') || role.contains('admin');
+    final role = '${user['role'] ?? user['account_type'] ?? 'farmer'}'
+        .toLowerCase();
+    return role.contains('analyst') ||
+        role.contains('planner') ||
+        role.contains('agricultural_planning_analyst') ||
+        role.contains('admin');
   }
 
   Future<void> _ensurePlatformAccess() async {
@@ -217,13 +301,15 @@ class _LoginPageState extends State<LoginPage> {
     final isAnalyst = _isAnalystRoleFrom(user);
     if (_isWebDashboardViewport && !isAnalyst) {
       await api.logout();
-      await FirebaseAuth.instance.signOut();
-      throw Exception('This farmer account does not have access to the web analyst dashboard. Please use the mobile farmer app.');
+      throw Exception(
+        'This farmer account does not have access to the web analyst dashboard. Please use the mobile farmer app.',
+      );
     }
     if (!_isWebDashboardViewport && isAnalyst) {
       await api.logout();
-      await FirebaseAuth.instance.signOut();
-      throw Exception('This analyst account is for the web analyst dashboard. Please open GeoSustain on a desktop browser.');
+      throw Exception(
+        'This analyst account is for the web analyst dashboard. Please open GeoSustain on a desktop browser.',
+      );
     }
   }
 
@@ -235,47 +321,7 @@ class _LoginPageState extends State<LoginPage> {
     final password = passwordController.text;
 
     try {
-      // New accounts use Firebase Auth first.
-      try {
-        final credential = await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
-        await credential.user?.reload();
-        final user = FirebaseAuth.instance.currentUser;
-
-        if (user == null) {
-          throw Exception('Firebase login failed. Please try again.');
-        }
-
-        if (!user.emailVerified) {
-          await user.sendEmailVerification();
-          await FirebaseAuth.instance.signOut();
-          throw Exception('Please verify your email first. A new verification link was sent.');
-        }
-
-        await api.completeFirebaseEmailRegistration(
-          username: user.displayName?.trim().isNotEmpty == true
-              ? user.displayName!.trim()
-              : email.split('@').first,
-          email: email,
-          password: password,
-          idToken: await user.getIdToken() ?? '',
-          role: MediaQuery.of(context).size.width >= 900 ? 'analyst' : 'farmer',
-        );
-      } on FirebaseAuthException catch (firebaseError) {
-        final code = firebaseError.code.toLowerCase();
-
-        // Fallback for old Render/PostgreSQL accounts that were created before Firebase Auth.
-        if (code.contains('user-not-found') ||
-            code.contains('invalid-credential') ||
-            code.contains('invalid-email')) {
-          await api.login(email, password);
-        } else {
-          throw Exception(firebaseError.message ?? 'Login failed.');
-        }
-      }
-
+      await api.login(email, password);
       await _ensurePlatformAccess();
 
       if (!mounted) return;
@@ -284,51 +330,14 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (_) => const ShellPage()),
       );
     } catch (e) {
-      showMessage(e);
-    } finally {
-      if (mounted) setState(() => loading = false);
-    }
-  }
-
-  Future<void> signInWithGoogle() async {
-    if (loading) return;
-    setState(() => loading = true);
-    try {
-      final provider = GoogleAuthProvider()
-        ..addScope('email')
-        ..addScope('profile');
-
-      UserCredential credential;
-      if (kIsWeb) {
-        credential = await FirebaseAuth.instance.signInWithPopup(provider);
-      } else {
-        credential = await FirebaseAuth.instance.signInWithProvider(provider);
+      final message = e.toString().replaceFirst('Exception: ', '');
+      if (message.toLowerCase().contains('verify your email')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => VerifyEmailPage(email: email)),
+        );
+        return;
       }
-
-      final idToken = await credential.user?.getIdToken();
-      if (idToken == null || idToken.isEmpty) {
-        throw Exception('Google did not return a valid sign-in token.');
-      }
-      await api.googleLoginWithFirebaseIdToken(
-        idToken,
-        role: MediaQuery.of(context).size.width >= 900 ? 'analyst' : 'farmer',
-      );
-
-      await _ensurePlatformAccess();
-
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ShellPage()),
-      );
-    } on FirebaseAuthException catch (e) {
-      final code = e.code.toLowerCase();
-      if (code.contains('popup-closed') || code.contains('cancelled') || code.contains('canceled')) {
-        showMessage('Google sign-in was cancelled. You can try again.');
-      } else {
-        showMessage(e.message ?? 'Google sign-in failed. Please try again.');
-      }
-    } catch (e) {
       showMessage(e);
     } finally {
       if (mounted) setState(() => loading = false);
@@ -338,7 +347,8 @@ class _LoginPageState extends State<LoginPage> {
   void showMessage(Object e) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))));
+      SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
+    );
   }
 
   @override
@@ -349,112 +359,143 @@ class _LoginPageState extends State<LoginPage> {
         passwordController: passwordController,
         loading: loading,
         onLogin: login,
-        onGoogle: signInWithGoogle,
         onCreate: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const RegisterPage()),
         ),
       );
     }
-    return Scaffold(
-      body: AuthBackground(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 430),
-              child: AuthCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+    return FarmerAuthScaffold(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Welcome, Farmer!',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF1F2A22),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Sign in to access your farms',
+            style: TextStyle(color: Colors.black54),
+          ),
+          const SizedBox(height: 26),
+          const Text(
+            'Email Address',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: InputDecoration(
+              hintText: 'you@example.com',
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Password',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: passwordController,
+            obscureText: obscurePassword,
+            onSubmitted: (_) => loading ? null : login(),
+            decoration: InputDecoration(
+              hintText: '••••••••',
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(14),
+                borderSide: BorderSide.none,
+              ),
+              suffixIcon: IconButton(
+                icon: Icon(
+                  obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size: 20,
+                ),
+                onPressed: () =>
+                    setState(() => obscurePassword = !obscurePassword),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: loading ? null : login,
+            style: FilledButton.styleFrom(
+              backgroundColor: green,
+              minimumSize: const Size.fromHeight(52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: loading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'Sign In',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      SizedBox(width: 8),
+                      Icon(Icons.arrow_forward_rounded, size: 18),
+                    ],
+                  ),
+          ),
+          const SizedBox(height: 18),
+          Center(
+            child: TextButton(
+              onPressed: loading
+                  ? null
+                  : () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => const RegisterPage()),
+                    ),
+              child: RichText(
+                text: const TextSpan(
+                  style: TextStyle(color: Colors.black54, fontSize: 13.5),
                   children: [
-                    Container(
-                      height: 76,
-                      width: 76,
-                      decoration: BoxDecoration(
-                        color: green.withOpacity(0.12),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.eco_rounded, size: 46, color: green),
-                    ),
-                    const SizedBox(height: 16),
-                    const Text(
-                      'GeoSustain Mobile',
-                      textAlign: TextAlign.center,
+                    TextSpan(text: "First time? "),
+                    TextSpan(
+                      text: 'Register here',
                       style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w900,
                         color: green,
+                        fontWeight: FontWeight.w800,
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'AI crop, land, and infrastructure suitability analysis',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                    const SizedBox(height: 30),
-                    TextField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.mail_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock_outline),
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    FilledButton(
-                      onPressed: loading ? null : login,
-                      child: Text(loading ? 'Signing in...' : 'Login'),
-                    ),
-
-                    const SizedBox(height: 12),
-                    OutlinedButton.icon(
-                      onPressed: loading ? null : signInWithGoogle,
-                      icon: const Icon(Icons.g_mobiledata_rounded, size: 28),
-                      label: const Text('Continue with Google'),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
-                        foregroundColor: const Color(0xFF1F2937),
-                        side: const BorderSide(color: Color(0xFFE1E8E2)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    OutlinedButton(
-                      onPressed: loading
-                          ? null
-                          : () => Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (_) => const RegisterPage()),
-                              ),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(50),
-                        foregroundColor: green,
-                        side: const BorderSide(color: green),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: const Text('Create Account'),
                     ),
                   ],
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
 }
-
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -469,6 +510,8 @@ class _RegisterPageState extends State<RegisterPage> {
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
   bool loading = false;
+  bool obscurePassword = true;
+  bool obscureConfirm = true;
 
   Future<void> register() async {
     final username = usernameController.text.trim();
@@ -478,32 +521,31 @@ class _RegisterPageState extends State<RegisterPage> {
     if (username.length < 3) {
       return showMessage('Username must be at least 3 characters.');
     }
-    if (!email.contains('@')) return showMessage('Enter a valid email address.');
-    if (password.length < 6) return showMessage('Password must be at least 6 characters.');
-    if (password != confirmPasswordController.text) return showMessage('Passwords do not match.');
+    if (!email.contains('@')) {
+      return showMessage('Enter a valid email address.');
+    }
+    if (password.length < 6) {
+      return showMessage('Password must be at least 6 characters.');
+    }
+    if (password != confirmPasswordController.text) {
+      return showMessage('Passwords do not match.');
+    }
     setState(() => loading = true);
     try {
-      final credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+      final assignedRole = MediaQuery.of(context).size.width >= 900
+          ? 'analyst'
+          : 'farmer';
+      await api.register(
+        username: username,
         email: email,
         password: password,
+        role: assignedRole,
       );
-      await credential.user?.updateDisplayName(username);
-      await credential.user?.sendEmailVerification();
-      final assignedRole = MediaQuery.of(context).size.width >= 900 ? 'analyst' : 'farmer';
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(
-          builder: (_) => VerifyEmailPage(
-            email: email,
-            username: username,
-            password: password,
-            role: assignedRole,
-          ),
-        ),
+        MaterialPageRoute(builder: (_) => VerifyEmailPage(email: email)),
       );
-    } on FirebaseAuthException catch (e) {
-      showMessage(e.message ?? 'Could not create Firebase account.');
     } catch (e) {
       showMessage(e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -513,190 +555,211 @@ class _RegisterPageState extends State<RegisterPage> {
 
   void showMessage(String message) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: AuthBackground(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(22),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 460),
-              child: AuthCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Row(
-                      children: [
-                        IconButton(
-                          onPressed: () => Navigator.pop(context),
-                          icon: const Icon(Icons.arrow_back),
-                        ),
-                        const Expanded(
-                          child: Text(
-                            'Create Account',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: green, fontWeight: FontWeight.w900, fontSize: 18),
-                          ),
-                        ),
-                        const SizedBox(width: 48),
-                      ],
+    return FarmerAuthScaffold(
+      onBack: () => Navigator.pop(context),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Text(
+            'Create Account',
+            style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF1F2A22),
+            ),
+          ),
+          const SizedBox(height: 6),
+          const Text(
+            'Join GeoSustain for field analysis, recommendations, and saved reports.',
+            style: TextStyle(color: Colors.black54, height: 1.35),
+          ),
+          const SizedBox(height: 22),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: softGreen,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: green.withValues(alpha: .14)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.agriculture_rounded, color: green, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    MediaQuery.of(context).size.width >= 900
+                        ? 'Web accounts are registered as Analyst accounts for dashboard access.'
+                        : 'Mobile accounts are automatically registered as Farmer accounts.',
+                    style: const TextStyle(
+                      color: darkGreen,
+                      fontWeight: FontWeight.w700,
+                      fontSize: 12.5,
+                      height: 1.25,
                     ),
-                    const SizedBox(height: 12),
-                    const Text('Register', style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900)),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Create your GeoSustain account for field analysis, recommendations, and saved reports.',
-                      style: TextStyle(color: Colors.black54, height: 1.35),
-                    ),
-                    const SizedBox(height: 24),
-                    TextField(controller: usernameController, decoration: const InputDecoration(labelText: 'Username')),
-                    const SizedBox(height: 12),
-                    TextField(controller: emailController, keyboardType: TextInputType.emailAddress, decoration: const InputDecoration(labelText: 'Email')),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: softGreen,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: green.withOpacity(.14)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.agriculture_rounded, color: green),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text(
-                              MediaQuery.of(context).size.width >= 900
-                                  ? 'Web accounts are registered as Analyst accounts for dashboard access.'
-                                  : 'Mobile accounts are automatically registered as Farmer accounts.',
-                              style: const TextStyle(color: darkGreen, fontWeight: FontWeight.w700, height: 1.25),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(controller: passwordController, obscureText: true, decoration: const InputDecoration(labelText: 'Password')),
-                    const SizedBox(height: 12),
-                    TextField(controller: confirmPasswordController, obscureText: true, decoration: const InputDecoration(labelText: 'Confirm Password')),
-                    const SizedBox(height: 22),
-                    FilledButton(onPressed: loading ? null : register, child: Text(loading ? 'Creating account...' : 'Register')),
-                  ],
+                  ),
                 ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 18),
+          const Text(
+            'Username',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: usernameController,
+            decoration: _fieldDecoration(),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Email Address',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: emailController,
+            keyboardType: TextInputType.emailAddress,
+            decoration: _fieldDecoration(hint: 'you@example.com'),
+          ),
+          const SizedBox(height: 14),
+          const Text(
+            'Password',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: passwordController,
+            obscureText: obscurePassword,
+            decoration: _fieldDecoration().copyWith(
+              suffixIcon: IconButton(
+                icon: Icon(
+                  obscurePassword
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size: 20,
+                ),
+                onPressed: () =>
+                    setState(() => obscurePassword = !obscurePassword),
               ),
             ),
           ),
-        ),
+          const SizedBox(height: 14),
+          const Text(
+            'Confirm Password',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: confirmPasswordController,
+            obscureText: obscureConfirm,
+            decoration: _fieldDecoration().copyWith(
+              suffixIcon: IconButton(
+                icon: Icon(
+                  obscureConfirm
+                      ? Icons.visibility_off_outlined
+                      : Icons.visibility_outlined,
+                  size: 20,
+                ),
+                onPressed: () =>
+                    setState(() => obscureConfirm = !obscureConfirm),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          FilledButton(
+            onPressed: loading ? null : register,
+            style: FilledButton.styleFrom(
+              backgroundColor: green,
+              minimumSize: const Size.fromHeight(52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: loading
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text(
+                    'Register',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
+          ),
+        ],
       ),
     );
   }
 }
 
+InputDecoration _fieldDecoration({String? hint}) => InputDecoration(
+  hintText: hint,
+  filled: true,
+  fillColor: Colors.white,
+  border: OutlineInputBorder(
+    borderRadius: BorderRadius.circular(14),
+    borderSide: BorderSide.none,
+  ),
+);
 
 class VerifyEmailPage extends StatefulWidget {
   final String email;
-  final String username;
-  final String password;
-  final String role;
 
-  const VerifyEmailPage({
-    super.key,
-    required this.email,
-    required this.username,
-    required this.password,
-    required this.role,
-  });
+  const VerifyEmailPage({super.key, required this.email});
 
   @override
   State<VerifyEmailPage> createState() => _VerifyEmailPageState();
 }
 
-class _VerifyEmailPageState extends State<VerifyEmailPage> with WidgetsBindingObserver {
+class _VerifyEmailPageState extends State<VerifyEmailPage> {
   final api = ApiService();
+  final codeController = TextEditingController();
   bool resending = false;
-  bool _checking = false;
-  bool _completing = false;
-  Timer? _pollTimer;
+  bool verifying = false;
 
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) => _checkVerification());
-    _checkVerification();
-  }
-
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    _pollTimer?.cancel();
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.resumed) {
-      _checkVerification();
+  Future<void> verify() async {
+    final code = codeController.text.trim();
+    if (code.length < 4) {
+      message('Enter the verification code we emailed you.');
+      return;
     }
-  }
-
-  Future<void> _checkVerification() async {
-    if (_checking || _completing || !mounted) return;
-    _checking = true;
+    setState(() => verifying = true);
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
-
-      await user.reload().timeout(const Duration(seconds: 15));
-      final refreshed = FirebaseAuth.instance.currentUser;
-      if (refreshed == null || refreshed.emailVerified != true) return;
-
-      _completing = true;
-      if (mounted) setState(() {});
-
-      await api.completeFirebaseEmailRegistration(
-        username: widget.username,
-        email: widget.email,
-        password: widget.password,
-        idToken: await refreshed.getIdToken() ?? '',
-        role: widget.role,
-      );
-
+      await api.verifyEmail(email: widget.email, code: code);
       if (!mounted) return;
       Navigator.pushAndRemoveUntil(
         context,
         MaterialPageRoute(builder: (_) => const ShellPage()),
         (_) => false,
       );
-    } on TimeoutException {
-      if (!_completing) return;
-      _completing = false;
-      message('That took too long. Check your connection and stay on this page after tapping the email link.');
     } catch (e) {
-      if (_completing) _completing = false;
       message(e.toString().replaceFirst('Exception: ', ''));
     } finally {
-      _checking = false;
-      if (mounted && !_completing) setState(() {});
+      if (mounted) setState(() => verifying = false);
     }
   }
 
   Future<void> resend() async {
     setState(() => resending = true);
     try {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user == null) {
-        message('Please register again so we can send a new link.');
-        return;
-      }
-      await user.sendEmailVerification();
-      message('Verification link resent. Check your inbox and Spam folder.');
-    } on FirebaseAuthException catch (e) {
-      message(e.message ?? 'Could not resend verification link.');
+      final result = await api.resendVerificationCode(widget.email);
+      final sent = result['email_sent'] == true;
+      message(
+        sent
+            ? 'A new verification code was sent to ${widget.email}.'
+            : 'We could not send the email right now. Please try again shortly.',
+      );
     } catch (e) {
       message(e.toString().replaceFirst('Exception: ', ''));
     } finally {
@@ -711,92 +774,104 @@ class _VerifyEmailPageState extends State<VerifyEmailPage> with WidgetsBindingOb
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: AuthBackground(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(22),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 430),
-              child: AuthCard(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Icon(Icons.mark_email_read_rounded, color: green, size: 58),
-                    const SizedBox(height: 16),
-                    Text(
-                      _completing ? 'Setting up your account' : 'Check your email',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900, color: green),
+    return FarmerAuthScaffold(
+      onBack: () => Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (_) => false,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const Icon(Icons.mark_email_read_rounded, color: green, size: 54),
+          const SizedBox(height: 16),
+          const Text(
+            'Check your email',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              color: Color(0xFF1F2A22),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'We sent a verification code to ${widget.email}. Enter it below to finish creating your account.',
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: Colors.black54, height: 1.35),
+          ),
+          const SizedBox(height: 26),
+          const Text(
+            'Verification Code',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+          ),
+          const SizedBox(height: 6),
+          TextField(
+            controller: codeController,
+            keyboardType: TextInputType.number,
+            textAlign: TextAlign.center,
+            maxLength: 6,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 6,
+            ),
+            decoration: _fieldDecoration(
+              hint: '000000',
+            ).copyWith(counterText: ''),
+          ),
+          const SizedBox(height: 10),
+          FilledButton(
+            onPressed: verifying ? null : verify,
+            style: FilledButton.styleFrom(
+              backgroundColor: green,
+              minimumSize: const Size.fromHeight(52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: verifying
+                ? const SizedBox(
+                    height: 20,
+                    width: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2.4,
+                      color: Colors.white,
                     ),
-                    const SizedBox(height: 8),
-                    Text(
-                      _completing
-                          ? 'Your email is verified. Finishing your GeoSustain account...'
-                          : 'We sent a verification link to ${widget.email}. Open your inbox, tap the link, and this page will sign you in automatically.',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.black54, height: 1.35),
-                    ),
-                    const SizedBox(height: 24),
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: softGreen,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: green.withOpacity(.15)),
-                      ),
-                      child: Text(
-                        _completing
-                            ? 'Almost there — keep this tab open.'
-                            : 'Didn\'t get it? Check Spam or junk, or resend the link below.',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(color: darkGreen, fontWeight: FontWeight.w700),
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    SizedBox(
-                      height: 44,
-                      child: Center(
-                        child: _completing
-                            ? const CircularProgressIndicator(color: green)
-                            : const SizedBox(
-                                width: 28,
-                                height: 28,
-                                child: CircularProgressIndicator(strokeWidth: 2.5, color: green),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    Text(
-                      _completing ? 'Creating your account...' : 'Waiting for email verification...',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.black45, fontWeight: FontWeight.w600),
-                    ),
-                    const SizedBox(height: 18),
-                    OutlinedButton(
-                      onPressed: resending ? null : resend,
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(48),
-                        foregroundColor: green,
-                        side: const BorderSide(color: green),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      ),
-                      child: Text(resending ? 'Sending...' : 'Resend Verification Link'),
-                    ),
-                    TextButton(
-                      onPressed: () => Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const LoginPage()),
-                        (_) => false,
-                      ),
-                      child: const Text('Back to login'),
-                    ),
-                  ],
-                ),
+                  )
+                : const Text(
+                    'Verify Email',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                  ),
+          ),
+          const SizedBox(height: 12),
+          OutlinedButton(
+            onPressed: resending ? null : resend,
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              foregroundColor: green,
+              side: const BorderSide(color: green),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+            ),
+            child: Text(resending ? 'Sending...' : 'Resend Code'),
+          ),
+          const SizedBox(height: 6),
+          Center(
+            child: TextButton(
+              onPressed: () => Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (_) => const LoginPage()),
+                (_) => false,
+              ),
+              child: const Text(
+                'Back to login',
+                style: TextStyle(color: Colors.black54),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -822,7 +897,9 @@ String friendlyErrorMessage(Object error) {
   if (lower.contains('timeoutexception') || lower.contains('timed out')) {
     return 'The request took too long to respond. Please try again.';
   }
-  if (lower.contains('401') || lower.contains('unauthorized') || lower.contains('session expired')) {
+  if (lower.contains('401') ||
+      lower.contains('unauthorized') ||
+      lower.contains('session expired')) {
     return 'Your session has expired. Please log in again.';
   }
   // Already a clean message from the backend (via _errorMessage) or a
@@ -832,6 +909,19 @@ String friendlyErrorMessage(Object error) {
 }
 
 class AnalysisState extends ChangeNotifier {
+  void replaceFarms(List<Map<String, dynamic>> values) {
+    farms
+      ..clear()
+      ..addAll(values);
+    notifyListeners();
+  }
+
+  void updateCurrentProfile(Map<String, dynamic> user, {Uint8List? photo}) {
+    currentUser = user;
+    if (photo != null) profilePhotoBytes = photo;
+    notifyListeners();
+  }
+
   final api = ApiService();
   final mapController = MapController();
   final latController = TextEditingController(text: '7.2915');
@@ -841,7 +931,11 @@ class AnalysisState extends ChangeNotifier {
   Map<String, dynamic>? currentUser;
   bool userLoaded = false;
   Uint8List? profilePhotoBytes;
-  Map<String, dynamic> profileCounts = {'analysis_count': 0, 'saved_count': 0, 'report_count': 0};
+  Map<String, dynamic> profileCounts = {
+    'analysis_count': 0,
+    'saved_count': 0,
+    'report_count': 0,
+  };
   bool loading = false;
   bool weatherLoading = false;
   String loadingMessage = 'Preparing analysis...';
@@ -861,21 +955,38 @@ class AnalysisState extends ChangeNotifier {
   final List<Map<String, dynamic>> savedAnalyses = [];
   final List<Map<String, dynamic>> generatedReports = [];
   final List<Map<String, dynamic>> verifiedTrendRecords = [];
+  final List<Map<String, dynamic>> farms = [];
+  bool farmsLoading = false;
   int mapEpoch = 0;
   final Map<String, String> _placeCache = {};
   double _lastMapZoom = 12.5;
 
   // Planner verification workflow state
   final List<Map<String, dynamic>> plannerQueue = [];
-  Map<String, dynamic> plannerCounts = {'pending_count': 0, 'verified_count': 0, 'rejected_count': 0};
+  Map<String, dynamic> plannerCounts = {
+    'pending_count': 0,
+    'verified_count': 0,
+    'rejected_count': 0,
+  };
   bool plannerQueueLoading = false;
   String plannerQueueStatus = 'pending';
   String heatmapLayer = 'NDVI';
   int intendedPlantingMonth = DateTime.now().month;
 
   static const List<String> monthNames = [
-    '', 'January', 'February', 'March', 'April', 'May', 'June',
-    'July', 'August', 'September', 'October', 'November', 'December'
+    '',
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
   ];
 
   String get intendedPlantingMonthName => monthNames[intendedPlantingMonth];
@@ -919,7 +1030,10 @@ class AnalysisState extends ChangeNotifier {
     loading = true;
     _loadingTimer = Timer.periodic(const Duration(milliseconds: 900), (_) {
       if (!loading) return;
-      _loadingStepIndex = (_loadingStepIndex + 1).clamp(0, loadingSteps.length - 1);
+      _loadingStepIndex = (_loadingStepIndex + 1).clamp(
+        0,
+        loadingSteps.length - 1,
+      );
       loadingMessage = loadingSteps[_loadingStepIndex];
       notifyListeners();
     });
@@ -990,7 +1104,8 @@ class AnalysisState extends ChangeNotifier {
   }
 
   Future<String> resolvePlaceForRecord(Map<String, dynamic> record) async {
-    final cached = record['place_name'] ??
+    final cached =
+        record['place_name'] ??
         record['location_name'] ??
         record['title'] ??
         record['barangay'] ??
@@ -1053,7 +1168,8 @@ class AnalysisState extends ChangeNotifier {
     final merged = <Map<String, dynamic>>[];
     final seen = <String>{};
     for (final row in [...historyRecords, ...verifiedTrendRecords]) {
-      final id = '${row['session_id'] ?? row['id'] ?? row['analyzed_at'] ?? row.hashCode}';
+      final id =
+          '${row['session_id'] ?? row['id'] ?? row['analyzed_at'] ?? row.hashCode}';
       if (seen.add(id)) merged.add(row);
     }
     return merged;
@@ -1066,7 +1182,9 @@ class AnalysisState extends ChangeNotifier {
       currentUser = await api.getMe().timeout(const Duration(seconds: 15));
       final encodedPhoto = currentUser?['profile_photo'];
       if (encodedPhoto != null && '$encodedPhoto'.isNotEmpty) {
-        try { profilePhotoBytes = base64Decode('$encodedPhoto'); } catch (_) {}
+        try {
+          profilePhotoBytes = base64Decode('$encodedPhoto');
+        } catch (_) {}
       }
     } catch (e) {
       // Prevent the app from being stuck forever on the loading screen.
@@ -1080,7 +1198,10 @@ class AnalysisState extends ChangeNotifier {
       userLoaded = true;
       notifyListeners();
     }
-    await refreshHistoryData().timeout(const Duration(seconds: 12), onTimeout: () {});
+    await refreshHistoryData().timeout(
+      const Duration(seconds: 12),
+      onTimeout: () {},
+    );
     notifyListeners();
   }
 
@@ -1138,6 +1259,22 @@ class AnalysisState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> refreshFarms() async {
+    farmsLoading = true;
+    notifyListeners();
+    try {
+      final rows = await api.getFarms();
+      farms
+        ..clear()
+        ..addAll(rows.map((e) => Map<String, dynamic>.from(e as Map)));
+    } catch (_) {
+      // Keep whatever farms were already loaded rather than clearing them
+      // on a transient network failure (Section 26).
+    }
+    farmsLoading = false;
+    notifyListeners();
+  }
+
   Future<String?> loadPlannerQueue({String? status}) async {
     if (status != null) plannerQueueStatus = status;
     plannerQueueLoading = true;
@@ -1163,7 +1300,11 @@ class AnalysisState extends ChangeNotifier {
     return api.getPlannerSessionDetail(sessionId);
   }
 
-  Future<String?> verifyPlannerSubmission(int sessionId, String status, {String? notes}) async {
+  Future<String?> verifyPlannerSubmission(
+    int sessionId,
+    String status, {
+    String? notes,
+  }) async {
     try {
       await api.verifySubmission(sessionId, status, notes: notes);
       // Remove it from the current queue view since it no longer matches
@@ -1186,15 +1327,22 @@ class AnalysisState extends ChangeNotifier {
   String userName() => '${currentUser?['username'] ?? 'User'}';
   String userLocation() => '${currentUser?['location'] ?? selectedPlaceName}';
   String userProfilePhotoBase64() => '${currentUser?['profile_photo'] ?? ''}';
-  String get accountRole => '${currentUser?['role'] ?? currentUser?['account_type'] ?? 'unknown'}'.toLowerCase();
-  String userRole() => isAnalystRole ? 'Agricultural Planning Analyst' : 'Farmer Account';
+  String get accountRole =>
+      '${currentUser?['role'] ?? currentUser?['account_type'] ?? 'unknown'}'
+          .toLowerCase();
+  String userRole() =>
+      isAnalystRole ? 'Agricultural Planning Analyst' : 'Farmer Account';
 
-  bool get isSuperAdmin => accountRole == 'super_admin' || accountRole == 'admin';
-  bool get isAnalystRole => accountRole.contains('analyst') || accountRole.contains('planner');
+  bool get isSuperAdmin =>
+      accountRole == 'super_admin' || accountRole == 'admin';
+  bool get isAnalystRole =>
+      accountRole.contains('analyst') || accountRole.contains('planner');
   // In GeoSustain, the Analyst also performs the Planner verification role.
-  bool get isPlanner => accountRole.contains('analyst') || accountRole.contains('planner');
+  bool get isPlanner =>
+      accountRole.contains('analyst') || accountRole.contains('planner');
 
-  String get roleDashboardTitle => isAnalystRole ? 'Planning Workspace' : 'Farmer Tools';
+  String get roleDashboardTitle =>
+      isAnalystRole ? 'Planning Workspace' : 'Farmer Tools';
 
   List<String> get roleCapabilities => isAnalystRole
       ? const [
@@ -1214,7 +1362,8 @@ class AnalysisState extends ChangeNotifier {
     final lat = record['center_lat'] ?? record['lat'];
     final lon = record['center_lon'] ?? record['lon'];
     final crop = record['predicted_crop'] ?? record['crop'] ?? 'Land Analysis';
-    final place = record['place_name'] ??
+    final place =
+        record['place_name'] ??
         record['location_name'] ??
         record['barangay'] ??
         record['address'] ??
@@ -1233,7 +1382,8 @@ class AnalysisState extends ChangeNotifier {
         resolvedPlace = _placeCache[key]!;
       }
     }
-    final compatibility = record['crop_compatibility_pct'] ?? record['compatibility_pct'];
+    final compatibility =
+        record['crop_compatibility_pct'] ?? record['compatibility_pct'];
     return {
       ...record,
       'compatibility_pct': compatibility,
@@ -1242,7 +1392,8 @@ class AnalysisState extends ChangeNotifier {
       'title': resolvedPlace,
       'place_name': record['place_name'] ?? resolvedPlace,
       'subtitle': record['subtitle'] ?? recommendationText(record),
-      'date': record['date'] ??
+      'date':
+          record['date'] ??
           record['analyzed_at'] ??
           record['saved_at'] ??
           record['report_created_at'] ??
@@ -1259,7 +1410,9 @@ class AnalysisState extends ChangeNotifier {
   Future<bool> submitAnalysisRecord(Map<String, dynamic> record) async {
     final item = normalizeRecord(record);
     final sessionRaw = item['session_id'];
-    final sessionId = sessionRaw is int ? sessionRaw : int.tryParse('$sessionRaw');
+    final sessionId = sessionRaw is int
+        ? sessionRaw
+        : int.tryParse('$sessionRaw');
     if (sessionId == null) return false;
     try {
       await api.submitAnalysisToPlanner(sessionId);
@@ -1268,7 +1421,8 @@ class AnalysisState extends ChangeNotifier {
       // Analyst already acted) surfaces as "already pending/verified" —
       // the Farmer's desired end state (submitted) is already true, so
       // this isn't a real failure worth alarming them with.
-      if ('$e'.toLowerCase().contains('already pending') || '$e'.toLowerCase().contains('already verified')) {
+      if ('$e'.toLowerCase().contains('already pending') ||
+          '$e'.toLowerCase().contains('already verified')) {
         await refreshHistoryData();
         return true;
       }
@@ -1281,13 +1435,19 @@ class AnalysisState extends ChangeNotifier {
   Future<bool> saveAnalysisRecord(Map<String, dynamic> record) async {
     final item = normalizeRecord(record);
     final sessionRaw = item['session_id'];
-    final sessionId = sessionRaw is int ? sessionRaw : int.tryParse('$sessionRaw');
+    final sessionId = sessionRaw is int
+        ? sessionRaw
+        : int.tryParse('$sessionRaw');
     if (sessionId != null) {
       await api.saveAnalysis(sessionId);
       await refreshHistoryData();
       return true;
     }
-    final exists = savedAnalyses.any((r) => '${r['center_lat']}-${r['center_lon']}-${r['predicted_crop']}' == '${item['center_lat']}-${item['center_lon']}-${item['predicted_crop']}');
+    final exists = savedAnalyses.any(
+      (r) =>
+          '${r['center_lat']}-${r['center_lon']}-${r['predicted_crop']}' ==
+          '${item['center_lat']}-${item['center_lon']}-${item['predicted_crop']}',
+    );
     if (!exists) savedAnalyses.insert(0, item);
     notifyListeners();
     return !exists;
@@ -1296,16 +1456,25 @@ class AnalysisState extends ChangeNotifier {
   Future<bool> createReportRecord(Map<String, dynamic> record) async {
     final item = normalizeRecord(record);
     final sessionRaw = item['session_id'];
-    final sessionId = sessionRaw is int ? sessionRaw : int.tryParse('$sessionRaw');
+    final sessionId = sessionRaw is int
+        ? sessionRaw
+        : int.tryParse('$sessionRaw');
     if (sessionId != null) {
-      final res = await api.createReport(sessionId, title: 'GeoSustain Report - ${item['predicted_crop']}');
+      final res = await api.createReport(
+        sessionId,
+        title: 'GeoSustain Report - ${item['predicted_crop']}',
+      );
       await refreshHistoryData();
       if (res['report'] is Map && res['report']['already_reported'] == true) {
         return false;
       }
       return true;
     }
-    final exists = generatedReports.any((r) => '${r['center_lat']}-${r['center_lon']}-${r['predicted_crop']}' == '${item['center_lat']}-${item['center_lon']}-${item['predicted_crop']}');
+    final exists = generatedReports.any(
+      (r) =>
+          '${r['center_lat']}-${r['center_lon']}-${r['predicted_crop']}' ==
+          '${item['center_lat']}-${item['center_lon']}-${item['predicted_crop']}',
+    );
     if (!exists) generatedReports.insert(0, item);
     notifyListeners();
     return !exists;
@@ -1319,13 +1488,15 @@ class AnalysisState extends ChangeNotifier {
   }
 
   String _prettyAddress(Map<String, dynamic> address) {
-    final barangay = address['suburb'] ??
+    final barangay =
+        address['suburb'] ??
         address['village'] ??
         address['neighbourhood'] ??
         address['quarter'] ??
         address['hamlet'] ??
         address['barangay'];
-    final city = address['city'] ??
+    final city =
+        address['city'] ??
         address['town'] ??
         address['municipality'] ??
         address['county'] ??
@@ -1354,9 +1525,14 @@ class AnalysisState extends ChangeNotifier {
       final uri = Uri.parse(
         'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=$lat&lon=$lon&addressdetails=1&zoom=18&accept-language=en',
       );
-      final response = await http.get(uri, headers: {
-        'User-Agent': 'GeoSustainCapstone/1.0 (student capstone project)'
-      }).timeout(const Duration(seconds: 10));
+      final response = await http
+          .get(
+            uri,
+            headers: {
+              'User-Agent': 'GeoSustainCapstone/1.0 (student capstone project)',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
       if (response.statusCode < 400) {
         final decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
@@ -1381,7 +1557,6 @@ class AnalysisState extends ChangeNotifier {
     return fallback;
   }
 
-
   Future<String?> refreshLiveWeather({double? lat, double? lon}) async {
     weatherLoading = true;
     notifyListeners();
@@ -1389,22 +1564,9 @@ class AnalysisState extends ChangeNotifier {
     final targetLon = lon ?? selectedPoint.longitude;
     try {
       final weather = await api.getLiveWeather(targetLat, targetLon);
-      liveWeather = {
-        ...weather,
-        'place_name': selectedPlaceName,
-      };
+      liveWeather = {...weather, 'place_name': selectedPlaceName};
       return null;
     } catch (e) {
-      final fallback = await _fetchOpenMeteoFallback(targetLat, targetLon);
-      if (fallback != null) {
-        liveWeather = {
-          ...fallback,
-          'place_name': selectedPlaceName,
-          'weather_source': 'Open-Meteo fallback',
-          'weather_is_realtime': true,
-        };
-        return null;
-      }
       return e.toString().replaceFirst('Exception: ', '');
     } finally {
       weatherLoading = false;
@@ -1419,123 +1581,31 @@ class AnalysisState extends ChangeNotifier {
     });
   }
 
-  Future<Map<String, dynamic>?> _fetchOpenMeteoFallback(double lat, double lon) async {
-    try {
-      final uri = Uri.parse(
-        'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon'
-        '&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m'
-        '&hourly=temperature_2m,precipitation,precipitation_probability,weather_code,wind_speed_10m'
-        '&daily=precipitation_sum&past_days=2&forecast_days=1&timezone=Asia%2FManila',
-      );
-      final response = await http.get(uri).timeout(const Duration(seconds: 12));
-      if (response.statusCode >= 400) return null;
-      final decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) return null;
-
-      final current =
-          decoded['current'] is Map<String, dynamic> ? decoded['current'] as Map<String, dynamic> : <String, dynamic>{};
-      final hourly = decoded['hourly'] is Map<String, dynamic> ? decoded['hourly'] as Map<String, dynamic> : <String, dynamic>{};
-      final daily = decoded['daily'] is Map<String, dynamic> ? decoded['daily'] as Map<String, dynamic> : <String, dynamic>{};
-
-      final hTimes = hourly['time'] is List ? hourly['time'] as List : const [];
-      final hRain = hourly['precipitation'] is List ? hourly['precipitation'] as List : const [];
-      final hProb = hourly['precipitation_probability'] is List ? hourly['precipitation_probability'] as List : const [];
-      final hCode = hourly['weather_code'] is List ? hourly['weather_code'] as List : const [];
-      final hWind = hourly['wind_speed_10m'] is List ? hourly['wind_speed_10m'] as List : const [];
-      final hTemp = hourly['temperature_2m'] is List ? hourly['temperature_2m'] as List : const [];
-      final dRain = daily['precipitation_sum'] is List ? daily['precipitation_sum'] as List : const [];
-
-      int startIndex = 0;
-      final now = DateTime.now();
-      for (var i = 0; i < hTimes.length; i++) {
-        final t = DateTime.tryParse('${hTimes[i]}');
-        if (t != null && !t.isBefore(now)) {
-          startIndex = i;
-          break;
-        }
-      }
-
-      double sumWindow(List values, int start, int hours) {
-        var total = 0.0;
-        for (var i = start; i < values.length && i < start + hours; i++) {
-          final n = values[i] is num ? (values[i] as num).toDouble() : double.tryParse('${values[i]}') ?? 0.0;
-          total += n;
-        }
-        return total;
-      }
-
-      double maxWindow(List values, int start, int hours) {
-        var out = 0.0;
-        for (var i = start; i < values.length && i < start + hours; i++) {
-          final n = values[i] is num ? (values[i] as num).toDouble() : double.tryParse('${values[i]}') ?? 0.0;
-          if (n > out) out = n;
-        }
-        return out;
-      }
-
-      final todayRain = dRain.isNotEmpty
-          ? (dRain.first is num ? (dRain.first as num).toDouble() : double.tryParse('${dRain.first}') ?? 0.0)
-          : 0.0;
-
-      final codes = <int>[];
-      for (var i = startIndex; i < hCode.length && i < startIndex + 6; i++) {
-        final n = hCode[i] is num ? (hCode[i] as num).round() : int.tryParse('${hCode[i]}');
-        if (n != null) codes.add(n);
-      }
-
-      int? codeNow;
-      if (current['weather_code'] is num) codeNow = (current['weather_code'] as num).round();
-      final desc = codeNow == null
-          ? 'Live weather'
-          : (codeNow == 0
-              ? 'Clear sky'
-              : ([1, 2, 3].contains(codeNow)
-                  ? 'Partly cloudy'
-                  : ([61, 63, 65, 66, 67, 80, 81, 82].contains(codeNow) ? 'Rainy' : 'Live weather')));
-
-      return {
-        'latitude': lat,
-        'longitude': lon,
-        'temperature_c': current['temperature_2m'],
-        'live_humidity': current['relative_humidity_2m'],
-        'wind_speed_ms': current['wind_speed_10m'],
-        'cloud_cover_pct': current['cloud_cover'],
-        'weather_code': current['weather_code'],
-        'weather_description': desc,
-        'current_precipitation_mm': current['precipitation'] ?? current['rain'],
-        'rainfall_today_mm': double.parse(todayRain.toStringAsFixed(2)),
-        'today_rainfall_mm': double.parse(todayRain.toStringAsFixed(2)),
-        'daily_rainfall_mm': double.parse(todayRain.toStringAsFixed(2)),
-        'rain_next_3h_mm': double.parse(sumWindow(hRain, startIndex, 3).toStringAsFixed(2)),
-        'rain_next_6h_mm': double.parse(sumWindow(hRain, startIndex, 6).toStringAsFixed(2)),
-        'rain_probability_next_3h': double.parse(maxWindow(hProb, startIndex, 3).toStringAsFixed(1)),
-        'rain_probability_next_6h': double.parse(maxWindow(hProb, startIndex, 6).toStringAsFixed(1)),
-        'max_wind_next_6h_kmh': double.parse(maxWindow(hWind, startIndex, 6).toStringAsFixed(1)),
-        'max_temp_next_6h_c': double.parse(maxWindow(hTemp, startIndex, 6).toStringAsFixed(1)),
-        'weather_codes_next_6h': codes,
-      };
-    } catch (_) {
-      return null;
-    }
-  }
-
   Future<String?> useCurrentLocation() async {
     locating = true;
     notifyListeners();
     try {
       final serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) return 'Location service is disabled. Please enable GPS/location.';
+      if (!serviceEnabled) {
+        return 'Location service is disabled. Please enable GPS/location.';
+      }
 
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
       }
-      if (permission == LocationPermission.denied) return 'Location permission was denied.';
+      if (permission == LocationPermission.denied) {
+        return 'Location permission was denied.';
+      }
       if (permission == LocationPermission.deniedForever) {
         return 'Location permission is permanently denied. Enable it in browser/app settings.';
       }
 
-      final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+      final pos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
       final point = LatLng(pos.latitude, pos.longitude);
       if (!_insidePanabo(point)) {
         return 'Your current location is outside the Panabo City study boundary. You can still manually pick a Panabo field on the map.';
@@ -1570,9 +1640,13 @@ class AnalysisState extends ChangeNotifier {
     if (loading) return 'Analysis is already running. Please wait.';
     final lat = double.tryParse(latController.text);
     final lon = double.tryParse(lonController.text);
-    if (lat == null || lon == null) return 'Enter valid latitude and longitude.';
+    if (lat == null || lon == null) {
+      return 'Enter valid latitude and longitude.';
+    }
     final point = LatLng(lat, lon);
-    if (!_insidePanabo(point)) return 'Selected point is outside Panabo City bounds.';
+    if (!_insidePanabo(point)) {
+      return 'Selected point is outside Panabo City bounds.';
+    }
 
     final key = _analysisKey('point', lat, lon);
     if (_isRecentDuplicate(key)) {
@@ -1585,7 +1659,12 @@ class AnalysisState extends ChangeNotifier {
     bumpMapVisual();
     selectedPlaceName = await reverseGeocode(lat, lon);
     return run(
-      () => api.analyzePoint(lat, lon, placeName: selectedPlaceName, intendedPlantingMonth: intendedPlantingMonth),
+      () => api.analyzePoint(
+        lat,
+        lon,
+        placeName: selectedPlaceName,
+        intendedPlantingMonth: intendedPlantingMonth,
+      ),
       lat: lat,
       lon: lon,
       locationType: 'Point',
@@ -1595,11 +1674,20 @@ class AnalysisState extends ChangeNotifier {
 
   Future<String?> analyzePolygon() async {
     if (loading) return 'Analysis is already running. Please wait.';
-    if (polygonPoints.length < 3) return 'Tap at least 3 points on the map to create a boundary.';
-    final payload = polygonPoints.map((p) => {'lat': p.latitude, 'lng': p.longitude}).toList();
-    final centerLat = polygonPoints.map((p) => p.latitude).reduce((a, b) => a + b) / polygonPoints.length;
-    final centerLon = polygonPoints.map((p) => p.longitude).reduce((a, b) => a + b) / polygonPoints.length;
-    final key = _analysisKey('boundary-area', centerLat, centerLon) + ':${polygonPoints.length}:${jsonEncode(payload).hashCode}';
+    if (polygonPoints.length < 3) {
+      return 'Tap at least 3 points on the map to create a boundary.';
+    }
+    final payload = polygonPoints
+        .map((p) => {'lat': p.latitude, 'lng': p.longitude})
+        .toList();
+    final centerLat =
+        polygonPoints.map((p) => p.latitude).reduce((a, b) => a + b) /
+        polygonPoints.length;
+    final centerLon =
+        polygonPoints.map((p) => p.longitude).reduce((a, b) => a + b) /
+        polygonPoints.length;
+    final key =
+        '${_analysisKey('boundary-area', centerLat, centerLon)}:${polygonPoints.length}:${jsonEncode(payload).hashCode}';
     if (_isRecentDuplicate(key)) {
       return 'This boundary was already analyzed recently. Edit the boundary or wait a few seconds before analyzing again.';
     }
@@ -1609,7 +1697,11 @@ class AnalysisState extends ChangeNotifier {
     _startLoadingFlow();
     selectedPlaceName = await reverseGeocode(centerLat, centerLon);
     final err = await run(
-      () => api.analyzePolygon(payload, placeName: selectedPlaceName, intendedPlantingMonth: intendedPlantingMonth),
+      () => api.analyzePolygon(
+        payload,
+        placeName: selectedPlaceName,
+        intendedPlantingMonth: intendedPlantingMonth,
+      ),
       lat: centerLat,
       lon: centerLon,
       locationType: 'Boundary Area',
@@ -1632,28 +1724,42 @@ class AnalysisState extends ChangeNotifier {
     for (final item in raw) {
       if (item is Map) {
         final lat = double.tryParse('${item['lat'] ?? item['latitude']}');
-        final lng = double.tryParse('${item['lng'] ?? item['lon'] ?? item['longitude']}');
+        final lng = double.tryParse(
+          '${item['lng'] ?? item['lon'] ?? item['longitude']}',
+        );
         if (lat != null && lng != null) points.add(LatLng(lat, lng));
       }
     }
-    if (points.length < 3) return 'This farm boundary has fewer than three valid points.';
+    if (points.length < 3) {
+      return 'This farm boundary has fewer than three valid points.';
+    }
     polygonPoints
       ..clear()
       ..addAll(points);
     drawing = false;
-    selectedPlaceName = '${farm['location_name'] ?? farm['farm_name'] ?? 'Saved farm'}';
-    final centerLat = points.map((p) => p.latitude).reduce((a,b)=>a+b)/points.length;
-    final centerLon = points.map((p) => p.longitude).reduce((a,b)=>a+b)/points.length;
+    selectedPlaceName =
+        '${farm['location_name'] ?? farm['farm_name'] ?? 'Saved farm'}';
+    final centerLat =
+        points.map((p) => p.latitude).reduce((a, b) => a + b) / points.length;
+    final centerLon =
+        points.map((p) => p.longitude).reduce((a, b) => a + b) / points.length;
     selectedPoint = LatLng(centerLat, centerLon);
     _startLoadingFlow();
-    final payload = points.map((p)=>{'lat':p.latitude,'lng':p.longitude}).toList();
+    final payload = points
+        .map((p) => {'lat': p.latitude, 'lng': p.longitude})
+        .toList();
     final err = await run(
-      () => api.analyzePolygon(payload,
+      () => api.analyzePolygon(
+        payload,
         placeName: selectedPlaceName,
         intendedPlantingMonth: intendedPlantingMonth,
-        farmId: int.tryParse('${farm['id']}')),
-      lat:centerLat, lon:centerLon, locationType:'Saved Farm Boundary',
-      analysisKey:'farm:${farm['id']}:${DateTime.now().millisecondsSinceEpoch ~/ 10000}',
+        farmId: int.tryParse('${farm['id']}'),
+      ),
+      lat: centerLat,
+      lon: centerLon,
+      locationType: 'Saved Farm Boundary',
+      analysisKey:
+          'farm:${farm['id']}:${DateTime.now().millisecondsSinceEpoch ~/ 10000}',
     );
     notifyListeners();
     return err;
@@ -1671,7 +1777,8 @@ class AnalysisState extends ChangeNotifier {
     notifyListeners();
     try {
       final data = await job();
-      final compatibility = data['crop_compatibility_pct'] ?? data['compatibility_pct'];
+      final compatibility =
+          data['crop_compatibility_pct'] ?? data['compatibility_pct'];
       result = {
         ...data,
         'compatibility_pct': compatibility,
@@ -1696,7 +1803,11 @@ class AnalysisState extends ChangeNotifier {
     }
   }
 
-  void _addRecentAnalysis(Map<String, dynamic> data, {double? lat, double? lon}) {
+  void _addRecentAnalysis(
+    Map<String, dynamic> data, {
+    double? lat,
+    double? lon,
+  }) {
     final now = DateTime.now();
     final item = normalizeRecord({
       ...data,
@@ -1735,9 +1846,10 @@ class AnalysisState extends ChangeNotifier {
     }
   }
 
-
   String? onMapTap(TapPosition tap, LatLng point) {
-    if (!_insidePanabo(point)) return 'Selected point is outside Panabo City bounds.';
+    if (!_insidePanabo(point)) {
+      return 'Selected point is outside Panabo City bounds.';
+    }
     if (drawing) {
       polygonPoints.add(point);
       notifyListeners();
@@ -1774,6 +1886,7 @@ class AnalysisState extends ChangeNotifier {
   void dispose() {
     _loadingTimer?.cancel();
     _weatherRefreshTimer?.cancel();
+    api.close();
     latController.dispose();
     lonController.dispose();
     super.dispose();
@@ -1806,14 +1919,18 @@ class _ShellPageState extends State<ShellPage> {
       state.loadUserData();
       state.refreshLiveWeather();
       state.startWeatherAutoRefresh();
+      state.refreshFarms();
     });
   }
 
   Future<void> logout() async {
     await state.api.logout();
     if (!mounted) return;
-    Navigator.pushAndRemoveUntil(context,
-        MaterialPageRoute(builder: (_) => const LoginPage()), (_) => false);
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+      (_) => false,
+    );
   }
 
   void message(String text) {
@@ -1837,7 +1954,7 @@ class _ShellPageState extends State<ShellPage> {
 
   Widget _buildShell(BuildContext context) {
     Widget tab(Widget Function() builder) =>
-        ListenableBuilder(listenable: state, builder: (_, __) => builder());
+        ListenableBuilder(listenable: state, builder: (_, _) => builder());
 
     final isDesktopWeb = MediaQuery.of(context).size.width >= 900;
 
@@ -1853,7 +1970,8 @@ class _ShellPageState extends State<ShellPage> {
         desktopAttempt: isDesktopWeb,
         logout: logout,
         customTitle: 'Unable to verify account access',
-        customMessage: 'GeoSustain could not load this account role from the server. Please log out, sign in again, and make sure the backend is live.',
+        customMessage:
+            'GeoSustain could not load this account role from the server. Please log out, sign in again, and make sure the backend is live.',
       );
     }
 
@@ -1873,14 +1991,10 @@ class _ShellPageState extends State<ShellPage> {
       return Scaffold(
         body: Stack(
           children: [
-            WebAnalystDashboard(
-              state: state,
-              logout: logout,
-              message: message,
-            ),
+            WebAnalystDashboard(state: state, logout: logout, message: message),
             ListenableBuilder(
               listenable: state,
-              builder: (_, __) => state.loading
+              builder: (_, _) => state.loading
                   ? FullscreenAnalysisOverlay(message: state.loadingMessage)
                   : const SizedBox.shrink(),
             ),
@@ -1890,69 +2004,81 @@ class _ShellPageState extends State<ShellPage> {
     }
 
     return Scaffold(
-        body: Stack(
-          children: [
-            IndexedStack(
-              index: index,
-              children: [
-                tab(() => HomePage(
-                    state: state,
-                    go: (i) => setState(() => index = i),
-                    logout: logout,
-                    message: message)),
-                tab(() => MapAnalyzePage(
-                    state: state,
-                    message: message,
-                    goAnalyze: () => setState(() => index = 2))),
-                tab(() => DashboardPage(
-                    state: state,
-                    goMap: () => setState(() => index = 1),
-                    message: message)),
-                tab(() => HistoryPage(api: state.api, state: state)),
-                tab(() => ProfilePage(state: state, logout: logout)),
-              ],
-            ),
-            ListenableBuilder(
-              listenable: state,
-              builder: (_, __) => state.loading
-                  ? FullscreenAnalysisOverlay(message: state.loadingMessage)
-                  : const SizedBox.shrink(),
-            ),
-          ],
-        ),
-        bottomNavigationBar: NavigationBar(
-          selectedIndex: index,
-          height: 68,
-          indicatorColor: softGreen,
-          onDestinationSelected: (i) => setState(() => index = i),
-          destinations: const [
-            NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home, color: green),
-                label: 'Home'),
-            NavigationDestination(
-                icon: Icon(Icons.map_outlined),
-                selectedIcon: Icon(Icons.map, color: green),
-                label: 'Map'),
-            NavigationDestination(
-                icon: Icon(Icons.center_focus_strong_outlined),
-                selectedIcon: Icon(Icons.center_focus_strong, color: green),
-                label: 'Analyze'),
-            NavigationDestination(
-                icon: Icon(Icons.history_outlined),
-                selectedIcon: Icon(Icons.history, color: green),
-                label: 'History'),
-            NavigationDestination(
-                icon: Icon(Icons.person_outline),
-                selectedIcon: Icon(Icons.person, color: green),
-                label: 'Profile'),
-          ],
-        ),
+      body: Stack(
+        children: [
+          IndexedStack(
+            index: index,
+            children: [
+              tab(
+                () => HomePage(
+                  state: state,
+                  go: (i) => setState(() => index = i),
+                  logout: logout,
+                  message: message,
+                ),
+              ),
+              tab(
+                () => MapAnalyzePage(
+                  state: state,
+                  message: message,
+                  goAnalyze: () => setState(() => index = 2),
+                ),
+              ),
+              tab(
+                () => DashboardPage(
+                  state: state,
+                  goMap: () => setState(() => index = 1),
+                  message: message,
+                ),
+              ),
+              tab(() => HistoryPage(api: state.api, state: state)),
+              tab(() => ProfilePage(state: state, logout: logout)),
+            ],
+          ),
+          ListenableBuilder(
+            listenable: state,
+            builder: (_, _) => state.loading
+                ? FullscreenAnalysisOverlay(message: state.loadingMessage)
+                : const SizedBox.shrink(),
+          ),
+        ],
+      ),
+      bottomNavigationBar: NavigationBar(
+        selectedIndex: index,
+        height: 68,
+        indicatorColor: softGreen,
+        onDestinationSelected: (i) => setState(() => index = i),
+        destinations: const [
+          NavigationDestination(
+            icon: Icon(Icons.home_outlined),
+            selectedIcon: Icon(Icons.home, color: green),
+            label: 'Home',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.map_outlined),
+            selectedIcon: Icon(Icons.map, color: green),
+            label: 'Map',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.center_focus_strong_outlined),
+            selectedIcon: Icon(Icons.center_focus_strong, color: green),
+            label: 'Analyze',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.history_outlined),
+            selectedIcon: Icon(Icons.history, color: green),
+            label: 'History',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person, color: green),
+            label: 'Profile',
+          ),
+        ],
+      ),
     );
   }
 }
-
-
 
 class AccessDeniedPage extends StatelessWidget {
   final bool desktopAttempt;
@@ -1970,12 +2096,16 @@ class AccessDeniedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final title = customTitle ?? (desktopAttempt
-        ? 'Farmer account detected'
-        : 'Analyst account detected');
-    final message = customMessage ?? (desktopAttempt
-        ? 'This account is registered as a Farmer account and cannot access the web analyst dashboard. Please use the mobile farmer app for field analysis, crop recommendations, weather alerts, and farm reports.'
-        : 'This account is registered as an Analyst account and is intended for the web dashboard. Please open GeoSustain on a desktop browser to access analyst tools, GIS monitoring, trends, and reports.');
+    final title =
+        customTitle ??
+        (desktopAttempt
+            ? 'Farmer account detected'
+            : 'Analyst account detected');
+    final message =
+        customMessage ??
+        (desktopAttempt
+            ? 'This account is registered as a Farmer account and cannot access the web analyst dashboard. Please use the mobile farmer app for field analysis, crop recommendations, weather alerts, and farm reports.'
+            : 'This account is registered as an Analyst account and is intended for the web dashboard. Please open GeoSustain on a desktop browser to access analyst tools, GIS monitoring, trends, and reports.');
 
     return Scaffold(
       backgroundColor: bg,
@@ -1987,7 +2117,13 @@ class AccessDeniedPage extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(28),
-            boxShadow: const [BoxShadow(color: Color(0x14000000), blurRadius: 28, offset: Offset(0, 12))],
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x14000000),
+                blurRadius: 28,
+                offset: Offset(0, 12),
+              ),
+            ],
             border: Border.all(color: const Color(0xFFE3EEE7)),
           ),
           child: Column(
@@ -1996,19 +2132,48 @@ class AccessDeniedPage extends StatelessWidget {
               Container(
                 height: 72,
                 width: 72,
-                decoration: BoxDecoration(color: softGreen, borderRadius: BorderRadius.circular(24)),
-                child: Icon(desktopAttempt ? Icons.agriculture_rounded : Icons.dashboard_customize_rounded, color: green, size: 38),
+                decoration: BoxDecoration(
+                  color: softGreen,
+                  borderRadius: BorderRadius.circular(24),
+                ),
+                child: Icon(
+                  desktopAttempt
+                      ? Icons.agriculture_rounded
+                      : Icons.dashboard_customize_rounded,
+                  color: green,
+                  size: 38,
+                ),
               ),
               const SizedBox(height: 20),
-              Text(title, textAlign: TextAlign.center, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900)),
+              Text(
+                title,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
               const SizedBox(height: 12),
-              Text(message, textAlign: TextAlign.center, style: const TextStyle(fontSize: 15, height: 1.5, color: Colors.black54)),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 15,
+                  height: 1.5,
+                  color: Colors.black54,
+                ),
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,
                 height: 52,
                 child: FilledButton.icon(
-                  style: FilledButton.styleFrom(backgroundColor: green, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16))),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: green,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
                   onPressed: () async => logout(),
                   icon: const Icon(Icons.logout),
                   label: const Text('Back to login'),
@@ -2036,7 +2201,7 @@ class FullscreenAnalysisOverlay extends StatelessWidget {
     ];
     return Positioned.fill(
       child: Material(
-        color: Colors.black.withOpacity(0.42),
+        color: Colors.black.withValues(alpha: 0.42),
         child: Center(
           child: Container(
             width: 310,
@@ -2044,7 +2209,13 @@ class FullscreenAnalysisOverlay extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(28),
-              boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.18), blurRadius: 28, offset: const Offset(0, 18))],
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.18),
+                  blurRadius: 28,
+                  offset: const Offset(0, 18),
+                ),
+              ],
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -2053,24 +2224,37 @@ class FullscreenAnalysisOverlay extends StatelessWidget {
                   tween: Tween(begin: .75, end: 1.0),
                   duration: const Duration(milliseconds: 700),
                   curve: Curves.easeInOut,
-                  builder: (context, scale, child) => Transform.scale(scale: scale, child: child),
+                  builder: (context, scale, child) =>
+                      Transform.scale(scale: scale, child: child),
                   child: Container(
                     width: 68,
                     height: 68,
-                    decoration: const BoxDecoration(color: softGreen, shape: BoxShape.circle),
+                    decoration: const BoxDecoration(
+                      color: softGreen,
+                      shape: BoxShape.circle,
+                    ),
                     child: const Center(
                       child: SizedBox(
                         width: 34,
                         height: 34,
-                        child: CircularProgressIndicator(strokeWidth: 3, color: green),
+                        child: CircularProgressIndicator(
+                          strokeWidth: 3,
+                          color: green,
+                        ),
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 18),
-                const Text('Analyzing selected area',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900, color: green)),
+                const Text(
+                  'Analyzing selected area',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                    color: green,
+                  ),
+                ),
                 const SizedBox(height: 8),
                 AnimatedSwitcher(
                   duration: const Duration(milliseconds: 250),
@@ -2078,24 +2262,43 @@ class FullscreenAnalysisOverlay extends StatelessWidget {
                     message,
                     key: ValueKey(message),
                     textAlign: TextAlign.center,
-                    style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF29352E)),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF29352E),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                ...steps.map((step) => Padding(
-                      padding: const EdgeInsets.only(bottom: 7),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.check_circle_outline, size: 17, color: green),
-                          const SizedBox(width: 8),
-                          Expanded(child: Text(step, style: const TextStyle(fontSize: 12, color: Colors.black54))),
-                        ],
-                      ),
-                    )),
+                ...steps.map(
+                  (step) => Padding(
+                    padding: const EdgeInsets.only(bottom: 7),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.check_circle_outline,
+                          size: 17,
+                          color: green,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            step,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black54,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
                 const SizedBox(height: 4),
-                const Text('Please wait. This may take a few seconds on Render free tier.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 11, color: Colors.black45)),
+                const Text(
+                  'Please wait. This may take a few seconds on Render free tier.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 11, color: Colors.black45),
+                ),
               ],
             ),
           ),
@@ -2116,67 +2319,132 @@ class RoleFeatureCard extends StatelessWidget {
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(color: analyst ? const Color(0xFFEAF2FF) : softGreen, borderRadius: BorderRadius.circular(14)),
-              child: Icon(analyst ? Icons.insights_rounded : Icons.agriculture_rounded, color: green),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(state.roleDashboardTitle, style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 16)),
-                Text(
-                  analyst
-                      ? 'Independent analyst/planner tools for risk, trends, and area review.'
-                      : 'Farmer tools for crop decisions, alerts, and farm records.',
-                  style: const TextStyle(color: Colors.black54, fontSize: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: analyst ? const Color(0xFFEAF2FF) : softGreen,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(
+                    analyst
+                        ? Icons.insights_rounded
+                        : Icons.agriculture_rounded,
+                    color: green,
+                  ),
                 ),
-              ]),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        state.roleDashboardTitle,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                        ),
+                      ),
+                      Text(
+                        analyst
+                            ? 'Independent analyst/planner tools for risk, trends, and area review.'
+                            : 'Farmer tools for crop decisions, alerts, and farm records.',
+                        style: const TextStyle(
+                          color: Colors.black54,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ]),
-          const SizedBox(height: 12),
-          ...capabilities.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 7),
-                child: Row(children: [
-                  const Icon(Icons.check_circle, size: 16, color: green),
-                  const SizedBox(width: 8),
-                  Expanded(child: Text(item, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w600))),
-                ]),
-              )),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: analyst
-                ? const [
-                    RolePill(icon: Icons.compare_arrows_rounded, label: 'Area Compare'),
-                    RolePill(icon: Icons.warning_amber_rounded, label: 'Risk Review'),
-                    RolePill(icon: Icons.query_stats_rounded, label: 'Trend Summary'),
-                    RolePill(icon: Icons.description_rounded, label: 'Planning Report'),
-                  ]
-                : const [
-                    RolePill(icon: Icons.eco_rounded, label: 'Crop Decision'),
-                    RolePill(icon: Icons.cloud_rounded, label: 'Weather Watch'),
-                    RolePill(icon: Icons.bookmark_rounded, label: 'Saved Fields'),
-                    RolePill(icon: Icons.picture_as_pdf_rounded, label: 'Farm Report'),
-                  ],
-          ),
-          if (analyst) ...[
             const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: const Color(0xFFF4F8FF), borderRadius: BorderRadius.circular(14)),
-              child: const Text(
-                'Analyst mode prioritizes summaries, risk indicators, polygon sample count, and planning reports. Farmer mode prioritizes crop choice, weather alerts, and farm records.',
-                style: TextStyle(fontSize: 11.5, color: Colors.black54, height: 1.35),
+            ...capabilities.map(
+              (item) => Padding(
+                padding: const EdgeInsets.only(bottom: 7),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle, size: 16, color: green),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        item,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: analyst
+                  ? const [
+                      RolePill(
+                        icon: Icons.compare_arrows_rounded,
+                        label: 'Area Compare',
+                      ),
+                      RolePill(
+                        icon: Icons.warning_amber_rounded,
+                        label: 'Risk Review',
+                      ),
+                      RolePill(
+                        icon: Icons.query_stats_rounded,
+                        label: 'Trend Summary',
+                      ),
+                      RolePill(
+                        icon: Icons.description_rounded,
+                        label: 'Planning Report',
+                      ),
+                    ]
+                  : const [
+                      RolePill(icon: Icons.eco_rounded, label: 'Crop Decision'),
+                      RolePill(
+                        icon: Icons.cloud_rounded,
+                        label: 'Weather Watch',
+                      ),
+                      RolePill(
+                        icon: Icons.bookmark_rounded,
+                        label: 'Saved Fields',
+                      ),
+                      RolePill(
+                        icon: Icons.picture_as_pdf_rounded,
+                        label: 'Farm Report',
+                      ),
+                    ],
+            ),
+            if (analyst) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF4F8FF),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: const Text(
+                  'Analyst mode prioritizes summaries, risk indicators, polygon sample count, and planning reports. Farmer mode prioritizes crop choice, weather alerts, and farm records.',
+                  style: TextStyle(
+                    fontSize: 11.5,
+                    color: Colors.black54,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
           ],
-        ]),
+        ),
       ),
     );
   }
@@ -2188,14 +2456,28 @@ class RolePill extends StatelessWidget {
   const RolePill({super.key, required this.icon, required this.label});
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-        decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(999), border: Border.all(color: const Color(0xFFDCEBE2))),
-        child: Row(mainAxisSize: MainAxisSize.min, children: [
-          Icon(icon, size: 15, color: green),
-          const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 11, color: green, fontWeight: FontWeight.w800)),
-        ]),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(999),
+      border: Border.all(color: const Color(0xFFDCEBE2)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 15, color: green),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            color: green,
+            fontWeight: FontWeight.w800,
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class PlannerRiskToolsCard extends StatelessWidget {
@@ -2205,33 +2487,43 @@ class PlannerRiskToolsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final r = state.result;
-    final risk = r?['flood_risk'] ?? r?['risk_level'] ?? r?['infrastructure_risk'] ?? '--';
+    final risk =
+        r?['flood_risk'] ??
+        r?['risk_level'] ??
+        r?['infrastructure_risk'] ??
+        '--';
     final slope = state.numText(r?['slope_deg'] ?? r?['slope']);
     final elevation = state.numText(r?['elevation_m']);
     final ndvi = state.numText(r?['ndvi']);
     return Card(
       child: Padding(
         padding: const EdgeInsets.all(16),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          const SectionTitle('PLANNER / ANALYST TOOLS'),
-          const SizedBox(height: 10),
-          const Text(
-            'Use this view for independent environmental planning, area comparison, and risk interpretation. This is not tied to any government agency.',
-            style: TextStyle(fontSize: 12, color: Colors.black54),
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: [
-              InfoChip(label: 'Risk', value: '$risk'),
-              InfoChip(label: 'Slope', value: '$slope°'),
-              InfoChip(label: 'Elevation', value: '$elevation m'),
-              InfoChip(label: 'NDVI', value: ndvi),
-              InfoChip(label: 'Samples', value: '${r?['polygon_area_sample_count'] ?? '--'}'),
-            ],
-          ),
-        ]),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SectionTitle('PLANNER / ANALYST TOOLS'),
+            const SizedBox(height: 10),
+            const Text(
+              'Use this view for independent environmental planning, area comparison, and risk interpretation. This is not tied to any government agency.',
+              style: TextStyle(fontSize: 12, color: Colors.black54),
+            ),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                InfoChip(label: 'Risk', value: '$risk'),
+                InfoChip(label: 'Slope', value: '$slope°'),
+                InfoChip(label: 'Elevation', value: '$elevation m'),
+                InfoChip(label: 'NDVI', value: ndvi),
+                InfoChip(
+                  label: 'Samples',
+                  value: '${r?['polygon_area_sample_count'] ?? '--'}',
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2243,13 +2535,31 @@ class InfoChip extends StatelessWidget {
   const InfoChip({super.key, required this.label, required this.value});
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        decoration: BoxDecoration(color: softGreen, borderRadius: BorderRadius.circular(14), border: Border.all(color: const Color(0xFFDCEBE2))),
-        child: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(label, style: const TextStyle(fontSize: 10, color: Colors.black54, fontWeight: FontWeight.w700)),
-          Text(value, style: const TextStyle(fontWeight: FontWeight.w900, color: green)),
-        ]),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+    decoration: BoxDecoration(
+      color: softGreen,
+      borderRadius: BorderRadius.circular(14),
+      border: Border.all(color: const Color(0xFFDCEBE2)),
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            color: Colors.black54,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(fontWeight: FontWeight.w900, color: green),
+        ),
+      ],
+    ),
+  );
 }
 
 class MobileHeader extends StatelessWidget {
@@ -2257,32 +2567,44 @@ class MobileHeader extends StatelessWidget {
   final bool showMenu;
   final Widget? trailing;
   final VoidCallback? back;
-  const MobileHeader(
-      {super.key,
-      required this.title,
-      this.showMenu = true,
-      this.trailing,
-      this.back});
+  const MobileHeader({
+    super.key,
+    required this.title,
+    this.showMenu = true,
+    this.trailing,
+    this.back,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(14, 8, 14, 6),
-      child: Row(children: [
-        back != null
-            ? IconButton(onPressed: back, icon: const Icon(Icons.arrow_back))
-            : const SizedBox(width: 48),
-        Expanded(
-            child: Text(title,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                    fontSize: 18, fontWeight: FontWeight.w900, color: green))),
-        trailing ??
-            IconButton(
-                onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsPage())),
-                icon: const Icon(Icons.notifications_none_rounded)),
-      ]),
+      child: Row(
+        children: [
+          back != null
+              ? IconButton(onPressed: back, icon: const Icon(Icons.arrow_back))
+              : const SizedBox(width: 48),
+          Expanded(
+            child: Text(
+              title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w900,
+                color: green,
+              ),
+            ),
+          ),
+          trailing ??
+              IconButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
+                ),
+                icon: const Icon(Icons.notifications_none_rounded),
+              ),
+        ],
+      ),
     );
   }
 }
-

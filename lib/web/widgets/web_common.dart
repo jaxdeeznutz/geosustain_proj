@@ -1,20 +1,29 @@
-part of geosustain_mobile;
+part of '../../main.dart';
 
 class _WebCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
-  const _WebCard({required this.child, this.padding = const EdgeInsets.all(22)});
+  const _WebCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(22),
+  });
   @override
   Widget build(BuildContext context) => Container(
-        padding: padding,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE4ECE6)),
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(.035), blurRadius: 18, offset: const Offset(0, 8))],
+    padding: padding,
+    decoration: BoxDecoration(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(22),
+      border: Border.all(color: const Color(0xFFE4ECE6)),
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black.withValues(alpha: .035),
+          blurRadius: 18,
+          offset: const Offset(0, 8),
         ),
-        child: child,
-      );
+      ],
+    ),
+    child: child,
+  );
 }
 
 class _SmallBadge extends StatelessWidget {
@@ -23,10 +32,16 @@ class _SmallBadge extends StatelessWidget {
   const _SmallBadge(this.text, {this.color = green});
   @override
   Widget build(BuildContext context) => Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-        decoration: BoxDecoration(color: color.withOpacity(.12), borderRadius: BorderRadius.circular(999)),
-        child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 12)),
-      );
+    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    decoration: BoxDecoration(
+      color: color.withValues(alpha: .12),
+      borderRadius: BorderRadius.circular(999),
+    ),
+    child: Text(
+      text,
+      style: TextStyle(color: color, fontWeight: FontWeight.w900, fontSize: 12),
+    ),
+  );
 }
 
 class _WebHeader extends StatelessWidget {
@@ -34,28 +49,64 @@ class _WebHeader extends StatelessWidget {
   final String subtitle;
   final AnalysisState state;
   final ValueChanged<String> message;
-  const _WebHeader({required this.title, required this.subtitle, required this.state, required this.message});
+  const _WebHeader({
+    required this.title,
+    required this.subtitle,
+    required this.state,
+    required this.message,
+  });
   @override
-  Widget build(BuildContext context) => Row(crossAxisAlignment: CrossAxisAlignment.center, children: [
-        const Icon(Icons.menu_rounded, color: green, size: 32),
-        const SizedBox(width: 18),
-        Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontSize: 32, fontWeight: FontWeight.w900, color: Color(0xFF102018))),
-          const SizedBox(height: 4),
-          Text(subtitle, style: const TextStyle(color: Colors.black54, fontSize: 15)),
-        ])),
-        OutlinedButton.icon(
-          onPressed: state.weatherLoading ? null : () async {
-            final err = await state.refreshLiveWeather();
-            if (err != null) message(err);
-          },
-          icon: const Icon(Icons.refresh_rounded),
-          label: Text(state.weatherLoading ? 'Refreshing...' : 'Refresh Data'),
-          style: OutlinedButton.styleFrom(foregroundColor: green, side: const BorderSide(color: Color(0xFFE1E8E2)), padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14))),
+  Widget build(BuildContext context) => Row(
+    crossAxisAlignment: CrossAxisAlignment.center,
+    children: [
+      const Icon(Icons.menu_rounded, color: green, size: 32),
+      const SizedBox(width: 18),
+      Expanded(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                color: Color(0xFF102018),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              subtitle,
+              style: const TextStyle(color: Colors.black54, fontSize: 15),
+            ),
+          ],
         ),
-        const SizedBox(width: 14),
-        const Icon(Icons.notifications_none_rounded, color: Color(0xFF33443A), size: 28),
-      ]);
+      ),
+      OutlinedButton.icon(
+        onPressed: state.weatherLoading
+            ? null
+            : () async {
+                final err = await state.refreshLiveWeather();
+                if (err != null) message(err);
+              },
+        icon: const Icon(Icons.refresh_rounded),
+        label: Text(state.weatherLoading ? 'Refreshing...' : 'Refresh Data'),
+        style: OutlinedButton.styleFrom(
+          foregroundColor: green,
+          side: const BorderSide(color: Color(0xFFE1E8E2)),
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      ),
+      const SizedBox(width: 14),
+      const Icon(
+        Icons.notifications_none_rounded,
+        color: Color(0xFF33443A),
+        size: 28,
+      ),
+    ],
+  );
 }
 
 class _WebKpiCard extends StatelessWidget {
@@ -63,79 +114,64 @@ class _WebKpiCard extends StatelessWidget {
   final String title;
   final String value;
   final String subtitle;
-  const _WebKpiCard({required this.icon, required this.title, required this.value, required this.subtitle});
+  const _WebKpiCard({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.subtitle,
+  });
   @override
   Widget build(BuildContext context) => _WebCard(
-        child: Row(children: [
-          Container(width: 62, height: 62, decoration: BoxDecoration(color: softGreen, borderRadius: BorderRadius.circular(18)), child: Icon(icon, color: green, size: 32)),
-          const SizedBox(width: 18),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(title, style: const TextStyle(color: Colors.black54, fontWeight: FontWeight.w700)),
-            const SizedBox(height: 6),
-            Text(value, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900)),
-            const SizedBox(height: 4),
-            Text(subtitle, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: green, fontWeight: FontWeight.w800, fontSize: 12)),
-          ])),
-        ]),
-      );
-}
-
-class _WebKpiRow extends StatelessWidget {
-  final AnalysisState state;
-  const _WebKpiRow({required this.state});
-
-  Map<String, dynamic>? get _latestRecord {
-    if (state.historyRecords.isEmpty) return null;
-    final first = state.historyRecords.first;
-    return first is Map<String, dynamic> ? first : null;
-  }
-
-  dynamic _latestPct(Map<String, dynamic>? latest) {
-    return latest?['crop_compatibility_pct'] ?? latest?['compatibility_pct'];
-  }
-
-  String _latestCrop(Map<String, dynamic>? latest) {
-    final direct = latest?['predicted_crop'] ?? latest?['crop_recommendation'] ?? latest?['recommended_crop'] ?? latest?['crop'];
-    if (direct != null && '$direct'.trim().isNotEmpty && '$direct' != '--') return '$direct';
-    final top = latest?['top_crop_recommendations'];
-    if (top is List && top.isNotEmpty && top.first is Map) {
-      final f = top.first as Map;
-      final name = f['crop'] ?? f['name'];
-      if (name != null && '$name'.trim().isNotEmpty) return '$name';
-    }
-    return 'No analysis yet';
-  }
-
-  String _bestCropFromState() {
-    final fromResult = _latestCrop(state.result);
-    if (fromResult != 'No analysis yet') return fromResult;
-    final fromHistory = _latestCrop(_latestRecord);
-    if (fromHistory != 'No analysis yet') return fromHistory;
-    if (state.recentAnalyses.isNotEmpty) {
-      final recent = state.recentAnalyses.first;
-      if (recent is Map<String, dynamic>) {
-        final fromRecent = _latestCrop(recent);
-        if (fromRecent != 'No analysis yet') return fromRecent;
-      }
-    }
-    return 'No analysis yet';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final data = state.result ?? _latestRecord;
-    final pct = (state.result?['crop_compatibility_pct'] ?? state.result?['compatibility_pct']) ?? _latestPct(_latestRecord);
-    final crop = _bestCropFromState();
-    return Row(children: [
-      Expanded(child: _WebKpiCard(icon: Icons.grid_view_rounded, title: 'Total Analyses', value: '${state.profileCounts['analysis_count'] ?? state.historyRecords.length}', subtitle: '+ field records')),
-      const SizedBox(width: 18),
-      Expanded(child: _WebKpiCard(icon: Icons.eco_rounded, title: 'Most Suitable Crop', value: crop, subtitle: data == null ? 'Run analysis' : 'Latest result')),
-      const SizedBox(width: 18),
-      Expanded(child: _WebKpiCard(icon: Icons.donut_large_rounded, title: 'Average Suitability', value: pct == null ? '--' : '${state.numText(pct)}%', subtitle: displaySuitability(data).toLowerCase())),
-      const SizedBox(width: 18),
-      Expanded(child: _WebKpiCard(icon: Icons.map_rounded, title: 'Areas Analyzed', value: '${state.historyRecords.length}', subtitle: 'Saved in history')),
-    ]);
-  }
+    child: Row(
+      children: [
+        Container(
+          width: 62,
+          height: 62,
+          decoration: BoxDecoration(
+            color: softGreen,
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Icon(icon, color: green, size: 32),
+        ),
+        const SizedBox(width: 18),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.black54,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                value,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                subtitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: green,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _WebMapVisual extends StatefulWidget {
@@ -165,7 +201,8 @@ class _WebMapVisualState extends State<_WebMapVisual> {
   @override
   Widget build(BuildContext context) {
     final data = state.result;
-    final crop = '${data?['crop_recommendation'] ?? data?['recommended_crop'] ?? '--'}';
+    final crop =
+        '${data?['crop_recommendation'] ?? data?['recommended_crop'] ?? '--'}';
     final pct = data?['crop_compatibility_pct'] ?? data?['compatibility_pct'];
 
     return ClipRRect(
@@ -178,9 +215,9 @@ class _WebMapVisualState extends State<_WebMapVisual> {
             Positioned.fill(
               child: LiveFieldMap(
                 analysisState: state,
-                onError: (msg) => ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(msg)),
-                ),
+                onError: (msg) => ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(msg))),
               ),
             ),
             Positioned.fill(
@@ -191,9 +228,9 @@ class _WebMapVisualState extends State<_WebMapVisual> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(.04),
+                        Colors.black.withValues(alpha: .04),
                         Colors.transparent,
-                        Colors.black.withOpacity(.22),
+                        Colors.black.withValues(alpha: .22),
                       ],
                     ),
                   ),
@@ -203,34 +240,55 @@ class _WebMapVisualState extends State<_WebMapVisual> {
             Positioned(
               top: 18,
               left: 18,
-              child: _SmallBadge(state.satellite ? 'Satellite' : 'Street', color: green),
+              child: _SmallBadge(
+                state.satellite ? 'Satellite' : 'Street',
+                color: green,
+              ),
             ),
-            if (state.result?['heatmap_grid'] is List && (state.result?['heatmap_grid'] as List).isNotEmpty)
+            if (state.result?['heatmap_grid'] is List &&
+                (state.result?['heatmap_grid'] as List).isNotEmpty)
               Positioned(
                 top: 70,
                 right: 18,
                 child: Container(
                   padding: const EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(.96),
+                    color: Colors.white.withValues(alpha: .96),
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(.10), blurRadius: 12)],
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: .10),
+                        blurRadius: 12,
+                      ),
+                    ],
                   ),
                   child: Wrap(
                     spacing: 5,
-                    children: ['NDVI', 'Suitability', 'Soil pH', 'Rainfall', 'Elevation', 'Slope']
-                        .map((layer) => ChoiceChip(
-                              label: Text(layer),
-                              selected: state.heatmapLayer == layer,
-                              selectedColor: softGreen,
-                              labelStyle: TextStyle(
-                                color: state.heatmapLayer == layer ? green : Colors.black54,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w800,
+                    children:
+                        [
+                              'NDVI',
+                              'Suitability',
+                              'Soil pH',
+                              'Rainfall',
+                              'Elevation',
+                              'Slope',
+                            ]
+                            .map(
+                              (layer) => ChoiceChip(
+                                label: Text(layer),
+                                selected: state.heatmapLayer == layer,
+                                selectedColor: softGreen,
+                                labelStyle: TextStyle(
+                                  color: state.heatmapLayer == layer
+                                      ? green
+                                      : Colors.black54,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                                onSelected: (_) => state.setHeatmapLayer(layer),
                               ),
-                              onSelected: (_) => state.setHeatmapLayer(layer),
-                            ))
-                        .toList(),
+                            )
+                            .toList(),
                   ),
                 ),
               ),
@@ -239,14 +297,22 @@ class _WebMapVisualState extends State<_WebMapVisual> {
               right: 18,
               child: Row(
                 children: [
-                  _MapToolButton(icon: Icons.layers_rounded, onTap: state.toggleSatellite),
+                  _MapToolButton(
+                    icon: Icons.layers_rounded,
+                    onTap: state.toggleSatellite,
+                  ),
                   const SizedBox(width: 8),
                   _MapToolButton(
-                    icon: state.drawing ? Icons.edit_off_rounded : Icons.polyline_rounded,
+                    icon: state.drawing
+                        ? Icons.edit_off_rounded
+                        : Icons.polyline_rounded,
                     onTap: state.toggleDrawing,
                   ),
                   const SizedBox(width: 8),
-                  _MapToolButton(icon: Icons.clear_rounded, onTap: state.clearSelection),
+                  _MapToolButton(
+                    icon: Icons.clear_rounded,
+                    onTap: state.clearSelection,
+                  ),
                 ],
               ),
             ),
@@ -256,18 +322,21 @@ class _WebMapVisualState extends State<_WebMapVisual> {
               child: FilledButton.icon(
                 onPressed: state.loading ? null : _analyze,
                 icon: const Icon(Icons.analytics_rounded),
-                label: Text(state.polygonPoints.length >= 3 ? 'Analyze Polygon' : 'Analyze Point'),
+                label: Text(
+                  state.polygonPoints.length >= 3
+                      ? 'Analyze Polygon'
+                      : 'Analyze Point',
+                ),
                 style: FilledButton.styleFrom(
                   minimumSize: const Size(0, 44),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
                 ),
               ),
             ),
-            Positioned(
-              left: 18,
-              bottom: 18,
-              child: _SuitabilityLegend(),
-            ),
+            Positioned(left: 18, bottom: 18, child: _SuitabilityLegend()),
             if (widget.showPopup)
               Positioned(
                 left: 28,
@@ -285,7 +354,6 @@ class _WebMapVisualState extends State<_WebMapVisual> {
     );
   }
 }
-
 
 class _WebMapPopup extends StatelessWidget {
   final AnalysisState state;
@@ -321,7 +389,7 @@ class _WebMapPopup extends StatelessWidget {
           border: Border.all(color: const Color(0xFFE2ECE6)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(.10),
+              color: Colors.black.withValues(alpha: .10),
               blurRadius: 24,
               offset: const Offset(0, 12),
             ),
@@ -337,7 +405,7 @@ class _WebMapPopup extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: green.withOpacity(.12),
+                    color: green.withValues(alpha: .12),
                     borderRadius: BorderRadius.circular(14),
                   ),
                   child: const Icon(Icons.eco_rounded, color: green),
@@ -405,27 +473,38 @@ class _MapToolButton extends StatelessWidget {
   final VoidCallback onTap;
   const _MapToolButton({required this.icon, required this.onTap});
   @override
-  Widget build(BuildContext context) => Material(color: Colors.white.withOpacity(.94), borderRadius: BorderRadius.circular(12), child: InkWell(onTap: onTap, borderRadius: BorderRadius.circular(12), child: SizedBox(width: 42, height: 42, child: Icon(icon, color: green))));
+  Widget build(BuildContext context) => Material(
+    color: Colors.white.withValues(alpha: .94),
+    borderRadius: BorderRadius.circular(12),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: SizedBox(width: 42, height: 42, child: Icon(icon, color: green)),
+    ),
+  );
 }
 
 class _SuitabilityLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
-        width: 180,
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(color: Colors.white.withOpacity(.92), borderRadius: BorderRadius.circular(14)),
-        child: const Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Suitability', style: TextStyle(fontWeight: FontWeight.w900)),
-            SizedBox(height: 8),
-            _LegendDot(color: Color(0xFF1FA463), label: '75% - 100%'),
-            _LegendDot(color: Color(0xFF8BDD75), label: '50% - 75%'),
-            _LegendDot(color: Color(0xFFE9A829), label: '25% - 50%'),
-            _LegendDot(color: Color(0xFFE45B5B), label: '0% - 25%'),
-          ],
-        ),
-      );
+    width: 180,
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: Colors.white.withValues(alpha: .92),
+      borderRadius: BorderRadius.circular(14),
+    ),
+    child: const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('Suitability', style: TextStyle(fontWeight: FontWeight.w900)),
+        SizedBox(height: 8),
+        _LegendDot(color: Color(0xFF1FA463), label: '75% - 100%'),
+        _LegendDot(color: Color(0xFF8BDD75), label: '50% - 75%'),
+        _LegendDot(color: Color(0xFFE9A829), label: '25% - 50%'),
+        _LegendDot(color: Color(0xFFE45B5B), label: '0% - 25%'),
+      ],
+    ),
+  );
 }
 
 class _LegendDot extends StatelessWidget {
@@ -434,11 +513,22 @@ class _LegendDot extends StatelessWidget {
   const _LegendDot({required this.color, required this.label});
   @override
   Widget build(BuildContext context) => Padding(
-        padding: const EdgeInsets.only(bottom: 8),
-        child: Row(children: [
-          Container(width: 11, height: 11, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
-          const SizedBox(width: 8),
-          Expanded(child: Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700))),
-        ]),
-      );
+    padding: const EdgeInsets.only(bottom: 8),
+    child: Row(
+      children: [
+        Container(
+          width: 11,
+          height: 11,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+          ),
+        ),
+      ],
+    ),
+  );
 }

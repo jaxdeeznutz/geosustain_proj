@@ -1,3 +1,5 @@
+from copy import deepcopy
+import config  # noqa: F401 -- load local environment before reading settings
 import ee
 import joblib
 import requests
@@ -11,7 +13,7 @@ from google.oauth2 import service_account
 
 GEE_PROJECT = os.getenv('GEE_PROJECT_ID') or os.getenv('GEE_PROJECT') or 'capstone-493314'
 GEE_SERVICE_ACCOUNT_JSON = os.getenv('GEE_SERVICE_ACCOUNT_JSON')
-OPENWEATHER_KEY = os.getenv('OPENWEATHER_API_KEY', 'ef57d35102fa708513cde8222753838d')
+OPENWEATHER_KEY = os.getenv('OPENWEATHER_API_KEY', '')
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
@@ -1131,7 +1133,7 @@ def analyze_location(lat, lon, active_crops=None):
     now_ts    = time.time()
     cached    = ANALYSIS_CACHE.get(cache_key)
     if cached and now_ts - cached['ts'] < CACHE_TTL_SECONDS:
-        return cached['data']
+        return deepcopy(cached['data'])
 
     with ThreadPoolExecutor(max_workers=7) as ex:
         weather_f  = ex.submit(get_live_weather,  lat, lon)
@@ -1264,7 +1266,10 @@ def analyze_location(lat, lon, active_crops=None):
         'ml_model_top_crop': ml_model_top_crop,
         'xai_explanation': xai_explanation,
     }
-    ANALYSIS_CACHE[cache_key] = {'ts': now_ts, 'data': result}
+    for key, entry in list(ANALYSIS_CACHE.items()):
+        if now_ts - entry['ts'] >= CACHE_TTL_SECONDS:
+            ANALYSIS_CACHE.pop(key, None)
+    ANALYSIS_CACHE[cache_key] = {'ts': now_ts, 'data': deepcopy(result)}
     return result
 
 

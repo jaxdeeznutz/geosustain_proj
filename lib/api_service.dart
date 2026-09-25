@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -10,14 +9,17 @@ class ApiService {
   // Default is the Render backend so Edge/Web/Android use the same source of truth.
   static const String _definedBaseUrl = String.fromEnvironment('API_BASE_URL');
 
-  static String get baseUrl {
-    if (_definedBaseUrl.isNotEmpty) return _definedBaseUrl;
+  static String get baseUrl =>
+      (_definedBaseUrl.isNotEmpty
+              ? _definedBaseUrl
+              : 'https://geosustain.onrender.com')
+          .replaceFirst(RegExp(r'/+$'), '');
 
-    // Render is the single online backend for Web, Edge, Android, and APK builds.
-    if (kIsWeb) return 'https://geosustain.onrender.com';
-    if (defaultTargetPlatform == TargetPlatform.android) return 'https://geosustain.onrender.com';
-    return 'https://geosustain.onrender.com';
-  }
+  // Injectable transport permits API contract tests without a live account.
+  ApiService({http.Client? client}) : _client = client ?? http.Client();
+  final http.Client _client;
+
+  void close() => _client.close();
 
   Future<String?> getToken() async {
     final prefs = await SharedPreferences.getInstance();
@@ -37,14 +39,29 @@ class ApiService {
   Map<String, dynamic> _decodeJson(http.Response response) {
     try {
       final decoded = jsonDecode(response.body);
-      return decoded is Map<String, dynamic> ? decoded : <String, dynamic>{'data': decoded};
-    } catch (_) {
-      return <String, dynamic>{'error': response.body.isEmpty ? 'No response from server.' : response.body};
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Unexpected server response.');
+      }
+      return decoded;
+    } on FormatException {
+      if (response.statusCode < 400) {
+        throw const FormatException(
+          'The server returned an invalid response. Please try again.',
+        );
+      }
+      return <String, dynamic>{
+        'error':
+            'Server request failed (HTTP ${response.statusCode}). Please try again.',
+      };
     }
   }
 
   String _errorMessage(Map<String, dynamic> data, String fallback) {
-    if (data['detail'] != null) return data['detail'].toString();
+    final detail = data['detail'];
+    if (detail is List) {
+      return detail.map((e) => e is Map ? e['msg'] ?? fallback : e).join('\n');
+    }
+    if (detail != null) return detail.toString();
     if (data['error'] != null) return data['error'].toString();
     final errors = data['errors'];
     if (errors is List) return errors.join('\n');
@@ -68,18 +85,27 @@ class ApiService {
         }
       }
     }
-    throw lastError ?? TimeoutException('Request timed out after $attempts attempts');
+    throw lastError ??
+        TimeoutException('Request timed out after $attempts attempts');
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/mobile/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/login'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'email': email, 'password': password}),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Login failed'));
-    await saveToken(data['token']);
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Login failed'));
+    }
+    final token = data['token'];
+    if (token is! String || token.isEmpty) {
+      throw const FormatException('The server did not return a login token.');
+    }
+    await saveToken(token);
     return data;
   }
 
@@ -89,66 +115,68 @@ class ApiService {
     required String password,
     String role = 'farmer',
   }) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/mobile/register'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': username, 'email': email, 'password': password, 'role': role}),
-    );
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/register'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({
+            'username': username,
+            'email': email,
+            'password': password,
+            'role': role,
+          }),
+        )
+        .timeout(const Duration(seconds: 90));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Register failed'));
-    // Legacy backend register is kept only for compatibility.
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Registration failed'));
+    }
     return data;
   }
 
-  Future<Map<String, dynamic>> completeFirebaseEmailRegistration({
-    required String username,
+  Future<Map<String, dynamic>> verifyEmail({
     required String email,
-    required String password,
-    required String idToken,
-    String role = 'farmer',
+    required String code,
   }) async {
-    final response = await _withRenderWarmupRetry(
-      () => http.post(
-        Uri.parse('$baseUrl/api/mobile/firebase-email-register'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          'username': username,
-          'email': email,
-          'password': password,
-          'role': role,
-          'id_token': idToken,
-        }),
-      ),
-    );
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/verify-email'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'email': email, 'code': code}),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not complete registration'));
+      throw Exception(_errorMessage(data, 'Verification failed'));
     }
     final token = data['token'];
     if (token != null) await saveToken('$token');
     return data;
   }
 
-  Future<Map<String, dynamic>> googleLoginWithFirebaseIdToken(String idToken, {String role = 'farmer'}) async {
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/mobile/google-login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'id_token': idToken, 'role': role}),
-    );
+  Future<Map<String, dynamic>> resendVerificationCode(String email) async {
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/resend-verification'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'email': email}),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Google login failed'));
-    final token = data['token'];
-    if (token != null) await saveToken('$token');
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not resend the code'));
+    }
     return data;
   }
 
   Future<String> reverseGeocodePlace(double lat, double lon) async {
     final token = await getToken();
-    final uri = Uri.parse('$baseUrl/api/mobile/reverse-geocode?lat=$lat&lon=$lon');
-    final response = await http.get(
-      uri,
-      headers: {'Authorization': 'Bearer $token'},
+    final uri = Uri.parse(
+      '$baseUrl/api/mobile/reverse-geocode?lat=$lat&lon=$lon',
     );
+    final response = await _client
+        .get(uri, headers: {'Authorization': 'Bearer $token'})
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw Exception(_errorMessage(data, 'Could not look up place name'));
@@ -156,12 +184,17 @@ class ApiService {
     return '${data['place_name'] ?? ''}'.trim();
   }
 
-  Future<Map<String, dynamic>> analyzePoint(double lat, double lon, {String? placeName, int? intendedPlantingMonth}) async {
+  Future<Map<String, dynamic>> analyzePoint(
+    double lat,
+    double lon, {
+    String? placeName,
+    int? intendedPlantingMonth,
+  }) async {
     return _postAnalysis({
       'lat': lat,
       'lon': lon,
       if (placeName != null && placeName.isNotEmpty) 'place_name': placeName,
-      if (intendedPlantingMonth != null) 'intended_planting_month': intendedPlantingMonth,
+      'intended_planting_month': ?intendedPlantingMonth,
     });
   }
 
@@ -174,20 +207,29 @@ class ApiService {
     return _postAnalysis({
       'polygon': polygon,
       if (placeName != null && placeName.isNotEmpty) 'place_name': placeName,
-      if (intendedPlantingMonth != null) 'intended_planting_month': intendedPlantingMonth,
-      if (farmId != null) 'farm_id': farmId,
+      'intended_planting_month': ?intendedPlantingMonth,
+      'farm_id': ?farmId,
     });
   }
 
-  Future<Map<String, dynamic>> _postAnalysis(Map<String, dynamic> payload) async {
+  Future<Map<String, dynamic>> _postAnalysis(
+    Map<String, dynamic> payload,
+  ) async {
     final token = await getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/mobile/analysis'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: jsonEncode(payload),
-    );
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/analysis'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(payload),
+        )
+        .timeout(const Duration(minutes: 5));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Analysis failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Analysis failed'));
+    }
 
     // Analysis rainfall now comes from the backend CHIRPS/GEE 30-day source.
     // Do not override it here with Open-Meteo, because Open-Meteo can return
@@ -196,19 +238,28 @@ class ApiService {
     return data;
   }
 
-
-
-  Future<List<Map<String, dynamic>>> getFarms({bool includeArchived = false}) async {
+  Future<List<Map<String, dynamic>>> getFarms({
+    bool includeArchived = false,
+  }) async {
     final token = await getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/mobile/farms?include_archived=$includeArchived'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client
+        .get(
+          Uri.parse(
+            '$baseUrl/api/mobile/farms?include_archived=$includeArchived',
+          ),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not load farms'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not load farms'));
+    }
     final raw = data['farms'];
     if (raw is! List) return [];
-    return raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
+    return raw
+        .whereType<Map>()
+        .map((e) => Map<String, dynamic>.from(e))
+        .toList();
   }
 
   Future<Map<String, dynamic>> createFarm({
@@ -219,31 +270,48 @@ class ApiService {
     double? gpsAccuracyM,
   }) async {
     final token = await getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/mobile/farms'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: jsonEncode({
-        'farm_name': farmName,
-        'polygon': polygon,
-        if (locationName != null) 'location_name': locationName,
-        'mapping_method': mappingMethod,
-        if (gpsAccuracyM != null) 'gps_accuracy_m': gpsAccuracyM,
-      }),
-    );
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/farms'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'farm_name': farmName,
+            'polygon': polygon,
+            'location_name': ?locationName,
+            'mapping_method': mappingMethod,
+            'gps_accuracy_m': ?gpsAccuracyM,
+          }),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not save farm'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not save farm'));
+    }
     return Map<String, dynamic>.from(data['farm'] as Map);
   }
 
-  Future<Map<String, dynamic>> updateFarm(int farmId, Map<String, dynamic> changes) async {
+  Future<Map<String, dynamic>> updateFarm(
+    int farmId,
+    Map<String, dynamic> changes,
+  ) async {
     final token = await getToken();
-    final response = await http.patch(
-      Uri.parse('$baseUrl/api/mobile/farms/$farmId'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: jsonEncode(changes),
-    );
+    final response = await _client
+        .patch(
+          Uri.parse('$baseUrl/api/mobile/farms/$farmId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(changes),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not update farm'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not update farm'));
+    }
     return Map<String, dynamic>.from(data['farm'] as Map);
   }
 
@@ -256,25 +324,22 @@ class ApiService {
 
     final token = await getToken();
     final uri = Uri.parse('$baseUrl/api/mobile/weather?lat=$lat&lon=$lon');
-    final response = await http
+    final response = await _client
         .get(
           uri,
-          headers: {if (token != null && token.isNotEmpty) 'Authorization': 'Bearer $token'},
+          headers: {
+            if (token != null && token.isNotEmpty)
+              'Authorization': 'Bearer $token',
+          },
         )
         .timeout(const Duration(seconds: 15));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      final directRetry = await _fetchOpenMeteoWeatherDirect(lat, lon);
-      if (directRetry != null) return directRetry;
       throw Exception(_errorMessage(data, 'Live weather failed'));
     }
 
-    // Keep the Home screen live even if the deployed backend has cached or
-    // older weather values. Direct Open-Meteo data overrides weather fields.
-    final direct = await _fetchOpenMeteoWeatherDirect(lat, lon);
-    if (direct != null) data.addAll(direct);
-
-    final hasDailyRain = data['rainfall_today_mm'] != null ||
+    final hasDailyRain =
+        data['rainfall_today_mm'] != null ||
         data['today_rainfall_mm'] != null ||
         data['daily_rainfall_mm'] != null;
     if (!hasDailyRain) {
@@ -288,33 +353,75 @@ class ApiService {
     return data;
   }
 
-  Future<Map<String, dynamic>?> _fetchOpenMeteoWeatherDirect(double lat, double lon) async {
+  Future<Map<String, dynamic>?> _fetchOpenMeteoWeatherDirect(
+    double lat,
+    double lon,
+  ) async {
     try {
       final uri = Uri.parse(
         'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon'
         '&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m'
         '&hourly=temperature_2m,precipitation,precipitation_probability,weather_code,wind_speed_10m'
-        '&daily=precipitation_sum&past_days=30&forecast_days=1&timezone=Asia%2FManila',
+        '&daily=precipitation_sum&past_days=30&forecast_days=2&wind_speed_unit=kmh&timezone=Asia%2FManila',
       );
-      final response = await http.get(uri).timeout(const Duration(seconds: 10));
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 10));
       if (response.statusCode >= 400) return null;
       final decoded = jsonDecode(response.body);
       if (decoded is! Map<String, dynamic>) return null;
-      final current = decoded['current'] is Map<String, dynamic> ? decoded['current'] as Map<String, dynamic> : <String, dynamic>{};
-      final daily = decoded['daily'] is Map<String, dynamic> ? decoded['daily'] as Map<String, dynamic> : <String, dynamic>{};
-      final hourly = decoded['hourly'] is Map<String, dynamic> ? decoded['hourly'] as Map<String, dynamic> : <String, dynamic>{};
-      final dailyVals = daily['precipitation_sum'] is List ? daily['precipitation_sum'] as List : const [];
-      final todayRain = dailyVals.isNotEmpty ? _toDouble(dailyVals.last) ?? 0.0 : 0.0;
-      final monthly = dailyVals.isNotEmpty
-          ? dailyVals.take(30).fold<double>(0.0, (sum, v) => sum + (_toDouble(v) ?? 0.0))
-          : 0.0;
+      final current = decoded['current'] is Map<String, dynamic>
+          ? decoded['current'] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final daily = decoded['daily'] is Map<String, dynamic>
+          ? decoded['daily'] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final hourly = decoded['hourly'] is Map<String, dynamic>
+          ? decoded['hourly'] as Map<String, dynamic>
+          : <String, dynamic>{};
+      final dailyVals = daily['precipitation_sum'] is List
+          ? daily['precipitation_sum'] as List
+          : const [];
+      final dailyTimes = daily['time'] is List
+          ? daily['time'] as List
+          : const [];
+      final currentTime = current['time']?.toString();
+      if (currentTime == null ||
+          currentTime.length < 10 ||
+          current['temperature_2m'] == null) {
+        return null;
+      }
+      final todayIndex = dailyTimes.indexOf(currentTime.substring(0, 10));
+      final todayRain = todayIndex >= 0 && todayIndex < dailyVals.length
+          ? _toDouble(dailyVals[todayIndex])
+          : null;
+      final pastRain = todayIndex >= 30 && todayIndex <= dailyVals.length
+          ? dailyVals
+                .take(todayIndex)
+                .skip(todayIndex - 30)
+                .map(_toDouble)
+                .toList()
+          : <double?>[];
+      final monthly = pastRain.length == 30 && pastRain.every((v) => v != null)
+          ? pastRain.fold<double>(0, (sum, v) => sum + v!)
+          : null;
       final hTime = hourly['time'] is List ? hourly['time'] as List : const [];
-      final hRain = hourly['precipitation'] is List ? hourly['precipitation'] as List : const [];
-      final hProb = hourly['precipitation_probability'] is List ? hourly['precipitation_probability'] as List : const [];
-      final hCode = hourly['weather_code'] is List ? hourly['weather_code'] as List : const [];
-      final hWind = hourly['wind_speed_10m'] is List ? hourly['wind_speed_10m'] as List : const [];
-      final hTemp = hourly['temperature_2m'] is List ? hourly['temperature_2m'] as List : const [];
-      final startIndex = _startHourlyIndex(hTime);
+      final hRain = hourly['precipitation'] is List
+          ? hourly['precipitation'] as List
+          : const [];
+      final hProb = hourly['precipitation_probability'] is List
+          ? hourly['precipitation_probability'] as List
+          : const [];
+      final hCode = hourly['weather_code'] is List
+          ? hourly['weather_code'] as List
+          : const [];
+      final hWind = hourly['wind_speed_10m'] is List
+          ? hourly['wind_speed_10m'] as List
+          : const [];
+      final hTemp = hourly['temperature_2m'] is List
+          ? hourly['temperature_2m'] as List
+          : const [];
+      final startIndex = _startHourlyIndex(hTime, currentTime);
       final next3Rain = _sumWindow(hRain, startIndex, 3);
       final next6 = _sumWindow(hRain, startIndex, 6);
       final prob3 = _maxWindow(hProb, startIndex, 3);
@@ -327,26 +434,43 @@ class ApiService {
         'longitude': lon,
         'temperature_c': current['temperature_2m'],
         'live_humidity': current['relative_humidity_2m'],
-        'rainfall_today_mm': double.parse(todayRain.toStringAsFixed(2)),
-        'today_rainfall_mm': double.parse(todayRain.toStringAsFixed(2)),
-        'daily_rainfall_mm': double.parse(todayRain.toStringAsFixed(2)),
-        'rainfall_mm': double.parse(monthly.toStringAsFixed(2)),
-        'rainfall_monthly_mm': double.parse(monthly.toStringAsFixed(2)),
-        'monthly_rainfall_mm': double.parse(monthly.toStringAsFixed(2)),
-        'rainfall_30d_mm': double.parse(monthly.toStringAsFixed(2)),
+        'rainfall_today_mm': todayRain == null
+            ? null
+            : double.parse(todayRain.toStringAsFixed(2)),
+        'today_rainfall_mm': todayRain == null
+            ? null
+            : double.parse(todayRain.toStringAsFixed(2)),
+        'daily_rainfall_mm': todayRain == null
+            ? null
+            : double.parse(todayRain.toStringAsFixed(2)),
+        'rainfall_mm': monthly == null
+            ? null
+            : double.parse(monthly.toStringAsFixed(2)),
+        'rainfall_monthly_mm': monthly == null
+            ? null
+            : double.parse(monthly.toStringAsFixed(2)),
+        'monthly_rainfall_mm': monthly == null
+            ? null
+            : double.parse(monthly.toStringAsFixed(2)),
+        'rainfall_30d_mm': monthly == null
+            ? null
+            : double.parse(monthly.toStringAsFixed(2)),
         'current_precipitation_mm': current['precipitation'] ?? current['rain'],
         'rain_next_6h_mm': double.parse(next6.toStringAsFixed(2)),
-        'rain_probability_next_6h': double.parse(prob6.toStringAsFixed(1)),
-        'wind_speed_ms': current['wind_speed_10m'],
+        'wind_speed_kmh': current['wind_speed_10m'],
+        'wind_speed_ms': (_toDouble(current['wind_speed_10m']) ?? 0) / 3.6,
         'cloud_cover_pct': current['cloud_cover'],
         'weather_code': current['weather_code'],
-        'weather_description': _weatherCodeLabel(_toDouble(current['weather_code'])?.round()),
+        'weather_description': _weatherCodeLabel(
+          _toDouble(current['weather_code'])?.round(),
+        ),
         'rain_next_3h_mm': double.parse(next3Rain.toStringAsFixed(2)),
         'rain_probability_next_3h': double.parse(prob3.toStringAsFixed(1)),
         'rain_probability_next_6h': double.parse(prob6.toStringAsFixed(1)),
         'max_wind_next_6h_kmh': double.parse(wind6.toStringAsFixed(1)),
         'max_temp_next_6h_c': double.parse(temp6.toStringAsFixed(1)),
         'weather_codes_next_6h': codes6,
+        'weather_updated_at': currentTime,
         'weather_source': 'Open-Meteo direct',
         'weather_is_realtime': true,
       };
@@ -355,15 +479,14 @@ class ApiService {
     }
   }
 
-
-  int _startHourlyIndex(List times) {
-    if (times.isEmpty) return 0;
-    final now = DateTime.now();
+  int _startHourlyIndex(List times, String currentTime) {
+    final now = DateTime.tryParse(currentTime);
+    if (now == null) return times.length;
     for (var i = 0; i < times.length; i++) {
       final parsed = DateTime.tryParse('${times[i]}');
       if (parsed != null && !parsed.isBefore(now)) return i;
     }
-    return 0;
+    return times.length;
   }
 
   double _sumWindow(List values, int start, int hours) {
@@ -409,59 +532,14 @@ class ApiService {
     return double.tryParse('$value');
   }
 
-  Future<double?> _fetchLast30DaysRainfall(double? lat, double? lon, {List? polygon}) async {
-    try {
-      double? useLat = lat;
-      double? useLon = lon;
-      if ((useLat == null || useLon == null) && polygon != null && polygon.isNotEmpty) {
-        double latSum = 0;
-        double lonSum = 0;
-        int count = 0;
-        for (final p in polygon) {
-          if (p is Map) {
-            final a = _toDouble(p['lat']);
-            final b = _toDouble(p['lng'] ?? p['lon']);
-            if (a != null && b != null) {
-              latSum += a;
-              lonSum += b;
-              count++;
-            }
-          }
-        }
-        if (count > 0) {
-          useLat = latSum / count;
-          useLon = lonSum / count;
-        }
-      }
-      if (useLat == null || useLon == null) return null;
-      final end = DateTime.now().toUtc().subtract(const Duration(days: 1));
-      final start = end.subtract(const Duration(days: 29));
-      String fmt(DateTime d) => d.toIso8601String().substring(0, 10);
-      final uri = Uri.parse(
-        'https://archive-api.open-meteo.com/v1/archive?latitude=$useLat&longitude=$useLon'
-        '&start_date=${fmt(start)}&end_date=${fmt(end)}&daily=precipitation_sum&timezone=Asia%2FManila',
-      );
-      final response = await http.get(uri).timeout(const Duration(seconds: 10));
-      if (response.statusCode >= 400) return null;
-      final decoded = jsonDecode(response.body);
-      if (decoded is! Map<String, dynamic>) return null;
-      final daily = decoded['daily'];
-      if (daily is! Map<String, dynamic>) return null;
-      final values = daily['precipitation_sum'];
-      if (values is! List || values.isEmpty) return null;
-      final total = values.fold<double>(0.0, (sum, v) => sum + (_toDouble(v) ?? 0.0));
-      return double.parse(total.toStringAsFixed(2));
-    } catch (_) {
-      return null;
-    }
-  }
-
   Future<double?> _fetchTodayRainfall(double lat, double lon) async {
     try {
       final uri = Uri.parse(
         'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon&daily=precipitation_sum&timezone=Asia%2FManila',
       );
-      final response = await http.get(uri).timeout(const Duration(seconds: 8));
+      final response = await _client
+          .get(uri)
+          .timeout(const Duration(seconds: 8));
       if (response.statusCode >= 400) return null;
       final decoded = jsonDecode(response.body);
       if (decoded is! Map<String, dynamic>) return null;
@@ -476,99 +554,139 @@ class ApiService {
     return null;
   }
 
-
   Future<Map<String, dynamic>> getMe() async {
     final token = await getToken();
     final response = await _withRenderWarmupRetry(
-      () => http.get(
+      () => _client.get(
         Uri.parse('$baseUrl/api/mobile/me'),
         headers: {'Authorization': 'Bearer $token'},
       ),
       timeout: const Duration(seconds: 20),
-    );
+    ).timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Profile failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Profile failed'));
+    }
     return data['user'] is Map<String, dynamic> ? data['user'] : data;
   }
 
   Future<Map<String, dynamic>> getCounts() async {
     final token = await getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/mobile/counts'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/mobile/counts'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Counts failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Counts failed'));
+    }
     return data;
   }
 
   Future<List<dynamic>> getHistory() async {
     final token = await getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/mobile/history'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/mobile/history'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'History failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'History failed'));
+    }
     return data['history'] as List<dynamic>;
   }
 
-
   Future<Map<String, dynamic>> submitAnalysisToPlanner(int sessionId) async {
     final token = await getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/mobile/submit-to-planner'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: jsonEncode({'session_id': sessionId}),
-    );
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/submit-to-planner'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'session_id': sessionId}),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Submission failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Submission failed'));
+    }
     return data;
   }
 
   Future<Map<String, dynamic>> saveAnalysis(int sessionId) async {
     final token = await getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/mobile/save-analysis'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: jsonEncode({'session_id': sessionId}),
-    );
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/save-analysis'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'session_id': sessionId}),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Save failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Save failed'));
+    }
     return data;
   }
 
   Future<List<dynamic>> getSavedAnalyses() async {
     final token = await getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/mobile/saved'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/mobile/saved'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Saved analyses failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Saved analyses failed'));
+    }
     return data['saved'] as List<dynamic>;
   }
 
-  Future<Map<String, dynamic>> createReport(int sessionId, {String? title}) async {
+  Future<Map<String, dynamic>> createReport(
+    int sessionId, {
+    String? title,
+  }) async {
     final token = await getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/mobile/report'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: jsonEncode({'session_id': sessionId, 'title': title}),
-    );
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/report'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'session_id': sessionId, 'title': title}),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Report failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Report failed'));
+    }
     return data;
   }
 
   Future<List<dynamic>> getReports() async {
     final token = await getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/mobile/reports'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/mobile/reports'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Reports failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Reports failed'));
+    }
     return data['reports'] as List<dynamic>;
   }
 
@@ -579,40 +697,55 @@ class ApiService {
     String? profilePhotoBase64,
   }) async {
     final token = await getToken();
-    final response = await http.put(
-      Uri.parse('$baseUrl/api/mobile/me'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: jsonEncode({
-        'username': username,
-        'role': role,
-        if (location != null) 'location': location,
-        if (profilePhotoBase64 != null) 'profile_photo': profilePhotoBase64,
-      }),
-    );
+    final response = await _client
+        .put(
+          Uri.parse('$baseUrl/api/mobile/me'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'username': username,
+            'role': role,
+            'location': ?location,
+            'profile_photo': ?profilePhotoBase64,
+          }),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Profile update failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Profile update failed'));
+    }
     return data['user'] is Map<String, dynamic> ? data['user'] : data;
   }
 
   Future<void> deactivateAccount() async {
     final token = await getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/mobile/me/deactivate'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/me/deactivate'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Deactivate failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Deactivate failed'));
+    }
     await logout();
   }
 
   Future<void> deleteAccount() async {
     final token = await getToken();
-    final response = await http.delete(
-      Uri.parse('$baseUrl/api/mobile/me'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client
+        .delete(
+          Uri.parse('$baseUrl/api/mobile/me'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Delete account failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Delete account failed'));
+    }
     await logout();
   }
 
@@ -621,21 +754,27 @@ class ApiService {
   // ---------------------------------------------------------------------
   Future<List<dynamic>> getPlannerQueue({String status = 'pending'}) async {
     final token = await getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/planner/queue?status=$status'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/planner/queue?status=$status'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not load verification queue'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not load verification queue'));
+    }
     return data['queue'] as List<dynamic>;
   }
 
   Future<Map<String, dynamic>> getPlannerSessionDetail(int sessionId) async {
     final token = await getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/planner/session/$sessionId'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/planner/session/$sessionId'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw Exception(_errorMessage(data, 'Could not load analysis details'));
@@ -648,96 +787,175 @@ class ApiService {
 
   Future<Map<String, dynamic>> getPlannerCounts() async {
     final token = await getToken();
-    final response = await http.get(
-      Uri.parse('$baseUrl/api/planner/counts'),
-      headers: {'Authorization': 'Bearer $token'},
-    );
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/planner/counts'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not load queue counts'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not load queue counts'));
+    }
     return data;
   }
 
-  Future<Map<String, dynamic>> verifySubmission(int sessionId, String status, {String? notes}) async {
+  Future<Map<String, dynamic>> verifySubmission(
+    int sessionId,
+    String status, {
+    String? notes,
+  }) async {
     final token = await getToken();
-    final response = await http.post(
-      Uri.parse('$baseUrl/api/planner/verify'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: jsonEncode({'session_id': sessionId, 'status': status, if (notes != null) 'notes': notes}),
-    );
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/planner/verify'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'session_id': sessionId,
+            'status': status,
+            'notes': ?notes,
+          }),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not update verification status'));
+    if (response.statusCode >= 400) {
+      throw Exception(
+        _errorMessage(data, 'Could not update verification status'),
+      );
+    }
     return data['session'] is Map<String, dynamic> ? data['session'] : data;
   }
 
-
   Future<Map<String, dynamic>> getAdminDashboard() async {
     final token = await getToken();
-    final response = await http.get(Uri.parse('$baseUrl/api/admin/dashboard'), headers: {'Authorization': 'Bearer $token'});
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/admin/dashboard'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Admin dashboard failed'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Admin dashboard failed'));
+    }
     return Map<String, dynamic>.from(data['stats'] ?? const {});
   }
 
   Future<List<dynamic>> getAdminUsers() async {
     final token = await getToken();
-    final response = await http.get(Uri.parse('$baseUrl/api/admin/users'), headers: {'Authorization': 'Bearer $token'});
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/admin/users'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not load users'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not load users'));
+    }
     return List<dynamic>.from(data['users'] ?? const []);
   }
 
-  Future<Map<String, dynamic>> updateAdminUser(int userId, {String? role, bool? isActive}) async {
+  Future<Map<String, dynamic>> updateAdminUser(
+    int userId, {
+    String? role,
+    bool? isActive,
+  }) async {
     final token = await getToken();
-    final response = await http.patch(
-      Uri.parse('$baseUrl/api/admin/users/$userId'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: jsonEncode({if (role != null) 'role': role, if (isActive != null) 'is_active': isActive}),
-    );
+    final response = await _client
+        .patch(
+          Uri.parse('$baseUrl/api/admin/users/$userId'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'role': ?role, 'is_active': ?isActive}),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not update user'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not update user'));
+    }
     return Map<String, dynamic>.from(data['user'] ?? const {});
   }
 
   Future<List<dynamic>> getAdminAnalyses() async {
     final token = await getToken();
-    final response = await http.get(Uri.parse('$baseUrl/api/admin/analyses'), headers: {'Authorization': 'Bearer $token'});
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/admin/analyses'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not load analyses'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not load analyses'));
+    }
     return List<dynamic>.from(data['analyses'] ?? const []);
   }
 
   Future<List<dynamic>> getAdminCrops() async {
     final token = await getToken();
-    final response = await http.get(Uri.parse('$baseUrl/api/admin/crops'), headers: {'Authorization': 'Bearer $token'});
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/admin/crops'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not load crop reference'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not load crop reference'));
+    }
     return List<dynamic>.from(data['crops'] ?? const []);
   }
 
-  Future<Map<String, dynamic>> updateAdminCrop(String cropKey, {String? label, String? growthCycle, String? estYield, String? suitabilityNote, bool? isActive}) async {
+  Future<Map<String, dynamic>> updateAdminCrop(
+    String cropKey, {
+    String? label,
+    String? growthCycle,
+    String? estYield,
+    String? suitabilityNote,
+    bool? isActive,
+  }) async {
     final token = await getToken();
-    final response = await http.patch(
-      Uri.parse('$baseUrl/api/admin/crops/${Uri.encodeComponent(cropKey)}'),
-      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-      body: jsonEncode({
-        if (label != null) 'label': label,
-        if (growthCycle != null) 'growth_cycle': growthCycle,
-        if (estYield != null) 'est_yield': estYield,
-        if (suitabilityNote != null) 'suitability_note': suitabilityNote,
-        if (isActive != null) 'is_active': isActive,
-      }),
-    );
+    final response = await _client
+        .patch(
+          Uri.parse('$baseUrl/api/admin/crops/${Uri.encodeComponent(cropKey)}'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'label': ?label,
+            'growth_cycle': ?growthCycle,
+            'est_yield': ?estYield,
+            'suitability_note': ?suitabilityNote,
+            'is_active': ?isActive,
+          }),
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not update crop'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not update crop'));
+    }
     return Map<String, dynamic>.from(data['crop'] ?? const {});
   }
 
   Future<List<dynamic>> getAdminAuditLogs() async {
     final token = await getToken();
-    final response = await http.get(Uri.parse('$baseUrl/api/admin/audit-logs'), headers: {'Authorization': 'Bearer $token'});
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/admin/audit-logs'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
-    if (response.statusCode >= 400) throw Exception(_errorMessage(data, 'Could not load audit logs'));
+    if (response.statusCode >= 400) {
+      throw Exception(_errorMessage(data, 'Could not load audit logs'));
+    }
     return List<dynamic>.from(data['logs'] ?? const []);
   }
-
 }

@@ -1,7 +1,7 @@
 import os
+import config  # noqa: F401 -- load local environment before reading settings
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
-from datetime import datetime
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -1555,8 +1555,18 @@ def list_farm_parcels(farmer_id: int, include_archived=False):
             cur.execute("""
                 SELECT f.*,
                        (SELECT COUNT(*) FROM analysis_sessions s WHERE s.farm_id=f.id) AS analysis_count,
-                       (SELECT MAX(s.analyzed_at) FROM analysis_sessions s WHERE s.farm_id=f.id) AS last_analyzed_at
+                       (SELECT MAX(s.analyzed_at) FROM analysis_sessions s WHERE s.farm_id=f.id) AS last_analyzed_at,
+                       latest.verification_status AS latest_verification_status,
+                       latest.predicted_crop AS latest_predicted_crop
                 FROM farm_parcels f
+                LEFT JOIN LATERAL (
+                    SELECT s.verification_status, c.predicted_crop
+                    FROM analysis_sessions s
+                    LEFT JOIN crop_recommendations c ON c.session_id = s.id
+                    WHERE s.farm_id = f.id
+                    ORDER BY s.analyzed_at DESC
+                    LIMIT 1
+                ) latest ON TRUE
                 WHERE f.farmer_id=%s AND (%s OR f.is_archived=FALSE)
                 ORDER BY f.updated_at DESC
             """, (farmer_id, include_archived))

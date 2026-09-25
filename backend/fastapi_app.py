@@ -1,10 +1,11 @@
 import os
 import json
 import secrets
+import smtplib
 import urllib.parse
 import urllib.request
+from email.message import EmailMessage
 from datetime import datetime, timezone, timedelta
-from functools import wraps
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -18,19 +19,14 @@ from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from pydantic import BaseModel, Field
 from starlette.middleware.sessions import SessionMiddleware
-from google.oauth2 import id_token as google_id_token
-from google.auth.transport import requests as google_auth_requests
 
 from database import (
     init_db,
     create_user,
     set_email_verification_code,
     mark_email_verified,
-    get_user_by_google_sub,
-    link_google_to_user,
     get_user_by_email,
     get_user_by_id,
-    get_user_by_username,
     save_analysis_session,
     get_user_history,
     save_analysis_for_user,
@@ -69,43 +65,6 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SECRET_KEY = os.getenv("SECRET_KEY", "geosustain-secret-change-in-production")
 MOBILE_TOKEN_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
 VERIFICATION_CODE_MAX_AGE_MINUTES = int(os.getenv("VERIFICATION_CODE_MAX_AGE_MINUTES", "10"))
-GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID", "").strip()
-GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
-GOOGLE_REDIRECT_URI = os.getenv("GOOGLE_REDIRECT_URI", "").strip()
-FIREBASE_WEB_CLIENT_ID = os.getenv("FIREBASE_WEB_CLIENT_ID", "").strip()
-FIREBASE_PROJECT_ID = os.getenv("FIREBASE_PROJECT_ID", "geosustain-4c722").strip()
-
-_firebase_auth_request = google_auth_requests.Request()
-
-
-def verify_firebase_email_verified_token(token: str, expected_email: str) -> bool:
-    """Cryptographically verify a Firebase Auth ID token server-side and
-    confirm it belongs to `expected_email` with a verified email address.
-
-    SECURITY: this closes an account-takeover hole where the backend used to
-    trust a bare client claim ("this email is Firebase-verified, trust me")
-    with no proof at all. A Firebase ID token is signed by Google and can
-    only be produced by someone who actually authenticated as that Firebase
-    user, so verifying it here (signature + issuer + audience, all checked
-    by google-auth) is what actually proves email ownership.
-    Returns False (never raises) on any invalid/expired/mismatched token so
-    callers can respond with a plain 401.
-    """
-    if not token:
-        return False
-    try:
-        claims = google_id_token.verify_firebase_token(
-            token, _firebase_auth_request, audience=FIREBASE_PROJECT_ID
-        )
-    except Exception as exc:
-        print(f"Firebase ID token verification failed: {exc}")
-        return False
-    if not claims:
-        return False
-    token_email = str(claims.get("email") or "").strip().lower()
-    if token_email != expected_email.strip().lower():
-        return False
-    return bool(claims.get("email_verified"))
 
 
 
@@ -332,77 +291,84 @@ WEATHER_CODE_TEXT = {
 
 
 def fetch_open_meteo_weather(lat: float, lon: float) -> Dict[str, Any]:
-    """Fetch live/current weather from Open-Meteo without an API key."""
+    """Fetch weather with forecast windows aligned to the provider's local time."""
     params = {
         "latitude": lat,
         "longitude": lon,
         "current": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m",
-        "hourly": "temperature_2m,relative_humidity_2m,precipitation,precipitation_probability,cloud_cover,wind_speed_10m",
+        "hourly": "temperature_2m,precipitation,precipitation_probability,weather_code,wind_speed_10m",
         "daily": "precipitation_sum",
-        "past_days": 31,
-        "forecast_days": 1,
-        "timezone": "auto",
+        "past_days": 30,
+        "forecast_days": 2,  # Include the next morning when requested late at night.
+        "wind_speed_unit": "kmh",
+        "timezone": "Asia/Manila",
     }
-    url = "https://api.open-meteo.com/v1/forecast?" + urllib.parse.urlencode(params)
-    # Use requests instead of urllib here because it behaves more reliably on
-    # Render free instances after cold starts. Keep a clear timeout so Home
-    # weather fails fast instead of hanging the whole app.
-    resp = requests.get(url, headers={"User-Agent": "GeoSustainCapstone/1.0"}, timeout=12)
-    resp.raise_for_status()
-    payload = resp.json()
+    response = requests.get(
+        "https://api.open-meteo.com/v1/forecast", params=params,
+        headers={"User-Agent": "GeoSustainCapstone/1.0"}, timeout=12,
+    )
+    response.raise_for_status()
+    payload = response.json()
+    current = payload.get("current") or {}
+    hourly = payload.get("hourly") or {}
+    daily = payload.get("daily") or {}
+    current_time = current.get("time")
+    if not current_time or current.get("temperature_2m") is None:
+        raise ValueError("Weather provider returned no current conditions.")
+    now = datetime.fromisoformat(current_time)
+    times = hourly.get("time") or []
+    start = next(
+        (i for i, value in enumerate(times) if datetime.fromisoformat(value) >= now),
+        len(times),
+    )
 
-    current = payload.get("current", {}) or {}
-    hourly = payload.get("hourly", {}) or {}
-    daily = payload.get("daily", {}) or {}
-    code = int(current.get("weather_code") or 0)
-    precip_now = current.get("precipitation") or current.get("rain") or 0
-    daily_precip = daily.get("precipitation_sum") or []
+    def window(name, hours=6):
+        values = (hourly.get(name) or [])[start:start + hours]
+        return [float(value) for value in values if value is not None]
+
     daily_times = daily.get("time") or []
-    today_rainfall = 0.0
-    if isinstance(daily_precip, list) and daily_precip:
-        # Home page uses the real daily rainfall total, not the current instant rain rate.
-        try:
-            current_day = str((current.get("time") or "")[:10])
-            if current_day and isinstance(daily_times, list) and current_day in daily_times:
-                today_rainfall = float(daily_precip[daily_times.index(current_day)] or 0)
-            else:
-                today_rainfall = float(daily_precip[-1] or 0)
-        except Exception:
-            today_rainfall = 0.0
-    monthly_rainfall = 0.0
-    if isinstance(daily_precip, list):
-        monthly_rainfall = round(sum(float(x or 0) for x in daily_precip[-31:]), 2)
-    # Do not multiply the current rain rate as a monthly fallback.
-    # Keep 0.0 when the live daily series genuinely reports no rain.
-    hourly_precip = hourly.get("precipitation") or []
-    hourly_prob = hourly.get("precipitation_probability") or []
-    next_6h_rain = sum(float(x or 0) for x in hourly_precip[:6]) if isinstance(hourly_precip, list) else 0
-    max_rain_prob = max([float(x or 0) for x in hourly_prob[:6]], default=0) if isinstance(hourly_prob, list) else 0
-
+    daily_rain = daily.get("precipitation_sum") or []
+    by_day = dict(zip(daily_times, daily_rain))
+    today = now.date()
+    today_rain = by_day.get(today.isoformat())
+    past_rain = [by_day.get((today - timedelta(days=i)).isoformat()) for i in range(1, 31)]
+    monthly_rain = round(sum(float(v) for v in past_rain), 2) if all(v is not None for v in past_rain) else None
+    next_6h_rain = sum(window("precipitation"))
+    max_rain_prob = max(window("precipitation_probability"), default=0)
     rainfall_status = "Low"
     if next_6h_rain >= 20 or max_rain_prob >= 80:
         rainfall_status = "High"
     elif next_6h_rain >= 5 or max_rain_prob >= 50:
         rainfall_status = "Moderate"
-
+    wind_kmh = current.get("wind_speed_10m")
+    code = current.get("weather_code")
     return {
         "latitude": lat,
         "longitude": lon,
         "temperature_c": current.get("temperature_2m"),
         "live_humidity": current.get("relative_humidity_2m"),
-        "rainfall_mm": monthly_rainfall,
-        "rainfall_monthly_mm": monthly_rainfall,
-        "rainfall_today_mm": round(today_rainfall, 2),
-        "today_rainfall_mm": round(today_rainfall, 2),
-        "current_precipitation_mm": precip_now,
+        "rainfall_mm": monthly_rain,
+        "rainfall_monthly_mm": monthly_rain,
+        "monthly_rainfall_mm": monthly_rain,
+        "rainfall_30d_mm": monthly_rain,
+        "rainfall_today_mm": today_rain,
+        "today_rainfall_mm": today_rain,
+        "daily_rainfall_mm": today_rain,
+        "current_precipitation_mm": current.get("precipitation", current.get("rain")),
+        "rain_next_3h_mm": round(sum(window("precipitation", 3)), 2),
         "rain_next_6h_mm": round(next_6h_rain, 2),
+        "rain_probability_next_3h": max(window("precipitation_probability", 3), default=0),
         "rain_probability_next_6h": round(max_rain_prob, 1),
         "rainfall_status": rainfall_status,
-        "wind_speed_ms": current.get("wind_speed_10m"),
+        "wind_speed_kmh": wind_kmh,
+        "wind_speed_ms": float(wind_kmh) / 3.6 if wind_kmh is not None else None,
+        "max_wind_next_6h_kmh": max(window("wind_speed_10m"), default=0),
+        "max_temp_next_6h_c": max(window("temperature_2m"), default=0),
+        "weather_codes_next_6h": [int(v) for v in window("weather_code")],
         "cloud_cover_pct": current.get("cloud_cover"),
         "weather_code": code,
         "weather_description": WEATHER_CODE_TEXT.get(code, "Weather data available"),
-        "weather_updated_at": current.get("time") or datetime.now(timezone.utc).isoformat(),
+        "weather_updated_at": current_time,
         "weather_source": "Open-Meteo",
         "weather_is_realtime": True,
     }
@@ -437,7 +403,7 @@ def flash(request: Request, message: str, category: str = "info") -> None:
 
 
 def render_template(request: Request, template: str, context: Optional[Dict[str, Any]] = None):
-    ctx = {"request": request, "google_oauth_enabled": google_oauth_enabled()}
+    ctx = {"request": request}
     if context:
         ctx.update(context)
     # Make Flask-style flash work for the current request.
@@ -463,9 +429,60 @@ def generate_verification_code() -> str:
 
 
 def send_verification_email(email: str, code: str) -> bool:
-    """Legacy placeholder kept for older web routes. Mobile now uses Firebase email links."""
-    print(f"[LEGACY EMAIL CODE DISABLED] Firebase handles email verification for {email}.")
-    return False
+    """Send a real verification-code email via SMTP (Gmail by default).
+
+    Configure with these env vars on Render (or wherever the backend runs):
+      SMTP_HOST      (default: smtp.gmail.com)
+      SMTP_PORT      (default: 587)
+      SMTP_USER      the sending Gmail address, e.g. geosustain.app@gmail.com
+      SMTP_PASSWORD  a Gmail "app password" (NOT the regular account password —
+                      Gmail requires 2-Step Verification enabled, then
+                      generate one at https://myaccount.google.com/apppasswords)
+      SMTP_FROM      (optional) display "from" address, defaults to SMTP_USER
+
+    Returns False (never raises) on any failure, so a transient email outage
+    degrades gracefully — the caller can offer "resend" rather than crash.
+    """
+    smtp_host = os.getenv("SMTP_HOST", "smtp.gmail.com")
+    smtp_port = int(os.getenv("SMTP_PORT", "587"))
+    smtp_user = os.getenv("SMTP_USER", "").strip()
+    smtp_password = os.getenv("SMTP_PASSWORD", "").strip()
+    smtp_from = os.getenv("SMTP_FROM", smtp_user).strip()
+
+    if not smtp_user or not smtp_password:
+        print(f"[EMAIL NOT SENT] SMTP_USER/SMTP_PASSWORD not configured — verification code for {email} was not delivered.")
+        return False
+
+    message = EmailMessage()
+    message["Subject"] = "Your GeoSustain verification code"
+    message["From"] = smtp_from
+    message["To"] = email
+    message.set_content(
+        f"Your GeoSustain verification code is: {code}\n\n"
+        f"This code expires in {VERIFICATION_CODE_MAX_AGE_MINUTES} minutes.\n\n"
+        "If you did not request this, you can safely ignore this email."
+    )
+    message.add_alternative(
+        f"""\
+        <div style="font-family: sans-serif; max-width: 420px; margin: auto;">
+          <h2 style="color:#08733F;">GeoSustain</h2>
+          <p>Your verification code is:</p>
+          <p style="font-size: 28px; font-weight: 700; letter-spacing: 4px;">{code}</p>
+          <p style="color:#666; font-size: 13px;">This code expires in {VERIFICATION_CODE_MAX_AGE_MINUTES} minutes. If you did not request this, you can safely ignore this email.</p>
+        </div>
+        """,
+        subtype="html",
+    )
+
+    try:
+        with smtplib.SMTP(smtp_host, smtp_port, timeout=10) as server:
+            server.starttls()
+            server.login(smtp_user, smtp_password)
+            server.send_message(message)
+        return True
+    except Exception as exc:
+        print(f"Sending verification email to {email} failed: {exc}")
+        return False
 
 def issue_and_send_verification_code(email: str) -> bool:
     code = generate_verification_code()
@@ -486,16 +503,6 @@ def sign_in_user(request: Request, user) -> None:
     request.session["user_id"] = user["id"]
     request.session["username"] = user["username"]
     request.session["role"] = user["role"]
-
-
-def google_oauth_enabled() -> bool:
-    return bool(GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET)
-
-
-def google_redirect_uri(request: Request) -> str:
-    if GOOGLE_REDIRECT_URI:
-        return GOOGLE_REDIRECT_URI
-    return str(request.url_for("google_callback"))
 
 
 def current_user(request: Request):
@@ -825,7 +832,9 @@ def fetch_multi_year_monthly_baseline(lat: float, lon: float, month: int) -> Dic
             'longitude': lon, 'latitude': lat,
             'start': start_year, 'end': end_year, 'format': 'JSON',
         }
-        payload = requests.get(url, params=params, timeout=12).json()
+        response = requests.get(url, params=params, timeout=12)
+        response.raise_for_status()
+        payload = response.json()
         parameter = payload.get('properties', {}).get('parameter', {})
         month_key = f'{int(month):02d}'
         def month_values(name):
@@ -972,11 +981,11 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
                 "lat": float(sample_lat),
                 "lng": float(sample_lon),
                 "ndvi": sample.get("ndvi"),
-                "crop_suitability": sample.get("crop_compatibility_pct") or sample.get("suitability_pct"),
+                "crop_suitability": sample.get("crop_compatibility_pct") if sample.get("crop_compatibility_pct") is not None else sample.get("suitability_pct"),
                 "soil_ph": sample.get("soil_ph"),
                 "rainfall": sample.get("rainfall_mm"),
                 "elevation": sample.get("elevation_m"),
-                "slope": sample.get("slope_pct") or sample.get("slope"),
+                "slope": sample.get("slope_pct") if sample.get("slope_pct") is not None else sample.get("slope"),
             })
         result["heatmap_grid"] = heatmap_grid
     else:
@@ -1036,7 +1045,6 @@ class RegisterBody(BaseModel):
     email: str
     password: str = Field(min_length=6)
     role: str = "farmer"
-    id_token: Optional[str] = None
 
 
 class LoginBody(BaseModel):
@@ -1046,11 +1054,6 @@ class LoginBody(BaseModel):
 
 class EmailOnlyBody(BaseModel):
     email: str
-
-
-class GoogleLoginBody(BaseModel):
-    id_token: str
-    role: Optional[str] = 'farmer'
 
 
 class AnalysisBody(BaseModel):
@@ -1176,10 +1179,10 @@ async def register_submit(request: Request):
         if sent:
             flash(request, "Account created! We sent a verification code to your email.", "success")
         else:
-            flash(request, "Account created! Firebase email verification is enabled, so check the server console for the test code.", "warning")
+            flash(request, "Account created, but the verification email could not be sent — email delivery may not be configured on the server yet. Please try resending.", "warning")
     except Exception as exc:
         print(f"Failed to send verification email: {exc}")
-        flash(request, "Account created, but email verification should be handled through Firebase in the mobile app.", "warning")
+        flash(request, "Account created, but something went wrong sending your verification email. Please try resending.", "warning")
     return RedirectResponse(f"/verify-email?email={urllib.parse.quote(email)}", status_code=302)
 
 
@@ -1238,98 +1241,11 @@ async def resend_verification(request: Request):
         return RedirectResponse("/login", status_code=302)
     try:
         sent = issue_and_send_verification_code(email)
-        flash(request, "We sent a new verification code." if sent else "New test code printed in the server console because Firebase email verification is enabled.", "success" if sent else "warning")
+        flash(request, "We sent a new verification code." if sent else "Could not send the email right now — email delivery may not be configured on the server. Please try again shortly.", "success" if sent else "warning")
     except Exception as exc:
         print(f"Failed to resend verification email: {exc}")
-        flash(request, "Firebase email verification is handled by the mobile app.", "error")
+        flash(request, "Something went wrong sending your verification email. Please try again.", "error")
     return render_template(request, "verify_email.html", {"email": email})
-
-
-@app.get("/auth/google", name="google_login")
-def google_login(request: Request):
-    if not google_oauth_enabled():
-        flash(request, "Google sign-in is not configured yet. Add GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in Render.", "warning")
-        return RedirectResponse("/login", status_code=302)
-    state = secrets.token_urlsafe(24)
-    request.session["google_oauth_state"] = state
-    params = {
-        "client_id": GOOGLE_CLIENT_ID,
-        "redirect_uri": google_redirect_uri(request),
-        "response_type": "code",
-        "scope": "openid email profile",
-        "state": state,
-        "prompt": "select_account",
-    }
-    return RedirectResponse("https://accounts.google.com/o/oauth2/v2/auth?" + urllib.parse.urlencode(params), status_code=302)
-
-
-@app.get("/auth/google/callback", name="google_callback")
-def google_callback(request: Request, code: str = "", state: str = "", error: str = ""):
-    if error:
-        flash(request, "Google sign-in was cancelled or failed.", "error")
-        return RedirectResponse("/login", status_code=302)
-    if not state or state != request.session.get("google_oauth_state"):
-        flash(request, "Google sign-in session expired. Please try again.", "error")
-        return RedirectResponse("/login", status_code=302)
-    if not code:
-        flash(request, "Google did not return an authorization code.", "error")
-        return RedirectResponse("/login", status_code=302)
-
-    data = urllib.parse.urlencode({
-        "code": code,
-        "client_id": GOOGLE_CLIENT_ID,
-        "client_secret": GOOGLE_CLIENT_SECRET,
-        "redirect_uri": google_redirect_uri(request),
-        "grant_type": "authorization_code",
-    }).encode("utf-8")
-    try:
-        req = urllib.request.Request("https://oauth2.googleapis.com/token", data=data, method="POST")
-        req.add_header("Content-Type", "application/x-www-form-urlencoded")
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            token_payload = json.loads(resp.read().decode("utf-8"))
-        id_token = token_payload.get("id_token")
-        info_req = urllib.request.Request("https://oauth2.googleapis.com/tokeninfo?id_token=" + urllib.parse.quote(id_token or ""))
-        with urllib.request.urlopen(info_req, timeout=15) as resp:
-            profile = json.loads(resp.read().decode("utf-8"))
-    except Exception as exc:
-        print(f"Google OAuth error: {exc}")
-        flash(request, "Google sign-in failed. Please try again.", "error")
-        return RedirectResponse("/login", status_code=302)
-
-    if profile.get("aud") != GOOGLE_CLIENT_ID:
-        flash(request, "Google sign-in failed because the client ID did not match.", "error")
-        return RedirectResponse("/login", status_code=302)
-
-    email = str(profile.get("email", "")).strip().lower()
-    google_sub = str(profile.get("sub", "")).strip()
-    name = str(profile.get("name") or email.split("@")[0]).strip()
-    if not email or not google_sub:
-        flash(request, "Google account did not provide an email address.", "error")
-        return RedirectResponse("/login", status_code=302)
-
-    user = get_user_by_google_sub(google_sub)
-    if not user:
-        existing = get_user_by_email(email)
-        if existing:
-            user = link_google_to_user(existing["id"], google_sub)
-        else:
-            base_username = ''.join(ch for ch in name.lower().replace(' ', '_') if ch.isalnum() or ch == '_')[:32] or email.split('@')[0]
-            username = base_username
-            suffix = 1
-            while get_user_by_username(username):
-                suffix += 1
-                username = f"{base_username[:28]}_{suffix}"
-            requested_role = (body.role or 'farmer').strip().lower()
-            if requested_role not in ('farmer', 'analyst', 'planner'):
-                requested_role = 'farmer'
-            user = create_user(username, email, hash_password(secrets.token_urlsafe(32)), requested_role, email_verified=True, auth_provider="google", google_sub=google_sub)
-    if not user:
-        flash(request, "Could not create or link your Google account.", "error")
-        return RedirectResponse("/login", status_code=302)
-
-    request.session.pop("google_oauth_state", None)
-    sign_in_user(request, user)
-    return RedirectResponse("/dashboard", status_code=302)
 
 
 @app.get("/logout", name="logout")
@@ -1403,49 +1319,23 @@ async def analysis(request: Request):
 # ---------------------------------------------------------------------------
 @app.post("/api/mobile/register", status_code=201)
 def mobile_register(body: RegisterBody):
-    return JSONResponse({
-        "error": "This app now uses Firebase email verification links. Please register through Firebase in the mobile app.",
-        "firebase_email_verification": True,
-    }, status_code=400)
-
-
-@app.post("/api/mobile/firebase-email-register", status_code=201)
-def mobile_firebase_email_register(body: RegisterBody):
     role = body.role if body.role in ("farmer", "analyst", "planner") else "farmer"
     username = body.username.strip()
     email = body.email.lower().strip()
 
-    # SECURITY: this endpoint used to trust the client's bare word that the
-    # email had been verified through a Firebase link, with no proof at all
-    # — anyone who knew a user's email could call it directly and receive a
-    # fully authenticated session token, no password required (account
-    # takeover). It now requires a real Firebase ID token and verifies it
-    # server-side (signature, audience, and email_verified) before treating
-    # the email as confirmed.
-    if not verify_firebase_email_verified_token(body.id_token or "", email):
-        return JSONResponse(
-            {"error": "Could not verify your Firebase email verification. Please verify your email and try again."},
-            status_code=401,
-        )
-
     existing = get_user_by_email(email)
-    if existing:
-        if not existing.get("email_verified"):
-            verified_user = mark_email_verified(email) or existing
-            return {"user": user_public_dict(verified_user), "token": generate_mobile_token(verified_user), "message": "Email verified."}
-        return {"user": user_public_dict(existing), "token": generate_mobile_token(existing), "message": "Account already exists."}
+    if existing and existing.get("email_verified"):
+        return JSONResponse({"error": "An account with this email already exists. Please log in instead."}, status_code=409)
 
-    user = create_user(
-        username,
-        email,
-        hash_password(body.password),
-        role,
-        email_verified=True,
-        auth_provider="firebase_email",
-    )
-    if not user:
-        return JSONResponse({"error": "Could not create verified account."}, status_code=500)
-    return {"user": user_public_dict(user), "token": generate_mobile_token(user), "message": "Firebase email verified and account created."}
+    code, code_hash, expires_at = make_verification_code_payload()
+    upsert_pending_registration(username, email, hash_password(body.password), role, code_hash, expires_at)
+    sent = send_verification_email(email, code)
+    return {
+        "message": "We sent a verification code to your email." if sent
+        else "Your account is pending, but the verification email could not be sent. Please try resending it.",
+        "email": email,
+        "email_sent": sent,
+    }
 
 
 @app.post("/api/mobile/login")
@@ -1456,16 +1346,11 @@ def mobile_login(body: LoginBody):
     if user.get("is_active") is False:
         return JSONResponse({"error": "This account is deactivated."}, status_code=403)
     if not user.get("email_verified"):
-        # Legacy PostgreSQL-only accounts are allowed to log in so users do not lose old accounts
-        # after switching new registrations to Firebase email verification.
-        provider = (user.get("auth_provider") or "email").lower()
-        if provider in ("firebase_email", "firebase", "google"):
-            return JSONResponse({"error": "Please verify your email through the Firebase verification link first.", "requires_verification": True}, status_code=403)
-        try:
-            user = mark_email_verified(body.email.lower()) or user
-        except Exception:
-            pass
-    return {"user": user_public_dict(user), "token": generate_mobile_token(user), "legacy_postgres_login": True}
+        return JSONResponse(
+            {"error": "Please verify your email first. Check your inbox for the verification code.", "requires_verification": True},
+            status_code=403,
+        )
+    return {"user": user_public_dict(user), "token": generate_mobile_token(user)}
 
 
 
@@ -1522,83 +1407,36 @@ def mobile_verify_email(body: VerifyEmailBody):
     return {"user": user_public_dict(verified_user), "token": generate_mobile_token(verified_user)}
 
 
-def _send_mobile_verification_response(email: str):
-    return JSONResponse({
-        "error": "GeoSustain now uses Firebase email verification links instead of backend email codes.",
-        "firebase_email_verification": True,
-    }, status_code=410)
+def _resend_verification_code(email: str):
+    email = email.lower().strip()
+    pending = get_pending_registration(email)
+    if pending:
+        code, code_hash, expires_at = make_verification_code_payload()
+        upsert_pending_registration(
+            pending["username"], email, pending["password_hash"],
+            pending.get("role") or "farmer", code_hash, expires_at,
+        )
+        sent = send_verification_email(email, code)
+        return {"message": "Verification code resent." if sent else "Could not send the email right now. Please try again shortly.", "email_sent": sent}
+
+    user = get_user_by_email(email)
+    if not user:
+        return JSONResponse({"error": "No pending registration or account found for this email."}, status_code=404)
+    if user.get("email_verified"):
+        return {"message": "This email is already verified.", "already_verified": True}
+    sent = issue_and_send_verification_code(email)
+    return {"message": "Verification code resent." if sent else "Could not send the email right now. Please try again shortly.", "email_sent": sent}
 
 
 @app.post("/api/mobile/send-verification")
 def mobile_send_verification(body: EmailOnlyBody):
-    return _send_mobile_verification_response(body.email)
+    return _resend_verification_code(body.email)
 
 
 @app.post("/api/mobile/resend-verification")
 def mobile_resend_verification(body: EmailOnlyBody):
-    return _send_mobile_verification_response(body.email)
+    return _resend_verification_code(body.email)
 
-
-@app.post("/api/mobile/verify-code")
-def mobile_verify_code_alias(body: VerifyEmailBody):
-    return JSONResponse({
-        "error": "Backend OTP codes were removed. Please use Firebase email verification links.",
-        "firebase_email_verification": True,
-    }, status_code=410)
-
-
-@app.post("/api/mobile/google-login")
-def mobile_google_login(body: GoogleLoginBody):
-    token = body.id_token.strip()
-    if not token:
-        return JSONResponse({"error": "Missing Google token."}, status_code=400)
-    try:
-        info_req = urllib.request.Request("https://oauth2.googleapis.com/tokeninfo?id_token=" + urllib.parse.quote(token))
-        with urllib.request.urlopen(info_req, timeout=12) as resp:
-            profile = json.loads(resp.read().decode("utf-8"))
-    except Exception as exc:
-        print(f"Mobile Firebase Google token check failed: {exc}")
-        return JSONResponse({"error": "Google sign-in token could not be verified."}, status_code=401)
-
-    allowed_audiences = {x for x in [GOOGLE_CLIENT_ID, FIREBASE_WEB_CLIENT_ID] if x}
-    aud = str(profile.get("aud", "")).strip()
-    if allowed_audiences and aud not in allowed_audiences:
-        return JSONResponse({"error": "Google client ID did not match this GeoSustain project."}, status_code=401)
-
-    email = str(profile.get("email", "")).strip().lower()
-    google_sub = str(profile.get("sub", "")).strip()
-    given_name = str(profile.get("given_name") or "").strip()
-    full_name = str(profile.get("name") or "").strip()
-    first_name = given_name or (full_name.split()[0] if full_name else email.split("@")[0])
-    if not email or not google_sub:
-        return JSONResponse({"error": "Google account did not provide an email address."}, status_code=400)
-
-    user = get_user_by_google_sub(google_sub)
-    if not user:
-        existing = get_user_by_email(email)
-        if existing:
-            user = link_google_to_user(existing["id"], google_sub)
-            # Keep a real name for previously-created placeholder accounts when possible.
-            try:
-                if str(existing.get("username") or "").lower() in ("user", "farmer", email.split("@")[0].lower()):
-                    update_user_profile(existing["id"], username=first_name[:80])
-                    user = get_user_by_id(existing["id"])
-            except Exception:
-                pass
-        else:
-            base = ''.join(ch for ch in first_name if ch.isalnum() or ch in " _-").strip()[:32] or email.split('@')[0]
-            username = base
-            suffix = 1
-            while get_user_by_username(username):
-                suffix += 1
-                username = f"{base}{suffix}"[:40]
-            requested_role = (body.role or 'farmer').strip().lower()
-            if requested_role not in ('farmer', 'analyst', 'planner'):
-                requested_role = 'farmer'
-            user = create_user(username, email, hash_password(secrets.token_urlsafe(32)), requested_role, email_verified=True, auth_provider="google", google_sub=google_sub)
-    if not user:
-        return JSONResponse({"error": "Could not create or link Google account."}, status_code=500)
-    return {"user": user_public_dict(user), "token": generate_mobile_token(user)}
 
 @app.get("/api/mobile/me")
 def mobile_me(user=Depends(get_api_user)):
@@ -1805,7 +1643,7 @@ def mobile_update_farm(farm_id: int, body: FarmUpdateBody, user=Depends(get_api_
         ok, err = validate_farm_polygon(body.polygon)
         if not ok:
             raise HTTPException(status_code=400, detail=err)
-    row=update_farm_parcel(user['id'],farm_id,**body.dict(exclude_none=True))
+    row=update_farm_parcel(user['id'],farm_id,**body.model_dump(exclude_none=True))
     if not row: raise HTTPException(status_code=404, detail='Farm parcel not found.')
     return {'farm':row}
 
@@ -1879,7 +1717,7 @@ def planner_verify(body: VerifySessionBody, planner=Depends(require_planner)):
 @app.post("/api/mobile/analysis")
 def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user)):
     try:
-        result, analysis_source = build_analysis_result(body=body.dict(exclude_none=True))
+        result, analysis_source = build_analysis_result(body=body.model_dump(exclude_none=True))
     except ValueError as e:
         return JSONResponse({"error": str(e)}, status_code=400)
     except RuntimeError as e:

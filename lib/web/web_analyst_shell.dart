@@ -1,4 +1,4 @@
-part of geosustain_mobile;
+part of '../main.dart';
 
 class WebAnalystDashboard extends StatefulWidget {
   final AnalysisState state;
@@ -44,7 +44,7 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
           Expanded(
             child: ListenableBuilder(
               listenable: state,
-              builder: (_, __) => _WebPageFrame(
+              builder: (_, _) => _WebPageFrame(
                 page: page,
                 state: state,
                 popupVisible: popupVisible,
@@ -66,7 +66,12 @@ class _WebSidebar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onSelect;
   final VoidCallback logout;
-  const _WebSidebar({required this.state, required this.selectedIndex, required this.onSelect, required this.logout});
+  const _WebSidebar({
+    required this.state,
+    required this.selectedIndex,
+    required this.onSelect,
+    required this.logout,
+  });
 
   static const _baseItems = [
     (Icons.dashboard_rounded, 'Dashboard'),
@@ -80,55 +85,148 @@ class _WebSidebar extends StatelessWidget {
   static const _settingsItem = (Icons.settings_rounded, 'Settings');
 
   static List<(IconData, String)> itemsFor(bool isPlanner) => [
-        ..._baseItems,
-        if (isPlanner) _plannerItem,
-        _settingsItem,
-      ];
+    ..._baseItems,
+    if (isPlanner) _plannerItem,
+    _settingsItem,
+  ];
 
   @override
   Widget build(BuildContext context) {
-    final name = '${state.currentUser?['username'] ?? state.currentUser?['name'] ?? 'Analyst'}';
+    final name =
+        '${state.currentUser?['username'] ?? state.currentUser?['name'] ?? 'Analyst'}';
     return Container(
       width: 280,
       decoration: const BoxDecoration(
-        gradient: LinearGradient(colors: [Color(0xFF064E2E), Color(0xFF08733F)], begin: Alignment.topCenter, end: Alignment.bottomCenter),
+        gradient: LinearGradient(
+          colors: [Color(0xFF064E2E), Color(0xFF08733F)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
       ),
       padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-      child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Row(children: [Icon(Icons.eco_rounded, color: Colors.white, size: 34), SizedBox(width: 12), Text('GeoSustain', style: TextStyle(color: Colors.white, fontSize: 28, fontWeight: FontWeight.w900))]),
-        const SizedBox(height: 34),
-        Row(children: [
-          CircleAvatar(radius: 26, backgroundColor: Colors.white.withOpacity(.2), child: Text(name.isEmpty ? 'A' : name[0].toUpperCase(), style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 20))),
-          const SizedBox(width: 12),
-          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            Text(name, maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)),
-            const Text('Agricultural Planning Agricultural Planning Analyst', style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.w700)),
-          ])),
-        ]),
-        const SizedBox(height: 28),
-        Expanded(child: ListView.separated(
-          itemCount: itemsFor(state.isPlanner).length,
-          separatorBuilder: (_, __) => const SizedBox(height: 6),
-          itemBuilder: (_, i) {
-            final rowItems = itemsFor(state.isPlanner);
-            final selected = selectedIndex == i;
-            return InkWell(
-              borderRadius: BorderRadius.circular(14),
-              onTap: () => onSelect(i),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                decoration: BoxDecoration(color: selected ? Colors.white.withOpacity(.20) : Colors.transparent, borderRadius: BorderRadius.circular(14)),
-                child: Row(children: [Icon(rowItems[i].$1, color: Colors.white, size: 22), const SizedBox(width: 14), Expanded(child: Text(rowItems[i].$2, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900)))]),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.eco_rounded, color: Colors.white, size: 34),
+              SizedBox(width: 12),
+              Text(
+                'GeoSustain',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-            );
-          },
-        )),
-        InkWell(
-          borderRadius: BorderRadius.circular(14),
-          onTap: logout,
-          child: Container(padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14), child: const Row(children: [Icon(Icons.logout_rounded, color: Colors.white), SizedBox(width: 14), Text('Logout', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900))])),
-        ),
-      ]),
+            ],
+          ),
+          const SizedBox(height: 34),
+          Row(
+            children: [
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: Colors.white.withValues(alpha: .2),
+                child: Text(
+                  name.isEmpty ? 'A' : name[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const Text(
+                      'Agricultural Planning Agricultural Planning Analyst',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 28),
+          Expanded(
+            child: ListView.separated(
+              itemCount: itemsFor(state.isPlanner).length,
+              separatorBuilder: (_, _) => const SizedBox(height: 6),
+              itemBuilder: (_, i) {
+                final rowItems = itemsFor(state.isPlanner);
+                final selected = selectedIndex == i;
+                return InkWell(
+                  borderRadius: BorderRadius.circular(14),
+                  onTap: () => onSelect(i),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 14,
+                    ),
+                    decoration: BoxDecoration(
+                      color: selected
+                          ? Colors.white.withValues(alpha: .20)
+                          : Colors.transparent,
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(rowItems[i].$1, color: Colors.white, size: 22),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Text(
+                            rowItems[i].$2,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: logout,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: const Row(
+                children: [
+                  Icon(Icons.logout_rounded, color: Colors.white),
+                  SizedBox(width: 14),
+                  Text(
+                    'Logout',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -141,13 +239,26 @@ class _WebPageFrame extends StatelessWidget {
   final Future<void> Function() onAnalyze;
   final ValueChanged<String> message;
   final ValueChanged<int> onNavigate;
-  const _WebPageFrame({required this.page, required this.state, required this.popupVisible, required this.onClosePopup, required this.onAnalyze, required this.message, required this.onNavigate});
+  const _WebPageFrame({
+    required this.page,
+    required this.state,
+    required this.popupVisible,
+    required this.onClosePopup,
+    required this.onAnalyze,
+    required this.message,
+    required this.onNavigate,
+  });
 
   @override
   Widget build(BuildContext context) {
     final isPlanner = state.isPlanner;
     final titles = [
-      'Dashboard', 'Map Analysis', 'Analyze Area', 'Analysis History', 'Reports', 'Crop Trends',
+      'Dashboard',
+      'Map Analysis',
+      'Analyze Area',
+      'Analysis History',
+      'Reports',
+      'Crop Trends',
       if (isPlanner) 'Verification Queue',
       'Settings',
     ];
@@ -158,16 +269,28 @@ class _WebPageFrame extends StatelessWidget {
       'Review previously analyzed land records with dates and recommendations',
       'Open and export generated suitability reports',
       'Compare crop recommendation frequencies and suitability patterns',
-      if (isPlanner) 'Review farmer-submitted land analyses and approve or reject them',
+      if (isPlanner)
+        'Review farmer-submitted land analyses and approve or reject them',
       'Manage dashboard preferences and account settings',
     ];
     final index = page.clamp(0, titles.length - 1);
 
     Widget body;
     if (page == 0) {
-      body = WebDashboardScreen(state: state, onStartAnalyze: () => onNavigate(2), onOpenMapAnalysis: () => onNavigate(1), onOpenHistory: () => onNavigate(3), onOpenReports: () => onNavigate(4));
+      body = WebDashboardScreen(
+        state: state,
+        onStartAnalyze: () => onNavigate(2),
+        onOpenMapAnalysis: () => onNavigate(1),
+        onOpenHistory: () => onNavigate(3),
+        onOpenReports: () => onNavigate(4),
+      );
     } else if (page == 1) {
-      body = WebMapScreen(state: state, popupVisible: popupVisible, onClosePopup: onClosePopup, onGoToAnalyzeArea: () => onNavigate(2));
+      body = WebMapScreen(
+        state: state,
+        popupVisible: popupVisible,
+        onClosePopup: onClosePopup,
+        onGoToAnalyzeArea: () => onNavigate(2),
+      );
     } else if (page == 2) {
       body = WebAnalyzeScreen(state: state, onAnalyze: onAnalyze);
     } else if (page == 3) {
@@ -191,7 +314,12 @@ class _WebPageFrame extends StatelessWidget {
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 if (page != 0) ...[
-                  _WebHeader(title: titles[index], subtitle: subtitles[index], state: state, message: message),
+                  _WebHeader(
+                    title: titles[index],
+                    subtitle: subtitles[index],
+                    state: state,
+                    message: message,
+                  ),
                   const SizedBox(height: 18),
                 ],
                 body,

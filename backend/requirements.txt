@@ -7,8 +7,9 @@ psycopg2-binary
 earthengine-api
 joblib
 requests
-scikit-learn
+scikit-learn==1.8.0
 pandas
 itsdangerous
 jinja2
 google-auth
+python-dotenv

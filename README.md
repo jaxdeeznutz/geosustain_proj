@@ -1,138 +1,75 @@
-# GeoSustain — Setup & Run Guide
+# GeoSustain
 
-AI-Driven Geospatial Decision Support System for Sustainable Landscape Management  
-**Location:** Panabo City, Davao del Norte, Philippines
+AI-driven geospatial decision support for sustainable landscape management in Panabo City.
 
----
+## Run the current application
 
-## Prerequisites
+The current application uses **Flutter + FastAPI**, with PostgreSQL/Supabase, Google Earth Engine, OpenWeather, Open-Meteo and NASA POWER. `backend/app.py` is an older Flask entry point; the Flutter app and both Render configurations use `backend/fastapi_app.py`.
 
-- Python 3.10+
-- PostgreSQL 14+ (running locally or on a server)
-- Google Earth Engine account (authenticated)
+Prerequisites: Flutter 3.41.9 / Dart 3.11.5 or a compatible newer SDK, Python 3.11+, and your existing database and provider configuration.
 
----
+From the project root:
 
-## 1. Create the PostgreSQL Database
-
-Open pgAdmin or psql and run:
-
-```sql
-CREATE DATABASE geosustain_db;
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+python -m pip install -r backend/requirements.txt
+python -m uvicorn fastapi_app:app --app-dir backend --host 0.0.0.0 --port 8000
 ```
 
-The app creates all tables automatically on first run — you do not need to run any SQL manually.
+Open `http://127.0.0.1:8000/health` to check the server and `/docs` for the API schema. Startup initializes the configured database as in the original project. Use a development database for local testing.
 
----
+In a second terminal:
 
-## 2. Configure Environment Variables
-
-Copy the example file and edit it:
-
-```bash
-cp .env.example .env
+```powershell
+flutter pub get
+flutter run -d chrome --dart-define=API_BASE_URL=http://127.0.0.1:8000
 ```
 
-Edit `.env`:
+For the Android emulator, use `http://10.0.2.2:8000`; for a physical phone, use your computer's reachable LAN address. Without `API_BASE_URL`, the app continues to use `https://geosustain.onrender.com`, exactly as the original.
 
-```
-DATABASE_URL=postgresql://postgres:YOUR_PASSWORD@localhost:5432/geosustain_db
-SECRET_KEY=any-long-random-string
-OPENWEATHER_API_KEY=your-openweather-key
-```
+The Windows shortcuts remain available: `start_backend.bat` and `run_flutter.bat`. The latter runs against the existing online backend by default.
 
----
+## Configuration
 
-## 3. Install Python Dependencies
+The backend now loads `backend/.env`; deployment environment variables take precedence. The private delivered ZIP includes the OpenWeather key carried over from your original source in this Git-ignored file. Keep it private. No database password, email credentials or Earth Engine service-account key was supplied or added.
 
-```bash
-pip install -r requirements.txt
-```
+Use `backend/.env.example` as a guide and retain your existing values for:
 
----
+- `DATABASE_URL`: existing PostgreSQL/Supabase database.
+- `SECRET_KEY`: your existing strong deployment signing secret. Changing it invalidates existing sessions/tokens.
+- `OPENWEATHER_API_KEY`: existing weather key.
+- `GEE_PROJECT_ID` and `GEE_SERVICE_ACCOUNT_JSON`, or locally authenticated Earth Engine credentials.
+- Your existing OTP email settings; see `OTP_RENDER_SETUP.md`.
 
-## 4. Authenticate Google Earth Engine
+**Before deploying the cleaned backend to Render, ensure `OPENWEATHER_API_KEY` is configured in Render Environment.** The local `.env` is intentionally ignored by Git. The old public source-code fallback key has been removed. Consider rotating that previously embedded key separately.
 
-Run once in your terminal:
+No changes were deployed during this review. Keep your current Render environment and database settings. Root `render.yaml` and `backend/render.yaml` are retained for the two existing repository-root layouts.
 
-```bash
-earthengine authenticate
-```
+## Verification
 
-Follow the browser prompt. Your credentials are saved locally and reused automatically.
-
----
-
-## 5. Run the App
-
-```bash
-python app.py
+```powershell
+flutter analyze
+flutter test
+flutter build web
+python -m pip install -r backend/requirements-dev.txt
+python -m pytest backend/tests -q
+python -m ruff check backend --select F
 ```
 
-Open your browser at: **http://127.0.0.1:5000**
+Backend regression tests replace database and external-provider calls with controlled responses. They do not require or modify your production data. Flutter API tests use a mock HTTP client. The trained model and datasets are unchanged; scikit-learn is pinned to the model's recorded training version, 1.8.0.
 
----
+For the optional older Flask application, install `backend/requirements-legacy.txt` first. It is retained for compatibility and is not the supported entry point for the current farmer/analyst/admin workflow.
 
-## Project Structure
+## Project layout
 
-```
-geosustain/
-├── app.py                  # Flask routes (auth + analysis API)
-├── database.py             # PostgreSQL connection + all DB helpers
-├── rainfallDatasets.py     # GEE data collection + Random Forest inference
-├── train_model.py          # (Re)train the crop model if needed
-├── crop_model.pkl          # Trained Random Forest model
-├── Crop_recommendation.csv # Training dataset (22 crops)
-├── requirements.txt
-├── .env.example
-├── static/
-│   ├── app.js              # Frontend map + analysis logic
-│   ├── style.css           # Dashboard styles
-│   └── auth.css            # Login / register styles
-└── templates/
-    ├── login.html
-    ├── register.html
-    ├── index.html          # Main dashboard
-    └── history.html        # Past analyses table
-```
+- `lib/`: Flutter application, mobile screens and analyst/admin web screens.
+- `backend/fastapi_app.py`: active API and existing HTML routes.
+- `backend/database.py`: database schema and persistence helpers.
+- `backend/rainfallDatasets.py`: environmental data collection and model inference.
+- `backend/training/`, model files and CSVs: unchanged training/inference assets.
+- `backend/templates/` and `backend/static/`: still used by FastAPI; not dead files.
+- `backend/tests/` and `test/`: regression tests added during this cleanup.
+- `android/`, `web/`, `assets/`: platform configuration and application assets.
 
----
-
-## User Roles
-
-GeoSustain has three roles, and they have **different, backend-enforced permissions** — not shared access.
-
-| Role | Access |
-|------|--------|
-| `farmer` | Mobile app. Manages their own profile, farms/boundaries, runs polygon-based analyses, submits for verification, views their own results/reports. Cannot see or touch other Farmers' data, cannot verify submissions, cannot change roles. |
-| `agricultural_planning_analyst` | Web app. Reviews the Farmer verification queue, inspects submitted farm evidence, verifies/rejects submissions with notes. Cannot self-promote or assign roles. |
-| `super_admin` | Web app. Manages users and roles, crop/reference data, and system configuration. The only role allowed to change another user's role. |
-
-Role changes can **only** be made by a Super Administrator, through the admin user-management endpoint. No profile-update or registration request can set a user's own role to a privileged value — this is enforced on the backend regardless of what the client sends.
-
----
-
-## Key Fixes Applied (from original code)
-
-1. **Rainfall unit** — GEE CHIRPS daily mm is now multiplied × 30 to match the training dataset's monthly mm unit. This was the root cause of wrong crop predictions.
-2. **Potassium baseline** — K corrected from 250 → 50 (within banana optimal range 45–55 in dataset).
-3. **Full crop map** — all 22 dataset crops are now mapped to Panabo equivalents. Unmapped crops trigger a low-confidence advisory instead of showing "Apple" or "Grapes".
-4. **Top-3 recommendations** — the system returns the top 3 Panabo-suitable crops, not just one.
-5. **Suitability levels** — Highly Suitable / Moderately Suitable / Low Suitability labels added.
-6. **DB persistence** — every analysis is saved to PostgreSQL under the logged-in user's account.
-
-## Clean Folder Note
-
-Backend files were moved into the `backend/` folder to make the project easier to view in VS Code.
-
-Start backend on Windows:
-
-```bat
-start_backend.bat
-```
-
-Run Flutter:
-
-```bat
-run_flutter.bat
-```
+Historical panel-update notes are preserved for context. See `CLEANUP_REPORT.md` for the changes and validation limits.

@@ -14,10 +14,8 @@ try:
 except ImportError:
     CORS = None
 from database import (
-    init_db, create_user, get_user_by_email, get_user_by_id, get_user_by_username,
-    save_analysis_session, get_user_history, set_email_verification_code,
-    mark_email_verified, get_user_by_google_sub, link_google_to_user, update_user_profile,
-    upsert_pending_registration, get_pending_registration, delete_pending_registration,
+    init_db, create_user, get_user_by_email, get_user_by_id, save_analysis_session, get_user_history, set_email_verification_code,
+    mark_email_verified, upsert_pending_registration, get_pending_registration, delete_pending_registration,
 )
 from rainfallDatasets import analyze_location
 from functools import wraps

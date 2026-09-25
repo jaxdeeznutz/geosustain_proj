@@ -23,13 +23,6 @@
         {% endfor %}
       {% endwith %}
 
-      {% if google_oauth_enabled %}
-        <a class="btn-google" href="{{ url_for('google_login') }}">
-          <span class="google-mark">G</span> Sign up with Google
-        </a>
-        <div class="auth-divider"><span>or create with email</span></div>
-      {% endif %}
-
       <form method="POST" action="{{ url_for('register') }}" novalidate>
 
         <div class="field-row">

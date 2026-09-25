@@ -23,15 +23,6 @@
         {% endfor %}
       {% endwith %}
 
-      {% if google_oauth_enabled %}
-        <a class="btn-google" href="{{ url_for('google_login') }}">
-          <span class="google-mark">G</span> Continue with Google
-        </a>
-        <div class="auth-divider"><span>or sign in with email</span></div>
-      {% else %}
-        <div class="flash flash--info">Google sign-in button will appear after GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET are added in Render.</div>
-      {% endif %}
-
       <form method="POST" action="{{ url_for('login') }}" novalidate>
         <div class="field">
           <label for="email">Email Address</label>
