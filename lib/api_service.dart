@@ -1,7 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+
+class ApiException implements Exception {
+  final int statusCode;
+  final String message;
+  const ApiException(this.statusCode, this.message);
+  @override
+  String toString() => message;
+}
 
 class ApiService {
   // API base URL is injected when needed:
@@ -34,6 +43,13 @@ class ApiService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
+    for (final key
+        in prefs
+            .getKeys()
+            .where((k) => k.startsWith('geosustain_pending_'))
+            .toList()) {
+      await prefs.remove(key);
+    }
   }
 
   Map<String, dynamic> _decodeJson(http.Response response) {
@@ -94,12 +110,18 @@ class ApiService {
         .post(
           Uri.parse('$baseUrl/api/mobile/login'),
           headers: {'Content-Type': 'application/json'},
-          body: jsonEncode({'email': email, 'password': password}),
+          body: jsonEncode({
+            'email': email.trim().toLowerCase(),
+            'password': password,
+          }),
         )
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Login failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Login failed'),
+      );
     }
     final token = data['token'];
     if (token is! String || token.isEmpty) {
@@ -121,7 +143,7 @@ class ApiService {
           headers: {'Content-Type': 'application/json'},
           body: jsonEncode({
             'username': username,
-            'email': email,
+            'email': email.trim().toLowerCase(),
             'password': password,
             'role': role,
           }),
@@ -129,7 +151,10 @@ class ApiService {
         .timeout(const Duration(seconds: 90));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Registration failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Registration failed'),
+      );
     }
     return data;
   }
@@ -144,7 +169,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not look up place name'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not look up place name'),
+      );
     }
     return '${data['place_name'] ?? ''}'.trim();
   }
@@ -177,29 +205,68 @@ class ApiService {
     });
   }
 
+  static String newRequestId() {
+    final random = math.Random.secure();
+    return List.generate(
+      16,
+      (_) => random.nextInt(256).toRadixString(16).padLeft(2, '0'),
+    ).join();
+  }
+
+  Future<String> _requestKey(
+    String operation,
+    Map<String, dynamic> payload, {
+    String? preferredKey,
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = 'geosustain_pending_$operation';
+    final body = jsonEncode(payload);
+    final previous = prefs.getString(key);
+    if (previous != null) {
+      try {
+        final decoded = jsonDecode(previous);
+        if (decoded['body'] == body) return decoded['key'] as String;
+      } catch (_) {}
+    }
+    final id = preferredKey ?? newRequestId();
+    await prefs.setString(key, jsonEncode({'body': body, 'key': id}));
+    return id;
+  }
+
+  Future<void> _completeRequest(String operation) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('geosustain_pending_$operation');
+  }
+
   Future<Map<String, dynamic>> _postAnalysis(
     Map<String, dynamic> payload,
   ) async {
     final token = await getToken();
+    final requestId = await _requestKey("analysis", payload);
     final response = await _client
         .post(
           Uri.parse('$baseUrl/api/mobile/analysis'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
+            'Idempotency-Key': requestId,
           },
           body: jsonEncode(payload),
         )
         .timeout(const Duration(minutes: 5));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Analysis failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Analysis failed'),
+      );
     }
 
     // Analysis rainfall now comes from the backend CHIRPS/GEE 30-day source.
     // Do not override it here with Open-Meteo, because Open-Meteo can return
     // the same coarse-grid value (for example 314.2 mm) across nearby Panabo
     // points. The backend remains the source of truth for Analyze rainfall.
+    await _completeRequest("analysis");
     return data;
   }
 
@@ -217,7 +284,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not load farms'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not load farms'),
+      );
     }
     final raw = data['farms'];
     if (raw is! List) return [];
@@ -233,28 +303,36 @@ class ApiService {
     String? locationName,
     String mappingMethod = 'manual_draw',
     double? gpsAccuracyM,
+    String? requestId,
   }) async {
     final token = await getToken();
+    final payload = <String, dynamic>{
+      'farm_name': farmName,
+      'polygon': polygon,
+      'location_name': ?locationName,
+      'mapping_method': mappingMethod,
+      'gps_accuracy_m': ?gpsAccuracyM,
+    };
+    final key = await _requestKey('farm', payload, preferredKey: requestId);
     final response = await _client
         .post(
           Uri.parse('$baseUrl/api/mobile/farms'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
+            'Idempotency-Key': key,
           },
-          body: jsonEncode({
-            'farm_name': farmName,
-            'polygon': polygon,
-            'location_name': ?locationName,
-            'mapping_method': mappingMethod,
-            'gps_accuracy_m': ?gpsAccuracyM,
-          }),
+          body: jsonEncode(payload),
         )
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not save farm'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not save farm'),
+      );
     }
+    await _completeRequest('farm');
     return Map<String, dynamic>.from(data['farm'] as Map);
   }
 
@@ -275,7 +353,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not update farm'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not update farm'),
+      );
     }
     return Map<String, dynamic>.from(data['farm'] as Map);
   }
@@ -300,7 +381,10 @@ class ApiService {
         .timeout(const Duration(seconds: 15));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Live weather failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Live weather failed'),
+      );
     }
 
     final hasDailyRain =
@@ -530,9 +614,62 @@ class ApiService {
     ).timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Profile failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Profile failed'),
+      );
     }
     return data['user'] is Map<String, dynamic> ? data['user'] : data;
+  }
+
+  Future<Map<String, dynamic>> getAnalysis(int sessionId) async {
+    final token = await getToken();
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/mobile/analyses/$sessionId'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
+    final data = _decodeJson(response);
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not load this analysis.'),
+      );
+    }
+    return Map<String, dynamic>.from(data['analysis'] as Map);
+  }
+
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    final token = await getToken();
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/change-password'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'current_password': currentPassword,
+            'new_password': newPassword,
+          }),
+        )
+        .timeout(const Duration(seconds: 60));
+    final data = _decodeJson(response);
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not change password.'),
+      );
+    }
+    final fresh = data['token'];
+    if (fresh is! String || fresh.isEmpty) {
+      throw const FormatException('Sign in again using your new password.');
+    }
+    await saveToken(fresh);
   }
 
   Future<Map<String, dynamic>> getCounts() async {
@@ -545,24 +682,39 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Counts failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Counts failed'),
+      );
     }
     return data;
   }
 
   Future<List<dynamic>> getHistory() async {
     final token = await getToken();
-    final response = await _client
-        .get(
-          Uri.parse('$baseUrl/api/mobile/history'),
-          headers: {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 60));
-    final data = _decodeJson(response);
-    if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'History failed'));
+    final rows = <dynamic>[];
+    bool more = true;
+    while (more) {
+      final response = await _client
+          .get(
+            Uri.parse(
+              '$baseUrl/api/mobile/history?offset=${rows.length}&limit=50',
+            ),
+            headers: {'Authorization': 'Bearer $token'},
+          )
+          .timeout(const Duration(seconds: 60));
+      final data = _decodeJson(response);
+      if (response.statusCode >= 400) {
+        throw ApiException(
+          response.statusCode,
+          _errorMessage(data, 'History failed'),
+        );
+      }
+      final page = data['history'] as List<dynamic>;
+      rows.addAll(page);
+      more = data['has_more'] == true && page.isNotEmpty;
     }
-    return data['history'] as List<dynamic>;
+    return rows;
   }
 
   Future<Map<String, dynamic>> submitAnalysisToPlanner(int sessionId) async {
@@ -579,7 +731,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Submission failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Submission failed'),
+      );
     }
     return data;
   }
@@ -598,7 +753,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Save failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Save failed'),
+      );
     }
     return data;
   }
@@ -613,7 +771,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Saved analyses failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Saved analyses failed'),
+      );
     }
     return data['saved'] as List<dynamic>;
   }
@@ -635,7 +796,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Report failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Report failed'),
+      );
     }
     return data;
   }
@@ -650,14 +814,17 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Reports failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Reports failed'),
+      );
     }
     return data['reports'] as List<dynamic>;
   }
 
   Future<Map<String, dynamic>> updateProfile({
     required String username,
-    required String role,
+    String? role,
     String? location,
     String? profilePhotoBase64,
   }) async {
@@ -671,7 +838,6 @@ class ApiService {
           },
           body: jsonEncode({
             'username': username,
-            'role': role,
             'location': ?location,
             'profile_photo': ?profilePhotoBase64,
           }),
@@ -679,7 +845,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Profile update failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Profile update failed'),
+      );
     }
     return data['user'] is Map<String, dynamic> ? data['user'] : data;
   }
@@ -694,7 +863,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Deactivate failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Deactivate failed'),
+      );
     }
     await logout();
   }
@@ -709,7 +881,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Delete account failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Delete account failed'),
+      );
     }
     await logout();
   }
@@ -727,7 +902,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not load verification queue'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not load verification queue'),
+      );
     }
     return data['queue'] as List<dynamic>;
   }
@@ -742,7 +920,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not load analysis details'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not load analysis details'),
+      );
     }
     final session = data['session'];
     return session is Map
@@ -760,7 +941,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not load queue counts'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not load queue counts'),
+      );
     }
     return data;
   }
@@ -804,7 +988,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Admin dashboard failed'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Admin dashboard failed'),
+      );
     }
     return Map<String, dynamic>.from(data['stats'] ?? const {});
   }
@@ -819,7 +1006,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not load users'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not load users'),
+      );
     }
     return List<dynamic>.from(data['users'] ?? const []);
   }
@@ -842,7 +1032,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not update user'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not update user'),
+      );
     }
     return Map<String, dynamic>.from(data['user'] ?? const {});
   }
@@ -857,7 +1050,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not load analyses'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not load analyses'),
+      );
     }
     return List<dynamic>.from(data['analyses'] ?? const []);
   }
@@ -872,7 +1068,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not load crop reference'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not load crop reference'),
+      );
     }
     return List<dynamic>.from(data['crops'] ?? const []);
   }
@@ -904,7 +1103,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not update crop'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not update crop'),
+      );
     }
     return Map<String, dynamic>.from(data['crop'] ?? const {});
   }
@@ -919,7 +1121,10 @@ class ApiService {
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
-      throw Exception(_errorMessage(data, 'Could not load audit logs'));
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not load audit logs'),
+      );
     }
     return List<dynamic>.from(data['logs'] ?? const []);
   }

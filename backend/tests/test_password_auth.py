@@ -55,6 +55,16 @@ def test_register_existing_unverified_account_is_not_replaced(client,monkeypatch
     assert client.post('/api/mobile/register',json={'username':'Farmer','email':'farmer@example.com','password':'different'}).status_code == 409
 
 
+def test_non_email_database_conflict_is_not_reported_as_duplicate_email(client, monkeypatch):
+    import psycopg2
+    monkeypatch.setattr(api, 'get_user_by_email', lambda email: None)
+    monkeypatch.setattr(api, 'create_user', Mock(side_effect=psycopg2.errors.UniqueViolation('private database details')))
+    response = client.post('/api/mobile/register', json={'username':'Farmer','email':'new@example.com','password':'test-password'})
+    assert response.status_code == 503
+    assert 'already registered' not in response.text
+    assert 'private database' not in response.text
+
+
 @pytest.mark.parametrize('route',['verify-email','verify-code','send-verification','resend-verification'])
 def test_retired_routes_never_return_tokens(client,route):
     result=client.post('/api/mobile/'+route,json={'email':'farmer@example.com','code':'000000'})

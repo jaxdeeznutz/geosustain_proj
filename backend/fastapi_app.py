@@ -1,5 +1,6 @@
 import os
 import json
+import hashlib
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
@@ -9,13 +10,16 @@ from typing import Any, Dict, List, Optional, Tuple
 import bcrypt
 from password_auth import verify_password
 import requests
-from fastapi import FastAPI, Request, Depends, HTTPException, status
+from fastapi import FastAPI, Request, Depends, HTTPException, status, Header, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from email_validator import validate_email, EmailNotValidError
+from geometry import normalize_polygon, polygon_area_m2, in_study_area
+from psycopg2 import Error as DatabaseError
 from starlette.middleware.sessions import SessionMiddleware
 
 from database import (
@@ -43,6 +47,7 @@ from database import (
     attach_analysis_to_farm, get_climate_baseline, save_climate_baseline,
     validate_farm_polygon, get_active_crop_keys, list_crop_reference,
     update_crop_reference, get_audit_logs,
+    get_user_analysis, find_analysis_request, change_user_password,
 )
 
 try:
@@ -250,6 +255,13 @@ def apply_local_seasonality(result: Dict[str, Any], planting_month: int) -> Dict
 
 
 app = FastAPI(title="GeoSustain API", version="2.0.0")
+
+
+@app.exception_handler(DatabaseError)
+async def database_unavailable(request: Request, exc: DatabaseError):
+    # Credentials/DSNs can appear in driver messages; never send those to clients.
+    print(f'Database operation failed: {type(exc).__name__}')
+    return JSONResponse({'error':'The account/data service is unavailable. Please try again shortly.'}, status_code=503)
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
 app.add_middleware(
     CORSMiddleware,
@@ -413,11 +425,15 @@ def sign_in_user(request: Request, user) -> None:
     request.session["user_id"] = user["id"]
     request.session["username"] = user["username"]
     request.session["role"] = user["role"]
+    request.session['password_version'] = user.get('password_version',0)
 
 
 def current_user(request: Request):
     uid = request.session.get("user_id")
-    return get_user_by_id(uid) if uid else None
+    user = get_user_by_id(uid) if uid else None
+    if user and user.get('is_active',True) and request.session.get('password_version',0) == user.get('password_version',0):
+        return user
+    return None
 
 
 def require_web_user(request: Request):
@@ -429,7 +445,7 @@ def require_web_user(request: Request):
 
 def generate_mobile_token(user) -> str:
     return token_serializer.dumps(
-        {"id": user["id"], "username": user["username"], "role": user["role"]},
+        {"id": user["id"], "password_version": user.get('password_version',0)},
         salt="geosustain-mobile",
     )
 
@@ -440,6 +456,8 @@ def user_public_dict(user) -> Dict[str, Any]:
         "username": user["username"],
         "email": user["email"],
         "role": user["role"],
+        "location": user.get('location'),
+        "profile_photo": user.get('profile_photo'),
     }
 
 
@@ -453,7 +471,7 @@ def get_api_user(request: Request):
     except (BadSignature, SignatureExpired):
         raise HTTPException(status_code=401, detail="Unauthorized. Please log in again.")
     user = get_user_by_id(payload.get("id"))
-    if not user:
+    if not user or not user.get('is_active',True) or payload.get('password_version',0) != user.get('password_version',0):
         raise HTTPException(status_code=401, detail="Unauthorized. Please log in again.")
     return user
 
@@ -827,7 +845,8 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         lat = body.get("lat")
         lon = body.get("lon")
 
-        if polygon and len(polygon) >= 3:
+        if polygon:
+            polygon = normalize_polygon(polygon)
             lat, lon = polygon_centroid(polygon)
             analysis_source = "selected-polygon"
         elif lat is not None and lon is not None:
@@ -850,6 +869,9 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         raise RuntimeError(
             f"Analysis engine failed to load on server: {ANALYSIS_IMPORT_ERROR}"
         )
+
+    if not in_study_area(lat, lon):
+        raise ValueError('Selected location is outside the supported Panabo study area.')
 
     # Fetched once per analysis request (not once per sampled point) — a
     # Super Administrator's crop reference table can temporarily narrow the
@@ -911,27 +933,9 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
     result["center_lon"] = float(lon)
     result["lat"] = float(lat)
     result["lon"] = float(lon)
-    if polygon and len(polygon) >= 3:
-        # Local equirectangular approximation is accurate enough for parcel-size
-        # polygons and makes the area immediately available in the API response.
-        import math
-        clean = []
-        for item in polygon:
-            try:
-                clean.append((float(item.get("lat", item.get("latitude"))), float(item.get("lng", item.get("lon", item.get("longitude"))))))
-            except (AttributeError, TypeError, ValueError):
-                continue
-        if len(clean) >= 3:
-            mean_lat = math.radians(sum(p[0] for p in clean) / len(clean))
-            radius = 6378137.0
-            xy = [(radius * math.radians(lo) * math.cos(mean_lat), radius * math.radians(la)) for la, lo in clean]
-            twice_area = 0.0
-            for index, (x1, y1) in enumerate(xy):
-                x2, y2 = xy[(index + 1) % len(xy)]
-                twice_area += x1 * y2 - x2 * y1
-            area_m2 = abs(twice_area) / 2.0
-            result["area_m2"] = area_m2
-            result["area_hectares"] = area_m2 / 10000.0
+    if polygon:
+        result['area_m2'] = polygon_area_m2(polygon)
+        result['area_hectares'] = result['area_m2'] / 10000.0
     if body is not None and body.get("place_name"):
         result["place_name"] = str(body["place_name"]).strip()
     else:
@@ -951,10 +955,30 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
 # Pydantic models for mobile/API JSON
 # ---------------------------------------------------------------------------
 class RegisterBody(BaseModel):
-    username: str = Field(min_length=3)
-    email: str
+    username: str = Field(min_length=3, max_length=50)
+    email: str = Field(max_length=100)
     password: str = Field(min_length=6)
     role: str = "farmer"
+
+    @field_validator('username', 'email', mode='before')
+    @classmethod
+    def strip_identity(cls, value):
+        return value.strip() if isinstance(value, str) else value
+
+    @field_validator('email')
+    @classmethod
+    def valid_email(cls,value):
+        try:
+            return validate_email(value,check_deliverability=False).normalized.lower()
+        except EmailNotValidError:
+            raise ValueError('Enter a valid email address.')
+
+    @field_validator('password')
+    @classmethod
+    def password_size(cls,value):
+        if len(value.encode('utf-8')) > 72:
+            raise ValueError('Password must be at most 72 UTF-8 bytes.')
+        return value
 
 
 class LoginBody(BaseModel):
@@ -986,9 +1010,24 @@ class ProfileUpdateBody(BaseModel):
     unknown fields by default, so it is never parsed, never reaches
     `update_user_profile`, and is silently ignored rather than applied.
     """
-    username: Optional[str] = None
-    location: Optional[str] = None
+    username: Optional[str] = Field(default=None, min_length=3, max_length=50)
+    location: Optional[str] = Field(default=None, max_length=200)
     profile_photo: Optional[str] = None
+
+    @field_validator('username',mode='before')
+    @classmethod
+    def strip_username(cls,value):
+        return value.strip() if isinstance(value,str) else value
+
+
+class ChangePasswordBody(BaseModel):
+    current_password: str
+    new_password: str = Field(min_length=6)
+
+    @field_validator('new_password')
+    @classmethod
+    def password_size(cls,value):
+        return RegisterBody.password_size(value)
 
 
 class AdminUserUpdateBody(BaseModel):
@@ -1063,8 +1102,7 @@ async def register_submit(request: Request):
         errors.append("Password must be at most 72 UTF-8 bytes.")
     if password != confirm:
         errors.append("Passwords do not match.")
-    if role not in ("farmer", "analyst", "planner"):
-        role = "farmer"
+    role = "farmer"  # Privileged accounts are assigned by a Super Administrator.
     if get_user_by_email(email):
         errors.append("Email is already registered.")
 
@@ -1160,7 +1198,7 @@ async def analysis(request: Request):
 # ---------------------------------------------------------------------------
 @app.post("/api/mobile/register", status_code=201)
 def mobile_register(body: RegisterBody):
-    role = body.role if body.role in ("farmer", "analyst", "planner") else "farmer"
+    role = "farmer"
     username = body.username.strip()
     email = body.email.lower().strip()
 
@@ -1200,6 +1238,19 @@ def retired_mobile_verification():
 @app.get("/api/mobile/me")
 def mobile_me(user=Depends(get_api_user)):
     return {"user": user_public_dict(user)}
+
+
+@app.post('/api/mobile/change-password')
+def mobile_change_password(body: ChangePasswordBody, user=Depends(get_api_user)):
+    if not verify_password(body.current_password, user.get('password_hash')):
+        raise HTTPException(status_code=400, detail='Current password is incorrect.')
+    if body.current_password == body.new_password:
+        raise HTTPException(status_code=400, detail='Choose a different new password.')
+    updated=change_user_password(user['id'],user['password_hash'],hash_password(body.new_password))
+    if not updated:
+        raise HTTPException(status_code=409, detail='The account changed. Please log in again before retrying.')
+    return {'user':user_public_dict(updated),'token':generate_mobile_token(updated),
+            'message':'Password changed. Other sessions have been signed out.'}
 
 
 @app.put("/api/mobile/me")
@@ -1309,7 +1360,7 @@ def api_admin_audit_logs(user=Depends(require_super_admin)):
 @app.get("/api/mobile/weather")
 def mobile_live_weather(lat: float, lon: float):
     # Public lightweight endpoint for the Home page. Auth is intentionally not
-    # required because live weather should load before/after Firebase login and
+    # required because live weather should load before/after password login and
     # should not break when a local token is missing or expired.
     try:
         return fetch_open_meteo_weather(lat, lon)
@@ -1319,9 +1370,17 @@ def mobile_live_weather(lat: float, lon: float):
 
 
 @app.get("/api/mobile/history")
-def mobile_history(user=Depends(get_api_user)):
-    rows = get_user_history(user["id"], limit=50)
-    return {"history": [dict(row) for row in rows]}
+def mobile_history(user=Depends(get_api_user), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100)):
+    rows = get_user_history(user["id"], limit=limit+1, offset=offset)
+    return {"history": [dict(row) for row in rows[:limit]], "has_more": len(rows)>limit}
+
+
+@app.get('/api/mobile/analyses/{session_id}')
+def mobile_analysis_detail(session_id: int, user=Depends(get_api_user)):
+    item=get_user_analysis(user['id'],session_id)
+    if not item:
+        raise HTTPException(status_code=404,detail='Analysis not found.')
+    return {'analysis':item}
 
 
 @app.get("/api/mobile/counts")
@@ -1337,9 +1396,11 @@ def mobile_save_analysis(body: SessionActionBody, user=Depends(get_api_user)):
 
 @app.post("/api/mobile/submit-to-planner")
 def mobile_submit_to_planner(body: SessionActionBody, user=Depends(get_api_user)):
+    if user.get('role') != 'farmer':
+        raise HTTPException(status_code=403,detail='Only farmers can submit an analysis for review.')
     item = submit_analysis_to_planner(user["id"], body.session_id)
     if not item:
-        raise HTTPException(status_code=409, detail="This analysis is already pending/verified or does not belong to you.")
+        raise HTTPException(status_code=404, detail="Analysis not found or not eligible for review.")
     return {"submission": item}
 
 
@@ -1367,32 +1428,65 @@ def mobile_reverse_geocode(lat: float, lon: float, user=Depends(get_api_user)):
 
 class FarmCreateBody(BaseModel):
     farm_name: str = Field(min_length=2, max_length=160)
-    location_name: Optional[str] = None
+    location_name: Optional[str] = Field(default=None,max_length=240)
     polygon: List[Dict[str, float]]
     mapping_method: str = 'manual_draw'
-    gps_accuracy_m: Optional[float] = None
+    gps_accuracy_m: Optional[float] = Field(default=None,ge=0,allow_inf_nan=False)
+
+    @field_validator('farm_name',mode='before')
+    @classmethod
+    def trim_name(cls,value):
+        return value.strip() if isinstance(value,str) else value
+
+    @field_validator('mapping_method')
+    @classmethod
+    def known_method(cls,value):
+        if value not in ('manual_draw','gps_walk'):
+            raise ValueError('Boundary source must be manual_draw or gps_walk.')
+        return value
 
 class FarmUpdateBody(BaseModel):
-    farm_name: Optional[str] = None
-    location_name: Optional[str] = None
+    farm_name: Optional[str] = Field(default=None,min_length=2,max_length=160)
+    location_name: Optional[str] = Field(default=None,max_length=240)
     polygon: Optional[List[Dict[str, float]]] = None
     mapping_method: Optional[str] = None
-    gps_accuracy_m: Optional[float] = None
+    gps_accuracy_m: Optional[float] = Field(default=None,ge=0,allow_inf_nan=False)
     is_archived: Optional[bool] = None
+
+    @field_validator('farm_name',mode='before')
+    @classmethod
+    def trim_name(cls,value):
+        return FarmCreateBody.trim_name(value)
+
+    @field_validator('mapping_method')
+    @classmethod
+    def known_method(cls,value):
+        return FarmCreateBody.known_method(value) if value is not None else None
+
+
+def request_identity(key, payload):
+    if key is not None and (not key.strip() or len(key)>128):
+        raise HTTPException(status_code=400,detail='Idempotency-Key must be between 1 and 128 characters.')
+    digest=hashlib.sha256(json.dumps(payload,sort_keys=True,separators=(',',':'),allow_nan=False).encode()).hexdigest()
+    return key,digest
 
 @app.get('/api/mobile/farms')
 def mobile_farms(include_archived: bool=False, user=Depends(get_api_user)):
     return {'farms': list_farm_parcels(user['id'], include_archived)}
 
 @app.post('/api/mobile/farms', status_code=201)
-def mobile_create_farm(body: FarmCreateBody, user=Depends(get_api_user)):
+def mobile_create_farm(body: FarmCreateBody, user=Depends(get_api_user), idempotency_key: Optional[str]=Header(default=None)):
     if len(body.polygon) < 3:
         raise HTTPException(status_code=400, detail='A farm boundary requires at least three valid GPS/map points.')
     ok, err = validate_farm_polygon(body.polygon)
     if not ok:
         raise HTTPException(status_code=400, detail=err)
-    return {'farm': create_farm_parcel(user['id'], body.farm_name, body.polygon,
-                                      body.location_name, body.mapping_method, body.gps_accuracy_m)}
+    key,digest=request_identity(idempotency_key,body.model_dump())
+    try:
+        return {'farm': create_farm_parcel(user['id'], body.farm_name, body.polygon,
+                    body.location_name, body.mapping_method, body.gps_accuracy_m,request_key=key,request_hash=digest)}
+    except ValueError as exc:
+        raise HTTPException(status_code=409,detail=str(exc))
 
 @app.patch('/api/mobile/farms/{farm_id}')
 def mobile_update_farm(farm_id: int, body: FarmUpdateBody, user=Depends(get_api_user)):
@@ -1474,38 +1568,42 @@ def planner_verify(body: VerifySessionBody, planner=Depends(require_planner)):
 
 
 @app.post("/api/mobile/analysis")
-def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user)):
+def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user), idempotency_key: Optional[str]=Header(default=None)):
+    payload=body.model_dump(exclude_none=True)
+    key,digest=request_identity(idempotency_key,payload)
     try:
-        result, analysis_source = build_analysis_result(body=body.model_dump(exclude_none=True))
-    except ValueError as e:
-        return JSONResponse({"error": str(e)}, status_code=400)
-    except RuntimeError as e:
-        return JSONResponse({"error": str(e)}, status_code=503)
-    except Exception as e:
-        print(f"Analysis failed: {e}")
-        return JSONResponse({"error": f"Analysis failed: {e}"}, status_code=500)
-
-    try:
-        session_id = save_analysis_session(user["id"], result, analysis_source)
-        result["session_id"] = session_id
-    except Exception as e:
-        print(f"DB save failed: {e}")
-        result["session_id"] = None
-        return result
-
-    # Attaching to a farm is optional and must not undo an already-successful
-    # session save if it fails (e.g. a bad/foreign farm_id, or a transient DB
-    # hiccup) — this was previously wrapped in the SAME try/except as the
-    # session save above, so any attach failure wiped out a real session_id
-    # and made a genuinely-saved analysis look like it never saved at all.
+        prior=find_analysis_request(user['id'],key,digest)
+        if prior:
+            return prior
+    except ValueError as exc:
+        raise HTTPException(status_code=409,detail=str(exc))
+    farm=None
     if body.farm_id:
-        try:
-            attach_analysis_to_farm(session_id, user["id"], body.farm_id)
-            result["farm_id"] = body.farm_id
-        except Exception as e:
-            print(f"Farm attach failed (session {session_id} still saved): {e}")
-
-    return result
+        farm=get_farm_parcel(user['id'],body.farm_id)
+        if not farm or farm.get('is_archived'):
+            raise HTTPException(status_code=404,detail='Farm parcel not found or archived.')
+        # Use the server-owned version, never a client-supplied replacement ring.
+        payload['polygon']=farm['polygon']
+        payload['place_name']=farm.get('location_name') or body.place_name
+    try:
+        result, analysis_source = build_analysis_result(body=payload)
+    except ValueError as exc:
+        raise HTTPException(status_code=400,detail=str(exc))
+    except RuntimeError:
+        raise HTTPException(status_code=503,detail='Land analysis is unavailable. Please retry shortly.')
+    except Exception as exc:
+        print(f'Analysis failed: {type(exc).__name__}')
+        raise HTTPException(status_code=502,detail='An analysis data service failed. Please retry.')
+    if farm:
+        result.update(farm_id=farm['id'], farm_name=farm['farm_name'], boundary_version=farm['boundary_version'])
+    else:
+        result['farm_name']=body.place_name
+    try:
+        session_id=save_analysis_session(user['id'],result,analysis_source,request_key=key,request_hash=digest)
+    except ValueError as exc:
+        raise HTTPException(status_code=409,detail=str(exc))
+    # A database failure is a failed request, never a false successful result.
+    return get_user_analysis(user['id'],session_id)
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ import os
 import config  # noqa: F401 -- load local environment before reading settings
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
+from geometry import normalize_polygon, polygon_area_m2
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -190,6 +191,18 @@ def init_db():
             cur.execute(SCHEMA_SQL)
             cur.execute("ALTER TABLE analysis_sessions ADD COLUMN IF NOT EXISTS place_name VARCHAR(200)")
             cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS location VARCHAR(200)")
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_version INTEGER NOT NULL DEFAULT 0")
+            cur.execute("ALTER TABLE farm_parcels ADD COLUMN IF NOT EXISTS boundary_version INTEGER NOT NULL DEFAULT 1")
+            cur.execute("ALTER TABLE farm_parcels ADD COLUMN IF NOT EXISTS request_key VARCHAR(128)")
+            cur.execute("ALTER TABLE farm_parcels ADD COLUMN IF NOT EXISTS request_hash VARCHAR(64)")
+            cur.execute("ALTER TABLE analysis_sessions ADD COLUMN IF NOT EXISTS result_snapshot JSONB")
+            cur.execute("ALTER TABLE analysis_sessions ADD COLUMN IF NOT EXISTS farm_name_snapshot VARCHAR(160)")
+            cur.execute("ALTER TABLE analysis_sessions ADD COLUMN IF NOT EXISTS boundary_version INTEGER")
+            cur.execute("ALTER TABLE analysis_sessions ADD COLUMN IF NOT EXISTS submitted_at TIMESTAMPTZ")
+            cur.execute("ALTER TABLE analysis_sessions ADD COLUMN IF NOT EXISTS request_key VARCHAR(128)")
+            cur.execute("ALTER TABLE analysis_sessions ADD COLUMN IF NOT EXISTS request_hash VARCHAR(64)")
+            cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS farm_request_unique ON farm_parcels (farmer_id, request_key) WHERE request_key IS NOT NULL")
+            cur.execute("CREATE UNIQUE INDEX IF NOT EXISTS analysis_request_unique ON analysis_sessions (user_id, request_key) WHERE request_key IS NOT NULL")
             cur.execute("ALTER TABLE users ALTER COLUMN role TYPE VARCHAR(50)")
             # Migrate any legacy/obsolete role strings that may still exist in
             # the database (from earlier project iterations) to the three
@@ -324,24 +337,54 @@ def init_db():
 
 
 def create_user(username: str, email: str, password_hash: str, role: str = "farmer", email_verified: bool = False, auth_provider: str = "email", google_sub: str = None):
-    """Insert a new user row. Returns the new user dict or None on duplicate."""
+    """Create an account; only an actual duplicate email returns None."""
+    normalized_email = email.strip().lower()
     conn = get_conn()
     try:
-        with conn.cursor() as cur:
-            cur.execute(
-                """
-                INSERT INTO users (username, email, password_hash, role, email_verified, auth_provider, google_sub)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-                RETURNING id, username, email, role, location, profile_photo, is_active, email_verified, auth_provider, created_at
-                """,
-                (username.strip(), email.strip().lower(), password_hash, role, email_verified, auth_provider, google_sub),
-            )
-            user = cur.fetchone()
-        conn.commit()
-        return dict(user)
-    except psycopg2.errors.UniqueViolation:
-        conn.rollback()
-        return None
+        for attempt in range(2):
+            try:
+                with conn.cursor() as cur:
+                    # Serialize normalized-email retries on legacy schemas too.
+                    cur.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", ('register:' + normalized_email,))
+                    cur.execute("SELECT id FROM users WHERE LOWER(BTRIM(email))=%s", (normalized_email,))
+                    if cur.fetchone():
+                        return None
+                    cur.execute(
+                        """
+                        INSERT INTO users (username, email, password_hash, role, email_verified, auth_provider, google_sub)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id, username, email, role, location, profile_photo, is_active, email_verified, auth_provider, created_at
+                        """,
+                        (username.strip(), normalized_email, password_hash, role, email_verified, auth_provider, google_sub),
+                    )
+                    user = cur.fetchone()
+                conn.commit()
+                return dict(user)
+            except psycopg2.errors.UniqueViolation as exc:
+                conn.rollback()
+                with conn.cursor() as cur:
+                    cur.execute("SELECT contype FROM pg_constraint WHERE conrelid='users'::regclass AND conname=%s", (exc.diag.constraint_name,))
+                    constraint = cur.fetchone()
+                    if attempt == 0 and constraint and constraint['contype'] == 'p':
+                        # Explicitly imported IDs can leave the SERIAL/IDENTITY
+                        # sequence behind existing users. Block concurrent INSERTs
+                        # during repair; advance it without changing any user row.
+                        cur.execute("LOCK TABLE users IN SHARE ROW EXCLUSIVE MODE")
+                        cur.execute("SELECT pg_get_serial_sequence('users', 'id') AS sequence_name")
+                        sequence = cur.fetchone()['sequence_name']
+                        if sequence:
+                            cur.execute(
+                                "SELECT setval(%s::regclass, GREATEST(COALESCE(MAX(id), 0), nextval(%s::regclass)), true) FROM users",
+                                (sequence, sequence),
+                            )
+                            conn.commit()
+                            continue
+                    cur.execute("SELECT id FROM users WHERE LOWER(BTRIM(email))=%s", (normalized_email,))
+                    if cur.fetchone():
+                        return None
+                # A different unique constraint is a server/schema issue, not
+                # evidence that this email belongs to an existing account.
+                raise
     finally:
         conn.close()
 
@@ -520,15 +563,11 @@ def update_user_profile(user_id: int, username: str = None, role: str = None, lo
     honored — an "admin"/"super_admin" value passed to THIS function is
     silently ignored rather than applied.
     """
-    self_service_roles = {"farmer", "agricultural_planning_analyst"}
     updates = []
     values = []
     if username:
         updates.append("username = %s")
         values.append(username)
-    if role in self_service_roles:
-        updates.append("role = %s")
-        values.append(role)
     if location is not None:
         updates.append("location = %s")
         values.append(location)
@@ -583,119 +622,21 @@ def delete_user(user_id: int):
 # Analysis session helpers
 # ---------------------------------------------------------------------------
 
-def _polygon_points(polygon):
-    pts = []
-    for item in polygon or []:
-        try:
-            if isinstance(item, dict):
-                lat = item.get("lat", item.get("latitude"))
-                lon = item.get("lng", item.get("lon", item.get("longitude")))
-            elif isinstance(item, (list, tuple)) and len(item) >= 2:
-                lat, lon = item[0], item[1]
-            else:
-                continue
-            pts.append((float(lat), float(lon)))
-        except (TypeError, ValueError):
-            continue
-    return pts
-
-
-def _polygon_self_intersects(pts):
-    """O(n^2) segment-intersection check for an obviously self-crossing
-    ('bowtie') boundary. Skipped for very large point counts (long GPS
-    walks) to stay fast — such shapes are rare there and downstream
-    analysis will still just get a noisier polygon rather than a crash."""
-    n = len(pts)
-    if n < 4 or n > 500:
-        return False
-
-    def cross(o, a, b):
-        return (a[1] - o[1]) * (b[0] - o[0]) - (a[0] - o[0]) * (b[1] - o[1])
-
-    def seg_intersect(p1, p2, p3, p4):
-        d1, d2 = cross(p3, p4, p1), cross(p3, p4, p2)
-        d3, d4 = cross(p1, p2, p3), cross(p1, p2, p4)
-        return ((d1 > 0 and d2 < 0) or (d1 < 0 and d2 > 0)) and ((d3 > 0 and d4 < 0) or (d3 < 0 and d4 > 0))
-
-    for i in range(n):
-        a1, a2 = pts[i], pts[(i + 1) % n]
-        for j in range(i + 1, n):
-            if j == i or (j + 1) % n == i or i == (j + 1) % n:
-                continue
-            b1, b2 = pts[j], pts[(j + 1) % n]
-            if seg_intersect(a1, a2, b1, b2):
-                return True
-    return False
-
-
 def validate_farm_polygon(polygon):
-    """Server-side farm boundary validation. Never trust that the client
-    (mobile app) already did this — it can be bypassed by calling the API
-    directly. Returns (ok: bool, error_message: str | None).
-
-    Checks: valid lat/lon ranges, at least three distinct vertices after
-    collapsing near-duplicate points, a non-degenerate (not vanishingly
-    small/collinear) area, and no self-intersection — a self-crossing
-    shape has no well-defined interior and breaks polygon-based
-    environmental sampling and area math downstream.
-    """
-    import math
-    pts = _polygon_points(polygon)
-    for lat, lon in pts:
-        if not (-90 <= lat <= 90) or not (-180 <= lon <= 180):
-            return False, "One or more boundary points has an invalid GPS coordinate."
-
-    deduped = []
-    for lat, lon in pts:
-        if deduped:
-            plat, plon = deduped[-1]
-            dlat_m = (lat - plat) * 111320
-            dlon_m = (lon - plon) * 111320 * math.cos(math.radians(lat))
-            if (dlat_m * dlat_m + dlon_m * dlon_m) ** 0.5 < 0.5:
-                continue  # collapse near-duplicate points (<0.5m apart)
-        deduped.append((lat, lon))
-
-    if len(deduped) < 3:
-        return False, "A farm boundary requires at least three distinct GPS/map points."
-
-    area = _polygon_area_m2(polygon)
-    if not area or area < 4:
-        return False, "The boundary shape is too small or degenerate — the points may be collinear or nearly identical."
-
-    if _polygon_self_intersects(deduped):
-        return False, "The boundary crosses over itself. Please redraw or re-walk a simple (non-crossing) shape."
-
-    return True, None
+    try:
+        normalize_polygon(polygon)
+        return True, None
+    except ValueError as exc:
+        return False, str(exc)
 
 
 def _polygon_area_m2(polygon):
-    """Approximate geodesic polygon area in square metres from lat/lon points."""
-    import math
-    pts = []
-    for item in polygon or []:
-        try:
-            if isinstance(item, dict):
-                lat = item.get("lat", item.get("latitude"))
-                lon = item.get("lng", item.get("lon", item.get("longitude")))
-            elif isinstance(item, (list, tuple)) and len(item) >= 2:
-                lat, lon = item[0], item[1]
-            else:
-                continue
-            pts.append((float(lat), float(lon)))
-        except (TypeError, ValueError):
-            continue
-    if len(pts) < 3:
+    if not polygon:
         return None
-    lat0 = math.radians(sum(p[0] for p in pts) / len(pts))
-    r = 6378137.0
-    xy = [(r * math.radians(lon) * math.cos(lat0), r * math.radians(lat)) for lat, lon in pts]
-    area = 0.0
-    for i, (x1, y1) in enumerate(xy):
-        x2, y2 = xy[(i + 1) % len(xy)]
-        area += x1 * y2 - x2 * y1
-    return abs(area) / 2.0
+    return polygon_area_m2(polygon)
 
-def save_analysis_session(user_id, result: dict, analysis_source: str):
+
+def save_analysis_session(user_id, result: dict, analysis_source: str, request_key=None, request_hash=None):
     """
     Persist a full analysis result across the four related tables.
     Returns the new session_id.
@@ -704,14 +645,30 @@ def save_analysis_session(user_id, result: dict, analysis_source: str):
     try:
         with conn.cursor() as cur:
             # 1. analysis_sessions
+            if request_key:
+                cur.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (f'analysis:{user_id}:{request_key}',))
+                cur.execute("SELECT id, request_hash FROM analysis_sessions WHERE user_id=%s AND request_key=%s", (user_id,request_key))
+                prior=cur.fetchone()
+                if prior:
+                    if prior['request_hash'] != request_hash:
+                        raise ValueError('This retry key was already used for different analysis inputs.')
+                    return prior['id']
+            farm_id = result.get('farm_id')
+            if farm_id:
+                cur.execute("SELECT boundary_version FROM farm_parcels WHERE id=%s AND farmer_id=%s AND is_archived=FALSE FOR SHARE", (farm_id,user_id))
+                farm=cur.fetchone()
+                if not farm or farm['boundary_version'] != result.get('boundary_version'):
+                    raise ValueError('Farm boundary changed or is no longer available. Reload the farm before analyzing.')
             cur.execute(
                 """
                 INSERT INTO analysis_sessions
                     (user_id, center_lat, center_lon, place_name, analysis_source,
                      season_name, season_advice, intended_planting_month, season_status,
                      season_adjusted_score, environmental_suitability_pct, recommended_planting_window,
-                     selected_polygon, heatmap_grid, area_m2, area_hectares, analysis_summary)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                     selected_polygon, heatmap_grid, area_m2, area_hectares, analysis_summary,
+                     farm_id, farm_name_snapshot, boundary_version, result_snapshot, request_key, request_hash)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s)
                 RETURNING id
                 """,
                 (
@@ -732,6 +689,7 @@ def save_analysis_session(user_id, result: dict, analysis_source: str):
                     result.get("area_m2") or _polygon_area_m2(result.get("selected_polygon") or []),
                     result.get("area_hectares") or ((result.get("area_m2") or _polygon_area_m2(result.get("selected_polygon") or [])) / 10000.0 if (result.get("area_m2") or _polygon_area_m2(result.get("selected_polygon") or [])) else None),
                     result.get("analysis_summary"),
+                    farm_id, result.get('farm_name'), result.get('boundary_version'), Json(result), request_key, request_hash,
                 ),
             )
             session_id = cur.fetchone()["id"]
@@ -746,7 +704,7 @@ def save_analysis_session(user_id, result: dict, analysis_source: str):
                      infrastructure_suitability, infrastructure_score,
                      infrastructure_status, infrastructure_recommendation,
                      infrastructure_risk, slope_pct, data_quality)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 """,
                 (
                     session_id,
@@ -822,112 +780,67 @@ def save_analysis_session(user_id, result: dict, analysis_source: str):
 
 
 def enrich_history_rows(rows):
-    """Fill missing slope_pct for older sessions using stored coordinates."""
-    try:
-        from rainfallDatasets import estimate_slope_percent
-    except ImportError:
-        return [dict(r) for r in rows]
-
+    """Restore persisted results without fetching today's values for historic runs."""
     enriched = []
     for row in rows:
         item = dict(row)
-        if item.get("area_m2") is None and item.get("selected_polygon"):
-            try:
-                area_m2 = _polygon_area_m2(item.get("selected_polygon"))
-                if area_m2:
-                    item["area_m2"] = area_m2
-                    item["area_hectares"] = area_m2 / 10000.0
-            except Exception:
-                pass
-        if item.get("slope_pct") is None:
-            lat = item.get("center_lat")
-            lon = item.get("center_lon")
-            if lat is not None and lon is not None:
-                try:
-                    item["slope_pct"] = estimate_slope_percent(
-                        float(lat),
-                        float(lon),
-                        item.get("elevation_m"),
-                    )
-                except Exception:
-                    pass
-        enriched.append(item)
+        snapshot = item.pop('result_snapshot', None) or {}
+        restored = dict(snapshot)
+        restored.update(item)
+        restored['analysis_status'] = 'completed'
+        restored['lat'] = restored.get('center_lat')
+        restored['lon'] = restored.get('center_lon')
+        restored['crop_compatibility_pct'] = restored.get('compatibility_pct', snapshot.get('crop_compatibility_pct'))
+        enriched.append(restored)
     return enriched
 
 
-def get_user_history(user_id: int, limit: int = 20):
-    """
-    Return the last `limit` analysis sessions for a user with
-    joined environmental and crop data for display.
-    """
+def get_user_history(user_id: int, limit: int = 20, offset: int = 0):
     conn = get_conn()
     try:
         with conn.cursor() as cur:
-            cur.execute(
-                """
-                SELECT
-                    s.id            AS session_id,
-                    s.center_lat,
-                    s.center_lon,
-                    s.place_name,
-                    s.analysis_source,
-                    s.season_name,
-                    s.season_advice,
-                    s.intended_planting_month,
-                    s.season_status,
-                    s.season_adjusted_score,
-                    s.environmental_suitability_pct,
-                    s.recommended_planting_window,
-                    s.analyzed_at,
-                    s.verification_status,
-                    s.verified_by,
-                    s.verified_at,
-                    s.planner_notes,
-                    s.selected_polygon,
-                    s.heatmap_grid,
-                    s.area_m2,
-                    s.area_hectares,
-        s.analysis_summary,
-                    s.analysis_summary,
-                    e.ndvi,
-                    e.rainfall_mm,
-                    e.temperature_c,
-                    e.elevation_m,
-                    e.soil_ph,
-                    e.live_humidity,
-                    e.weather_description,
-                    e.infrastructure_suitability,
-                    e.infrastructure_score,
-                    e.infrastructure_status,
-                    e.infrastructure_recommendation,
-                    e.infrastructure_risk,
-                    e.slope_pct,
-                    e.data_quality,
-                    n.nitrogen,
-                    n.phosphorus,
-                    n.potassium,
-                    c.predicted_crop,
-                    c.compatibility_pct,
-                    c.suitability_level,
-                    c.is_crop_recommended,
-                    c.land_status,
-                    c.recommendation_title,
-                    c.alternative_crops,
-                    c.xai_explanation,
-                    fp.farm_name
-                FROM analysis_sessions s
-                LEFT JOIN environmental_data  e ON e.session_id = s.id
-                LEFT JOIN soil_nutrients      n ON n.session_id = s.id
-                LEFT JOIN crop_recommendations c ON c.session_id = s.id
-                LEFT JOIN farm_parcels        fp ON fp.id = s.farm_id
-                WHERE s.user_id = %s
-                ORDER BY s.analyzed_at DESC
-                LIMIT %s
-                """,
-                (user_id, limit),
-            )
-            rows = cur.fetchall()
-        return enrich_history_rows(rows)
+            cur.execute(_history_select_sql() + ' LIMIT %s OFFSET %s', (user_id, limit, offset))
+            return enrich_history_rows(cur.fetchall())
+    finally:
+        conn.close()
+
+
+def get_user_analysis(user_id: int, session_id: int):
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(_history_select_sql(where_prefix='s.user_id = %s AND s.id = %s'), (user_id, session_id))
+            row = cur.fetchone()
+            return enrich_history_rows([row])[0] if row else None
+    finally:
+        conn.close()
+
+
+def find_analysis_request(user_id, key, request_hash):
+    if not key:
+        return None
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, request_hash FROM analysis_sessions WHERE user_id=%s AND request_key=%s', (user_id,key))
+            row=cur.fetchone()
+            if not row:
+                return None
+            if row['request_hash'] != request_hash:
+                raise ValueError('This retry key was already used for different analysis inputs.')
+            return get_user_analysis(user_id,row['id'])
+    finally:
+        conn.close()
+
+
+def change_user_password(user_id, old_hash, new_hash):
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('UPDATE users SET password_hash=%s, password_version=password_version+1, updated_at=NOW() WHERE id=%s AND password_hash=%s AND is_active=TRUE RETURNING *', (new_hash,user_id,old_hash))
+            row=cur.fetchone()
+        conn.commit()
+        return dict(row) if row else None
     finally:
         conn.close()
 
@@ -936,6 +849,7 @@ def _history_select_sql(extra_select="", extra_join="", where_prefix="s.user_id 
     return f"""
                 SELECT
                     s.id            AS session_id,
+                    s.farm_id, s.boundary_version, s.submitted_at, s.result_snapshot,
                     s.verification_status,
                     s.verified_by,
                     s.verified_at,
@@ -956,7 +870,6 @@ def _history_select_sql(extra_select="", extra_join="", where_prefix="s.user_id 
                     s.heatmap_grid,
                     s.area_m2,
                     s.area_hectares,
-        s.analysis_summary,
                     s.analysis_summary,
                     e.ndvi,
                     e.rainfall_mm,
@@ -981,9 +894,10 @@ def _history_select_sql(extra_select="", extra_join="", where_prefix="s.user_id 
                     c.is_crop_recommended,
                     c.land_status,
                     c.recommendation_title,
+                    c.recommendation, c.crop_label, c.crop_growth_cycle, c.crop_est_yield,
                     c.alternative_crops,
                     c.xai_explanation,
-                    fp.farm_name
+                    COALESCE(s.farm_name_snapshot, fp.farm_name) AS farm_name
                     {extra_select}
                 FROM analysis_sessions s
                 LEFT JOIN environmental_data  e ON e.session_id = s.id
@@ -998,7 +912,7 @@ def _history_select_sql(extra_select="", extra_join="", where_prefix="s.user_id 
 
 
 def submit_analysis_to_planner(user_id: int, session_id: int):
-    """Submit a farmer-owned draft/rejected analysis to the planner queue."""
+    """Submit once; retries return the current review without erasing decisions."""
     conn = get_conn()
     try:
         with conn.cursor() as cur:
@@ -1006,17 +920,21 @@ def submit_analysis_to_planner(user_id: int, session_id: int):
                 """
                 UPDATE analysis_sessions
                 SET verification_status = 'pending',
-                    verified_by = NULL,
-                    verified_at = NULL,
-                    planner_notes = NULL
+                    submitted_at = NOW()
                 WHERE id = %s
                   AND user_id = %s
-                  AND verification_status IN ('draft', 'rejected')
+                  AND verification_status = 'draft'
+                  AND EXISTS (SELECT 1 FROM users WHERE id=%s AND role='farmer')
                 RETURNING id, verification_status, analyzed_at
                 """,
-                (session_id, user_id),
+                (session_id, user_id, user_id),
             )
             row = cur.fetchone()
+            if not row:
+                cur.execute("""SELECT id, verification_status, analyzed_at, planner_notes, verified_at
+                               FROM analysis_sessions WHERE id=%s AND user_id=%s
+                               AND verification_status IN ('pending','verified','rejected')""", (session_id,user_id))
+                row=cur.fetchone()
         conn.commit()
         return dict(row) if row else None
     finally:
@@ -1130,6 +1048,7 @@ def get_user_counts(user_id: int):
 _PLANNER_SESSION_SELECT = """
     SELECT
         s.id                AS session_id,
+        s.farm_id, s.boundary_version, s.submitted_at, s.result_snapshot,
         s.center_lat,
         s.center_lon,
         s.place_name,
@@ -1181,7 +1100,7 @@ _PLANNER_SESSION_SELECT = """
         c.recommendation,
         c.alternative_crops,
         c.xai_explanation,
-        fp.farm_name
+        COALESCE(s.farm_name_snapshot, fp.farm_name) AS farm_name
     FROM analysis_sessions s
     LEFT JOIN users               u ON u.id = s.user_id
     LEFT JOIN environmental_data  e ON e.session_id = s.id
@@ -1200,7 +1119,7 @@ def get_planner_queue(status: str = "pending", limit: int = 100):
     conn = get_conn()
     try:
         with conn.cursor() as cur:
-            farmer_only = " WHERE LOWER(COALESCE(u.role, 'farmer')) = 'farmer' "
+            farmer_only = " WHERE LOWER(COALESCE(u.role, 'farmer')) = 'farmer' AND s.verification_status IN ('pending','verified','rejected') "
             if status == "all":
                 cur.execute(
                     _PLANNER_SESSION_SELECT + farmer_only + " ORDER BY s.analyzed_at DESC LIMIT %s",
@@ -1527,20 +1446,29 @@ def update_crop_reference(crop_key: str, label=None, growth_cycle=None, est_yiel
 # Farm parcel management
 # ---------------------------------------------------------------------------
 def create_farm_parcel(farmer_id: int, farm_name: str, polygon, location_name=None,
-                       mapping_method='manual_draw', gps_accuracy_m=None):
+                       mapping_method='manual_draw', gps_accuracy_m=None, request_key=None, request_hash=None):
+    polygon = normalize_polygon(polygon)
     area_m2 = _polygon_area_m2(polygon or [])
     conn = get_conn()
     try:
         with conn.cursor() as cur:
+            if request_key:
+                cur.execute("SELECT pg_advisory_xact_lock(hashtextextended(%s, 0))", (f'farm:{farmer_id}:{request_key}',))
+                cur.execute("SELECT * FROM farm_parcels WHERE farmer_id=%s AND request_key=%s", (farmer_id,request_key))
+                prior=cur.fetchone()
+                if prior:
+                    if prior['request_hash'] != request_hash:
+                        raise ValueError('This retry key was already used for different farm inputs.')
+                    return dict(prior)
             cur.execute("""
                 INSERT INTO farm_parcels
                     (farmer_id, farm_name, location_name, polygon, area_m2, area_hectares,
-                     mapping_method, gps_accuracy_m)
-                VALUES (%s,%s,%s,%s,%s,%s,%s,%s)
+                     mapping_method, gps_accuracy_m, request_key, request_hash)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
                 RETURNING *
             """, (farmer_id, farm_name.strip(), location_name, Json(polygon or []),
                   area_m2, area_m2 / 10000.0 if area_m2 else None,
-                  mapping_method, gps_accuracy_m))
+                  mapping_method, gps_accuracy_m, request_key, request_hash))
             row = cur.fetchone()
         conn.commit()
         return dict(row) if row else None
@@ -1557,14 +1485,17 @@ def list_farm_parcels(farmer_id: int, include_archived=False):
                        (SELECT COUNT(*) FROM analysis_sessions s WHERE s.farm_id=f.id) AS analysis_count,
                        (SELECT MAX(s.analyzed_at) FROM analysis_sessions s WHERE s.farm_id=f.id) AS last_analyzed_at,
                        latest.verification_status AS latest_verification_status,
+                       latest.id AS latest_analysis_id,
+                       latest.analyzed_at AS latest_analysis_date,
+                       latest.verification_status AS latest_review_status,
                        latest.predicted_crop AS latest_predicted_crop
                 FROM farm_parcels f
                 LEFT JOIN LATERAL (
-                    SELECT s.verification_status, c.predicted_crop
+                    SELECT s.id, s.analyzed_at, s.verification_status, c.predicted_crop
                     FROM analysis_sessions s
                     LEFT JOIN crop_recommendations c ON c.session_id = s.id
-                    WHERE s.farm_id = f.id
-                    ORDER BY s.analyzed_at DESC
+                    WHERE s.farm_id = f.id AND s.user_id = f.farmer_id
+                    ORDER BY s.analyzed_at DESC, s.id DESC
                     LIMIT 1
                 ) latest ON TRUE
                 WHERE f.farmer_id=%s AND (%s OR f.is_archived=FALSE)
@@ -1590,6 +1521,7 @@ def update_farm_parcel(farmer_id: int, farm_id: int, **changes):
     allowed={'farm_name','location_name','polygon','mapping_method','gps_accuracy_m','is_archived'}
     data={k:v for k,v in changes.items() if k in allowed and v is not None}
     if 'polygon' in data:
+        data['polygon']=normalize_polygon(data['polygon'])
         area=_polygon_area_m2(data['polygon'] or [])
         data['area_m2']=area
         data['area_hectares']=area/10000.0 if area else None
@@ -1598,6 +1530,8 @@ def update_farm_parcel(farmer_id: int, farm_id: int, **changes):
     if not data:
         return get_farm_parcel(farmer_id, farm_id)
     sets=', '.join(f"{k}=%s" for k in data)
+    if 'polygon' in data:
+        sets += ', boundary_version=boundary_version+1'
     vals=list(data.values())+[farm_id,farmer_id]
     conn=get_conn()
     try:

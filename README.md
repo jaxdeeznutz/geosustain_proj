@@ -1,5 +1,7 @@
 # GeoSustain
 
+See [MOBILE_UPDATE.md](MOBILE_UPDATE.md) for the October 2026 mobile changes, registration findings, validation results, and backend/frontend deployment steps.
+
 AI-driven geospatial decision support for sustainable landscape management in Panabo City.
 
 ## Run the current application
@@ -32,7 +34,7 @@ The Windows shortcuts remain available: `start_backend.bat` and `run_flutter.bat
 
 ## Configuration
 
-The backend now loads `backend/.env`; deployment environment variables take precedence. The private delivered ZIP includes the OpenWeather key carried over from your original source in this Git-ignored file. Keep it private. No database password, email credentials or Earth Engine service-account key was supplied or added.
+The backend loads `backend/.env`; deployment environment variables take precedence. The mobile-update source ZIP excludes local secrets and `.env` files. Keep your existing Render environment values and configure local credentials separately.
 
 Use `backend/.env.example` as a guide and retain your existing values for:
 

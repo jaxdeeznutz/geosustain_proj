@@ -17,11 +17,15 @@ import 'package:printing/printing.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'farm_geometry.dart';
 
 part 'screens/home_screen.dart';
 part 'screens/map_screen.dart';
 part 'screens/my_farms_screen.dart';
+part 'screens/land_mapping_screen.dart';
+part 'screens/session_gate.dart';
 part 'screens/analyze_screen.dart';
+part 'screens/mobile_results.dart';
 part 'screens/history_screen.dart';
 part 'screens/profile_screen.dart';
 part 'screens/insights_report_admin_screen.dart';
@@ -123,7 +127,8 @@ class AuthCard extends StatelessWidget {
 }
 
 class GeoSustainApp extends StatelessWidget {
-  const GeoSustainApp({super.key});
+  final Widget? home;
+  const GeoSustainApp({super.key, this.home});
 
   @override
   Widget build(BuildContext context) {
@@ -141,6 +146,7 @@ class GeoSustainApp extends StatelessWidget {
           centerTitle: true,
           elevation: 0,
           titleTextStyle: TextStyle(
+            fontFamily: 'Roboto',
             fontSize: 18,
             fontWeight: FontWeight.w800,
             color: green,
@@ -174,7 +180,10 @@ class GeoSustainApp extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
             ),
-            textStyle: const TextStyle(fontWeight: FontWeight.w800),
+            textStyle: const TextStyle(
+              fontFamily: 'Roboto',
+              fontWeight: FontWeight.w800,
+            ),
           ),
         ),
         cardTheme: CardThemeData(
@@ -186,7 +195,7 @@ class GeoSustainApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const LoginPage(),
+      home: home ?? const SessionGate(),
     );
   }
 }
@@ -285,32 +294,12 @@ class _LoginPageState extends State<LoginPage> {
   bool loading = false;
   bool obscurePassword = true;
 
-  bool get _isWebDashboardViewport => MediaQuery.of(context).size.width >= 900;
-
-  bool _isAnalystRoleFrom(Map<String, dynamic> user) {
-    final role = '${user['role'] ?? user['account_type'] ?? 'farmer'}'
-        .toLowerCase();
-    return role.contains('analyst') ||
-        role.contains('planner') ||
-        role.contains('agricultural_planning_analyst') ||
-        role.contains('admin');
-  }
-
-  Future<void> _ensurePlatformAccess() async {
-    final user = await api.getMe();
-    final isAnalyst = _isAnalystRoleFrom(user);
-    if (_isWebDashboardViewport && !isAnalyst) {
-      await api.logout();
-      throw Exception(
-        'This farmer account does not have access to the web analyst dashboard. Please use the mobile farmer app.',
-      );
-    }
-    if (!_isWebDashboardViewport && isAnalyst) {
-      await api.logout();
-      throw Exception(
-        'This analyst account is for the web analyst dashboard. Please open GeoSustain on a desktop browser.',
-      );
-    }
+  @override
+  void dispose() {
+    emailController.dispose();
+    passwordController.dispose();
+    api.close();
+    super.dispose();
   }
 
   Future<void> login() async {
@@ -319,10 +308,16 @@ class _LoginPageState extends State<LoginPage> {
 
     final email = emailController.text.trim();
     final password = passwordController.text;
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email) ||
+        password.isEmpty) {
+      setState(() => loading = false);
+      showMessage('Enter your email address and password.');
+      return;
+    }
 
     try {
       await api.login(email, password);
-      await _ensurePlatformAccess();
+      // The authenticated role selects the appropriate shell.
 
       if (!mounted) return;
       Navigator.pushReplacement(
@@ -338,9 +333,9 @@ class _LoginPageState extends State<LoginPage> {
 
   void showMessage(Object e) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(e.toString().replaceFirst('Exception: ', ''))),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(friendlyErrorMessage(e))));
   }
 
   @override
@@ -506,6 +501,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool obscureConfirm = true;
 
   Future<void> register() async {
+    if (loading) return;
     final username = usernameController.text.trim();
     final email = emailController.text.trim().toLowerCase();
     final password = passwordController.text;
@@ -513,8 +509,11 @@ class _RegisterPageState extends State<RegisterPage> {
     if (username.length < 3) {
       return showMessage('Username must be at least 3 characters.');
     }
-    if (!email.contains('@')) {
+    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
       return showMessage('Enter a valid email address.');
+    }
+    if (utf8.encode(password).length > 72) {
+      return showMessage('Password is too long (maximum 72 UTF-8 bytes).');
     }
     if (password.length < 6) {
       return showMessage('Password must be at least 6 characters.');
@@ -524,9 +523,7 @@ class _RegisterPageState extends State<RegisterPage> {
     }
     setState(() => loading = true);
     try {
-      final assignedRole = MediaQuery.of(context).size.width >= 900
-          ? 'analyst'
-          : 'farmer';
+      const assignedRole = 'farmer';
       await api.register(
         username: username,
         email: email,
@@ -534,6 +531,7 @@ class _RegisterPageState extends State<RegisterPage> {
         role: assignedRole,
       );
       if (!mounted) return;
+      showMessage('Account created. Sign in with your email and password.');
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -543,6 +541,16 @@ class _RegisterPageState extends State<RegisterPage> {
     } finally {
       if (mounted) setState(() => loading = false);
     }
+  }
+
+  @override
+  void dispose() {
+    usernameController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    confirmPasswordController.dispose();
+    api.close();
+    super.dispose();
   }
 
   void showMessage(String message) {
@@ -586,9 +594,7 @@ class _RegisterPageState extends State<RegisterPage> {
                 const SizedBox(width: 10),
                 Expanded(
                   child: Text(
-                    MediaQuery.of(context).size.width >= 900
-                        ? 'Web accounts are registered as Analyst accounts for dashboard access.'
-                        : 'Mobile accounts are automatically registered as Farmer accounts.',
+                    'Create a Farmer account. Analyst access is assigned by your administrator.',
                     style: const TextStyle(
                       color: darkGreen,
                       fontWeight: FontWeight.w700,
@@ -737,6 +743,55 @@ String friendlyErrorMessage(Object error) {
 }
 
 class AnalysisState extends ChangeNotifier {
+  bool _disposed = false;
+  String? historyError;
+  String? farmsError;
+  @override
+  void notifyListeners() {
+    if (!_disposed) super.notifyListeners();
+  }
+
+  Future<String?> selectAnalysis(Map<String, dynamic> record) async {
+    final id = int.tryParse('${record['session_id'] ?? record['id']}');
+    if (id == null) {
+      return 'This analysis has no saved record. Analyze the area again.';
+    }
+    try {
+      final selected = await api.getAnalysis(id);
+      if (_disposed) return 'The session has ended.';
+      result = selected;
+      notifyListeners();
+      return null;
+    } catch (error) {
+      return friendlyErrorMessage(error);
+    }
+  }
+
+  void clearUserData() {
+    _weatherRefreshTimer?.cancel();
+    _loadingTimer?.cancel();
+    result = null;
+    currentUser = null;
+    liveWeather = null;
+    profilePhotoBytes = null;
+    for (final list in [
+      farms,
+      historyRecords,
+      recentAnalyses,
+      savedAnalyses,
+      generatedReports,
+      verifiedTrendRecords,
+      plannerQueue,
+    ]) {
+      list.clear();
+    }
+    polygonPoints.clear();
+    _placeCache.clear();
+    profileCounts.clear();
+    loading = false;
+    notifyListeners();
+  }
+
   void replaceFarms(List<Map<String, dynamic>> values) {
     farms
       ..clear()
@@ -750,7 +805,8 @@ class AnalysisState extends ChangeNotifier {
     notifyListeners();
   }
 
-  final api = ApiService();
+  AnalysisState({ApiService? api}) : api = api ?? ApiService();
+  final ApiService api;
   final mapController = MapController();
   final latController = TextEditingController(text: '7.2915');
   final lonController = TextEditingController(text: '125.6255');
@@ -1007,7 +1063,7 @@ class AnalysisState extends ChangeNotifier {
     userLoaded = false;
     notifyListeners();
     try {
-      currentUser = await api.getMe().timeout(const Duration(seconds: 15));
+      currentUser = await api.getMe();
       final encodedPhoto = currentUser?['profile_photo'];
       if (encodedPhoto != null && '$encodedPhoto'.isNotEmpty) {
         try {
@@ -1030,13 +1086,17 @@ class AnalysisState extends ChangeNotifier {
       const Duration(seconds: 12),
       onTimeout: () {},
     );
+    if (result == null && !loading && historyRecords.isNotEmpty && !_disposed) {
+      await selectAnalysis(historyRecords.first);
+    }
     notifyListeners();
   }
 
   Future<void> refreshHistoryData() async {
+    historyError = null;
     try {
       final rows = await api.getHistory();
-      if (rows.isNotEmpty || historyRecords.isEmpty) {
+      {
         historyRecords
           ..clear()
           ..addAll(rows.map((e) => Map<String, dynamic>.from(e as Map)));
@@ -1044,7 +1104,25 @@ class AnalysisState extends ChangeNotifier {
       recentAnalyses
         ..clear()
         ..addAll(historyRecords.take(3).map(normalizeRecord));
-    } catch (_) {}
+      final selectedId = result?['session_id'];
+      if (selectedId != null) {
+        for (final row in historyRecords) {
+          if ('${row['session_id'] ?? row['id']}' == '$selectedId') {
+            for (final key in [
+              'verification_status',
+              'planner_notes',
+              'verified_at',
+              'submitted_at',
+            ]) {
+              result![key] = row[key];
+            }
+            break;
+          }
+        }
+      }
+    } catch (error) {
+      historyError = friendlyErrorMessage(error);
+    }
     if (isPlanner) {
       try {
         final rows = await api.getPlannerQueue(status: 'verified');
@@ -1089,13 +1167,15 @@ class AnalysisState extends ChangeNotifier {
 
   Future<void> refreshFarms() async {
     farmsLoading = true;
+    farmsError = null;
     notifyListeners();
     try {
       final rows = await api.getFarms();
       farms
         ..clear()
         ..addAll(rows.map((e) => Map<String, dynamic>.from(e as Map)));
-    } catch (_) {
+    } catch (error) {
+      farmsError = friendlyErrorMessage(error);
       // Keep whatever farms were already loaded rather than clearing them
       // on a transient network failure (Section 26).
     }
@@ -1153,7 +1233,11 @@ class AnalysisState extends ChangeNotifier {
   }
 
   String userName() => '${currentUser?['username'] ?? 'User'}';
-  String userLocation() => '${currentUser?['location'] ?? selectedPlaceName}';
+  String userLocation() {
+    final location = '${currentUser?['location'] ?? ''}'.trim();
+    return location.isEmpty ? 'Location not set' : location;
+  }
+
   String userProfilePhotoBase64() => '${currentUser?['profile_photo'] ?? ''}';
   String get accountRole =>
       '${currentUser?['role'] ?? currentUser?['account_type'] ?? 'unknown'}'
@@ -1502,12 +1586,9 @@ class AnalysisState extends ChangeNotifier {
 
   Future<String?> analyzePolygon() async {
     if (loading) return 'Analysis is already running. Please wait.';
-    if (polygonPoints.length < 3) {
-      return 'Tap at least 3 points on the map to create a boundary.';
-    }
-    final payload = polygonPoints
-        .map((p) => {'lat': p.latitude, 'lng': p.longitude})
-        .toList();
+    final invalid = FarmGeometry.validate(polygonPoints);
+    if (invalid != null) return invalid;
+    final payload = FarmGeometry.payload(polygonPoints);
     final centerLat =
         polygonPoints.map((p) => p.latitude).reduce((a, b) => a + b) /
         polygonPoints.length;
@@ -1558,9 +1639,8 @@ class AnalysisState extends ChangeNotifier {
         if (lat != null && lng != null) points.add(LatLng(lat, lng));
       }
     }
-    if (points.length < 3) {
-      return 'This farm boundary has fewer than three valid points.';
-    }
+    final invalid = FarmGeometry.validate(points);
+    if (invalid != null) return invalid;
     polygonPoints
       ..clear()
       ..addAll(points);
@@ -1573,9 +1653,7 @@ class AnalysisState extends ChangeNotifier {
         points.map((p) => p.longitude).reduce((a, b) => a + b) / points.length;
     selectedPoint = LatLng(centerLat, centerLon);
     _startLoadingFlow();
-    final payload = points
-        .map((p) => {'lat': p.latitude, 'lng': p.longitude})
-        .toList();
+    final payload = FarmGeometry.payload(points);
     final err = await run(
       () => api.analyzePolygon(
         payload,
@@ -1622,7 +1700,7 @@ class AnalysisState extends ChangeNotifier {
       }
       // Weather alerts are now live advisories and are intentionally independent
       // from land analysis results. Refresh them from Home/Map, not after Analyze.
-      await refreshHistoryData();
+      await Future.wait([refreshHistoryData(), refreshFarms()]);
       return null;
     } catch (e) {
       return e.toString().replaceFirst('Exception: ', '');
@@ -1712,8 +1790,10 @@ class AnalysisState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _disposed = true;
     _loadingTimer?.cancel();
     _weatherRefreshTimer?.cancel();
+    mapController.dispose();
     api.close();
     latController.dispose();
     lonController.dispose();
@@ -1731,20 +1811,23 @@ class AnalysisState extends ChangeNotifier {
 }
 
 class ShellPage extends StatefulWidget {
-  const ShellPage({super.key});
+  final AnalysisState? analysisState;
+  const ShellPage({super.key, this.analysisState});
   @override
   State<ShellPage> createState() => _ShellPageState();
 }
 
-class _ShellPageState extends State<ShellPage> {
-  final state = AnalysisState();
+class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
+  late final AnalysisState state;
   int index = 0;
 
   @override
   void initState() {
     super.initState();
+    state = widget.analysisState ?? AnalysisState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      state.loadUserData();
+      if (!state.userLoaded) state.loadUserData();
       state.refreshLiveWeather();
       state.startWeatherAutoRefresh();
       state.refreshFarms();
@@ -1753,6 +1836,7 @@ class _ShellPageState extends State<ShellPage> {
 
   Future<void> logout() async {
     await state.api.logout();
+    state.clearUserData();
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
@@ -1767,7 +1851,32 @@ class _ShellPageState extends State<ShellPage> {
   }
 
   @override
+  void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
+    if (lifecycle == AppLifecycleState.resumed) {
+      state.refreshHistoryData();
+      state.refreshFarms();
+    }
+  }
+
+  void selectTab(int i) {
+    setState(() => index = i);
+    if (i == 1) state.refreshFarms();
+    if (i == 2 || i == 3) state.refreshHistoryData();
+  }
+
+  Future<void> openAnalysis(Map<String, dynamic> record) async {
+    final error = await state.selectAnalysis(record);
+    if (!mounted) return;
+    if (error != null) {
+      message(error);
+      return;
+    }
+    selectTab(2);
+  }
+
+  @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     state.dispose();
     super.dispose();
   }
@@ -1803,10 +1912,6 @@ class _ShellPageState extends State<ShellPage> {
       );
     }
 
-    if (isDesktopWeb && !(state.isAnalystRole || state.isSuperAdmin)) {
-      return AccessDeniedPage(desktopAttempt: true, logout: logout);
-    }
-
     if (!isDesktopWeb && (state.isAnalystRole || state.isSuperAdmin)) {
       return AccessDeniedPage(desktopAttempt: false, logout: logout);
     }
@@ -1831,78 +1936,88 @@ class _ShellPageState extends State<ShellPage> {
       );
     }
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          IndexedStack(
-            index: index,
-            children: [
-              tab(
-                () => HomePage(
-                  state: state,
-                  go: (i) => setState(() => index = i),
-                  logout: logout,
-                  message: message,
+    return PopScope(
+      canPop: index == 0,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && index != 0) selectTab(0);
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            IndexedStack(
+              index: index,
+              children: [
+                tab(
+                  () => HomePage(
+                    state: state,
+                    go: selectTab,
+                    logout: logout,
+                    message: message,
+                  ),
                 ),
-              ),
-              tab(
-                () => MapAnalyzePage(
-                  state: state,
-                  message: message,
-                  goAnalyze: () => setState(() => index = 2),
+                tab(
+                  () =>
+                      MyFarmsPage(state: state, onAnalyzed: () => selectTab(2)),
                 ),
-              ),
-              tab(
-                () => DashboardPage(
-                  state: state,
-                  goMap: () => setState(() => index = 1),
-                  message: message,
+                tab(
+                  () => MobileAnalysisPage(
+                    state: state,
+                    goFarms: () => selectTab(1),
+                  ),
                 ),
-              ),
-              tab(() => HistoryPage(api: state.api, state: state)),
-              tab(() => ProfilePage(state: state, logout: logout)),
-            ],
-          ),
-          ListenableBuilder(
-            listenable: state,
-            builder: (_, _) => state.loading
-                ? FullscreenAnalysisOverlay(message: state.loadingMessage)
-                : const SizedBox.shrink(),
-          ),
-        ],
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: index,
-        height: 68,
-        indicatorColor: softGreen,
-        onDestinationSelected: (i) => setState(() => index = i),
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home, color: green),
-            label: 'Home',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map, color: green),
-            label: 'Map',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.center_focus_strong_outlined),
-            selectedIcon: Icon(Icons.center_focus_strong, color: green),
-            label: 'Analyze',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history, color: green),
-            label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: green),
-            label: 'Profile',
-          ),
-        ],
+                tab(
+                  () => HistoryPage(
+                    api: state.api,
+                    state: state,
+                    onOpenAnalysis: openAnalysis,
+                    goFarms: () => selectTab(1),
+                  ),
+                ),
+                tab(() => ProfilePage(state: state, logout: logout)),
+              ],
+            ),
+            ListenableBuilder(
+              listenable: state,
+              builder: (_, _) => state.loading
+                  ? FullscreenAnalysisOverlay(message: state.loadingMessage)
+                  : const SizedBox.shrink(),
+            ),
+          ],
+        ),
+        bottomNavigationBar: NavigationBar(
+          selectedIndex: index,
+          height: 76,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          indicatorColor: softGreen,
+          onDestinationSelected: selectTab,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home, color: green),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.map_outlined),
+              selectedIcon: Icon(Icons.map, color: green),
+              label: 'My Farms',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.center_focus_strong_outlined),
+              selectedIcon: Icon(Icons.center_focus_strong, color: green),
+              label: 'Analysis',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.history_outlined),
+              selectedIcon: Icon(Icons.history, color: green),
+              label: 'History',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person, color: green),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     );
   }

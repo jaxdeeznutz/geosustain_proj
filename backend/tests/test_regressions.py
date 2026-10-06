@@ -110,15 +110,14 @@ def test_invalid_month_rejected_before_analysis(client):
                                                   'intended_planting_month': 13}).status_code == 422
 
 
-def test_saved_session_survives_optional_farm_attach_failure(client, monkeypatch):
-    api.app.dependency_overrides[api.get_api_user] = lambda: {'id': 10, 'role': 'farmer'}
-    monkeypatch.setattr(api, 'build_analysis_result', lambda **kw: ({'crop': 'Cacao'}, 'selected-polygon'))
-    monkeypatch.setattr(api, 'save_analysis_session', lambda *a: 42)
-    monkeypatch.setattr(api, 'attach_analysis_to_farm', Mock(side_effect=ValueError('Not your farm')))
-    response = client.post('/api/mobile/analysis', json={'lat': 7.3, 'lon': 125.6, 'farm_id': 7})
-    assert response.status_code == 200
-    assert response.json()['session_id'] == 42
-    assert 'farm_id' not in response.json()
+def test_unknown_farm_is_rejected_before_analysis(client, monkeypatch):
+    api.app.dependency_overrides[api.get_api_user] = lambda: {'id':10,'role':'farmer'}
+    monkeypatch.setattr(api, 'get_farm_parcel', lambda *args: None)
+    build = Mock()
+    monkeypatch.setattr(api, 'build_analysis_result', build)
+    response = client.post('/api/mobile/analysis', json={'lat':7.3,'lon':125.6,'farm_id':7})
+    assert response.status_code == 404
+    build.assert_not_called()
 
 
 def test_weather_failure_returns_502(client, monkeypatch):
