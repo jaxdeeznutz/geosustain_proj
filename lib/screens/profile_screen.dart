@@ -75,7 +75,8 @@ class ProfilePage extends StatelessWidget {
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  state.userRole(),
+                  '${state.currentUser?['email'] ?? ''}\n${state.userRole()}',
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
                     color: Colors.white70,
                     fontWeight: FontWeight.w700,
@@ -171,9 +172,8 @@ class ProfilePage extends StatelessWidget {
             children: [
               ProfileActionTile(
                 icon: Icons.settings_outlined,
-                title: 'Account Settings',
-                subtitle:
-                    'Edit profile, photo, notifications, and account actions',
+                title: 'Edit Profile',
+                subtitle: 'Update your name, location, and profile photo',
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -197,6 +197,38 @@ class ProfilePage extends StatelessWidget {
                 icon: Icons.my_location_outlined,
                 title: 'Location Permission',
                 subtitle: 'GPS and field location access',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const LocationGuidancePage(),
+                  ),
+                ),
+              ),
+              ProfileActionTile(
+                icon: Icons.lock_outline,
+                title: 'Change Password',
+                subtitle: 'Use your current password to set a new one',
+                onTap: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => ChangePasswordPage(api: state.api),
+                  ),
+                ),
+              ),
+              ProfileActionTile(
+                icon: Icons.info_outline,
+                title: 'About GeoSustain',
+                subtitle: 'Version 1.0.0+1',
+                onTap: () => showAboutDialog(
+                  context: context,
+                  applicationName: 'GeoSustain',
+                  applicationVersion: '1.0.0+1',
+                  children: const [
+                    Text(
+                      'GeoSustain helps farmers map their land, explore automated crop suitability, and request analyst review. Automated results support planning and do not replace field assessment.',
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -228,8 +260,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Uint8List? pickedPhotoBytes;
   String? pickedPhotoBase64;
   bool saving = false;
-  bool notificationsEnabled = true;
-  bool weatherAlerts = true;
 
   @override
   void initState() {
@@ -241,13 +271,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
       text: widget.state.currentUser?['email']?.toString() ?? '',
     );
     locationController = TextEditingController(
-      text: widget.state.userLocation(),
+      text: '${widget.state.currentUser?['location'] ?? ''}',
     );
-    final currentRole =
-        widget.state.currentUser?['role']?.toString() ?? 'farmer';
-    role = currentRole == 'analyst'
-        ? 'Agricultural Planning Analyst'
-        : 'Farmer';
+    role = widget.state.userRole();
   }
 
   @override
@@ -257,9 +283,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     locationController.dispose();
     super.dispose();
   }
-
-  String get apiRole =>
-      role == 'Agricultural Planning Analyst' ? 'analyst' : 'farmer';
 
   Future<void> pickPhoto() async {
     final picker = ImagePicker();
@@ -278,13 +301,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> saveProfile() async {
+    if (saving) return;
+    if (nameController.text.trim().length < 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Name must be at least 3 characters.')),
+      );
+      return;
+    }
     setState(() => saving = true);
     try {
       final updated = await widget.state.api.updateProfile(
         username: nameController.text.trim().isEmpty
             ? 'User'
             : nameController.text.trim(),
-        role: apiRole,
         location: locationController.text.trim(),
         profilePhotoBase64: pickedPhotoBase64,
       );
@@ -428,23 +457,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    DropdownButtonFormField<String>(
+                    TextFormField(
                       initialValue: role,
+                      readOnly: true,
                       decoration: const InputDecoration(
                         labelText: 'Role',
+                        helperText: 'Assigned by your administrator',
                         prefixIcon: Icon(Icons.badge_outlined),
                       ),
-                      items: const [
-                        DropdownMenuItem(
-                          value: 'Farmer',
-                          child: Text('Farmer'),
-                        ),
-                        DropdownMenuItem(
-                          value: 'Agricultural Planning Analyst',
-                          child: Text('Agricultural Planning Analyst'),
-                        ),
-                      ],
-                      onChanged: (v) => setState(() => role = v ?? 'Farmer'),
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -489,35 +509,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                     ),
                   ],
                 ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Card(
-              child: Column(
-                children: [
-                  SwitchListTile(
-                    value: notificationsEnabled,
-                    onChanged: (v) => setState(() => notificationsEnabled = v),
-                    secondary: const Icon(
-                      Icons.notifications_outlined,
-                      color: green,
-                    ),
-                    title: const Text('Notifications'),
-                    subtitle: const Text('Show analysis and system alerts'),
-                  ),
-                  SwitchListTile(
-                    value: weatherAlerts,
-                    onChanged: (v) => setState(() => weatherAlerts = v),
-                    secondary: const Icon(
-                      Icons.water_drop_outlined,
-                      color: green,
-                    ),
-                    title: const Text('Weather alerts'),
-                    subtitle: const Text(
-                      'Rainfall, humidity, wind, and field warnings',
-                    ),
-                  ),
-                ],
               ),
             ),
             const SizedBox(height: 12),
@@ -896,4 +887,203 @@ Color infrastructureColor(Map<String, dynamic>? data) {
   }
   if (label.contains('NOT')) return const Color(0xFFE45B5B);
   return green;
+}
+
+class ChangePasswordPage extends StatefulWidget {
+  final ApiService api;
+  const ChangePasswordPage({super.key, required this.api});
+  @override
+  State<ChangePasswordPage> createState() => _ChangePasswordPageState();
+}
+
+class _ChangePasswordPageState extends State<ChangePasswordPage> {
+  final current = TextEditingController(),
+      password = TextEditingController(),
+      confirm = TextEditingController();
+  bool saving = false, obscure = true;
+  String? error;
+  @override
+  void dispose() {
+    current.dispose();
+    password.dispose();
+    confirm.dispose();
+    super.dispose();
+  }
+
+  Future<void> save() async {
+    if (saving) return;
+    if (current.text.isEmpty ||
+        password.text.length < 6 ||
+        utf8.encode(password.text).length > 72 ||
+        password.text != confirm.text) {
+      setState(
+        () => error =
+            'Enter your current password and matching new passwords (6 characters minimum, 72 UTF-8 bytes maximum).',
+      );
+      return;
+    }
+    setState(() {
+      saving = true;
+      error = null;
+    });
+    try {
+      await widget.api.changePassword(current.text, password.text);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Password changed. Other sessions must sign in again.'),
+        ),
+      );
+      Navigator.pop(context);
+    } catch (e) {
+      if (mounted) setState(() => error = friendlyErrorMessage(e));
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Change Password')),
+    body: SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          const Text(
+            'Your current password is required. Your other sessions will be signed out.',
+          ),
+          const SizedBox(height: 18),
+          for (final field in [
+            (current, 'Current password'),
+            (password, 'New password'),
+            (confirm, 'Confirm new password'),
+          ]) ...[
+            TextField(
+              controller: field.$1,
+              obscureText: obscure,
+              enabled: !saving,
+              autocorrect: false,
+              enableSuggestions: false,
+              decoration: InputDecoration(
+                labelText: field.$2,
+                suffixIcon: IconButton(
+                  onPressed: () => setState(() => obscure = !obscure),
+                  icon: Icon(
+                    obscure
+                        ? Icons.visibility_outlined
+                        : Icons.visibility_off_outlined,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Text(error!, style: const TextStyle(color: Colors.red)),
+            ),
+          FilledButton(
+            onPressed: saving ? null : save,
+            child: Text(saving ? 'Saving...' : 'Change Password'),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class LocationGuidancePage extends StatefulWidget {
+  const LocationGuidancePage({super.key});
+  @override
+  State<LocationGuidancePage> createState() => _LocationGuidancePageState();
+}
+
+class _LocationGuidancePageState extends State<LocationGuidancePage> {
+  String status = 'Checking location access...';
+  @override
+  void initState() {
+    super.initState();
+    check();
+  }
+
+  Future<void> check({bool request = false}) async {
+    try {
+      final enabled = await Geolocator.isLocationServiceEnabled();
+      var permission = await Geolocator.checkPermission();
+      if (request && permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      final message = !enabled
+          ? 'Device location is off. Enable GPS in your device settings.'
+          : permission == LocationPermission.deniedForever
+          ? 'Location is blocked. Allow location for GeoSustain in app or browser settings.'
+          : permission == LocationPermission.denied
+          ? 'Location permission has not been granted.'
+          : 'Location access is available for GPS recording.';
+      if (mounted) setState(() => status = message);
+    } catch (e) {
+      if (mounted) setState(() => status = friendlyErrorMessage(e));
+    }
+  }
+
+  Future<void> openSettings(bool location) async {
+    try {
+      final opened = location
+          ? await Geolocator.openLocationSettings()
+          : await Geolocator.openAppSettings();
+      if (!opened && mounted) {
+        setState(
+          () => status =
+              'Open your device or browser settings and allow location for GeoSustain.',
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => status =
+              'Open your browser site permissions and allow location for GeoSustain.',
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Location Permission')),
+    body: SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Text(status),
+          const SizedBox(height: 16),
+          const Text(
+            'GPS walking needs location access and a clear outdoor signal. Recording pauses when the app is backgrounded. Drawing a polygon works without location permission.',
+          ),
+          const SizedBox(height: 20),
+          FilledButton(
+            onPressed: () => check(request: true),
+            child: const Text('Check / request permission'),
+          ),
+          if (!kIsWeb) ...[
+            TextButton(
+              onPressed: () => openSettings(false),
+              child: const Text('Open app settings'),
+            ),
+            TextButton(
+              onPressed: () => openSettings(true),
+              child: const Text('Open location settings'),
+            ),
+          ],
+          if (kIsWeb)
+            const Padding(
+              padding: EdgeInsets.only(top: 16),
+              child: Text(
+                'In your browser, open site permissions beside the address bar and allow Location. GPS requires HTTPS or a trusted local development origin.',
+              ),
+            ),
+        ],
+      ),
+    ),
+  );
 }

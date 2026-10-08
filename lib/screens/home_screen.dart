@@ -13,115 +13,184 @@ class HomePage extends StatelessWidget {
     required this.message,
   });
 
+  Future<void> openRecord(Map<String, dynamic> record) async {
+    final error = await state.selectAnalysis(record);
+    if (error != null) {
+      message(error);
+      return;
+    }
+    go(2);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final data = state.result;
-    final weather = state.liveWeather ?? state.result;
+    final pending = state.historyRecords
+        .where((r) => r['verification_status'] == 'pending')
+        .length;
     return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 86),
-        children: [
-          MobileHeader(
-            title: '🌿 GeoSustain',
-            trailing: IconButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => NotificationsPage(state: state),
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await Future.wait([state.refreshFarms(), state.refreshHistoryData()]);
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            const MobileHeader(title: 'GeoSustain'),
+            Card(
+              color: softGreen,
+              child: Padding(
+                padding: const EdgeInsets.all(22),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Welcome, ${state.userName()}',
+                      style: const TextStyle(color: darkGreen),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      'Understand your land. Plan your farm.',
+                      style: TextStyle(
+                        fontSize: 28,
+                        height: 1.15,
+                        fontWeight: FontWeight.w900,
+                        color: darkGreen,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    const Text(
+                      'GeoSustain helps you map your farm, explore land suitability, understand crop recommendations, and submit your analysis for analyst review.',
+                    ),
+                    const SizedBox(height: 20),
+                    FilledButton.icon(
+                      onPressed: () =>
+                          showLandMethodPicker(context, state, () => go(2)),
+                      icon: const Icon(Icons.add_location_alt_outlined),
+                      label: const Text('Get Started'),
+                    ),
+                  ],
                 ),
               ),
-              icon: const Icon(Icons.notifications_none_rounded),
             ),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Today’s Conditions',
-                  style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+            const SizedBox(height: 12),
+            if (state.historyError != null || state.farmsError != null)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(state.historyError ?? state.farmsError!),
                 ),
               ),
-              TextButton(
-                onPressed: () async {
-                  final err = await state.refreshLiveWeather();
-                  if (err != null) message(err);
-                },
+            Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: [
+                ActionChip(
+                  avatar: const Icon(Icons.agriculture_outlined),
+                  label: Text('${state.farms.length} saved farms'),
+                  onPressed: () => go(1),
+                ),
+                ActionChip(
+                  avatar: const Icon(Icons.fact_check_outlined),
+                  label: Text('$pending pending reviews'),
+                  onPressed: () => go(3),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'How GeoSustain works',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            _guide(
+              Icons.route_outlined,
+              '1. Map your land',
+              'Record a boundary with GPS or draw an area on the map.',
+            ),
+            _guide(
+              Icons.analytics_outlined,
+              '2. Understand your results',
+              'Explore suitability, recommended crops, and the factors behind the analysis.',
+            ),
+            _guide(
+              Icons.fact_check_outlined,
+              '3. Request analyst review',
+              'Submit your results and follow their verification status.',
+            ),
+            if (state.historyRecords.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
                 child: Text(
-                  state.weatherLoading ? 'Updating...' : 'Refresh',
-                  style: TextStyle(color: green, fontWeight: FontWeight.w800),
+                  'Your first farm starts with a boundary. Choose Get Started when you are ready.',
+                  style: TextStyle(color: Colors.grey.shade700),
                 ),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          SizedBox(
-            height: 108,
-            child: state.weatherLoading && weather == null
-                ? const Center(
-                    child: CircularProgressIndicator(strokeWidth: 2.5),
-                  )
-                : ListView(
-                    scrollDirection: Axis.horizontal,
-                    children: [
-                      SmartConditionCard(
-                        icon: Icons.thermostat,
-                        label: 'Temperature',
-                        value: '${state.numText(weather?['temperature_c'])}°C',
-                        bgColor: const Color(0xFFFFF1E8),
-                      ),
-                      SmartConditionCard(
-                        icon: Icons.water_drop,
-                        label: 'Rainfall Today',
-                        value:
-                            '${state.numText(weather?['rainfall_today_mm'] ?? weather?['today_rainfall_mm'] ?? weather?['daily_rainfall_mm'] ?? weather?['precipitation_sum'] ?? weather?['current_precipitation_mm'])} mm',
-                        bgColor: const Color(0xFFEAF2FF),
-                      ),
-                      SmartConditionCard(
-                        icon: Icons.opacity,
-                        label: 'Humidity',
-                        value: '${state.numText(weather?['live_humidity'])}%',
-                        bgColor: const Color(0xFFEAF7F8),
-                      ),
-                      SmartConditionCard(
-                        icon: Icons.air,
-                        label: 'Wind',
-                        value:
-                            '${state.numText(weather?['wind_speed_kmh'])} km/h',
-                        bgColor: const Color(0xFFF4F8FF),
-                      ),
-
-                      SmartConditionCard(
-                        icon: Icons.cloud_outlined,
-                        label: 'Condition',
-                        value: '${weather?['weather_description'] ?? '--'}',
-                        bgColor: const Color(0xFFF1F5FF),
-                      ),
-                      SmartConditionCard(
-                        icon: Icons.eco,
-                        label: 'NDVI',
-                        value: state.numText(data?['ndvi']),
-                        bgColor: const Color(0xFFEAF8EA),
-                      ),
-                    ],
+            if (state.historyRecords.isNotEmpty) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Recent activity',
+                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              ),
+              for (final row in state.historyRecords.take(3))
+                Card(
+                  child: ListTile(
+                    leading: const Icon(Icons.history, color: green),
+                    title: Text(
+                      '${row['farm_name'] ?? row['place_name'] ?? 'Land analysis'}',
+                    ),
+                    subtitle: Text(
+                      '${row['analyzed_at'] ?? row['created_at'] ?? ''}',
+                    ),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () => openRecord(row),
                   ),
-          ),
-          const SizedBox(height: 16),
-          RoleFeatureCard(state: state),
-          const SizedBox(height: 14),
-          AiRecommendationHomeCard(state: state, openAnalyze: () => go(1)),
-          if (state.isAnalystRole) ...[
-            const SizedBox(height: 14),
-            InfrastructureHomeOverview(state: state, openMap: () => go(1)),
+                ),
+            ],
+            ExpansionTile(
+              title: const Text('Current weather'),
+              subtitle: const Text(
+                'Live conditions are separate from saved land analyses',
+              ),
+              children: [
+                if (state.liveWeather == null)
+                  const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Text(
+                      'Weather is unavailable. Pull to refresh or try again later.',
+                    ),
+                  )
+                else
+                  ListTile(
+                    title: Text(
+                      '${state.numText(state.liveWeather!['temperature_c'])} °C',
+                    ),
+                    subtitle: Text(
+                      '${state.liveWeather!['weather_description'] ?? 'Condition unavailable'} · ${state.numText(state.liveWeather!['wind_speed_kmh'])} km/h wind',
+                    ),
+                  ),
+                TextButton(
+                  onPressed: () async {
+                    final error = await state.refreshLiveWeather();
+                    if (error != null) message(error);
+                  },
+                  child: const Text('Refresh weather'),
+                ),
+              ],
+            ),
           ],
-          const SizedBox(height: 14),
-          HomeAlertsCard(state: state),
-          const SizedBox(height: 14),
-          RecentAnalysesHomeCard(state: state, openHistory: () => go(3)),
-        ],
+        ),
       ),
     );
   }
+
+  Widget _guide(IconData icon, String title, String detail) => Card(
+    child: ListTile(
+      leading: Icon(icon, color: green),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+      subtitle: Text(detail),
+      contentPadding: const EdgeInsets.all(14),
+    ),
+  );
 }
 
 class SmartConditionCard extends StatelessWidget {

@@ -42,6 +42,87 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
+  test(
+    'farm retry survives a new client and does not reuse a completed key',
+    () async {
+      String? firstKey;
+      final failing = ApiService(
+        client: MockClient((request) async {
+          firstKey = request.headers['Idempotency-Key'];
+          return http.Response('{"error":"Database unavailable"}', 503);
+        }),
+      );
+      addTearDown(failing.close);
+      final polygon = [
+        {'lat': 7.3, 'lng': 125.6},
+      ];
+      await expectLater(
+        failing.createFarm(
+          farmName: 'Test',
+          polygon: polygon,
+          requestId: 'original',
+        ),
+        throwsA(isA<ApiException>()),
+      );
+      final keys = <String?>[];
+      final retry = ApiService(
+        client: MockClient((request) async {
+          keys.add(request.headers['Idempotency-Key']);
+          return http.Response('{"farm":{"id":9}}', 201);
+        }),
+      );
+      addTearDown(retry.close);
+      await retry.createFarm(
+        farmName: 'Test',
+        polygon: polygon,
+        requestId: 'new-screen',
+      );
+      expect(keys.single, firstKey);
+      await retry.createFarm(farmName: 'Test', polygon: polygon);
+      expect(keys.last, isNot(firstKey));
+    },
+  );
+
+  test('logout removes user-specific retry data and session', () async {
+    SharedPreferences.setMockInitialValues({
+      'token': 'old',
+      'geosustain_pending_farm': 'payload',
+      'geosustain_pending_analysis': 'payload',
+      'unrelated_setting': true,
+    });
+    final api = ApiService();
+    addTearDown(api.close);
+    await api.logout();
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getKeys(), {'unrelated_setting'});
+  });
+
+  test(
+    'history retrieves all pages instead of dropping older farm results',
+    () async {
+      var calls = 0;
+      final api = ApiService(
+        client: MockClient((request) async {
+          expect(request.url.queryParameters['offset'], '${calls * 50}');
+          calls++;
+          return http.Response(
+            jsonEncode({
+              'history': List.generate(
+                calls == 1 ? 50 : 2,
+                (i) => {'session_id': i},
+              ),
+              'has_more': calls == 1,
+            }),
+            200,
+          );
+        }),
+      );
+      addTearDown(api.close);
+      expect((await api.getHistory()).length, 52);
+      expect(calls, 2);
+    },
+  );
+
   test('successful HTTP status with malformed JSON is rejected', () async {
     final api = ApiService(
       client: MockClient(

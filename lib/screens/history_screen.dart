@@ -3,19 +3,30 @@ part of '../main.dart';
 class HistoryPage extends StatefulWidget {
   final ApiService api;
   final AnalysisState state;
-  const HistoryPage({super.key, required this.api, required this.state});
+  final FutureOr<void> Function(Map<String, dynamic>)? onOpenAnalysis;
+  final VoidCallback? goFarms;
+  const HistoryPage({
+    super.key,
+    required this.api,
+    required this.state,
+    this.onOpenAnalysis,
+    this.goFarms,
+  });
   @override
   State<HistoryPage> createState() => _HistoryPageState();
 }
 
 class _HistoryPageState extends State<HistoryPage> {
   bool loading = false;
+  bool opening = false;
   String? error;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => refresh());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) refresh();
+    });
   }
 
   Future<void> refresh() async {
@@ -26,181 +37,197 @@ class _HistoryPageState extends State<HistoryPage> {
     });
     try {
       await widget.state.refreshHistoryData();
+      if (mounted) error = widget.state.historyError;
     } catch (e) {
-      error = e.toString();
+      error = friendlyErrorMessage(e);
     } finally {
       if (mounted) setState(() => loading = false);
     }
   }
 
-  String labelFor(dynamic pct) => suitabilityLabel(pct);
-
-  Color colorFor(String label) {
-    if (label.startsWith('HIGH')) return const Color(0xFFDCF5E4);
-    if (label.startsWith('MODERATE')) return const Color(0xFFFFE7B8);
-    return const Color(0xFFFFD5D5);
+  Future<void> open(Map<String, dynamic> record) async {
+    if (opening) return;
+    setState(() => opening = true);
+    try {
+      if (widget.onOpenAnalysis != null) {
+        await widget.onOpenAnalysis!(record);
+      } else {
+        await Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                HistoryDetailPage(record: record, state: widget.state),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) setState(() => error = friendlyErrorMessage(e));
+    } finally {
+      if (mounted) setState(() => opening = false);
+    }
   }
 
   @override
-  Widget build(BuildContext context) {
-    final rows = widget.state.historyRecords
-        .map(widget.state.normalizeRecord)
-        .toList();
-    return SafeArea(
-      child: Column(
-        children: [
-          MobileHeader(
-            title: 'Analysis History',
-            trailing: IconButton(
-              onPressed: loading ? null : refresh,
-              icon: loading
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.refresh),
+  Widget build(BuildContext context) => AnimatedBuilder(
+    animation: widget.state,
+    builder: (context, _) {
+      final rows = newestAnalysisRecords(widget.state.historyRecords);
+      return SafeArea(
+        child: Column(
+          children: [
+            MobileHeader(
+              title: 'History',
+              trailing: IconButton(
+                tooltip: 'Refresh analyses and analyst decisions',
+                onPressed: loading ? null : refresh,
+                icon: const Icon(Icons.refresh),
+              ),
             ),
-          ),
-          if (error != null)
-            Padding(
-              padding: const EdgeInsets.all(12),
-              child: Text(error!, style: const TextStyle(color: Colors.red)),
-            ),
-          Expanded(
-            child: rows.isEmpty
-                ? Center(
-                    child: loading
-                        ? const CircularProgressIndicator()
-                        : const Text('No analysis history yet.'),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(14, 0, 14, 18),
-                    itemCount: rows.length,
-                    itemBuilder: (context, i) {
-                      final r = rows[i];
-                      return Card(
+            if (loading || opening) const LinearProgressIndicator(),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: refresh,
+                child: ListView(
+                  key: const PageStorageKey('mobile-history-scroll'),
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  children: [
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: Text(
+                        'Previous analyses and their separate analyst review status. Pull down to refresh.',
+                      ),
+                    ),
+                    if (error != null || widget.state.historyError != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Text(
+                          error ?? widget.state.historyError!,
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
+                        ),
+                      ),
+                    if (rows.isEmpty && !loading) ...[
+                      const SizedBox(height: 32),
+                      const Icon(Icons.history, size: 54, color: green),
+                      const SizedBox(height: 16),
+                      const Text(
+                        'No analyses yet',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Create a boundary or draw an area in My Farms, then analyze it. Saving a farm alone does not create an analysis.',
+                        textAlign: TextAlign.center,
+                      ),
+                      if (widget.goFarms != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 20),
+                          child: FilledButton.icon(
+                            onPressed: widget.goFarms,
+                            icon: const Icon(Icons.agriculture),
+                            label: const Text('Go to My Farms'),
+                          ),
+                        ),
+                    ],
+                    for (final row in rows)
+                      Card(
+                        key: ValueKey('history-${row['session_id']}'),
                         margin: const EdgeInsets.only(bottom: 12),
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(18),
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => HistoryDetailPage(
-                                record: r,
-                                state: widget.state,
-                              ),
-                            ),
-                          ),
+                          onTap: opening ? null : () => open(row),
+                          borderRadius: BorderRadius.circular(16),
                           child: Padding(
-                            padding: const EdgeInsets.all(12),
-                            child: Row(
+                            padding: const EdgeInsets.all(16),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                LocationHistoryThumb(
-                                  lat: r['center_lat'],
-                                  lon: r['center_lon'],
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Row(
-                                        children: [
-                                          Expanded(
-                                            child: Text(
-                                              '${r['title'] ?? r['place_name'] ?? 'Analyzed Area'}',
-                                              maxLines: 1,
-                                              overflow: TextOverflow.ellipsis,
-                                              style: const TextStyle(
-                                                fontWeight: FontWeight.w800,
-                                              ),
-                                            ),
-                                          ),
-                                          const SizedBox(width: 6),
-                                          VerificationStatusBadge(
-                                            status:
-                                                '${r['verification_status'] ?? 'pending'}',
-                                          ),
-                                        ],
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        widget.state.recommendationText(r),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        analysisRecordName(row),
                                         style: const TextStyle(
-                                          color: Colors.black54,
-                                          fontSize: 12,
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w800,
                                         ),
                                       ),
-                                      const SizedBox(height: 7),
-                                      Wrap(
-                                        spacing: 6,
-                                        runSpacing: 6,
-                                        children: [
-                                          SmallHistoryAction(
-                                            icon: Icons.bookmark_border_rounded,
-                                            label: 'Save',
-                                            onTap: () async {
-                                              final saved = await widget.state
-                                                  .saveAnalysisRecord(r);
-                                              if (!context.mounted) return;
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    saved
-                                                        ? 'Analysis saved.'
-                                                        : 'Already saved.',
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                          SmallHistoryAction(
-                                            icon: Icons.description_outlined,
-                                            label: 'Report',
-                                            onTap: () async {
-                                              final added = await widget.state
-                                                  .createReportRecord(r);
-                                              if (!context.mounted) return;
-                                              ScaffoldMessenger.of(
-                                                context,
-                                              ).showSnackBar(
-                                                SnackBar(
-                                                  content: Text(
-                                                    added
-                                                        ? 'Report added.'
-                                                        : 'Report already exists.',
-                                                  ),
-                                                ),
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ],
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(Icons.chevron_right),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  analysisDateText(analysisRecordDate(row)),
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black54,
                                   ),
                                 ),
-                                const Icon(Icons.chevron_right_rounded),
+                                const SizedBox(height: 8),
+                                Text(analysisAreaText(row)),
+                                const SizedBox(height: 10),
+                                Text(
+                                  'Analysis: ${analysisProcessingLabel(row)}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                VerificationStatusBadge(
+                                  status:
+                                      '${row['verification_status'] ?? 'draft'}',
+                                ),
+                                if (row['verified_at'] != null) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Reviewed: ${analysisDateText(row['verified_at'])}',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ],
+                                if ('${row['planner_notes'] ?? ''}'
+                                    .trim()
+                                    .isNotEmpty) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    'Analyst feedback: ${row['planner_notes']}',
+                                    maxLines: 3,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ],
+                                const SizedBox(height: 12),
+                                const Text(
+                                  'View full result and feedback',
+                                  style: TextStyle(
+                                    color: green,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
                               ],
                             ),
                           ),
                         ),
-                      );
-                    },
-                  ),
-          ),
-        ],
-      ),
-    );
-  }
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    },
+  );
 }
 
-class HistoryDetailPage extends StatelessWidget {
+/// Keeps the existing standalone detail route usable while mobile History
+/// normally opens the exact selected analysis in the Analysis tab.
+class HistoryDetailPage extends StatefulWidget {
   final Map<String, dynamic> record;
   final AnalysisState state;
   const HistoryDetailPage({
@@ -208,520 +235,70 @@ class HistoryDetailPage extends StatelessWidget {
     required this.record,
     required this.state,
   });
+  @override
+  State<HistoryDetailPage> createState() => _HistoryDetailPageState();
+}
 
-  String _num(dynamic value, {int decimals = 2}) {
-    final n = value is num ? value : num.tryParse('$value');
-    if (n == null) return '--';
-    return n.toStringAsFixed(decimals);
+class _HistoryDetailPageState extends State<HistoryDetailPage> {
+  bool loading = true;
+  String? error;
+  Map<String, dynamic>? detail;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) load();
+    });
   }
 
-  double _progress(dynamic value, double fallback) {
-    final n = value is num ? value : num.tryParse('$value');
-    return ((n ?? fallback).clamp(0, 100) / 100).toDouble();
-  }
-
-  Map<String, dynamic>? _xai(Map<String, dynamic> item) {
-    dynamic raw = item['xai_explanation'];
-    if (raw is String && raw.trim().isNotEmpty) {
-      try {
-        raw = jsonDecode(raw);
-      } catch (_) {
-        return null;
-      }
+  Future<void> load() async {
+    setState(() {
+      loading = true;
+      error = null;
+    });
+    try {
+      final failure = await widget.state.selectAnalysis(widget.record);
+      if (!mounted) return;
+      error = failure;
+      if (failure == null) detail = widget.state.result;
+    } catch (e) {
+      error = friendlyErrorMessage(e);
+    } finally {
+      if (mounted) setState(() => loading = false);
     }
-    return raw is Map ? Map<String, dynamic>.from(raw) : null;
-  }
-
-  List<String> _xaiLines(Map<String, dynamic> item) {
-    final xai = _xai(item);
-    if (xai == null) return const [];
-    final lines = <String>[];
-    final summary = '${xai['summary'] ?? ''}'.trim();
-    if (summary.isNotEmpty) lines.add(summary);
-    final supporting = xai['supporting_factors'];
-    if (supporting is List) lines.addAll(supporting.map((e) => '$e'));
-    final limiting = xai['limiting_factors'];
-    if (limiting is List) {
-      lines.addAll(limiting.map((e) => 'Limiting factor: $e'));
-    }
-    final comparison = '${xai['comparison'] ?? ''}'.trim();
-    if (comparison.isNotEmpty) lines.add(comparison);
-    return lines.where((e) => e.trim().isNotEmpty).toList();
   }
 
   @override
-  Widget build(BuildContext context) {
-    final item = state.normalizeRecord(Map<String, dynamic>.from(record));
-    final crop = item['predicted_crop'] ?? 'Land Analysis';
-    final compatibility = item['compatibility_pct'];
-    final suitability = suitabilityLabel(compatibility);
-    final lat = item['center_lat'];
-    final lon = item['center_lon'];
-    final place = item['title'] ?? item['place_name'] ?? 'Analyzed Area';
-
-    return Scaffold(
-      backgroundColor: bg,
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            MobileHeader(
-              title: 'Analysis Details',
-              back: () => Navigator.pop(context),
-              trailing: IconButton(
-                onPressed: () => generateAnalysisPdf(item, state: state),
-                icon: const Icon(Icons.download_outlined),
-              ),
-            ),
-            Card(
-              clipBehavior: Clip.antiAlias,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height: 170,
-                    width: double.infinity,
-                    child: LocationHistoryThumb(
-                      lat: lat,
-                      lon: lon,
-                      expanded: true,
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(18),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '$place',
-                          style: const TextStyle(
-                            fontSize: 22,
-                            fontWeight: FontWeight.w900,
-                            color: green,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        VerificationStatusBadge(
-                          status: '${item['verification_status'] ?? 'draft'}',
-                        ),
-                        if ('${item['verification_status'] ?? ''}' ==
-                                'rejected' &&
-                            '${item['planner_notes'] ?? ''}'
-                                .trim()
-                                .isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFFFFF0F0),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              'Planner feedback: ${item['planner_notes']}',
-                              style: const TextStyle(
-                                fontSize: 12.5,
-                                color: Color(0xFF8A2C2C),
-                              ),
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 6),
-                        Text(
-                          state.recommendationText(item),
-                          style: const TextStyle(color: Colors.black54),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          '$crop',
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 6,
-                          ),
-                          decoration: BoxDecoration(
-                            color: suitabilityColor(compatibility),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            suitability,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                        if ('${item['analysis_summary'] ?? ''}'
-                            .trim()
-                            .isNotEmpty) ...[
-                          const Divider(height: 24),
-                          const Text(
-                            'ANALYSIS SUMMARY',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              color: green,
-                            ),
-                          ),
-                          const SizedBox(height: 7),
-                          Text(
-                            '${item['analysis_summary']}',
-                            style: const TextStyle(fontSize: 13, height: 1.45),
-                          ),
-                        ],
-                        const Divider(height: 28),
-                        DetailLine(
-                          label: 'Suitability Score',
-                          value: '${compatibility ?? '--'}%',
-                        ),
-                        DetailLine(
-                          label: 'NDVI',
-                          value: _num(item['ndvi'], decimals: 3),
-                        ),
-                        DetailLine(
-                          label: 'Rainfall',
-                          value: '${_num(item['rainfall_mm'], decimals: 1)} mm',
-                        ),
-                        DetailLine(
-                          label: 'Temperature',
-                          value:
-                              '${_num(item['temperature_c'], decimals: 1)} °C',
-                        ),
-                        DetailLine(
-                          label: 'Elevation',
-                          value: '${_num(item['elevation_m'], decimals: 1)} m',
-                        ),
-                        DetailLine(
-                          label: 'Soil pH',
-                          value: _num(item['soil_ph'], decimals: 2),
-                        ),
-                        DetailLine(
-                          label: 'Nitrogen',
-                          value: _num(item['nitrogen'], decimals: 0),
-                        ),
-                        DetailLine(
-                          label: 'Phosphorus',
-                          value: _num(item['phosphorus'], decimals: 0),
-                        ),
-                        DetailLine(
-                          label: 'Potassium',
-                          value: _num(item['potassium'], decimals: 0),
-                        ),
-                        DetailLine(
-                          label: 'Weather',
-                          value: '${item['weather_description'] ?? '--'}',
-                        ),
-                        const Divider(height: 24),
-                        DetailLine(
-                          label: 'Infrastructure Suitability',
-                          value:
-                              '${item['infrastructure_suitability'] ?? '--'}',
-                        ),
-                        DetailLine(
-                          label: 'Infrastructure Score',
-                          value: '${item['infrastructure_score'] ?? '--'}',
-                        ),
-                        DetailLine(
-                          label: 'Infrastructure Status',
-                          value: '${item['infrastructure_status'] ?? '--'}',
-                        ),
-                        DetailLine(
-                          label: 'Infrastructure Recommendation',
-                          value:
-                              '${item['infrastructure_recommendation'] ?? '--'}',
-                        ),
-                        DetailLine(
-                          label: 'Slope',
-                          value:
-                              state.numText(
-                                    item['slope_pct'] ?? item['slope'],
-                                  ) ==
-                                  '--'
-                              ? '--'
-                              : '${state.numText(item['slope_pct'] ?? item['slope'])}%',
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (_xaiLines(item).isNotEmpty)
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.psychology_alt_rounded, color: green),
-                          SizedBox(width: 8),
-                          Expanded(
-                            child: SectionTitle(
-                              'EXPLAINABLE AI — WHY THIS CROP?',
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      ..._xaiLines(item).map(
-                        (line) => Padding(
-                          padding: const EdgeInsets.only(bottom: 8),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Padding(
-                                padding: EdgeInsets.only(top: 2),
-                                child: Icon(
-                                  Icons.check_circle_rounded,
-                                  color: green,
-                                  size: 16,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  line,
-                                  style: const TextStyle(
-                                    fontSize: 12.5,
-                                    height: 1.35,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const Divider(height: 18),
-                      Text(
-                        'Method: ${_xai(item)?['method'] ?? 'Local feature contribution analysis'}',
-                        style: const TextStyle(
-                          fontSize: 10.5,
-                          color: Colors.black54,
-                          fontStyle: FontStyle.italic,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            const SizedBox(height: 10),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: const [
-                    SectionTitle('UNDERSTANDING THIS ANALYSIS'),
-                    SizedBox(height: 10),
-                    Text(
-                      'Arable — land that can support crop production under the assessed conditions.',
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'NDVI — satellite vegetation index from -1 to 1; higher positive values generally indicate denser vegetation.',
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Suitability — the system’s comparative fit score, not a guarantee of yield.',
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Slope — terrain steepness; the summary describes the dominant condition and localized steep sections.',
-                    ),
-                    SizedBox(height: 6),
-                    Text(
-                      'Wet/Dry season — seasonal context used to adjust, but not replace, the environmental ranking.',
-                    ),
-                    SizedBox(height: 8),
-                    Text(
-                      'Green: favorable  •  Yellow/Orange: conditional  •  Red: limiting/not suitable',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: green,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const SectionTitle('CHARTS AND ANALYTICS'),
-                    const SizedBox(height: 12),
-                    DetailBar(
-                      label: 'NDVI',
-                      value: _progress(
-                        (item['ndvi'] is num ? item['ndvi'] * 100 : 0),
-                        45,
-                      ),
-                    ),
-                    DetailBar(
-                      label: 'Rainfall',
-                      value: _progress(
-                        (item['rainfall_mm'] is num
-                            ? item['rainfall_mm'] / 2
-                            : null),
-                        70,
-                      ),
-                    ),
-                    DetailBar(
-                      label: 'Temp',
-                      value: _progress(
-                        (item['temperature_c'] is num
-                            ? item['temperature_c'] * 2
-                            : null),
-                        50,
-                      ),
-                    ),
-                    DetailBar(
-                      label: 'Soil pH',
-                      value: _progress(
-                        (item['soil_ph'] is num ? item['soil_ph'] * 12 : null),
-                        60,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final saved = await state.saveAnalysisRecord(item);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            saved ? 'Analysis saved.' : 'Already saved.',
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.bookmark_border_rounded),
-                    label: const Text('Save'),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: OutlinedButton.icon(
-                    onPressed: () async {
-                      final added = await state.createReportRecord(item);
-                      if (!context.mounted) return;
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            added ? 'Report added.' : 'Report already exists.',
-                          ),
-                        ),
-                      );
-                    },
-                    icon: const Icon(Icons.description_outlined),
-                    label: const Text('Report'),
-                  ),
-                ),
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: const Text('Analysis details')),
+    body: SafeArea(
+      child: AnimatedBuilder(
+        animation: widget.state,
+        builder: (context, _) {
+          final selected =
+              '${widget.state.result?['session_id']}' ==
+                  '${widget.record['session_id']}'
+              ? widget.state.result
+              : detail;
+          return ListView(
+            padding: const EdgeInsets.all(16),
+            children: [
+              if (loading) const LinearProgressIndicator(),
+              if (error != null) ...[
+                Text(error!),
+                TextButton(onPressed: load, child: const Text('Retry')),
               ],
-            ),
-            const SizedBox(height: 10),
-            if (('${item['verification_status'] ?? 'draft'}' == 'draft') ||
-                ('${item['verification_status'] ?? ''}' == 'rejected')) ...[
-              FilledButton.icon(
-                onPressed: () async {
-                  final isResubmission =
-                      '${item['verification_status'] ?? 'draft'}' == 'rejected';
-                  final confirmed = await showDialog<bool>(
-                    context: context,
-                    builder: (dialogContext) => AlertDialog(
-                      icon: const Icon(
-                        Icons.send_rounded,
-                        color: Color(0xFF0B7D49),
-                        size: 34,
-                      ),
-                      title: Text(
-                        isResubmission
-                            ? 'Resubmit this analysis?'
-                            : 'Submit to planner?',
-                      ),
-                      content: Text(
-                        isResubmission
-                            ? 'This analyzed land will be returned to the planner for another review. Please make sure the analysis is ready.'
-                            : 'The planner will be able to review this analyzed land, its crop recommendation, environmental readings, and Explainable AI details. Continue?',
-                      ),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(dialogContext, false),
-                          child: const Text('Cancel'),
-                        ),
-                        FilledButton.icon(
-                          onPressed: () => Navigator.pop(dialogContext, true),
-                          icon: const Icon(Icons.send_rounded),
-                          label: Text(
-                            isResubmission ? 'Yes, Resubmit' : 'Yes, Submit',
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirmed != true || !context.mounted) return;
-                  try {
-                    await state.submitAnalysisRecord(item);
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Analysis submitted to the planner.'),
-                      ),
-                    );
-                    Navigator.pop(context);
-                  } catch (e) {
-                    if (!context.mounted) return;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                          'Could not submit: ${friendlyErrorMessage(e)}',
-                        ),
-                      ),
-                    );
-                  }
-                },
-                icon: const Icon(Icons.send_rounded),
-                label: Text(
-                  '${item['verification_status'] ?? 'draft'}' == 'rejected'
-                      ? 'Resubmit for Analyst Review'
-                      : 'Submit for Analyst Review',
-                ),
-              ),
-              const SizedBox(height: 10),
+              if (selected != null && !loading)
+                MobileAnalysisResult(state: widget.state, record: selected),
             ],
-            FilledButton.icon(
-              onPressed: () => generateAnalysisPdf(item, state: state),
-              icon: const Icon(Icons.download),
-              label: const Text('Download PDF Report'),
-            ),
-          ],
-        ),
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
 }
 
-/// Shows whether a planner has reviewed this analyzed land submission yet.
-/// Farmers see this on their History cards and detail view; it reflects the
-/// `verification_status` field returned by the backend ('pending', 'verified',
-/// or 'rejected').
 class VerificationStatusBadge extends StatelessWidget {
   final String status;
   const VerificationStatusBadge({super.key, required this.status});
@@ -734,8 +311,10 @@ class VerificationStatusBadge extends StatelessWidget {
         return const Color(0xFFE45B5B);
       case 'draft':
         return const Color(0xFF667085);
+      case 'pending':
+        return const Color(0xFF805700);
       default:
-        return const Color(0xFFE9A829);
+        return const Color(0xFF667085);
     }
   }
 
@@ -747,23 +326,14 @@ class VerificationStatusBadge extends StatelessWidget {
         return Icons.report_gmailerrorred_rounded;
       case 'draft':
         return Icons.edit_note_rounded;
-      default:
+      case 'pending':
         return Icons.hourglass_top_rounded;
+      default:
+        return Icons.help_outline;
     }
   }
 
-  String get _label {
-    switch (status) {
-      case 'verified':
-        return 'Verified';
-      case 'rejected':
-        return 'Rejected';
-      case 'draft':
-        return 'Not submitted';
-      default:
-        return 'Pending';
-    }
-  }
+  String get _label => analysisReviewLabel(status);
 
   @override
   Widget build(BuildContext context) {
@@ -778,12 +348,14 @@ class VerificationStatusBadge extends StatelessWidget {
         children: [
           Icon(_icon, size: 12, color: _color),
           const SizedBox(width: 4),
-          Text(
-            _label,
-            style: TextStyle(
-              color: _color,
-              fontWeight: FontWeight.w800,
-              fontSize: 10,
+          Flexible(
+            child: Text(
+              _label,
+              style: TextStyle(
+                color: _color,
+                fontWeight: FontWeight.w800,
+                fontSize: 12,
+              ),
             ),
           ),
         ],
@@ -945,6 +517,7 @@ Future<void> generateAnalysisPdf(
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
         pw.Text('Location: $location'),
+        pw.Text('Analyzed: ${analysisDateText(analysisRecordDate(data))}'),
         pw.Text('Coordinates: $lat, $lon'),
         if (areaHectares != null)
           pw.Text(
@@ -1072,9 +645,7 @@ Future<void> generateAnalysisPdf(
           style: pw.TextStyle(fontWeight: pw.FontWeight.bold, fontSize: 13),
         ),
         pw.SizedBox(height: 4),
-        pw.Text(
-          'Status: ${verificationStatus[0].toUpperCase()}${verificationStatus.substring(1)}',
-        ),
+        pw.Text('Status: ${analysisReviewLabel(verificationStatus)}'),
         if (verifiedAt != null) pw.Text('Reviewed: $verifiedAt'),
         if (plannerNotes != null && '$plannerNotes'.trim().isNotEmpty)
           pw.Text('Analyst notes: $plannerNotes'),
