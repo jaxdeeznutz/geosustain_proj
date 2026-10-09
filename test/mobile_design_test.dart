@@ -63,6 +63,11 @@ void main() {
       final originalHttp = HttpOverrides.current;
       HttpOverrides.global = QaHttpOverrides();
       addTearDown(() => HttpOverrides.global = originalHttp);
+      tester.platformDispatcher.accessibilityFeaturesTestValue =
+          FakeAccessibilityFeatures(disableAnimations: true);
+      addTearDown(
+        tester.platformDispatcher.clearAccessibilityFeaturesTestValue,
+      );
       tester.view.physicalSize = Size(width, 874);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -158,6 +163,11 @@ void main() {
         expect(tester.takeException(), isNull);
       }
 
+      await capture('home');
+      await tab('My Farms');
+      await capture('my-farms');
+      await tab('Profile');
+      await capture('profile');
       await tab('Analysis');
       await capture('analysis');
       await tester.dragUntilVisible(
@@ -196,7 +206,7 @@ void main() {
       for (var i = 0; i < 3; i++) {
         gps.fixes.add(
           Position(
-            latitude: 7.3 + i * .00005,
+            latitude: 7.3 + i * .0001,
             longitude: 125.6,
             timestamp: start.add(Duration(seconds: i * 3)),
             accuracy: 8,

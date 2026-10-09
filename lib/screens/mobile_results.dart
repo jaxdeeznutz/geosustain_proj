@@ -104,6 +104,8 @@ class AnalysisHistoryRow extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         child: Row(
           children: [
+            const _FieldIcon(Icons.assignment_outlined),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,7 +134,7 @@ class NoAnalyses extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 32),
     child: Column(
       children: [
-        const Icon(Icons.analytics_outlined, size: 42, color: green),
+        const _FieldLandscape(),
         const SizedBox(height: 16),
         const Text(
           'No analyses yet',

@@ -168,7 +168,24 @@ void main() {
     );
     test('accepts a first fix and plausible movement', () {
       expect(check(start, previous: null), isNull);
-      expect(check(const LatLng(7.30005, 125.6)), isNull);
+      expect(check(const LatLng(7.3001, 125.6)), isNull);
+    });
+    test('reported uncertainty does not become a boundary vertex', () {
+      // About 5.6 m drift is not accepted with an 8 m accuracy radius.
+      expect(check(const LatLng(7.30005, 125.6)), contains('Move farther'));
+      expect(check(const LatLng(7.3001, 125.6)), isNull);
+      expect(
+        FarmGpsFilter.rejection(
+          point: const LatLng(7.3001, 125.6),
+          accuracy: 5,
+          previousAccuracy: 15,
+          timestamp: now,
+          previous: start,
+          previousTimestamp: now.subtract(const Duration(seconds: 5)),
+          now: now,
+        ),
+        contains('15 m'),
+      );
     });
     test('rejects inaccurate, duplicate, stale and unreasonable fixes', () {
       expect(

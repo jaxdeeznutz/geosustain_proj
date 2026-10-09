@@ -62,18 +62,15 @@ class _LandMethodCard extends StatelessWidget {
   Widget build(BuildContext context) => Card(
     child: ListTile(
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      leading: Icon(
-        gps ? Icons.directions_walk : Icons.draw_outlined,
-        color: green,
-      ),
+      leading: _FieldIcon(gps ? Icons.directions_walk : Icons.draw_outlined),
       title: Text(
         gps ? 'Create a Farm Boundary' : 'Analyze Land Using a Polygon',
         style: const TextStyle(fontWeight: FontWeight.w800),
       ),
       subtitle: Text(
         gps
-            ? 'Walk around your farm to record its boundary using GPS.'
-            : 'Draw an area on the map to analyze its land suitability.',
+            ? 'Walk your perimeter with live GPS.'
+            : 'Outline an area and explore crop suitability.',
       ),
       trailing: const Icon(Icons.chevron_right),
       onTap: onTap,
@@ -102,6 +99,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
   DateTime? _lastFixAt;
   DateTime? _startedAt;
   bool _followPosition = true;
+  bool _hasStarted = false;
   bool get _fresh =>
       _lastFixAt != null &&
       DateTime.now().difference(_lastFixAt!).inSeconds <= 20;
@@ -154,8 +152,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
     if (mounted) {
       setState(
         () => _notice =
-            message ??
-            'Recording paused. Resume near your last recorded point.',
+            message ?? 'Paused. Resume near your last recorded point.',
       );
     }
   }
@@ -215,6 +212,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
             );
       setState(() {
         _recording = true;
+        _hasStarted = true;
         _review = false;
         _notice = 'Waiting for a stable GPS fix…';
       });
@@ -237,7 +235,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
         onError: (Object error) {
           if (generation == _streamGeneration) {
             _pause(
-              'Location recording stopped: ${friendlyErrorMessage(error)}. Check GPS and Resume.',
+              'Location recording stopped. Check location access and Resume.',
             );
           }
         },
@@ -250,7 +248,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
         },
       );
     } catch (error) {
-      _pause('Unable to start GPS: ${friendlyErrorMessage(error)}');
+      _pause('Unable to start GPS. Check location access and try again.');
     } finally {
       if (mounted) setState(() => _starting = false);
     }
@@ -262,6 +260,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
         !fix.longitude.isFinite ||
         fix.latitude.abs() > 90 ||
         fix.longitude.abs() > 180) {
+      _logFix(fix, 'invalid_coordinate');
       _message('An invalid GPS coordinate was ignored.');
       return;
     }
@@ -269,6 +268,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
     if (age.inSeconds > 20 ||
         age.inSeconds < -5 ||
         (_lastFixAt != null && !fix.timestamp.isAfter(_lastFixAt!))) {
+      _logFix(fix, 'stale_or_nonmonotonic');
       _message('Waiting for a fresh GPS reading.');
       return;
     }
@@ -280,7 +280,9 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
       timestamp: fix.timestamp,
       previous: _points.lastOrNull,
       previousTimestamp: _times.lastOrNull,
+      previousAccuracy: _accuracies.lastOrNull,
     );
+    _logFix(fix, rejection ?? 'accepted');
     setState(() {
       _current = point;
       _accuracy = fix.accuracy.isFinite && fix.accuracy > 0
@@ -299,6 +301,24 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
         'The 2,000-point limit was reached. Review this recording before saving.',
       );
     }
+  }
+
+  void _logFix(Position fix, String decision) {
+    if (!kDebugMode) return;
+    final validCoordinate =
+        fix.latitude.isFinite &&
+        fix.longitude.isFinite &&
+        fix.latitude.abs() <= 90 &&
+        fix.longitude.abs() <= 180;
+    final gap = _points.isEmpty || !validCoordinate
+        ? null
+        : FarmGeometry.distance(
+            _points.last,
+            LatLng(fix.latitude, fix.longitude),
+          );
+    debugPrint(
+      'GPS timestamp=${fix.timestamp.toIso8601String()} age_ms=${DateTime.now().difference(fix.timestamp).inMilliseconds} accuracy_m=${fix.accuracy} distance_m=${gap?.toStringAsFixed(1)} accepted=${decision == 'accepted'} reason=$decision',
+    );
   }
 
   void _finish() {
@@ -436,8 +456,26 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
             children: [
               const Padding(
                 padding: EdgeInsets.only(bottom: 12),
-                child: Text(
-                  'Walk the perimeter and return to your starting point.',
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'Walk the perimeter and return to your starting point.',
+                        style: TextStyle(
+                          color: darkGreen,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    SizedBox(width: 12),
+                    SizedBox(
+                      width: 80,
+                      height: 48,
+                      child: ExcludeSemantics(
+                        child: CustomPaint(painter: _FieldPainter()),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               _BoundaryMap(
@@ -460,11 +498,9 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                 runSpacing: 6,
                 children: [
                   Chip(
-                    avatar: Icon(
-                      _recording
-                          ? Icons.fiber_manual_record
-                          : Icons.pause_circle_outline,
-                      size: 16,
+                    avatar: _RecordingDot(
+                      key: const ValueKey('recording-indicator'),
+                      active: _recording && _fresh,
                     ),
                     label: Text(
                       _saved != null
@@ -473,10 +509,20 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                           ? 'Boundary preview'
                           : _recording
                           ? (_fresh ? 'Recording' : 'Waiting for GPS')
-                          : (_current != null ? 'Paused' : 'Ready'),
+                          : (_hasStarted ? 'Paused' : 'Ready'),
                     ),
                   ),
-                  Chip(label: Text('${_points.length} points')),
+                  Chip(
+                    label: AnimatedSwitcher(
+                      duration: MediaQuery.disableAnimationsOf(context)
+                          ? Duration.zero
+                          : const Duration(milliseconds: 220),
+                      child: Text(
+                        '${_points.length} points',
+                        key: ValueKey(_points.length),
+                      ),
+                    ),
+                  ),
                   Chip(
                     label: Text(
                       _accuracy == null
@@ -536,7 +582,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                             ? 'Finding GPS…'
                             : _recording
                             ? 'Pause'
-                            : _points.isEmpty
+                            : !_hasStarted
                             ? 'Start'
                             : 'Resume',
                       ),

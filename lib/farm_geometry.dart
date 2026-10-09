@@ -164,6 +164,7 @@ class FarmGpsFilter {
     required DateTime timestamp,
     LatLng? previous,
     DateTime? previousTimestamp,
+    double? previousAccuracy,
     DateTime? now,
   }) {
     if (!FarmGeometry.insideCoverage(point)) {
@@ -181,8 +182,22 @@ class FarmGpsFilter {
     }
     if (previous == null) return null;
     final gap = FarmGeometry.distance(previous, point);
-    if (gap < 4) {
-      return 'Waiting for movement of at least 4 m to reduce duplicate points.';
+    // Keep the 4 m floor, but do not treat displacement inside either fix's
+    // reported uncertainty as evidence of walking. This is a conservative
+    // sampling rule, not a survey accuracy guarantee.
+    final spacing = math.max(
+      4.0,
+      math.max(
+        accuracy,
+        previousAccuracy != null &&
+                previousAccuracy.isFinite &&
+                previousAccuracy > 0
+            ? previousAccuracy
+            : accuracy,
+      ),
+    );
+    if (gap < spacing) {
+      return 'Move farther to record the next point. Waiting for movement beyond ${spacing.toStringAsFixed(0)} m.';
     }
     if (gap > 80) {
       return 'GPS jumped ${gap.toStringAsFixed(0)} m. Return near the last point or undo it before resuming.';

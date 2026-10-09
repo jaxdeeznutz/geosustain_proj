@@ -53,6 +53,9 @@ void main() {
   });
 
   Future<void> mount(WidgetTester tester, Widget page) async {
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        FakeAccessibilityFeatures(disableAnimations: true);
+    addTearDown(tester.platformDispatcher.clearAccessibilityFeaturesTestValue);
     tester.view.physicalSize = const Size(390, 844);
     tester.view.devicePixelRatio = 1;
     addTearDown(tester.view.resetPhysicalSize);
@@ -255,6 +258,11 @@ void main() {
       gps.fixes.add(fix(7.3001, 5, 9));
       await tester.pumpAndSettle();
       expect(find.text('2 points'), findsOneWidget);
+      gps.fixes.add(fix(double.nan, 5, 10));
+      await tester.pumpAndSettle();
+      expect(marker().point, const LatLng(7.3001, 125.6));
+      expect(find.text('2 points'), findsOneWidget);
+      expect(tester.takeException(), isNull);
       gps.fixes.add(fix(7.3002, 5, -40));
       await tester.pumpAndSettle();
       expect(marker().point, const LatLng(7.3001, 125.6));
@@ -289,4 +297,87 @@ void main() {
       await tester.pumpWidget(const SizedBox());
     },
   );
+  testWidgets(
+    'pause before first fix stays paused and Resume restarts exactly once',
+    (tester) async {
+      await mount(tester, FarmBoundaryPage(state: state));
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Pause'));
+      await tester.pumpAndSettle();
+      expect(find.text('Paused'), findsOneWidget);
+      expect(find.text('Resume'), findsOneWidget);
+      expect(gps.fixes.hasListener, isFalse);
+      await tester.tap(find.text('Resume'));
+      await tester.pumpAndSettle();
+      expect(gps.subscriptions, 2);
+      gps.fixes.add(
+        Position(
+          latitude: 7.3,
+          longitude: 125.6,
+          timestamp: DateTime.now(),
+          accuracy: 5,
+          altitude: 0,
+          altitudeAccuracy: 0,
+          heading: 0,
+          headingAccuracy: 0,
+          speed: 0,
+          speedAccuracy: 0,
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('1 points'), findsOneWidget);
+      await tester.tap(find.text('Pause'));
+      await tester.pumpAndSettle();
+      await revealControls(tester);
+      await tester.tap(find.text('Undo last point'));
+      await tester.pumpAndSettle();
+      expect(find.text('0 points'), findsOneWidget);
+      expect(find.text('Resume'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+
+  testWidgets('recording pulse stops for pause and reduced motion', (
+    tester,
+  ) async {
+    await mount(tester, FarmBoundaryPage(state: state));
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        FakeAccessibilityFeatures(disableAnimations: false);
+    await tester.pump();
+    await tester.tap(find.text('Start'));
+    await tester.pumpAndSettle();
+    gps.fixes.add(
+      Position(
+        latitude: 7.3,
+        longitude: 125.6,
+        timestamp: DateTime.now(),
+        accuracy: 5,
+        altitude: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        headingAccuracy: 0,
+        speed: 0,
+        speedAccuracy: 0,
+      ),
+    );
+    await tester.pump();
+    final fade = find.descendant(
+      of: find.byKey(const ValueKey('recording-indicator')),
+      matching: find.byType(FadeTransition),
+    );
+    final pulse = tester.widget<FadeTransition>(fade).opacity;
+    await tester.pump(const Duration(milliseconds: 1));
+    final initial = pulse.value;
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(pulse.value, isNot(initial));
+    tester.platformDispatcher.accessibilityFeaturesTestValue =
+        FakeAccessibilityFeatures(disableAnimations: true);
+    await tester.pumpAndSettle();
+    expect(pulse.value, 1);
+    await tester.tap(find.text('Pause'));
+    await tester.pumpAndSettle();
+    expect(pulse.value, 1);
+    await tester.pumpWidget(const SizedBox());
+  });
 }

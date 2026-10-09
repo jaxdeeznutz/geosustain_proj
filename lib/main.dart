@@ -19,6 +19,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'farm_geometry.dart';
 
+part 'screens/mobile_visuals.dart';
 part 'screens/home_screen.dart';
 part 'screens/map_screen.dart';
 part 'screens/my_farms_screen.dart';
@@ -49,7 +50,7 @@ void main() async {
 const green = Color(0xFF08733F);
 const darkGreen = Color(0xFF055C34);
 const softGreen = Color(0xFFEAF6EF);
-const bg = Color(0xFFF7FAF7);
+const bg = Color(0xFFF8FAF4);
 const cream = Color(0xFFFFF6EB);
 const panaboCenter = LatLng(7.2915, 125.6255);
 
@@ -136,7 +137,27 @@ class GeoSustainApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'GeoSustain Mobile',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: green),
+        colorScheme: ColorScheme.fromSeed(seedColor: green).copyWith(
+          primary: green,
+          secondary: darkGreen,
+          surface: const Color(0xFFF8FAF4),
+        ),
+        chipTheme: ChipThemeData(
+          backgroundColor: softGreen,
+          side: const BorderSide(color: Color(0xFFD6E6DA)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          labelStyle: const TextStyle(
+            fontFamily: 'Roboto',
+            color: darkGreen,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        navigationBarTheme: const NavigationBarThemeData(
+          backgroundColor: Colors.white,
+          indicatorColor: Color(0xFFD5EDDD),
+        ),
         scaffoldBackgroundColor: bg,
         useMaterial3: true,
         fontFamily: 'Roboto',
@@ -718,39 +739,41 @@ InputDecoration _fieldDecoration({String? hint}) => InputDecoration(
 /// fetch, uri=https://..." — accurate, but meaningless and alarming to a
 /// non-technical user (Section 26).
 String friendlyErrorMessage(Object error) {
-  final text = error.toString();
-  final lower = text.toLowerCase();
-  if (lower.contains('failed to fetch') ||
-      lower.contains('socketexception') ||
-      lower.contains('clientexception') ||
-      lower.contains('connection refused') ||
-      lower.contains('connection closed') ||
-      lower.contains('network is unreachable')) {
-    return 'No internet connection, or the server is temporarily unreachable. Please check your connection and try again.';
-  }
-  if (lower.contains('timeoutexception') || lower.contains('timed out')) {
-    return 'The request took too long to respond. Please try again.';
-  }
-  if (lower.contains('401') ||
-      lower.contains('unauthorized') ||
-      lower.contains('session expired')) {
-    return 'Your session has expired. Please log in again.';
-  }
-  // Already a clean message from the backend (via _errorMessage) or a
-  // deliberate user-facing string elsewhere in the app — strip a leading
-  // "Exception: " wrapper if present and use it as-is.
+  // HTTP status is authoritative; transport text cannot establish offline state.
   if (error is ApiException) {
+    if (error.statusCode == 401) {
+      return 'Your session has expired. Please log in again.';
+    }
     if (error.statusCode >= 500) {
       return 'The analysis service is unavailable. Try again shortly.';
     }
-    return error.message;
+    if (error.statusCode == 403) {
+      return 'You do not have access to this action.';
+    }
+    final message = error.message;
+    if (!RegExp(
+      r'https?://|uri=|traceback|exception',
+      caseSensitive: false,
+    ).hasMatch(message)) {
+      return message;
+    }
+    return 'The request could not be completed. Please try again.';
   }
-  if (lower.contains('uri=') ||
-      lower.contains('http://') ||
-      lower.contains('https://')) {
-    return 'Unable to complete the request. Check your connection and try again.';
+  if (error is TimeoutException) {
+    return 'The request took too long. Try again to check for an existing analysis.';
   }
-  return text.replaceFirst(RegExp(r'^(Exception|FormatException):\s*'), '');
+  final lower = error.toString().toLowerCase();
+  if (error is http.ClientException ||
+      lower.contains('socketexception') ||
+      lower.contains('failed to fetch') ||
+      lower.contains('connection') ||
+      lower.contains('network is unreachable')) {
+    return "Couldn't reach the analysis service. Try again.";
+  }
+  if (error is FormatException) {
+    return 'The service returned an unexpected response. Please try again.';
+  }
+  return 'Unable to complete this action. Please try again.';
 }
 
 class AnalysisState extends ChangeNotifier {
@@ -2648,7 +2671,7 @@ class MobileHeader extends StatelessWidget {
         children: [
           back != null
               ? IconButton(onPressed: back, icon: const Icon(Icons.arrow_back))
-              : const SizedBox(width: 48),
+              : const _FieldIcon(Icons.eco_outlined),
           Expanded(
             child: Text(
               title,

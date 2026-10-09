@@ -36,8 +36,7 @@ class HomePage extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
             const MobileHeader(title: 'GeoSustain'),
-            Card(
-              color: softGreen,
+            _HarvestSurface(
               child: Padding(
                 padding: const EdgeInsets.all(22),
                 child: Column(
@@ -59,7 +58,7 @@ class HomePage extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'GeoSustain helps you map your farm, explore land suitability, understand crop recommendations, and submit your analysis for analyst review.',
+                      'Map your boundary, discover suitable crops, and plan with confidence.',
                     ),
                     const SizedBox(height: 20),
                     FilledButton.icon(
@@ -98,33 +97,22 @@ class HomePage extends StatelessWidget {
             ),
             const SizedBox(height: 18),
             const Text(
-              'How GeoSustain works',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              'Start with your land',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w800,
+                color: darkGreen,
+              ),
             ),
             const SizedBox(height: 8),
-            _guide(
-              Icons.route_outlined,
-              '1. Map your land',
-              'Record a boundary with GPS or draw an area on the map.',
+            _LandMethodCard(
+              gps: true,
+              onTap: () => openLandMethod(context, state, true, () => go(2)),
             ),
-            _guide(
-              Icons.analytics_outlined,
-              '2. Understand your results',
-              'Explore suitability, recommended crops, and the factors behind the analysis.',
+            _LandMethodCard(
+              gps: false,
+              onTap: () => openLandMethod(context, state, false, () => go(2)),
             ),
-            _guide(
-              Icons.fact_check_outlined,
-              '3. Request analyst review',
-              'Submit your results and follow their verification status.',
-            ),
-            if (state.historyRecords.isEmpty)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(
-                  'Your first farm starts with a boundary. Choose Get Started when you are ready.',
-                  style: TextStyle(color: Colors.grey.shade700),
-                ),
-              ),
             if (state.historyRecords.isNotEmpty) ...[
               const SizedBox(height: 16),
               const Text(
@@ -182,15 +170,6 @@ class HomePage extends StatelessWidget {
       ),
     );
   }
-
-  Widget _guide(IconData icon, String title, String detail) => Card(
-    child: ListTile(
-      leading: Icon(icon, color: green),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(detail),
-      contentPadding: const EdgeInsets.all(14),
-    ),
-  );
 }
 
 class SmartConditionCard extends StatelessWidget {

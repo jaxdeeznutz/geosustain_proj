@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -328,6 +329,29 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> _postAnalysis(
+    Map<String, dynamic> payload,
+  ) async {
+    final timer = Stopwatch()..start();
+    try {
+      final result = await _performAnalysisRequest(payload);
+      if (kDebugMode) {
+        debugPrint(
+          'Analysis completed elapsed_ms=${timer.elapsedMilliseconds}',
+        );
+      }
+      return result;
+    } catch (error) {
+      // Never log tokens, request bodies, farm coordinates, or raw exceptions.
+      if (kDebugMode) {
+        debugPrint(
+          'Analysis failed type=${error.runtimeType} status=${error is ApiException ? error.statusCode : 'transport_or_parse'} elapsed_ms=${timer.elapsedMilliseconds}',
+        );
+      }
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> _performAnalysisRequest(
     Map<String, dynamic> payload,
   ) async {
     final token = await getToken();

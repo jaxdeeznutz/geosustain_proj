@@ -125,9 +125,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
               'Saved farms',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
             ),
-            const Text(
-              'Each farm can have multiple analysis runs. Open a farm to view its boundary, results, and review feedback.',
-            ),
+            const Text('Your boundaries, results, and review updates.'),
             const SizedBox(height: 12),
             if (_loading) const LinearProgressIndicator(),
             if (_error != null) ...[
@@ -142,8 +140,24 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
               const Card(
                 child: Padding(
                   padding: EdgeInsets.all(24),
-                  child: Text(
-                    'No farms saved yet. Choose GPS walking or map drawing above to create your first farm.',
+                  child: Column(
+                    children: [
+                      _FieldLandscape(),
+                      SizedBox(height: 16),
+                      Text(
+                        'Your next season starts here',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w800,
+                          color: darkGreen,
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      Text(
+                        'No farms saved yet. Walk or draw your first boundary above.',
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
                 ),
               ),
@@ -159,7 +173,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
                       children: [
                         Row(
                           children: [
-                            const Icon(Icons.landscape_outlined, color: green),
+                            const _FieldIcon(Icons.landscape_outlined),
                             const SizedBox(width: 10),
                             Expanded(
                               child: Text(
