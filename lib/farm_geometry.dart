@@ -169,11 +169,15 @@ class FarmGpsFilter {
     if (!FarmGeometry.insideCoverage(point)) {
       return 'GPS position is outside the supported Panabo City map area.';
     }
-    if (!accuracy.isFinite || accuracy <= 0 || accuracy > maxAccuracyMetres) {
-      return 'Weak GPS signal. Waiting for accuracy within ±20 m; this point was not recorded.';
+    final age = (now ?? DateTime.now()).difference(timestamp);
+    if (age.inSeconds > 20 || age.inSeconds < -5) {
+      return 'This GPS fix is old or has an invalid time. Waiting for a fresh location.';
     }
-    if ((now ?? DateTime.now()).difference(timestamp).inSeconds > 20) {
-      return 'This GPS fix is old. Waiting for a fresh location.';
+    if (!accuracy.isFinite || accuracy <= 0) {
+      return 'GPS accuracy is unavailable. Waiting before recording a point.';
+    }
+    if (accuracy > maxAccuracyMetres) {
+      return 'Accuracy is outside ±20 m. Live position updated; boundary point not recorded.';
     }
     if (previous == null) return null;
     final gap = FarmGeometry.distance(previous, point);

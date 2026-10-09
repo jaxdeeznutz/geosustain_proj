@@ -73,6 +73,7 @@ void main() {
       state.userLoaded = true;
       final previewKey = GlobalKey();
       Future<void> capture(String name) async {
+        if (!const bool.fromEnvironment('CAPTURE_QA')) return;
         await tester.runAsync(() async {
           final boundary =
               previewKey.currentContext!.findRenderObject()!

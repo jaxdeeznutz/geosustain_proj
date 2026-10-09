@@ -739,11 +739,47 @@ String friendlyErrorMessage(Object error) {
   // Already a clean message from the backend (via _errorMessage) or a
   // deliberate user-facing string elsewhere in the app — strip a leading
   // "Exception: " wrapper if present and use it as-is.
-  return text.replaceFirst(RegExp(r'^Exception:\s*'), '');
+  if (error is ApiException) {
+    if (error.statusCode >= 500) {
+      return 'The analysis service is unavailable. Try again shortly.';
+    }
+    return error.message;
+  }
+  if (lower.contains('uri=') ||
+      lower.contains('http://') ||
+      lower.contains('https://')) {
+    return 'Unable to complete the request. Check your connection and try again.';
+  }
+  return text.replaceFirst(RegExp(r'^(Exception|FormatException):\s*'), '');
 }
 
 class AnalysisState extends ChangeNotifier {
   bool _disposed = false;
+  int _sessionEpoch = 0, _selectionEpoch = 0;
+  bool historyLoading = false, historyLoaded = false;
+  Future<void>? _historyRefresh;
+  Future<void>? _farmsRefresh;
+  Map<String, dynamic>? selectedFarm;
+  String? analysisError;
+  bool analysisPending = false;
+  int? get selectedFarmId => int.tryParse('${selectedFarm?['id']}');
+  bool _active(int epoch, dynamic owner) =>
+      !_disposed && epoch == _sessionEpoch && currentUser?['id'] == owner;
+  bool _ownsRecord(Map<String, dynamic> row) =>
+      row['owner_id'] == null ||
+      '${row['owner_id']}' == '${currentUser?['id']}';
+
+  void focusFarm(Map<String, dynamic> farm) {
+    if (selectedFarmId != int.tryParse('${farm['id']}')) {
+      _selectionEpoch++;
+      result = null;
+      analysisError = null;
+      analysisPending = false;
+    }
+    selectedFarm = Map.of(farm);
+    notifyListeners();
+  }
+
   String? historyError;
   String? farmsError;
   @override
@@ -753,13 +789,35 @@ class AnalysisState extends ChangeNotifier {
 
   Future<String?> selectAnalysis(Map<String, dynamic> record) async {
     final id = int.tryParse('${record['session_id'] ?? record['id']}');
-    if (id == null) {
-      return 'This analysis has no saved record. Analyze the area again.';
-    }
+    if (id == null) return 'This analysis has no saved record.';
+    final epoch = _sessionEpoch, selection = ++_selectionEpoch;
+    final owner = currentUser?['id'];
+    result = null;
+    notifyListeners();
     try {
       final selected = await api.getAnalysis(id);
-      if (_disposed) return 'The session has ended.';
+      if (!_active(epoch, owner) || selection != _selectionEpoch) {
+        return 'The selected farm or account changed.';
+      }
+      if ('${selected['session_id']}' != '$id' ||
+          !_ownsRecord(selected) ||
+          (record['farm_id'] != null &&
+              '${selected['farm_id']}' != '${record['farm_id']}')) {
+        return 'This result does not match the selected farm. Refresh and try again.';
+      }
+      if (!analysisIsCompleted(selected)) {
+        return 'This analysis is not complete yet.';
+      }
+      selectedFarm = selected['farm_id'] == null
+          ? null
+          : {
+              'id': selected['farm_id'],
+              'farm_name': selected['farm_name'],
+              'owner_display_name': selected['owner_display_name'],
+            };
       result = selected;
+      analysisError = null;
+      analysisPending = false;
       notifyListeners();
       return null;
     } catch (error) {
@@ -768,6 +826,18 @@ class AnalysisState extends ChangeNotifier {
   }
 
   void clearUserData() {
+    _sessionEpoch++;
+    _selectionEpoch++;
+    _historyRefresh = null;
+    _farmsRefresh = null;
+    selectedFarm = null;
+    analysisError = null;
+    analysisPending = false;
+    historyError = null;
+    farmsError = null;
+    historyLoaded = false;
+    historyLoading = false;
+    userLoaded = false;
     _weatherRefreshTimer?.cancel();
     _loadingTimer?.cancel();
     result = null;
@@ -788,11 +858,23 @@ class AnalysisState extends ChangeNotifier {
     polygonPoints.clear();
     _placeCache.clear();
     profileCounts.clear();
+    plannerCounts.clear();
+    _lastAnalysisKey = null;
+    _lastAnalysisAt = null;
+    selectedPoint = panaboCenter;
+    selectedPlaceName = 'Panabo City, Davao del Norte';
+    latController.text = panaboCenter.latitude.toStringAsFixed(5);
+    lonController.text = panaboCenter.longitude.toStringAsFixed(5);
+    drawing = false;
+    farmsLoading = false;
+    weatherLoading = false;
+    plannerQueueLoading = false;
     loading = false;
     notifyListeners();
   }
 
   void replaceFarms(List<Map<String, dynamic>> values) {
+    if (_disposed) return;
     farms
       ..clear()
       ..addAll(values);
@@ -823,7 +905,6 @@ class AnalysisState extends ChangeNotifier {
   bool loading = false;
   bool weatherLoading = false;
   String loadingMessage = 'Preparing analysis...';
-  int _loadingStepIndex = 0;
   Timer? _loadingTimer;
   Timer? _weatherRefreshTimer;
   bool satellite = true;
@@ -909,18 +990,9 @@ class AnalysisState extends ChangeNotifier {
 
   void _startLoadingFlow() {
     _loadingTimer?.cancel();
-    _loadingStepIndex = 0;
-    loadingMessage = loadingSteps.first;
     loading = true;
-    _loadingTimer = Timer.periodic(const Duration(milliseconds: 900), (_) {
-      if (!loading) return;
-      _loadingStepIndex = (_loadingStepIndex + 1).clamp(
-        0,
-        loadingSteps.length - 1,
-      );
-      loadingMessage = loadingSteps[_loadingStepIndex];
-      notifyListeners();
-    });
+    analysisError = null;
+    loadingMessage = 'Analyzing your land. This may take a few minutes…';
     notifyListeners();
   }
 
@@ -1060,127 +1132,166 @@ class AnalysisState extends ChangeNotifier {
   }
 
   Future<void> loadUserData() async {
+    final epoch = _sessionEpoch;
     userLoaded = false;
     notifyListeners();
     try {
-      currentUser = await api.getMe();
-      final encodedPhoto = currentUser?['profile_photo'];
-      if (encodedPhoto != null && '$encodedPhoto'.isNotEmpty) {
+      final user = await api.getMe();
+      if (_disposed || epoch != _sessionEpoch) return;
+      if (currentUser?['id'] != null && currentUser?['id'] != user['id']) {
+        clearUserData();
+      }
+      currentUser = user;
+      final photo = user['profile_photo'];
+      if (photo != null && '$photo'.isNotEmpty) {
         try {
-          profilePhotoBytes = base64Decode('$encodedPhoto');
+          profilePhotoBytes = base64Decode('$photo');
         } catch (_) {}
       }
-    } catch (e) {
-      // Prevent the app from being stuck forever on the loading screen.
-      // If the backend profile request fails, send the user back to an access/login state.
-      currentUser = <String, dynamic>{
+    } catch (error) {
+      if (_disposed || epoch != _sessionEpoch) return;
+      currentUser = {
         'username': 'Unknown user',
         'role': 'unknown',
-        'profile_load_error': e.toString(),
+        'profile_load_error': friendlyErrorMessage(error),
       };
-    } finally {
-      userLoaded = true;
-      notifyListeners();
     }
-    await refreshHistoryData().timeout(
-      const Duration(seconds: 12),
-      onTimeout: () {},
-    );
-    if (result == null && !loading && historyRecords.isNotEmpty && !_disposed) {
-      await selectAnalysis(historyRecords.first);
-    }
+    if (_disposed) return;
+    userLoaded = true;
     notifyListeners();
+    await refreshHistoryData();
+    // Selection is explicit. Account-wide history must not become a farm result.
   }
 
-  Future<void> refreshHistoryData() async {
+  Future<void> refreshHistoryData() {
+    if (currentUser == null) return Future.value();
+    final epoch = _sessionEpoch;
+    return _historyRefresh ??= _refreshHistory().whenComplete(() {
+      if (epoch == _sessionEpoch) _historyRefresh = null;
+    });
+  }
+
+  Future<void> _refreshHistory() async {
+    final epoch = _sessionEpoch;
+    final owner = currentUser?['id'];
+    historyLoading = true;
     historyError = null;
+    notifyListeners();
     try {
       final rows = await api.getHistory();
-      {
-        historyRecords
-          ..clear()
-          ..addAll(rows.map((e) => Map<String, dynamic>.from(e as Map)));
-      }
+      if (!_active(epoch, owner)) return;
+      historyRecords
+        ..clear()
+        ..addAll(
+          rows
+              .map((r) => Map<String, dynamic>.from(r as Map))
+              .where(_ownsRecord),
+        );
+      historyLoaded = true;
       recentAnalyses
         ..clear()
-        ..addAll(historyRecords.take(3).map(normalizeRecord));
-      final selectedId = result?['session_id'];
-      if (selectedId != null) {
-        for (final row in historyRecords) {
-          if ('${row['session_id'] ?? row['id']}' == '$selectedId') {
-            for (final key in [
-              'verification_status',
-              'planner_notes',
-              'verified_at',
-              'submitted_at',
-            ]) {
-              result![key] = row[key];
-            }
-            break;
+        ..addAll(
+          historyRecords
+              .where(analysisIsCompleted)
+              .take(3)
+              .map(normalizeRecord),
+        );
+      final id = result?['session_id'];
+      for (final row in historyRecords) {
+        if (id != null && '${row['session_id']}' == '$id') {
+          for (final key in [
+            'verification_status',
+            'planner_notes',
+            'verified_at',
+            'submitted_at',
+          ]) {
+            result![key] = row[key];
           }
         }
       }
     } catch (error) {
-      historyError = friendlyErrorMessage(error);
+      if (_active(epoch, owner)) historyError = friendlyErrorMessage(error);
+    } finally {
+      if (_active(epoch, owner)) {
+        historyLoading = false;
+        notifyListeners();
+      }
     }
-    if (isPlanner) {
-      try {
-        final rows = await api.getPlannerQueue(status: 'verified');
-        verifiedTrendRecords
-          ..clear()
-          ..addAll(rows.map((e) => Map<String, dynamic>.from(e as Map)));
-      } catch (_) {}
-    }
-    try {
-      final rows = await api.getSavedAnalyses();
-      savedAnalyses
-        ..clear()
-        ..addAll(rows.map((e) => Map<String, dynamic>.from(e as Map)));
-    } catch (_) {}
-    try {
-      final rows = await api.getReports();
-      generatedReports
-        ..clear()
-        ..addAll(rows.map((e) => Map<String, dynamic>.from(e as Map)));
-    } catch (_) {}
-    try {
-      profileCounts = await api.getCounts();
-    } catch (_) {
-      profileCounts = {
-        'analysis_count': historyRecords.length,
-        'saved_count': savedAnalyses.length,
-        'report_count': generatedReports.length,
-      };
-    }
-    notifyListeners();
-    await enrichRecordsWithPlaces([
-      ...historyRecords,
-      ...savedAnalyses,
-      ...generatedReports,
-      ...recentAnalyses,
-    ], maxLookups: 30);
-    recentAnalyses
-      ..clear()
-      ..addAll(historyRecords.take(3).map(normalizeRecord));
-    notifyListeners();
+    if (!_active(epoch, owner)) return;
+    // Coalesce simultaneous tab refreshes and fetch each account resource once.
+    await Future.wait([
+      () async {
+        try {
+          final rows = await api.getSavedAnalyses();
+          if (_active(epoch, owner)) {
+            savedAnalyses
+              ..clear()
+              ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
+          }
+        } catch (_) {}
+      }(),
+      () async {
+        try {
+          final rows = await api.getReports();
+          if (_active(epoch, owner)) {
+            generatedReports
+              ..clear()
+              ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
+          }
+        } catch (_) {}
+      }(),
+      () async {
+        try {
+          final counts = await api.getCounts();
+          if (_active(epoch, owner)) profileCounts = counts;
+        } catch (_) {}
+      }(),
+      if (isPlanner)
+        () async {
+          try {
+            final rows = await api.getPlannerQueue(status: 'verified');
+            if (_active(epoch, owner)) {
+              verifiedTrendRecords
+                ..clear()
+                ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
+            }
+          } catch (_) {}
+        }(),
+    ]);
+    if (_active(epoch, owner)) notifyListeners();
   }
 
-  Future<void> refreshFarms() async {
+  Future<void> refreshFarms() {
+    if (currentUser == null) return Future.value();
+    final epoch = _sessionEpoch;
+    return _farmsRefresh ??= _refreshFarms().whenComplete(() {
+      if (epoch == _sessionEpoch) _farmsRefresh = null;
+    });
+  }
+
+  Future<void> _refreshFarms() async {
+    final epoch = _sessionEpoch, owner = currentUser?['id'];
     farmsLoading = true;
     farmsError = null;
     notifyListeners();
     try {
       final rows = await api.getFarms();
+      if (!_active(epoch, owner)) return;
       farms
         ..clear()
-        ..addAll(rows.map((e) => Map<String, dynamic>.from(e as Map)));
+        ..addAll(
+          rows.where(
+            (r) => r['farmer_id'] == null || '${r['farmer_id']}' == '$owner',
+          ),
+        );
     } catch (error) {
-      farmsError = friendlyErrorMessage(error);
-      // Keep whatever farms were already loaded rather than clearing them
-      // on a transient network failure (Section 26).
+      if (_active(epoch, owner)) farmsError = friendlyErrorMessage(error);
+    } finally {
+      if (_active(epoch, owner)) {
+        farmsLoading = false;
+        notifyListeners();
+      }
     }
-    farmsLoading = false;
-    notifyListeners();
   }
 
   Future<String?> loadPlannerQueue({String? status}) async {
@@ -1472,17 +1583,21 @@ class AnalysisState extends ChangeNotifier {
   Future<String?> refreshLiveWeather({double? lat, double? lon}) async {
     weatherLoading = true;
     notifyListeners();
+    final epoch = _sessionEpoch;
     final targetLat = lat ?? selectedPoint.latitude;
     final targetLon = lon ?? selectedPoint.longitude;
     try {
       final weather = await api.getLiveWeather(targetLat, targetLon);
+      if (_disposed || epoch != _sessionEpoch) return null;
       liveWeather = {...weather, 'place_name': selectedPlaceName};
       return null;
     } catch (e) {
       return e.toString().replaceFirst('Exception: ', '');
     } finally {
-      weatherLoading = false;
-      notifyListeners();
+      if (!_disposed && epoch == _sessionEpoch) {
+        weatherLoading = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -1565,6 +1680,8 @@ class AnalysisState extends ChangeNotifier {
       return 'This exact location was already analyzed recently. Move the pin or wait a few seconds before analyzing again.';
     }
 
+    selectedFarm = null;
+    _selectionEpoch++;
     selectedPoint = point;
     _startLoadingFlow();
     moveMapLocked(point, 15);
@@ -1600,6 +1717,8 @@ class AnalysisState extends ChangeNotifier {
     if (_isRecentDuplicate(key)) {
       return 'This boundary was already analyzed recently. Edit the boundary or wait a few seconds before analyzing again.';
     }
+    selectedFarm = null;
+    _selectionEpoch++;
     selectedPoint = LatLng(centerLat, centerLon);
     latController.text = centerLat.toStringAsFixed(5);
     lonController.text = centerLon.toStringAsFixed(5);
@@ -1627,6 +1746,9 @@ class AnalysisState extends ChangeNotifier {
 
   Future<String?> analyzeSavedFarm(Map<String, dynamic> farm) async {
     if (loading) return 'Analysis is already running. Please wait.';
+    focusFarm(farm);
+    final farmId = int.tryParse('${farm['id']}');
+    if (farmId == null) return 'Refresh this farm before analyzing it.';
     final raw = farm['polygon'];
     if (raw is! List) return 'This farm has no valid saved boundary.';
     final points = <LatLng>[];
@@ -1659,7 +1781,7 @@ class AnalysisState extends ChangeNotifier {
         payload,
         placeName: selectedPlaceName,
         intendedPlantingMonth: intendedPlantingMonth,
-        farmId: int.tryParse('${farm['id']}'),
+        farmId: farmId,
       ),
       lat: centerLat,
       lon: centerLon,
@@ -1678,11 +1800,22 @@ class AnalysisState extends ChangeNotifier {
     String locationType = 'Point',
     String? analysisKey,
   }) async {
+    final epoch = _sessionEpoch, selection = _selectionEpoch;
+    result = null;
+    analysisError = null;
+    final owner = currentUser?['id'];
     if (!loading) _startLoadingFlow();
-    loadingMessage = 'Generating crop recommendations...';
-    notifyListeners();
     try {
       final data = await job();
+      if (!_active(epoch, owner)) {
+        return 'Your session has changed. Sign in again.';
+      }
+      if (!_ownsRecord(data) || !analysisIsCompleted(data)) {
+        return 'The server has not returned a completed analysis for this account.';
+      }
+      if (selection != _selectionEpoch) {
+        return 'Analysis saved. Open its result from History.';
+      }
       final compatibility =
           data['crop_compatibility_pct'] ?? data['compatibility_pct'];
       result = {
@@ -1690,22 +1823,26 @@ class AnalysisState extends ChangeNotifier {
         'compatibility_pct': compatibility,
         'crop_compatibility_pct': compatibility,
         'suitability_level': suitabilityLabel(compatibility),
-        'place_name': selectedPlaceName,
         'location_type': locationType,
       };
+      analysisError = null;
+      analysisPending = false;
       _addRecentAnalysis(result!, lat: lat, lon: lon);
       if (analysisKey != null) {
         _lastAnalysisKey = analysisKey;
         _lastAnalysisAt = DateTime.now();
       }
-      // Weather alerts are now live advisories and are intentionally independent
-      // from land analysis results. Refresh them from Home/Map, not after Analyze.
       await Future.wait([refreshHistoryData(), refreshFarms()]);
       return null;
-    } catch (e) {
-      return e.toString().replaceFirst('Exception: ', '');
+    } catch (error) {
+      if (_active(epoch, owner) && selection == _selectionEpoch) {
+        analysisError = friendlyErrorMessage(error);
+        analysisPending = error is ApiException && error.statusCode == 202;
+      }
+      if (kDebugMode) debugPrint('Land analysis failed: ${error.runtimeType}');
+      return friendlyErrorMessage(error);
     } finally {
-      _stopLoadingFlow();
+      if (_active(epoch, owner)) _stopLoadingFlow();
     }
   }
 
@@ -1714,7 +1851,6 @@ class AnalysisState extends ChangeNotifier {
     double? lat,
     double? lon,
   }) {
-    final now = DateTime.now();
     final item = normalizeRecord({
       ...data,
       'place_name': data['place_name'] ?? selectedPlaceName,
@@ -1722,34 +1858,15 @@ class AnalysisState extends ChangeNotifier {
       'center_lon': data['center_lon'] ?? lon,
       'lat': data['lat'] ?? lat,
       'lon': data['lon'] ?? lon,
-      'date':
-          '${now.month.toString().padLeft(2, '0')}/${now.day.toString().padLeft(2, '0')}/${now.year} ${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}',
     });
 
-    String keyOf(Map<String, dynamic> r) =>
-        '${r['center_lat'] ?? r['lat']}-${r['center_lon'] ?? r['lon']}-${r['predicted_crop'] ?? r['crop']}';
-    final key = keyOf(item);
-
-    historyRecords.removeWhere((r) => keyOf(r) == key);
+    historyRecords.removeWhere((r) => r['session_id'] == item['session_id']);
     historyRecords.insert(0, item);
-    if (historyRecords.length > 30) {
-      historyRecords.removeRange(30, historyRecords.length);
-    }
 
     recentAnalyses
       ..clear()
       ..addAll(historyRecords.take(3).map(normalizeRecord));
     notifyListeners();
-
-    final latNum = item['center_lat'] is num
-        ? (item['center_lat'] as num).toDouble()
-        : double.tryParse('${item['center_lat']}');
-    final lonNum = item['center_lon'] is num
-        ? (item['center_lon'] as num).toDouble()
-        : double.tryParse('${item['center_lon']}');
-    if (latNum != null && lonNum != null) {
-      enrichRecordsWithPlaces([item], maxLookups: 1);
-    }
   }
 
   String? onMapTap(TapPosition tap, LatLng point) {
@@ -1790,6 +1907,7 @@ class AnalysisState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _sessionEpoch++;
     _disposed = true;
     _loadingTimer?.cancel();
     _weatherRefreshTimer?.cancel();
@@ -1827,10 +1945,14 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
     state = widget.analysisState ?? AnalysisState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!state.userLoaded) state.loadUserData();
+      if (!state.userLoaded) {
+        state.loadUserData().then((_) {
+          if (mounted) state.refreshFarms();
+        });
+      }
       state.refreshLiveWeather();
       state.startWeatherAutoRefresh();
-      state.refreshFarms();
+      if (state.userLoaded) state.refreshFarms();
     });
   }
 

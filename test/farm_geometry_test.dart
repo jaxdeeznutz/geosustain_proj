@@ -173,7 +173,7 @@ void main() {
     test('rejects inaccurate, duplicate, stale and unreasonable fixes', () {
       expect(
         check(const LatLng(7.30005, 125.6), accuracy: 21),
-        contains('Weak'),
+        contains('outside ±20 m'),
       );
       expect(check(start), contains('movement'));
       expect(

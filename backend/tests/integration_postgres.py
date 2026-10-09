@@ -142,6 +142,16 @@ def run():
                     "polygon": ring,
                     "intended_planting_month": 10,
                 }
+                uid = db.get_user_by_email('farmer@example.com')['id']
+                assert client.get('/api/mobile/history', headers=headers).json()['history'] == []
+                with db.analysis_request_lock(uid, 'analysis-one') as acquired:
+                    assert acquired
+                    assert client.get('/api/mobile/analysis-requests/analysis-one', headers=headers).json()['status'] == 'processing'
+                    busy = client.post('/api/mobile/analysis', json=payload, headers={**headers, 'Idempotency-Key':'analysis-one'})
+                    assert busy.status_code == 202
+                    assert db.get_user_history(uid) == []
+                assert client.get('/api/mobile/analysis-requests/analysis-one', headers=headers).json()['status'] == 'not_found'
+                print('PASS in-flight PostgreSQL lock/recovery status/no duplicate inference')
                 result = client.post(
                     "/api/mobile/analysis",
                     json=payload,
@@ -149,6 +159,16 @@ def run():
                 )
                 assert result.status_code == 200, result.text
                 sid = result.json()["session_id"]
+                status = client.get('/api/mobile/analysis-requests/analysis-one', headers=headers).json()
+                assert status['status'] == 'completed' and status['analysis']['session_id'] == sid
+                assert status['analysis']['owner_id'] == uid
+                assert status['analysis']['owner_display_name'] == 'Fixture Farmer'
+                empty_farm = db.create_farm_parcel(uid, 'Empty farm', ring, location_name='Panabo', mapping_method='manual_draw')
+                empty_id = empty_farm['id']
+                assert client.get(f'/api/mobile/history?farm_id={empty_id}', headers=headers).json()['history'] == []
+                scoped = client.get(f'/api/mobile/history?farm_id={fid}', headers=headers).json()['history']
+                assert len(scoped) == 1 and scoped[0]['farm_id'] == fid
+                print('PASS farm-specific history/verified owner identity/empty farm stays unanalyzed')
                 assert result.json()["verification_status"] == "draft"
                 again = client.post(
                     "/api/mobile/analysis",
@@ -259,6 +279,8 @@ def run():
                     ).status_code
                     == 404
                 )
+                assert client.get('/api/mobile/analysis-requests/analysis-one', headers=oh).json()['status'] == 'not_found'
+                assert client.get(f'/api/mobile/history?farm_id={fid}', headers=oh).status_code == 404
                 change = client.post(
                     "/api/mobile/change-password",
                     headers=headers,

@@ -33,7 +33,9 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
   void initState() {
     super.initState();
     widget.state.addListener(_refresh);
-    _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _load();
+    });
   }
 
   @override
@@ -62,7 +64,8 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
       });
     }
     try {
-      widget.state.replaceFarms(await widget.state.api.getFarms());
+      await widget.state.refreshFarms();
+      if (mounted) setState(() => _error = widget.state.farmsError);
     } catch (error) {
       if (mounted) setState(() => _error = friendlyErrorMessage(error));
     } finally {
@@ -71,10 +74,11 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
   }
 
   Future<void> _open(Map<String, dynamic> farm) async {
+    widget.state.focusFarm(farm);
     final analyzed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => _FarmDetailsPage(state: widget.state, farm: farm),
+        builder: (_) => FarmDetailsPage(state: widget.state, farm: farm),
       ),
     );
     if (!mounted) return;
@@ -225,18 +229,20 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
   );
 }
 
-class _FarmDetailsPage extends StatefulWidget {
+class FarmDetailsPage extends StatefulWidget {
   final AnalysisState state;
   final Map<String, dynamic> farm;
-  const _FarmDetailsPage({required this.state, required this.farm});
+  const FarmDetailsPage({super.key, required this.state, required this.farm});
   @override
-  State<_FarmDetailsPage> createState() => _FarmDetailsPageState();
+  State<FarmDetailsPage> createState() => FarmDetailsPageState();
 }
 
-class _FarmDetailsPageState extends State<_FarmDetailsPage> {
+class FarmDetailsPageState extends State<FarmDetailsPage> {
   bool _busy = false, _loading = true;
   String? _notice;
   late Map<String, dynamic> _farm;
+  List<Map<String, dynamic>> _records = [];
+  bool _recordsLoaded = false;
   @override
   void initState() {
     super.initState();
@@ -263,8 +269,27 @@ class _FarmDetailsPageState extends State<_FarmDetailsPage> {
       });
     }
     try {
-      await widget.state.refreshHistoryData();
-      if (mounted) setState(() => _notice = widget.state.historyError);
+      final epoch = widget.state._sessionEpoch;
+      _recordsLoaded = false;
+      final values = await Future.wait<dynamic>([
+        widget.state.api.getFarm(int.parse('${_farm['id']}')),
+        widget.state.api.getFarmHistory(int.parse('${_farm['id']}')),
+      ]);
+      if (!mounted || epoch != widget.state._sessionEpoch) return;
+      final freshFarm = Map<String, dynamic>.from(values[0] as Map);
+      if ('${freshFarm['id']}' != '${_farm['id']}') {
+        throw const FormatException(
+          'The farm could not be verified. Refresh and try again.',
+        );
+      }
+      setState(() {
+        _farm = freshFarm;
+        _records = (values[1] as List)
+            .map((r) => Map<String, dynamic>.from(r as Map))
+            .where((r) => widget.state._ownsRecord(r))
+            .toList();
+        _recordsLoaded = true;
+      });
     } catch (error) {
       if (mounted) setState(() => _notice = friendlyErrorMessage(error));
     } finally {
@@ -272,17 +297,13 @@ class _FarmDetailsPageState extends State<_FarmDetailsPage> {
     }
   }
 
-  List<Map<String, dynamic>> get _analyses {
-    final result = widget.state.historyRecords
-        .where((record) => '${record['farm_id']}' == '${_farm['id']}')
-        .toList();
-    result.sort(
-      (a, b) => '${b['analyzed_at'] ?? b['created_at'] ?? b['date']}'.compareTo(
-        '${a['analyzed_at'] ?? a['created_at'] ?? a['date']}',
-      ),
-    );
-    return result;
-  }
+  List<Map<String, dynamic>> get _analyses => newestAnalysisRecords(
+    _records.where(
+      (record) =>
+          '${record['farm_id']}' == '${_farm['id']}' &&
+          analysisIsCompleted(record),
+    ),
+  );
 
   Future<void> _analyze() async {
     if (_busy) return;
@@ -433,21 +454,26 @@ class _FarmDetailsPageState extends State<_FarmDetailsPage> {
   Widget build(BuildContext context) {
     final points = FarmGeometry.fromPayload(_farm['polygon']);
     final analyses = _analyses;
-    final latest =
-        analyses.firstOrNull ??
-        (_farm['latest_analysis_id'] == null
-            ? null
-            : <String, dynamic>{'session_id': _farm['latest_analysis_id']});
+    final latest = analyses.firstOrNull;
     return PopScope<bool>(
       canPop: !_busy,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('${_farm['farm_name'] ?? 'Farm details'}'),
+          title: const Text('Farm details'),
           actions: [
-            IconButton(
-              onPressed: _busy || _loading ? null : _load,
-              icon: const Icon(Icons.refresh),
-              tooltip: 'Refresh analyses',
+            PopupMenuButton<String>(
+              enabled: !_busy,
+              tooltip: 'Farm actions',
+              onSelected: (action) {
+                if (action == 'refresh') _load();
+                if (action == 'edit') _editDetails();
+                if (action == 'archive') _archive();
+              },
+              itemBuilder: (_) => const [
+                PopupMenuItem(value: 'refresh', child: Text('Refresh')),
+                PopupMenuItem(value: 'edit', child: Text('Edit farm details')),
+                PopupMenuItem(value: 'archive', child: Text('Archive farm')),
+              ],
             ),
           ],
         ),
@@ -455,92 +481,101 @@ class _FarmDetailsPageState extends State<_FarmDetailsPage> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              if (points.isNotEmpty)
-                _BoundaryMap(points: points)
-              else
-                const _MappingNotice(
-                  'This saved farm has no readable boundary. Its historical analyses are still available below.',
-                ),
-              const SizedBox(height: 12),
               Text(
-                '${_farm['farm_name']}',
+                '${_farm['farm_name'] ?? 'Farm'}',
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: 26,
                   fontWeight: FontWeight.w800,
+                  color: Color(0xFF20382C),
                 ),
               ),
+              if ('${_farm['owner_display_name'] ?? ''}'.isNotEmpty)
+                Text('Owner: ${_farm['owner_display_name']}'),
+              if ('${_farm['location_name'] ?? ''}'.isNotEmpty)
+                Text(
+                  '${_farm['location_name']}',
+                  style: const TextStyle(color: Colors.black54),
+                ),
+              const SizedBox(height: 6),
               Text(
-                '${_farm['location_name'] ?? ''}'.trim().isEmpty
-                    ? 'No location description'
-                    : '${_farm['location_name']}',
+                '${analysisAreaText(_farm)} · ${_farm['mapping_method'] == 'gps_walk' ? 'GPS boundary' : 'Drawn boundary'}',
+                style: const TextStyle(fontSize: 13, color: Colors.black54),
               ),
-              Text(
-                '${_farm['mapping_method'] == 'gps_walk' ? 'GPS boundary' : 'Drawn polygon'} · ${_farm['area_hectares'] == null ? 'Area unavailable' : '${(double.tryParse('${_farm['area_hectares']}') ?? 0).toStringAsFixed(3)} ha'}',
-              ),
-              if (_farm['boundary_version'] != null)
-                Text('Boundary version ${_farm['boundary_version']}'),
-              const SizedBox(height: 12),
-              FilledButton.icon(
-                onPressed: _busy || points.isEmpty ? null : _analyze,
-                icon: const Icon(Icons.analytics_outlined),
-                label: Text(_busy ? 'Please wait…' : 'Analyze This Farm'),
-              ),
-              OutlinedButton.icon(
-                onPressed: _busy || latest == null
-                    ? null
-                    : () => _openResult(latest),
-                icon: const Icon(Icons.assessment_outlined),
-                label: const Text('Latest Results and Analyst Review'),
-              ),
-              TextButton.icon(
-                onPressed: _busy ? null : _editDetails,
-                icon: const Icon(Icons.edit_outlined),
-                label: const Text('Edit Farm Details'),
-              ),
-              if (_notice != null) _MappingNotice(_notice!),
-              if (_loading || _busy) const LinearProgressIndicator(),
               const SizedBox(height: 16),
-              const Text(
-                'Previous analyses',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-              ),
-              const Text(
-                'Each run keeps its own boundary and review status. Open a result to submit it or read analyst feedback.',
-              ),
-              if (!_loading && analyses.isEmpty && _notice == null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
+              if (points.isNotEmpty)
+                _BoundaryMap(
+                  key: ValueKey('${_farm['id']}-${_farm['boundary_version']}'),
+                  points: points,
+                )
+              else
+                const _MappingNotice('This farm has no readable boundary.'),
+              const SizedBox(height: 12),
+              if (_loading || _busy) const LinearProgressIndicator(),
+              if (!_loading && _recordsLoaded && analyses.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 10),
                   child: Text(
-                    latest == null
-                        ? 'Not analyzed yet. Analyze this saved boundary to see crop recommendations.'
-                        : 'Older analyses are not in the current history page. Open Latest Results above to retrieve the latest run.',
+                    'Not analyzed yet',
+                    style: TextStyle(color: Colors.black54),
                   ),
                 ),
-              ...analyses.map(
-                (record) => Card(
-                  child: ListTile(
-                    leading: const Icon(Icons.history, color: green),
-                    title: Text(
-                      _farmDate(
-                        record['analyzed_at'] ??
-                            record['created_at'] ??
-                            record['date'],
+              if (_notice != null) _MappingNotice(_notice!),
+              if (_busy && widget.state.loading)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 10),
+                  child: Text(widget.state.loadingMessage),
+                ),
+              FilledButton.icon(
+                onPressed: _busy || _loading || points.isEmpty
+                    ? null
+                    : _analyze,
+                icon: const Icon(Icons.analytics_outlined),
+                label: Text(
+                  _busy
+                      ? 'Please wait…'
+                      : widget.state.analysisPending &&
+                            widget.state.selectedFarmId ==
+                                int.tryParse('${_farm['id']}')
+                      ? 'Check analysis'
+                      : 'Analyze This Farm',
+                ),
+              ),
+              if (latest != null)
+                TextButton.icon(
+                  onPressed: _busy ? null : () => _openResult(latest),
+                  icon: const Icon(Icons.assessment_outlined),
+                  label: const Text('Latest results'),
+                ),
+              if (points.isNotEmpty &&
+                  FarmGeometry.areaSquareMetres(points) < 100)
+                const ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  title: Text(
+                    'Small boundary · limited detail',
+                    style: TextStyle(fontSize: 13),
+                  ),
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(bottom: 12),
+                      child: Text(
+                        'This boundary is smaller than a 10 m satellite pixel. Results may describe surrounding land. Check the boundary and verify conditions on site.',
                       ),
                     ),
-                    subtitle: Text(
-                      '${_farmReviewLabel(record['verification_status'])}${record['planner_notes'] == null ? '' : '\nAnalyst feedback: ${record['planner_notes']}'}',
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
+                  ],
+                ),
+              if (analyses.isNotEmpty) ...[
+                const SizedBox(height: 20),
+                const Text(
+                  'Previous analyses',
+                  style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+                ),
+                const SizedBox(height: 12),
+                for (final record in analyses)
+                  AnalysisHistoryRow(
+                    record: record,
                     onTap: _busy ? null : () => _openResult(record),
                   ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              TextButton.icon(
-                onPressed: _busy ? null : _archive,
-                icon: const Icon(Icons.archive_outlined),
-                label: const Text('Archive Farm'),
-              ),
+              ],
             ],
           ),
         ),

@@ -1,6 +1,8 @@
 import os
 import json
 import hashlib
+import logging
+import time
 import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta
@@ -48,6 +50,7 @@ from database import (
     validate_farm_polygon, get_active_crop_keys, list_crop_reference,
     update_crop_reference, get_audit_logs,
     get_user_analysis, find_analysis_request, change_user_password,
+    analysis_request_lock, analysis_request_status,
 )
 
 try:
@@ -896,10 +899,11 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
                 try:
                     ordered_results[index] = future.result()
                 except Exception as exc:
-                    print(f"Polygon sample {index + 1} failed: {exc}")
+                    logging.getLogger('uvicorn.error').warning('Polygon sample failed sample=%s type=%s', index + 1, type(exc).__name__)
         sample_results = [item for item in ordered_results if item is not None]
         if not sample_results:
             raise RuntimeError("All polygon sample analyses failed.")
+        logging.getLogger('uvicorn.error').info('Polygon samples completed successful=%s requested=%s', len(sample_results), len(sample_points))
         result = merge_area_results(sample_results)
         result["polygon_area_sample_count"] = len(sample_points)
         result["polygon_area_samples"] = [{"lat": p[0], "lng": p[1]} for p in sample_points]
@@ -1153,7 +1157,8 @@ def history(request: Request):
 # ---------------------------------------------------------------------------
 # Web JSON API
 # ---------------------------------------------------------------------------
-@app.api_route("/api/analysis", methods=["GET", "POST"])
+@app.get("/api/analysis")
+@app.post("/api/analysis")
 async def analysis(request: Request):
     user = current_user(request)
     if not user:
@@ -1370,8 +1375,10 @@ def mobile_live_weather(lat: float, lon: float):
 
 
 @app.get("/api/mobile/history")
-def mobile_history(user=Depends(get_api_user), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100)):
-    rows = get_user_history(user["id"], limit=limit+1, offset=offset)
+def mobile_history(user=Depends(get_api_user), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), farm_id: Optional[int] = Query(None, gt=0)):
+    if farm_id is not None and not get_farm_parcel(user['id'], farm_id):
+        raise HTTPException(status_code=404, detail='Farm not found.')
+    rows = get_user_history(user["id"], limit=limit+1, offset=offset, farm_id=farm_id)
     return {"history": [dict(row) for row in rows[:limit]], "has_more": len(rows)>limit}
 
 
@@ -1567,8 +1574,32 @@ def planner_verify(body: VerifySessionBody, planner=Depends(require_planner)):
     return {"session": session}
 
 
+@app.get('/api/mobile/analysis-requests/{request_id}')
+def mobile_analysis_request(request_id: str, user=Depends(get_api_user)):
+    request_identity(request_id, {})
+    return analysis_request_status(user['id'], request_id)
+
+
 @app.post("/api/mobile/analysis")
 def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user), idempotency_key: Optional[str]=Header(default=None)):
+    key, _ = request_identity(idempotency_key, body.model_dump(exclude_none=True))
+    logger = logging.getLogger('uvicorn.error')
+    started = time.monotonic()
+    # Logs deliberately omit bearer tokens, coordinates, email and provider secrets.
+    logger.info('Analysis started user=%s farm=%s', user['id'], body.farm_id)
+    try:
+        with analysis_request_lock(user['id'], key) as acquired:
+            if not acquired:
+                return JSONResponse({'status': 'processing', 'request_id': key}, status_code=202)
+            result = _perform_mobile_analysis(body, user, key)
+            logger.info('Analysis completed user=%s farm=%s session=%s seconds=%.1f', user['id'], body.farm_id, result.get('session_id'), time.monotonic()-started)
+            return result
+    except Exception as exc:
+        logger.warning('Analysis failed user=%s farm=%s type=%s seconds=%.1f', user['id'], body.farm_id, type(exc).__name__, time.monotonic()-started)
+        raise
+
+
+def _perform_mobile_analysis(body, user, idempotency_key):
     payload=body.model_dump(exclude_none=True)
     key,digest=request_identity(idempotency_key,payload)
     try:
@@ -1586,10 +1617,12 @@ def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user), idempotency_
         payload['polygon']=farm['polygon']
         payload['place_name']=farm.get('location_name') or body.place_name
     try:
+        logging.getLogger('uvicorn.error').info('Analysis inference user=%s farm=%s', user['id'], body.farm_id)
         result, analysis_source = build_analysis_result(body=payload)
     except ValueError as exc:
         raise HTTPException(status_code=400,detail=str(exc))
-    except RuntimeError:
+    except RuntimeError as exc:
+        logging.getLogger('uvicorn.error').warning('Analysis engine unavailable user=%s farm=%s type=%s', user['id'], body.farm_id, type(exc).__name__)
         raise HTTPException(status_code=503,detail='Land analysis is unavailable. Please retry shortly.')
     except Exception as exc:
         print(f'Analysis failed: {type(exc).__name__}')
@@ -1597,8 +1630,9 @@ def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user), idempotency_
     if farm:
         result.update(farm_id=farm['id'], farm_name=farm['farm_name'], boundary_version=farm['boundary_version'])
     else:
-        result['farm_name']=body.place_name
+        result['farm_name']=None
     try:
+        logging.getLogger('uvicorn.error').info('Analysis saving user=%s farm=%s', user['id'], body.farm_id)
         session_id=save_analysis_session(user['id'],result,analysis_source,request_key=key,request_hash=digest)
     except ValueError as exc:
         raise HTTPException(status_code=409,detail=str(exc))

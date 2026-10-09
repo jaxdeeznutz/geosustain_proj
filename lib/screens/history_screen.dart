@@ -19,6 +19,8 @@ class HistoryPage extends StatefulWidget {
 class _HistoryPageState extends State<HistoryPage> {
   bool loading = false;
   bool opening = false;
+  bool _allFarms = false;
+  int? _lastFarm;
   String? error;
 
   @override
@@ -71,148 +73,86 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: widget.state,
     builder: (context, _) {
-      final rows = newestAnalysisRecords(widget.state.historyRecords);
+      final farmId = widget.state.selectedFarmId;
+      if (_lastFarm != farmId) {
+        _lastFarm = farmId;
+        _allFarms = false;
+      }
+      final rows = newestAnalysisRecords(
+        widget.state.historyRecords
+            .where(analysisIsCompleted)
+            .where(
+              (row) =>
+                  _allFarms ||
+                  farmId == null ||
+                  '${row['farm_id']}' == '$farmId',
+            ),
+      );
+      final busy = loading || opening || widget.state.historyLoading;
+      final failure = error ?? widget.state.historyError;
       return SafeArea(
         child: Column(
           children: [
             MobileHeader(
               title: 'History',
               trailing: IconButton(
-                tooltip: 'Refresh analyses and analyst decisions',
-                onPressed: loading ? null : refresh,
+                tooltip: 'Refresh',
+                onPressed: busy ? null : refresh,
                 icon: const Icon(Icons.refresh),
               ),
             ),
-            if (loading || opening) const LinearProgressIndicator(),
+            if (busy) const LinearProgressIndicator(),
             Expanded(
               child: RefreshIndicator(
                 onRefresh: refresh,
                 child: ListView(
                   key: const PageStorageKey('mobile-history-scroll'),
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: Text(
-                        'Previous analyses and their separate analyst review status. Pull down to refresh.',
+                    if (farmId != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: Wrap(
+                          spacing: 8,
+                          children: [
+                            ChoiceChip(
+                              label: Text(
+                                '${widget.state.selectedFarm?['farm_name'] ?? 'Selected farm'}',
+                              ),
+                              selected: !_allFarms,
+                              onSelected: (_) =>
+                                  setState(() => _allFarms = false),
+                            ),
+                            ChoiceChip(
+                              label: const Text('All farms'),
+                              selected: _allFarms,
+                              onSelected: (_) =>
+                                  setState(() => _allFarms = true),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    if (error != null || widget.state.historyError != null)
+                    if (failure != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
                         child: Text(
-                          error ?? widget.state.historyError!,
+                          failure,
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.error,
                           ),
                         ),
                       ),
-                    if (rows.isEmpty && !loading) ...[
-                      const SizedBox(height: 32),
-                      const Icon(Icons.history, size: 54, color: green),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'No analyses yet',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        'Create a boundary or draw an area in My Farms, then analyze it. Saving a farm alone does not create an analysis.',
-                        textAlign: TextAlign.center,
-                      ),
-                      if (widget.goFarms != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: 20),
-                          child: FilledButton.icon(
-                            onPressed: widget.goFarms,
-                            icon: const Icon(Icons.agriculture),
-                            label: const Text('Go to My Farms'),
-                          ),
-                        ),
-                    ],
+                    if (rows.isEmpty &&
+                        !busy &&
+                        failure == null &&
+                        widget.state.historyLoaded)
+                      NoAnalyses(goFarms: widget.goFarms),
                     for (final row in rows)
-                      Card(
+                      AnalysisHistoryRow(
                         key: ValueKey('history-${row['session_id']}'),
-                        margin: const EdgeInsets.only(bottom: 12),
-                        child: InkWell(
-                          onTap: opening ? null : () => open(row),
-                          borderRadius: BorderRadius.circular(16),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        analysisRecordName(row),
-                                        style: const TextStyle(
-                                          fontSize: 17,
-                                          fontWeight: FontWeight.w800,
-                                        ),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    const Icon(Icons.chevron_right),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  analysisDateText(analysisRecordDate(row)),
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.black54,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(analysisAreaText(row)),
-                                const SizedBox(height: 10),
-                                Text(
-                                  'Analysis: ${analysisProcessingLabel(row)}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                VerificationStatusBadge(
-                                  status:
-                                      '${row['verification_status'] ?? 'draft'}',
-                                ),
-                                if (row['verified_at'] != null) ...[
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Reviewed: ${analysisDateText(row['verified_at'])}',
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ],
-                                if ('${row['planner_notes'] ?? ''}'
-                                    .trim()
-                                    .isNotEmpty) ...[
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    'Analyst feedback: ${row['planner_notes']}',
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
-                                const SizedBox(height: 12),
-                                const Text(
-                                  'View full result and feedback',
-                                  style: TextStyle(
-                                    color: green,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        record: row,
+                        onTap: opening ? null : () => open(row),
                       ),
                   ],
                 ),

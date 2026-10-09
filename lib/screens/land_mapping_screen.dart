@@ -97,8 +97,14 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
   final _times = <DateTime>[];
   final _accuracies = <double>[];
   StreamSubscription<Position>? _subscription;
+  int _streamGeneration = 0;
   Timer? _signalTimer;
   DateTime? _lastFixAt;
+  DateTime? _startedAt;
+  bool _followPosition = true;
+  bool get _fresh =>
+      _lastFixAt != null &&
+      DateTime.now().difference(_lastFixAt!).inSeconds <= 20;
   LatLng? _current;
   double? _accuracy;
   bool _recording = false, _starting = false, _review = false, _busy = false;
@@ -141,6 +147,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
   void _pause([String? message]) {
     // Flip the flag before cancelling: queued fixes must not enter the polygon.
     _recording = false;
+    _streamGeneration++;
     _subscription?.cancel();
     _subscription = null;
     _signalTimer?.cancel();
@@ -191,43 +198,51 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
           !kIsWeb && defaultTargetPlatform == TargetPlatform.android
           ? AndroidSettings(
               accuracy: LocationAccuracy.best,
-              distanceFilter: 3,
+              distanceFilter: 0,
               intervalDuration: const Duration(seconds: 1),
               forceLocationManager: true,
             )
           : !kIsWeb && defaultTargetPlatform == TargetPlatform.iOS
           ? AppleSettings(
               accuracy: LocationAccuracy.best,
-              distanceFilter: 3,
+              distanceFilter: 0,
               activityType: ActivityType.fitness,
               pauseLocationUpdatesAutomatically: false,
             )
           : const LocationSettings(
               accuracy: LocationAccuracy.best,
-              distanceFilter: 3,
+              distanceFilter: 0,
             );
       setState(() {
         _recording = true;
         _review = false;
         _notice = 'Waiting for a stable GPS fix…';
       });
-      _lastFixAt = DateTime.now();
+      _startedAt = DateTime.now();
+      _followPosition = true;
       _signalTimer = Timer.periodic(const Duration(seconds: 5), (_) {
         if (_recording &&
-            _lastFixAt != null &&
-            DateTime.now().difference(_lastFixAt!).inSeconds > 20) {
+            DateTime.now().difference(_lastFixAt ?? _startedAt!).inSeconds >
+                20) {
           _message(
             'No recent GPS update. Stop walking until a fresh fix arrives, or Pause and retry in an open area.',
           );
         }
       });
+      final generation = ++_streamGeneration;
       _subscription = Geolocator.getPositionStream(locationSettings: settings).listen(
-        _onPosition,
-        onError: (Object error) => _pause(
-          'Location recording stopped: ${friendlyErrorMessage(error)}. Check GPS and Resume.',
-        ),
+        (fix) {
+          if (generation == _streamGeneration) _onPosition(fix);
+        },
+        onError: (Object error) {
+          if (generation == _streamGeneration) {
+            _pause(
+              'Location recording stopped: ${friendlyErrorMessage(error)}. Check GPS and Resume.',
+            );
+          }
+        },
         onDone: () {
-          if (_recording) {
+          if (_recording && generation == _streamGeneration) {
             _pause(
               'GPS recording was interrupted. Check location access and Resume.',
             );
@@ -250,8 +265,15 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
       _message('An invalid GPS coordinate was ignored.');
       return;
     }
+    final age = DateTime.now().difference(fix.timestamp);
+    if (age.inSeconds > 20 ||
+        age.inSeconds < -5 ||
+        (_lastFixAt != null && !fix.timestamp.isAfter(_lastFixAt!))) {
+      _message('Waiting for a fresh GPS reading.');
+      return;
+    }
     final point = LatLng(fix.latitude, fix.longitude);
-    _lastFixAt = DateTime.now();
+    _lastFixAt = fix.timestamp;
     final rejection = FarmGpsFilter.rejection(
       point: point,
       accuracy: fix.accuracy,
@@ -261,7 +283,9 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
     );
     setState(() {
       _current = point;
-      _accuracy = fix.accuracy;
+      _accuracy = fix.accuracy.isFinite && fix.accuracy > 0
+          ? fix.accuracy
+          : null;
       _notice = rejection;
       if (rejection == null) {
         _points.add(point);
@@ -269,7 +293,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
         _accuracies.add(fix.accuracy);
       }
     });
-    if (_points.length == 1 && rejection == null) _controller.move(point, 18);
+    if (_followPosition) _controller.move(point, 20);
     if (_points.length >= 2000) {
       _pause(
         'The 2,000-point limit was reached. Review this recording before saving.',
@@ -336,8 +360,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
       if (mounted) {
         setState(() {
           _saved = farm;
-          _notice =
-              'Farm saved. You can analyze it now or return to My Farms. It has not been submitted for analyst review.';
+          _notice = 'Farm saved. Ready to analyze.';
         });
       }
     } catch (error) {
@@ -411,19 +434,24 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              const Text(
-                'Start at a farm corner, then walk safely around the perimeter and return close to your starting point. Keep the phone outdoors with a clear view of the sky.',
+              const Padding(
+                padding: EdgeInsets.only(bottom: 12),
+                child: Text(
+                  'Walk the perimeter and return to your starting point.',
+                ),
               ),
-              const SizedBox(height: 8),
-              const Text(
-                'Recording pauses when the app is backgrounded. Leaving discards an unsaved recording; saved farms remain available.',
-                style: TextStyle(color: Colors.black54),
-              ),
-              const SizedBox(height: 12),
               _BoundaryMap(
                 controller: _controller,
                 points: _points,
                 current: _current,
+                currentActive: _recording && _fresh,
+                onGesture: () => _followPosition = false,
+                onRecenter: _current == null
+                    ? null
+                    : () {
+                        _followPosition = true;
+                        _controller.move(_current!, 20);
+                      },
                 closed: _review || _saved != null,
               ),
               const SizedBox(height: 10),
@@ -444,21 +472,23 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                           : _review
                           ? 'Boundary preview'
                           : _recording
-                          ? 'Recording'
-                          : 'Not recording',
+                          ? (_fresh ? 'Recording' : 'Waiting for GPS')
+                          : (_current != null ? 'Paused' : 'Ready'),
                     ),
                   ),
                   Chip(label: Text('${_points.length} points')),
                   Chip(
                     label: Text(
                       _accuracy == null
-                          ? 'GPS accuracy unavailable'
+                          ? 'Accuracy unknown'
                           : 'GPS ±${_accuracy!.toStringAsFixed(0)} m',
                     ),
                   ),
-                  if (_points.length >= 3)
+                  if (_points.length >= 3 && area > 0)
                     Chip(
-                      label: Text('${area.toStringAsFixed(3)} ha (estimate)'),
+                      label: Text(
+                        '${analysisAreaText({'area_hectares': area})} (estimate)',
+                      ),
                     ),
                 ],
               ),
@@ -589,9 +619,22 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
               ],
               if (_busy) const LinearProgressIndicator(),
               const SizedBox(height: 12),
-              const Text(
-                'GPS boundaries and area are agricultural estimates, not legal land surveys. Poor GPS can affect the boundary even when a reading is accepted.',
-                style: TextStyle(fontSize: 12, color: Colors.black54),
+              const ExpansionTile(
+                tilePadding: EdgeInsets.zero,
+                title: Text('Recording help', style: TextStyle(fontSize: 14)),
+                children: [
+                  Text(
+                    'Keep the phone outdoors with a clear view of the sky. Recording pauses when the app leaves the foreground. Resume near your last accepted point.',
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Boundary points require reported accuracy within ±20 m, a fresh reading, and at least 4 m of movement. Large or unusually fast jumps are rejected. The live marker can move while a boundary point is rejected.',
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'GPS boundaries and area are agricultural estimates, not legal land surveys.',
+                  ),
+                ],
               ),
             ],
           ),
@@ -873,117 +916,207 @@ class _MappingNotice extends StatelessWidget {
   );
 }
 
-class _BoundaryMap extends StatelessWidget {
+class _BoundaryMap extends StatefulWidget {
   final MapController? controller;
   final List<LatLng> points;
   final LatLng? current;
-  final bool closed;
+  final bool closed, currentActive;
+  final VoidCallback? onRecenter, onGesture;
   final ValueChanged<LatLng>? onTap;
   final ValueChanged<int>? onVertex;
   final int? selectedVertex;
   const _BoundaryMap({
+    super.key,
     this.controller,
     required this.points,
     this.current,
     this.closed = true,
+    this.currentActive = true,
+    this.onRecenter,
+    this.onGesture,
     this.onTap,
     this.onVertex,
     this.selectedVertex,
   });
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: SizedBox(
-          height: math.min(350, MediaQuery.sizeOf(context).height * .42),
-          child: FlutterMap(
-            mapController: controller,
-            options: MapOptions(
-              initialCenter: points.firstOrNull ?? panaboCenter,
-              initialZoom: 15,
-              initialCameraFit: points.length >= 3
-                  ? CameraFit.coordinates(
-                      coordinates: points,
-                      padding: const EdgeInsets.all(28),
-                    )
-                  : null,
-              interactionOptions: const InteractionOptions(
-                flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-              ),
-              onTap: (_, point) => onTap?.call(point),
-            ),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.geosustain.mobile',
-              ),
-              if (points.length >= 2)
-                PolylineLayer(
-                  polylines: [
-                    Polyline(points: points, color: green, strokeWidth: 3),
-                  ],
-                ),
-              if (closed && points.length >= 3)
-                PolygonLayer(
-                  polygons: [
-                    Polygon(
-                      points: points,
-                      color: green.withValues(alpha: .18),
-                      borderColor: green,
-                      borderStrokeWidth: 3,
+  State<_BoundaryMap> createState() => _BoundaryMapState();
+}
+
+class _BoundaryMapState extends State<_BoundaryMap> {
+  bool _tileFailed = false;
+  int _tileAttempt = 0;
+  void _tileError() {
+    if (_tileFailed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_tileFailed) setState(() => _tileFailed = true);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final points = widget.points;
+    return Column(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            height: math.min(330, MediaQuery.sizeOf(context).height * .40),
+            child: Stack(
+              children: [
+                FlutterMap(
+                  mapController: widget.controller,
+                  options: MapOptions(
+                    backgroundColor: const Color(0xFFE9EEE9),
+                    initialCenter: points.firstOrNull ?? panaboCenter,
+                    initialZoom: 15,
+                    maxZoom: 22,
+                    initialCameraFit: points.length >= 3
+                        ? CameraFit.coordinates(
+                            coordinates: points,
+                            padding: const EdgeInsets.all(32),
+                            maxZoom: 22,
+                          )
+                        : null,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                    ),
+                    onPositionChanged: (_, gesture) {
+                      if (gesture) widget.onGesture?.call();
+                    },
+                    onTap: (_, point) => widget.onTap?.call(point),
+                  ),
+                  children: [
+                    TileLayer(
+                      key: ValueKey(_tileAttempt),
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.geosustain.mobile',
+                      maxNativeZoom: 19,
+                      maxZoom: 22,
+                      errorTileCallback: (_, _, _) => _tileError(),
+                    ),
+                    if (points.length >= 2)
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: points,
+                            color: green,
+                            strokeWidth: 3,
+                          ),
+                        ],
+                      ),
+                    if (widget.closed && points.length >= 3)
+                      PolygonLayer(
+                        polygons: [
+                          Polygon(
+                            points: points,
+                            color: green.withValues(alpha: .18),
+                            borderColor: green,
+                            borderStrokeWidth: 3,
+                          ),
+                        ],
+                      ),
+                    MarkerLayer(
+                      markers: [
+                        for (final entry in points.asMap().entries)
+                          Marker(
+                            point: entry.value,
+                            width: 26,
+                            height: 26,
+                            child: GestureDetector(
+                              onTap: widget.onVertex == null
+                                  ? null
+                                  : () => widget.onVertex!(entry.key),
+                              child: CircleAvatar(
+                                backgroundColor:
+                                    widget.selectedVertex == entry.key
+                                    ? Colors.orange.shade800
+                                    : green,
+                                child: Text(
+                                  '${entry.key + 1}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (widget.current != null)
+                          Marker(
+                            point: widget.current!,
+                            width: 34,
+                            height: 34,
+                            child: Semantics(
+                              label: widget.currentActive
+                                  ? 'Live GPS position'
+                                  : 'Last GPS position',
+                              child: Icon(
+                                Icons.my_location,
+                                key: const ValueKey('gps-live-marker'),
+                                color: widget.currentActive
+                                    ? Colors.blue
+                                    : Colors.grey,
+                                size: 30,
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
                   ],
                 ),
-              MarkerLayer(
-                markers: [
-                  for (final entry in points.asMap().entries)
-                    Marker(
-                      point: entry.value,
-                      width: 30,
-                      height: 30,
-                      child: GestureDetector(
-                        onTap: onVertex == null
-                            ? null
-                            : () => onVertex!(entry.key),
-                        child: CircleAvatar(
-                          backgroundColor: selectedVertex == entry.key
-                              ? Colors.orange.shade800
-                              : green,
-                          child: Text(
-                            '${entry.key + 1}',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
+                if (widget.onRecenter != null)
+                  Positioned(
+                    right: 10,
+                    bottom: 10,
+                    child: IconButton.filledTonal(
+                      tooltip: 'Recenter on my position',
+                      onPressed: widget.onRecenter,
+                      icon: const Icon(Icons.my_location),
+                    ),
+                  ),
+                if (_tileFailed)
+                  Positioned(
+                    left: 8,
+                    right: 8,
+                    top: 8,
+                    child: Material(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(10),
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 12),
+                        child: Row(
+                          children: [
+                            const Expanded(
+                              child: Text(
+                                'Map background unavailable',
+                                style: TextStyle(fontSize: 12),
+                              ),
                             ),
-                          ),
+                            TextButton(
+                              onPressed: () => setState(() {
+                                _tileFailed = false;
+                                _tileAttempt++;
+                              }),
+                              child: const Text('Retry'),
+                            ),
+                          ],
                         ),
                       ),
                     ),
-                  if (current != null)
-                    Marker(
-                      point: current!,
-                      width: 34,
-                      height: 34,
-                      child: const Icon(
-                        Icons.my_location,
-                        color: Colors.blue,
-                        size: 30,
-                      ),
-                    ),
-                ],
-              ),
-            ],
+                  ),
+              ],
+            ),
           ),
         ),
-      ),
-      const Align(
-        alignment: Alignment.centerRight,
-        child: Text(
-          '© OpenStreetMap contributors',
-          style: TextStyle(fontSize: 10, color: Colors.black54),
+        const Align(
+          alignment: Alignment.centerRight,
+          child: Text(
+            '© OpenStreetMap contributors',
+            style: TextStyle(fontSize: 10, color: Colors.black54),
+          ),
         ),
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }

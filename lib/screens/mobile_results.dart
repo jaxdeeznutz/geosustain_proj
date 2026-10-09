@@ -27,12 +27,134 @@ double? analysisNumber(dynamic raw) {
   return value != null && value.isFinite ? value : null;
 }
 
+bool analysisIsCompleted(Map<String, dynamic> record) =>
+    record['session_id'] != null &&
+    analysisProcessingLabel(record) == 'Completed';
+
 String analysisRecordName(Map<String, dynamic> record) {
-  for (final key in ['farm_name', 'place_name', 'title', 'location_name']) {
+  final name = '${record['farm_name'] ?? ''}'.trim();
+  return record['farm_id'] != null && name.isNotEmpty ? name : 'Unnamed area';
+}
+
+String analysisLocation(Map<String, dynamic> record) {
+  for (final key in ['location_name', 'place_name']) {
     final value = '${record[key] ?? ''}'.trim();
-    if (value.isNotEmpty && value != 'Looking up location...') return value;
+    if (value.isNotEmpty &&
+        value != 'Looking up location...' &&
+        value != analysisRecordName(record)) {
+      return value;
+    }
   }
-  return 'Analyzed area';
+  return '';
+}
+
+class AnalysisIdentity extends StatelessWidget {
+  final Map<String, dynamic> record;
+  final bool compact;
+  const AnalysisIdentity({
+    super.key,
+    required this.record,
+    this.compact = false,
+  });
+  @override
+  Widget build(BuildContext context) {
+    final owner = '${record['owner_display_name'] ?? ''}'.trim();
+    final location = analysisLocation(record);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          analysisRecordName(record),
+          style: TextStyle(
+            fontSize: compact ? 17 : 25,
+            fontWeight: FontWeight.w800,
+            color: const Color(0xFF20382C),
+          ),
+        ),
+        if (owner.isNotEmpty)
+          Text('Owner: $owner', style: const TextStyle(fontSize: 13)),
+        if (location.isNotEmpty)
+          Text(
+            location,
+            style: const TextStyle(fontSize: 13, color: Colors.black54),
+          ),
+        const SizedBox(height: 6),
+        Text(
+          '${analysisAreaText(record)} · ${analysisDateText(analysisRecordDate(record))}',
+          style: const TextStyle(fontSize: 12, color: Colors.black54),
+        ),
+      ],
+    );
+  }
+}
+
+class AnalysisHistoryRow extends StatelessWidget {
+  final Map<String, dynamic> record;
+  final VoidCallback? onTap;
+  const AnalysisHistoryRow({super.key, required this.record, this.onTap});
+  @override
+  Widget build(BuildContext context) => Card(
+    color: Colors.white,
+    elevation: 0,
+    margin: const EdgeInsets.only(bottom: 10),
+    child: InkWell(
+      borderRadius: BorderRadius.circular(16),
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  AnalysisIdentity(record: record, compact: true),
+                  const SizedBox(height: 8),
+                  VerificationStatusBadge(
+                    status: '${record['verification_status'] ?? 'draft'}',
+                  ),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_right, color: green),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class NoAnalyses extends StatelessWidget {
+  final VoidCallback? goFarms;
+  const NoAnalyses({super.key, this.goFarms});
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 32),
+    child: Column(
+      children: [
+        const Icon(Icons.analytics_outlined, size: 42, color: green),
+        const SizedBox(height: 16),
+        const Text(
+          'No analyses yet',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Analyze a farm to see its results.',
+          textAlign: TextAlign.center,
+        ),
+        if (goFarms != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 20),
+            child: FilledButton.icon(
+              onPressed: goFarms,
+              icon: const Icon(Icons.agriculture_outlined),
+              label: const Text('Go to My Farms'),
+            ),
+          ),
+      ],
+    ),
+  );
 }
 
 DateTime? analysisRecordDate(Map<String, dynamic> record) {
@@ -159,7 +281,9 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
   }
 
   Future<void> _chooseAnalysis() async {
-    final rows = newestAnalysisRecords(widget.state.historyRecords);
+    final rows = newestAnalysisRecords(
+      widget.state.historyRecords.where(analysisIsCompleted),
+    );
     final selected = await showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,
@@ -179,17 +303,8 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
               Expanded(
                 child: ListView.builder(
                   itemCount: rows.length,
-                  itemBuilder: (context, i) => ListTile(
-                    title: Text(analysisRecordName(rows[i])),
-                    subtitle: Text(
-                      '${analysisDateText(analysisRecordDate(rows[i]))}\n${analysisAreaText(rows[i])}',
-                    ),
-                    isThreeLine: true,
-                    trailing:
-                        '${rows[i]['session_id']}' ==
-                            '${widget.state.result?['session_id']}'
-                        ? const Icon(Icons.check_circle, color: green)
-                        : null,
+                  itemBuilder: (context, i) => AnalysisHistoryRow(
+                    record: rows[i],
                     onTap: () => Navigator.pop(context, rows[i]),
                   ),
                 ),
@@ -219,6 +334,20 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
     animation: widget.state,
     builder: (context, _) {
       final result = widget.state.result;
+      final state = widget.state;
+      final completed = newestAnalysisRecords(
+        state.historyRecords.where(analysisIsCompleted),
+      );
+      final scoped = completed
+          .where(
+            (r) =>
+                state.selectedFarmId == null ||
+                '${r['farm_id']}' == '${state.selectedFarmId}',
+          )
+          .toList();
+      final busy =
+          _refreshing || _selecting || state.loading || state.historyLoading;
+      final error = _error ?? state.analysisError ?? state.historyError;
       return SafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,
@@ -230,56 +359,86 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
               MobileHeader(
                 title: 'Analysis',
                 trailing: IconButton(
-                  tooltip: 'Refresh analysis and review status',
-                  onPressed: _refreshing ? null : _refresh,
+                  tooltip: 'Refresh',
+                  onPressed: busy ? null : _refresh,
                   icon: const Icon(Icons.refresh),
                 ),
               ),
-              if (_refreshing || _selecting || widget.state.loading)
-                const LinearProgressIndicator(),
-              if (_error != null || widget.state.historyError != null)
+              if (busy) const LinearProgressIndicator(),
+              if (state.loading)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Text(state.loadingMessage),
+                ),
+              if (error != null)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   child: Text(
-                    _error ?? widget.state.historyError!,
+                    error,
                     style: TextStyle(
                       color: Theme.of(context).colorScheme.error,
                     ),
                   ),
                 ),
-              if (widget.state.historyRecords.isNotEmpty)
-                OutlinedButton.icon(
-                  onPressed: _selecting ? null : _chooseAnalysis,
-                  icon: const Icon(Icons.swap_horiz),
-                  label: const Text('Choose a farm or analysis'),
-                ),
-              if (result == null) ...[
-                const SizedBox(height: 32),
-                const Icon(Icons.analytics_outlined, size: 54, color: green),
-                const SizedBox(height: 16),
-                const Text(
-                  'Understand your land',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  widget.state.historyRecords.isEmpty
-                      ? 'Map your farm in My Farms, then run an analysis to see crop suitability and the factors behind the results.'
-                      : 'Choose a saved analysis above to view its results and analyst feedback.',
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 20),
-                FilledButton.icon(
-                  onPressed: widget.goFarms,
-                  icon: const Icon(Icons.agriculture),
-                  label: const Text('Go to My Farms'),
-                ),
-              ] else
+              if (result != null) ...[
+                if (completed.length > 1)
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton.icon(
+                      onPressed: busy ? null : _chooseAnalysis,
+                      icon: const Icon(Icons.swap_horiz),
+                      label: const Text('Switch analysis'),
+                    ),
+                  ),
                 MobileAnalysisResult(
                   key: ValueKey('analysis-${result['session_id']}'),
-                  state: widget.state,
+                  state: state,
                   record: result,
+                ),
+              ] else if (!busy && error == null && state.historyLoaded) ...[
+                if (state.selectedFarm != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      '${state.selectedFarm!['farm_name'] ?? 'Selected farm'}',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                if (scoped.isEmpty)
+                  NoAnalyses(goFarms: widget.goFarms)
+                else ...[
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: Text(
+                      'Choose an analysis',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  for (final row in scoped)
+                    AnalysisHistoryRow(
+                      record: row,
+                      onTap: () async {
+                        setState(() => _selecting = true);
+                        final failure = await state.selectAnalysis(row);
+                        if (mounted) {
+                          setState(() {
+                            _selecting = false;
+                            _error = failure;
+                          });
+                        }
+                      },
+                    ),
+                ],
+              ] else if (!busy && !state.historyLoaded)
+                TextButton(
+                  onPressed: _refresh,
+                  child: const Text('Load analyses'),
                 ),
             ],
           ),
@@ -326,39 +485,15 @@ class MobileAnalysisResult extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _AnalysisSection(
-          title: 'Analysis overview',
-          children: [
-            Text(
-              analysisRecordName(record),
-              style: const TextStyle(
-                fontSize: 22,
-                color: green,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${analysisAreaText(record)} · ${analysisDateText(analysisRecordDate(record))}',
-            ),
-            const SizedBox(height: 8),
-            Text('Analysis: ${analysisProcessingLabel(record)}'),
-            const SizedBox(height: 8),
-            VerificationStatusBadge(
-              status: '${record['verification_status'] ?? 'draft'}',
-            ),
-            const SizedBox(height: 12),
-            Text(
-              summary.isEmpty
-                  ? 'A written summary is unavailable for this analysis.'
-                  : summary,
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Automated decision support. Analyst review is shown separately below.',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
-            ),
-          ],
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          child: AnalysisIdentity(record: record),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: VerificationStatusBadge(
+            status: '${record['verification_status'] ?? 'draft'}',
+          ),
         ),
         _AnalysisSection(
           title: 'Land suitability',
@@ -367,10 +502,10 @@ class MobileAnalysisResult extends StatelessWidget {
               record['land_status'] == null
                   ? displaySuitability(record)
                   : '${record['land_status']}',
-              style: const TextStyle(fontWeight: FontWeight.w700),
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
             ),
             if (score != null) ...[
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Text(
                 '${score.toStringAsFixed(1)}% · ${suitabilityLabel(score)}',
                 style: const TextStyle(fontWeight: FontWeight.w700),
@@ -378,63 +513,73 @@ class MobileAnalysisResult extends StatelessWidget {
               const SizedBox(height: 8),
               LinearProgressIndicator(
                 value: score.clamp(0, 100) / 100,
-                minHeight: 8,
+                minHeight: 6,
                 color: green,
                 backgroundColor: softGreen,
               ),
-              const SizedBox(height: 10),
-              const Text(
-                'A comparative crop-fit score, not the probability of a successful harvest. High: 75–100; moderate: 50–<75; marginal: 25–<50; low: below 25.',
-                style: TextStyle(fontSize: 12),
-              ),
-            ] else ...[
-              const SizedBox(height: 8),
-              const Text(
-                'No crop suitability score was returned for this analysis.',
-              ),
             ],
+            if (summary.isNotEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  summary,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
           ],
         ),
-        AnalysisIndicatorsCard(record: record),
         AnalysisCropsCard(record: record),
         _AnalysisSection(
-          title: 'Explainable AI',
+          title: 'Key factors',
           children: [
-            Text(
-              '${xai['plain_summary'] ?? xai['summary'] ?? 'An explanation is unavailable for this saved analysis.'}',
-            ),
-            if (xai.isNotEmpty)
-              ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                childrenPadding: const EdgeInsets.only(bottom: 12),
-                title: const Text('Factors and explanation details'),
-                children: [
-                  if (xai['summary'] != null)
-                    _AnalysisParagraph('${xai['summary']}'),
-                  for (final factor in analysisListValue(
-                    xai['supporting_factors'],
-                  ))
-                    _AnalysisParagraph('Supporting factor: $factor'),
-                  for (final factor in analysisListValue(
-                    xai['limiting_factors'],
-                  ))
-                    _AnalysisParagraph('Limiting factor: $factor'),
-                  if ('${xai['comparison'] ?? ''}'.isNotEmpty)
-                    _AnalysisParagraph('${xai['comparison']}'),
-                  if (xai['method'] != null)
-                    _AnalysisParagraph('Method: ${xai['method']}'),
-                  if (record['recommendation_scoring'] != null)
-                    _AnalysisParagraph(
-                      'Scoring: ${record['recommendation_scoring']}',
-                    ),
-                ],
-              ),
-            const SizedBox(height: 8),
-            const Text(
-              'These factors explain the system’s ranking. They do not prove causes or guarantee crop performance.',
-              style: TextStyle(fontSize: 12, color: Colors.black54),
+            for (final factor in analysisListValue(
+              xai['supporting_factors'],
+            ).take(2))
+              _AnalysisParagraph('• $factor'),
+            for (final factor in analysisListValue(
+              xai['limiting_factors'],
+            ).take(2))
+              _AnalysisParagraph('• $factor'),
+            ExpansionTile(
+              tilePadding: EdgeInsets.zero,
+              title: const Text('Why this result?'),
+              children: [
+                if (summary.isNotEmpty) _AnalysisParagraph(summary),
+                if (xai['summary'] != null && '${xai['summary']}' != summary)
+                  _AnalysisParagraph('${xai['summary']}'),
+                for (final factor in analysisListValue(
+                  xai['supporting_factors'],
+                ))
+                  _AnalysisParagraph('Supporting factor: $factor'),
+                for (final factor in analysisListValue(xai['limiting_factors']))
+                  _AnalysisParagraph('Limiting factor: $factor'),
+                if (xai['comparison'] != null)
+                  _AnalysisParagraph('${xai['comparison']}'),
+                if (xai['method'] != null)
+                  _AnalysisParagraph('Method: ${xai['method']}'),
+                if (record['recommendation_scoring'] != null)
+                  _AnalysisParagraph(
+                    'Scoring: ${record['recommendation_scoring']}',
+                  ),
+                const _AnalysisParagraph(
+                  'The score compares crop fit; it is not a harvest probability. High: 75–100; moderate: 50–<75; marginal: 25–<50; low: below 25. Automated analysis is separate from analyst approval.',
+                ),
+                const _AnalysisParagraph(
+                  'Satellite and soil-proxy estimates do not replace field observations or soil tests. Vegetation uses 10 m imagery; elevation and weather data are coarser. Small boundaries may share data with surrounding land.',
+                ),
+                for (final warning in analysisListValue(
+                  record['data_quality_warnings'],
+                ))
+                  _AnalysisParagraph('$warning'),
+              ],
             ),
           ],
+        ),
+        ExpansionTile(
+          title: const Text('Land indicators'),
+          tilePadding: EdgeInsets.zero,
+          children: [AnalysisIndicatorsCard(record: record)],
         ),
         _AnalysisSection(
           title: 'Practical recommendations',

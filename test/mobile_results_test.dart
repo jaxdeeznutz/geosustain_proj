@@ -125,6 +125,8 @@ void main() {
     state.historyRecords.addAll([
       {
         'session_id': 1,
+        'farm_id': 4,
+        'owner_display_name': 'Fixture Farmer',
         'farm_name': 'Older analysis',
         'analyzed_at': '2026-08-01T12:00:00Z',
         'area_hectares': 1.2,
@@ -132,6 +134,8 @@ void main() {
       },
       {
         'session_id': 2,
+        'farm_id': 4,
+        'owner_display_name': 'Fixture Farmer',
         'farm_name': 'Latest analysis',
         'analyzed_at': '2026-09-01T12:00:00Z',
         'area_hectares': 1.2,
@@ -159,11 +163,9 @@ void main() {
       tester.getTopLeft(find.text('Latest analysis')).dy,
       lessThan(tester.getTopLeft(find.text('Older analysis')).dy),
     );
-    expect(
-      find.text('Analyst feedback: Check the eastern boundary.'),
-      findsOneWidget,
-    );
-    expect(find.text('Analysis: Completed'), findsNWidgets(2));
+    expect(find.text('Owner: Fixture Farmer'), findsNWidgets(2));
+    expect(find.text('Rejected'), findsOneWidget);
+    expect(find.text('Approved'), findsOneWidget);
     await tester.tap(find.text('Latest analysis'));
     await tester.pumpAndSettle();
     expect(selected?['session_id'], 2);

@@ -43,6 +43,7 @@ class ApiService {
   Future<void> logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
+    await prefs.remove('account_id');
     for (final key
         in prefs
             .getKeys()
@@ -128,6 +129,10 @@ class ApiService {
       throw const FormatException('The server did not return a login token.');
     }
     await saveToken(token);
+    final prefs = await SharedPreferences.getInstance();
+    if (data['user'] is Map && data['user']['id'] != null) {
+      await prefs.setString('account_id', '${data['user']['id']}');
+    }
     return data;
   }
 
@@ -219,55 +224,190 @@ class ApiService {
     String? preferredKey,
   }) async {
     final prefs = await SharedPreferences.getInstance();
-    final key = 'geosustain_pending_$operation';
+    final key =
+        'geosustain_pending_${prefs.getString('account_id') ?? 'session'}_$operation';
     final body = jsonEncode(payload);
-    final previous = prefs.getString(key);
-    if (previous != null) {
-      try {
-        final decoded = jsonDecode(previous);
-        if (decoded['body'] == body) return decoded['key'] as String;
-      } catch (_) {}
+    final pending = _pendingRequests(prefs.getString(key));
+    for (final request in pending) {
+      if (request['body'] == body) return request['key'] as String;
     }
     final id = preferredKey ?? newRequestId();
-    await prefs.setString(key, jsonEncode({'body': body, 'key': id}));
+    pending.add({'body': body, 'key': id});
+    await prefs.setString(key, jsonEncode({'requests': pending}));
     return id;
   }
 
-  Future<void> _completeRequest(String operation) async {
+  List<Map<String, dynamic>> _pendingRequests(String? value) {
+    if (value == null) return [];
+    try {
+      final decoded = jsonDecode(value) as Map;
+      final rows = decoded['requests'] ?? [decoded];
+      return (rows as List)
+          .map((r) => Map<String, dynamic>.from(r as Map))
+          .where((r) => r['key'] is String && r['body'] is String)
+          .toList();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> _completeRequest(
+    String operation,
+    String requestId,
+    String? token,
+  ) async {
+    if (await getToken() != token) return;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('geosustain_pending_$operation');
+    final key =
+        'geosustain_pending_${prefs.getString('account_id') ?? 'session'}_$operation';
+    final pending = _pendingRequests(prefs.getString(key))
+      ..removeWhere((r) => r['key'] == requestId);
+    if (pending.isEmpty) {
+      await prefs.remove(key);
+    } else {
+      await prefs.setString(key, jsonEncode({'requests': pending}));
+    }
+  }
+
+  Future<Map<String, dynamic>> _analysisStatus(
+    String requestId,
+    String? token,
+  ) async {
+    final response = await _client
+        .get(
+          Uri.parse(
+            '$baseUrl/api/mobile/analysis-requests/${Uri.encodeComponent(requestId)}',
+          ),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 30));
+    final data = _decodeJson(response);
+    if (response.statusCode == 404) {
+      throw const ApiException(
+        503,
+        'The analysis service needs an update. Please contact the project team.',
+      );
+    }
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not check the analysis. Try again shortly.'),
+      );
+    }
+    return data;
+  }
+
+  Future<Map<String, dynamic>> _waitForAnalysis(
+    String key,
+    String? token,
+    Map<String, dynamic> status,
+  ) async {
+    for (var attempt = 0; attempt < 60; attempt++) {
+      if (await getToken() != token) {
+        throw const ApiException(
+          401,
+          'Your session has changed. Sign in again.',
+        );
+      }
+      if (status['status'] == 'completed' && status['analysis'] is Map) {
+        return Map<String, dynamic>.from(status['analysis']);
+      }
+      if (status['status'] != 'processing') {
+        throw const ApiException(
+          503,
+          'The analysis stopped before saving. Try again.',
+        );
+      }
+      await Future<void>.delayed(const Duration(seconds: 5));
+      status = await _analysisStatus(key, token);
+    }
+    throw const ApiException(
+      202,
+      'Analysis is still running. Tap Check analysis to retrieve its result.',
+    );
   }
 
   Future<Map<String, dynamic>> _postAnalysis(
     Map<String, dynamic> payload,
   ) async {
     final token = await getToken();
-    final requestId = await _requestKey("analysis", payload);
+    final key = await _requestKey('analysis', payload);
+    // Recover a completed/in-flight request before attempting any new POST.
+    final prior = await _analysisStatus(key, token);
+    Map<String, dynamic> data;
+    if (prior['status'] == 'completed' || prior['status'] == 'processing') {
+      data = await _waitForAnalysis(key, token, prior);
+    } else if (prior['status'] == 'not_found') {
+      try {
+        final response = await _client
+            .post(
+              Uri.parse('$baseUrl/api/mobile/analysis'),
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer $token',
+                'Idempotency-Key': key,
+              },
+              body: jsonEncode(payload),
+            )
+            .timeout(const Duration(minutes: 5));
+        data = _decodeJson(response);
+        if (response.statusCode >= 400) {
+          throw ApiException(
+            response.statusCode,
+            _errorMessage(data, 'Analysis failed. Please try again.'),
+          );
+        }
+        if (response.statusCode == 202) {
+          data = await _waitForAnalysis(key, token, data);
+        }
+      } on http.ClientException {
+        final status = await _analysisStatus(key, token);
+        if (status['status'] == 'not_found') rethrow;
+        data = await _waitForAnalysis(key, token, status);
+      } on TimeoutException {
+        final status = await _analysisStatus(key, token);
+        if (status['status'] == 'not_found') rethrow;
+        data = await _waitForAnalysis(key, token, status);
+      }
+    } else {
+      throw const FormatException(
+        'Unable to confirm the analysis status. Try again shortly.',
+      );
+    }
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session has changed. Sign in again.');
+    }
+    if (data['session_id'] == null ||
+        (data['analysis_status'] != null &&
+            data['analysis_status'] != 'completed')) {
+      throw const FormatException(
+        'The analysis has not been saved. Try again shortly.',
+      );
+    }
+    if (payload['farm_id'] != null && data['farm_id'] != payload['farm_id']) {
+      throw const FormatException(
+        'The server returned a different farm. Refresh your farm and try again.',
+      );
+    }
+    await _completeRequest('analysis', key, token);
+    return data;
+  }
+
+  Future<Map<String, dynamic>> getFarm(int farmId) async {
     final response = await _client
-        .post(
-          Uri.parse('$baseUrl/api/mobile/analysis'),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-            'Idempotency-Key': requestId,
-          },
-          body: jsonEncode(payload),
+        .get(
+          Uri.parse('$baseUrl/api/mobile/farms/$farmId'),
+          headers: {'Authorization': 'Bearer ${await getToken()}'},
         )
-        .timeout(const Duration(minutes: 5));
+        .timeout(const Duration(seconds: 30));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw ApiException(
         response.statusCode,
-        _errorMessage(data, 'Analysis failed'),
+        _errorMessage(data, 'Could not load this farm.'),
       );
     }
-
-    // Analysis rainfall now comes from the backend CHIRPS/GEE 30-day source.
-    // Do not override it here with Open-Meteo, because Open-Meteo can return
-    // the same coarse-grid value (for example 314.2 mm) across nearby Panabo
-    // points. The backend remains the source of truth for Analyze rainfall.
-    await _completeRequest("analysis");
-    return data;
+    return Map<String, dynamic>.from(data['farm']);
   }
 
   Future<List<Map<String, dynamic>>> getFarms({
@@ -332,7 +472,10 @@ class ApiService {
         _errorMessage(data, 'Could not save farm'),
       );
     }
-    await _completeRequest('farm');
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session has changed. Sign in again.');
+    }
+    await _completeRequest('farm', key, token);
     return Map<String, dynamic>.from(data['farm'] as Map);
   }
 
@@ -357,6 +500,9 @@ class ApiService {
         response.statusCode,
         _errorMessage(data, 'Could not update farm'),
       );
+    }
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session has changed. Sign in again.');
     }
     return Map<String, dynamic>.from(data['farm'] as Map);
   }
@@ -619,7 +765,15 @@ class ApiService {
         _errorMessage(data, 'Profile failed'),
       );
     }
-    return data['user'] is Map<String, dynamic> ? data['user'] : data;
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session has changed. Sign in again.');
+    }
+    final user = data['user'] is Map<String, dynamic> ? data['user'] : data;
+    if (user['id'] != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('account_id', '${user['id']}');
+    }
+    return user;
   }
 
   Future<Map<String, dynamic>> getAnalysis(int sessionId) async {
@@ -690,7 +844,11 @@ class ApiService {
     return data;
   }
 
-  Future<List<dynamic>> getHistory() async {
+  Future<List<dynamic>> getHistory() => _history();
+
+  Future<List<dynamic>> getFarmHistory(int farmId) => _history(farmId: farmId);
+
+  Future<List<dynamic>> _history({int? farmId}) async {
     final token = await getToken();
     final rows = <dynamic>[];
     bool more = true;
@@ -698,7 +856,7 @@ class ApiService {
       final response = await _client
           .get(
             Uri.parse(
-              '$baseUrl/api/mobile/history?offset=${rows.length}&limit=50',
+              '$baseUrl/api/mobile/history?offset=${rows.length}&limit=50${farmId == null ? '' : '&farm_id=$farmId'}',
             ),
             headers: {'Authorization': 'Bearer $token'},
           )

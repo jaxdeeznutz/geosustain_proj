@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'dart:io';
+import 'qa_support.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
@@ -23,6 +27,7 @@ class _TestGps extends GeolocatorPlatform {
   Future<LocationPermission> requestPermission() async => permission;
   @override
   Stream<Position> getPositionStream({LocationSettings? locationSettings}) {
+    expect(locationSettings?.distanceFilter, 0);
     subscriptions++;
     return fixes.stream;
   }
@@ -33,6 +38,9 @@ void main() {
   late GeolocatorPlatform original;
   late AnalysisState state;
   setUp(() {
+    final previousHttp = HttpOverrides.current;
+    HttpOverrides.global = QaHttpOverrides();
+    addTearDown(() => HttpOverrides.global = previousHttp);
     original = GeolocatorPlatform.instance;
     gps = _TestGps();
     GeolocatorPlatform.instance = gps;
@@ -199,6 +207,84 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.textContaining('at least three distinct'), findsOneWidget);
       expect(gps.subscriptions, 0);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
+  testWidgets(
+    'fresh GPS marker, boundary filter, camera and pause remain independent',
+    (tester) async {
+      await mount(tester, FarmBoundaryPage(state: state));
+      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      final start = DateTime.now().subtract(const Duration(seconds: 12));
+      Position fix(double lat, double accuracy, int seconds) => Position(
+        latitude: lat,
+        longitude: 125.6,
+        timestamp: start.add(Duration(seconds: seconds)),
+        accuracy: accuracy,
+        altitude: 0,
+        altitudeAccuracy: 0,
+        heading: 0,
+        headingAccuracy: 0,
+        speed: 0,
+        speedAccuracy: 0,
+      );
+      Marker marker() =>
+          tester.widget<MarkerLayer>(find.byType(MarkerLayer)).markers.last;
+      gps.fixes.add(fix(7.3, 5, 0));
+      await tester.pumpAndSettle();
+      expect(find.text('1 points'), findsOneWidget);
+      gps.fixes.add(fix(7.30005, 60, 3));
+      await tester.pumpAndSettle();
+      expect(marker().point, const LatLng(7.30005, 125.6));
+      expect(find.text('1 points'), findsOneWidget);
+      expect(
+        find.textContaining('boundary point not recorded'),
+        findsOneWidget,
+      );
+      final map = tester.widget<FlutterMap>(find.byType(FlutterMap));
+      expect(
+        map.mapController!.camera.center.latitude,
+        closeTo(7.30005, .000001),
+      );
+      gps.fixes.add(fix(7.30006, 0, 6));
+      await tester.pumpAndSettle();
+      expect(find.text('Accuracy unknown'), findsOneWidget);
+      expect(marker().point, const LatLng(7.30006, 125.6));
+      gps.fixes.add(fix(7.3001, 5, 9));
+      await tester.pumpAndSettle();
+      expect(find.text('2 points'), findsOneWidget);
+      gps.fixes.add(fix(7.3002, 5, -40));
+      await tester.pumpAndSettle();
+      expect(marker().point, const LatLng(7.3001, 125.6));
+      await tester.tap(find.byTooltip('Recenter on my position'));
+      await tester.pumpAndSettle();
+      expect(
+        map.mapController!.camera.center.latitude,
+        closeTo(7.3001, .000001),
+      );
+      await revealControls(tester);
+      await tester.tap(find.text('Pause'));
+      await tester.pumpAndSettle();
+      expect(gps.fixes.hasListener, isFalse);
+      expect(find.text('Paused'), findsOneWidget);
+      expect(
+        tester
+            .widget<Icon>(find.byKey(const ValueKey('gps-live-marker')))
+            .color,
+        Colors.grey,
+      );
+      gps.fixes.add(fix(7.30015, 5, 12));
+      await tester.pumpAndSettle();
+      expect(find.text('2 points'), findsOneWidget);
+      await tester.tap(find.text('Resume'));
+      await tester.pumpAndSettle();
+      expect(gps.subscriptions, 2);
+      gps.fixes.addError(Exception('Location access interrupted'));
+      await tester.pumpAndSettle();
+      expect(gps.fixes.hasListener, isFalse);
+      expect(find.textContaining('Location recording stopped'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     },

@@ -1,6 +1,7 @@
 """Offline workflow/security regression tests, no provider requests or live DB."""
 
 from unittest.mock import Mock
+from contextlib import nullcontext
 import pytest
 from fastapi.testclient import TestClient
 from test_regressions import api
@@ -18,6 +19,7 @@ RING = [
 @pytest.fixture
 def client(monkeypatch):
     monkeypatch.setattr(api, "init_db", lambda: None)
+    monkeypatch.setattr(api, "analysis_request_lock", lambda *args: nullcontext(True))
     api.app.dependency_overrides[api.get_api_user] = lambda: {
         "id": 10,
         "role": "farmer",
@@ -184,6 +186,7 @@ def test_change_password_requires_current_password(client, monkeypatch):
 
 def test_stale_token_and_disabled_account_are_rejected(monkeypatch):
     monkeypatch.setattr(api, "init_db", lambda: None)
+    monkeypatch.setattr(api, "analysis_request_lock", lambda *args: nullcontext(True))
     user = {"id": 10, "role": "farmer", "is_active": True, "password_version": 0}
     token = api.generate_mobile_token(user)
     monkeypatch.setattr(

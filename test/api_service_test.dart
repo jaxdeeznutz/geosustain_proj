@@ -219,13 +219,19 @@ void main() {
       final api = ApiService(
         client: MockClient((request) async {
           calls++;
+          if (request.method == 'GET') {
+            return http.Response('{"status":"not_found"}', 200);
+          }
           expect(request.method, 'POST');
           expect(request.headers['Authorization'], 'Bearer test-token');
           final body = jsonDecode(request.body) as Map;
           expect(body['farm_id'], 4);
           expect(body['intended_planting_month'], 5);
           expect((body['polygon'] as List).length, 3);
-          return http.Response('{"session_id":42,"rainfall_mm":123}', 200);
+          return http.Response(
+            '{"session_id":42,"farm_id":4,"rainfall_mm":123}',
+            200,
+          );
         }),
       );
       addTearDown(api.close);
@@ -240,7 +246,7 @@ void main() {
       );
       expect(result['rainfall_mm'], 123);
       expect(result['session_id'], 42);
-      expect(calls, 1);
+      expect(calls, 2);
     },
   );
 }

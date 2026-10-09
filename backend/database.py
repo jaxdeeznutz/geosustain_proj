@@ -1,4 +1,5 @@
 import os
+from contextlib import contextmanager
 import config  # noqa: F401 -- load local environment before reading settings
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
@@ -795,11 +796,16 @@ def enrich_history_rows(rows):
     return enriched
 
 
-def get_user_history(user_id: int, limit: int = 20, offset: int = 0):
+def get_user_history(user_id: int, limit: int = 20, offset: int = 0, farm_id=None):
     conn = get_conn()
     try:
         with conn.cursor() as cur:
-            cur.execute(_history_select_sql() + ' LIMIT %s OFFSET %s', (user_id, limit, offset))
+            where = 's.user_id = %s'
+            params = [user_id]
+            if farm_id is not None:
+                where += ' AND s.farm_id = %s'
+                params.append(farm_id)
+            cur.execute(_history_select_sql(where_prefix=where) + ' LIMIT %s OFFSET %s', (*params, limit, offset))
             return enrich_history_rows(cur.fetchall())
     finally:
         conn.close()
@@ -845,10 +851,53 @@ def change_user_password(user_id, old_hash, new_hash):
         conn.close()
 
 
+@contextmanager
+def analysis_request_lock(user_id, key):
+    """One live computation per retry key, across API processes. Crash-safe PG lock."""
+    if not key:
+        yield True
+        return
+    conn = get_conn()
+    conn.autocommit = True
+    lock_name = f'analysis-running:{user_id}:{key}'
+    acquired = False
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT pg_try_advisory_lock(hashtextextended(%s, 0)) AS acquired', (lock_name,))
+            acquired = cur.fetchone()['acquired']
+        yield acquired
+    finally:
+        try:
+            if acquired:
+                with conn.cursor() as cur:
+                    cur.execute('SELECT pg_advisory_unlock(hashtextextended(%s, 0))', (lock_name,))
+        finally:
+            conn.close()
+
+
+def analysis_request_status(user_id, key):
+    # A free lock means no server worker still owns this request. Check the
+    # completed row after acquiring it, to avoid a completion/check race.
+    with analysis_request_lock(user_id, key) as available:
+        if not available:
+            return {'status': 'processing'}
+        conn = get_conn()
+        try:
+            with conn.cursor() as cur:
+                cur.execute('SELECT id FROM analysis_sessions WHERE user_id=%s AND request_key=%s', (user_id, key))
+                row = cur.fetchone()
+            if row:
+                return {'status': 'completed', 'analysis': get_user_analysis(user_id, row['id'])}
+            return {'status': 'not_found'}
+        finally:
+            conn.close()
+
+
 def _history_select_sql(extra_select="", extra_join="", where_prefix="s.user_id = %s"):
     return f"""
                 SELECT
                     s.id            AS session_id,
+                    s.user_id AS owner_id, owner.username AS owner_display_name,
                     s.farm_id, s.boundary_version, s.submitted_at, s.result_snapshot,
                     s.verification_status,
                     s.verified_by,
@@ -903,7 +952,8 @@ def _history_select_sql(extra_select="", extra_join="", where_prefix="s.user_id 
                 LEFT JOIN environmental_data  e ON e.session_id = s.id
                 LEFT JOIN soil_nutrients      n ON n.session_id = s.id
                 LEFT JOIN crop_recommendations c ON c.session_id = s.id
-                LEFT JOIN farm_parcels        fp ON fp.id = s.farm_id
+                LEFT JOIN farm_parcels        fp ON fp.id = s.farm_id AND fp.farmer_id = s.user_id
+                LEFT JOIN users owner ON owner.id = s.user_id
                 {extra_join}
                 WHERE {where_prefix}
                 ORDER BY s.analyzed_at DESC
@@ -1481,9 +1531,9 @@ def list_farm_parcels(farmer_id: int, include_archived=False):
     try:
         with conn.cursor() as cur:
             cur.execute("""
-                SELECT f.*,
-                       (SELECT COUNT(*) FROM analysis_sessions s WHERE s.farm_id=f.id) AS analysis_count,
-                       (SELECT MAX(s.analyzed_at) FROM analysis_sessions s WHERE s.farm_id=f.id) AS last_analyzed_at,
+                SELECT f.*, (SELECT username FROM users WHERE id=f.farmer_id) AS owner_display_name,
+                       (SELECT COUNT(*) FROM analysis_sessions s WHERE s.farm_id=f.id AND s.user_id=f.farmer_id) AS analysis_count,
+                       (SELECT MAX(s.analyzed_at) FROM analysis_sessions s WHERE s.farm_id=f.id AND s.user_id=f.farmer_id) AS last_analyzed_at,
                        latest.verification_status AS latest_verification_status,
                        latest.id AS latest_analysis_id,
                        latest.analyzed_at AS latest_analysis_date,
@@ -1510,7 +1560,7 @@ def get_farm_parcel(farmer_id: int, farm_id: int):
     conn = get_conn()
     try:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM farm_parcels WHERE id=%s AND farmer_id=%s", (farm_id, farmer_id))
+            cur.execute("SELECT f.*, (SELECT username FROM users WHERE id=f.farmer_id) AS owner_display_name FROM farm_parcels f WHERE f.id=%s AND f.farmer_id=%s", (farm_id, farmer_id))
             row=cur.fetchone()
             return dict(row) if row else None
     finally:
