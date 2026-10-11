@@ -72,16 +72,16 @@ class AnalysisIdentity extends StatelessWidget {
           ),
         ),
         if (owner.isNotEmpty)
-          Text('Owner: $owner', style: const TextStyle(fontSize: 13)),
+          Text('Owner: $owner', style: const TextStyle(fontSize: 16)),
         if (location.isNotEmpty)
           Text(
             location,
-            style: const TextStyle(fontSize: 13, color: Colors.black54),
+            style: const TextStyle(fontSize: 16, color: Color(0xFF536258)),
           ),
         const SizedBox(height: 6),
         Text(
           '${analysisAreaText(record)} · ${analysisDateText(analysisRecordDate(record))}',
-          style: const TextStyle(fontSize: 12, color: Colors.black54),
+          style: const TextStyle(fontSize: 14, color: Color(0xFF536258)),
         ),
       ],
     );
@@ -462,9 +462,7 @@ class MobileAnalysisResult extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final xai = analysisMapValue(record['xai_explanation']);
-    final score = analysisNumber(
-      record['crop_compatibility_pct'] ?? record['compatibility_pct'],
-    );
+    final crops = assessedCrops(record);
     final summary =
         '${record['analysis_summary'] ?? xai['plain_summary'] ?? xai['summary'] ?? ''}'
             .trim();
@@ -497,94 +495,48 @@ class MobileAnalysisResult extends StatelessWidget {
             status: '${record['verification_status'] ?? 'draft'}',
           ),
         ),
-        _AnalysisSection(
-          title: 'Land suitability',
-          children: [
-            Text(
-              record['land_status'] == null
-                  ? displaySuitability(record)
-                  : '${record['land_status']}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+        if (crops.isNotEmpty) ...[
+          _CropAssessmentCard(crop: crops.first, record: record, rank: 1),
+          ModelExplanationCard(record: record),
+          if (crops.length > 1) ...[
+            const Padding(
+              padding: EdgeInsets.fromLTRB(4, 20, 4, 4),
+              child: Text(
+                'Other crops assessed',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w800,
+                  color: darkGreen,
+                ),
+              ),
             ),
-            if (score != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                '${score.toStringAsFixed(1)}% · ${suitabilityLabel(score)}',
-                style: const TextStyle(fontWeight: FontWeight.w700),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+              child: Text(
+                'Assessed crops are not all recommendations for planting.',
+                style: TextStyle(fontSize: 16),
               ),
-              const SizedBox(height: 8),
-              LinearProgressIndicator(
-                value: score.clamp(0, 100) / 100,
-                minHeight: 6,
-                color: green,
-                backgroundColor: softGreen,
+            ),
+            for (var i = 1; i < crops.length; i++)
+              _CropAssessmentCard(
+                key: ValueKey('crop-${crops[i]['crop']}'),
+                crop: crops[i],
+                record: record,
+                rank: i + 1,
               ),
+          ],
+        ] else
+          _AnalysisSection(
+            title: 'Land assessment',
+            icon: Icons.landscape_outlined,
+            children: [
+              const Text('No crop recommended for this analysis.'),
+              if (summary.isNotEmpty) AnalysisReadableText(summary),
             ],
-            if (summary.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(
-                  summary,
-                  maxLines: 3,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-          ],
-        ),
-        AnalysisCropsCard(record: record),
+          ),
+        AnalysisIndicatorsCard(record: record),
         _AnalysisSection(
-          title: 'Key factors',
-          children: [
-            for (final factor in analysisListValue(
-              xai['supporting_factors'],
-            ).take(2))
-              _AnalysisParagraph('• $factor'),
-            for (final factor in analysisListValue(
-              xai['limiting_factors'],
-            ).take(2))
-              _AnalysisParagraph('• $factor'),
-            ExpansionTile(
-              tilePadding: EdgeInsets.zero,
-              title: const Text('Why this result?'),
-              children: [
-                if (summary.isNotEmpty) _AnalysisParagraph(summary),
-                if (xai['summary'] != null && '${xai['summary']}' != summary)
-                  _AnalysisParagraph('${xai['summary']}'),
-                for (final factor in analysisListValue(
-                  xai['supporting_factors'],
-                ))
-                  _AnalysisParagraph('Supporting factor: $factor'),
-                for (final factor in analysisListValue(xai['limiting_factors']))
-                  _AnalysisParagraph('Limiting factor: $factor'),
-                if (xai['comparison'] != null)
-                  _AnalysisParagraph('${xai['comparison']}'),
-                if (xai['method'] != null)
-                  _AnalysisParagraph('Method: ${xai['method']}'),
-                if (record['recommendation_scoring'] != null)
-                  _AnalysisParagraph(
-                    'Scoring: ${record['recommendation_scoring']}',
-                  ),
-                const _AnalysisParagraph(
-                  'The score compares crop fit; it is not a harvest probability. High: 75–100; moderate: 50–<75; marginal: 25–<50; low: below 25. Automated analysis is separate from analyst approval.',
-                ),
-                const _AnalysisParagraph(
-                  'Satellite and soil-proxy estimates do not replace field observations or soil tests. Vegetation uses 10 m imagery; elevation and weather data are coarser. Small boundaries may share data with surrounding land.',
-                ),
-                for (final warning in analysisListValue(
-                  record['data_quality_warnings'],
-                ))
-                  _AnalysisParagraph('$warning'),
-              ],
-            ),
-          ],
-        ),
-        ExpansionTile(
-          title: const Text('Land indicators'),
-          tilePadding: EdgeInsets.zero,
-          children: [AnalysisIndicatorsCard(record: record)],
-        ),
-        _AnalysisSection(
-          title: 'Practical recommendations',
+          title: 'Next steps',
           children: [
             if (actions.isEmpty)
               const Text(
@@ -638,22 +590,57 @@ class _AnalysisParagraph extends StatelessWidget {
 class _AnalysisSection extends StatelessWidget {
   final String title;
   final List<Widget> children;
-  const _AnalysisSection({required this.title, required this.children});
+  final Color surface;
+  final IconData? icon;
+  const _AnalysisSection({
+    required this.title,
+    required this.children,
+    this.surface = Colors.white,
+    this.icon,
+  });
   @override
   Widget build(BuildContext context) => Card(
+    color: surface,
+    elevation: .5,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(22),
+      side: BorderSide(color: darkGreen.withValues(alpha: .08)),
+    ),
     margin: const EdgeInsets.symmetric(vertical: 8),
     child: Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            title,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 12),
-          ...children,
-        ],
+      padding: const EdgeInsets.all(18),
+      child: DefaultTextStyle.merge(
+        style: const TextStyle(
+          fontSize: 16,
+          height: 1.4,
+          color: Color(0xFF263C32),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (icon != null) ...[
+                  Icon(icon, color: darkGreen, size: 24),
+                  const SizedBox(width: 10),
+                ],
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                      color: darkGreen,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            ...children,
+          ],
+        ),
       ),
     ),
   );
@@ -666,7 +653,7 @@ class AnalysisIndicatorsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final quality = analysisMapValue(record['data_quality']);
     const indicators = [
-      ('ndvi', 'Vegetation (NDVI)', '', 'ndvi'),
+      ('ndvi', 'Plant cover (NDVI)', '', 'ndvi'),
       ('soil_ph', 'Soil pH', '', 'soil_ph'),
       ('rainfall_mm', '30-day rainfall', 'mm', 'rainfall'),
       ('temperature_c', 'Temperature', '°C', 'temperature'),
@@ -682,8 +669,17 @@ class AnalysisIndicatorsCard extends StatelessWidget {
         .toList();
     final warnings = analysisListValue(record['data_quality_warnings']);
     return _AnalysisSection(
-      title: 'Land indicators',
+      title: 'Land conditions',
+      icon: Icons.landscape_outlined,
       children: [
+        Text(
+          'Land type: ${farmerLandType(record)}',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
+        const SizedBox(height: 8),
+        const _AnalysisParagraph(
+          'Land type comes from plant-cover rules. It does not prove that every crop will grow here.',
+        ),
         if (present.isEmpty)
           const Text(
             'Environmental measurements are unavailable for this analysis.',
@@ -712,7 +708,10 @@ class AnalysisIndicatorsCard extends StatelessWidget {
                   Text(
                     '${analysisMapValue(quality[item.$4])['overall_quality'] ?? analysisMapValue(quality[item.$4])['quality'] ?? 'Source quality unavailable'}'
                         .replaceAll('_', ' '),
-                    style: const TextStyle(fontSize: 12, color: Colors.black54),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Color(0xFF536258),
+                    ),
                   ),
               ],
             ),
@@ -722,7 +721,7 @@ class AnalysisIndicatorsCard extends StatelessWidget {
         ))
           const Text(
             'Nutrient values are model inputs. Units are not specified in these records; they are not fertilizer application rates.',
-            style: TextStyle(fontSize: 12),
+            style: TextStyle(fontSize: 16),
           ),
         if (warnings.isNotEmpty || quality.isNotEmpty)
           ExpansionTile(
@@ -750,72 +749,18 @@ class AnalysisCropsCard extends StatelessWidget {
   const AnalysisCropsCard({super.key, required this.record});
   @override
   Widget build(BuildContext context) {
-    final flag = record['is_crop_recommended'];
-    final cropAllowed =
-        flag != false && '$flag'.toLowerCase() != 'false' && '$flag' != '0';
-    final crops = <Map<String, dynamic>>[];
-    if (cropAllowed) {
-      final top = analysisListValue(record['top_crop_recommendations']);
-      if (top.isNotEmpty) {
-        crops.addAll(
-          top.whereType<Map>().map((row) => Map<String, dynamic>.from(row)),
-        );
-      } else {
-        final primary = '${record['predicted_crop'] ?? ''}'.trim();
-        if (primary.isNotEmpty &&
-            primary != 'Land Analysis' &&
-            primary.toLowerCase() != 'no crop recommended') {
-          crops.add({
-            'crop': primary,
-            'compatibility_pct':
-                record['crop_compatibility_pct'] ?? record['compatibility_pct'],
-          });
-        }
-        crops.addAll(
-          analysisListValue(
-            record['alternative_crops'],
-          ).whereType<Map>().map((row) => Map<String, dynamic>.from(row)),
-        );
-      }
-    }
-    final unique = <String>{};
-    crops.removeWhere(
-      (crop) => !unique.add('${crop['crop'] ?? crop['name']}'.toLowerCase()),
-    );
-    final xai = analysisMapValue(record['xai_explanation']);
-    return _AnalysisSection(
-      title: 'Recommended crops',
+    final crops = assessedCrops(record);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (crops.isEmpty)
-          Text(
-            cropAllowed
-                ? 'No crop recommendations are available for this analysis.'
-                : 'The analysis did not recommend planting a crop in this area. See its land assessment and practical recommendations.',
+        if (crops.isEmpty) const Text('No crop assessments were saved.'),
+        for (var i = 0; i < crops.length; i++)
+          _CropAssessmentCard(
+            key: ValueKey('crop-${crops[i]['crop']}'),
+            crop: crops[i],
+            record: record,
+            rank: i + 1,
           ),
-        for (var i = 0; i < crops.length; i++) ...[
-          if (i > 0) const Divider(height: 24),
-          Text(
-            '${i + 1}. ${crops[i]['crop'] ?? crops[i]['name'] ?? 'Unnamed crop'}',
-            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-          ),
-          const SizedBox(height: 6),
-          if (analysisNumber(crops[i]['compatibility_pct'] ?? crops[i]['score'])
-              case final double score) ...[
-            Text('${score.toStringAsFixed(1)}% · ${suitabilityLabel(score)}'),
-            const SizedBox(height: 6),
-            LinearProgressIndicator(
-              value: score.clamp(0, 100) / 100,
-              minHeight: 6,
-              color: green,
-              backgroundColor: softGreen,
-            ),
-          ] else
-            const Text('Suitability score unavailable'),
-          const SizedBox(height: 8),
-          Text(
-            '${crops[i]['reason'] ?? crops[i]['explanation'] ?? crops[i]['suitability_note'] ?? (i == 0 ? xai['plain_summary'] : null) ?? 'No crop-specific explanation was returned.'}',
-          ),
-        ],
       ],
     );
   }

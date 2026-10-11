@@ -1,0 +1,1715 @@
+{
+  "is_crop_recommended": true,
+  "predicted_crop": "Rice",
+  "crop_compatibility_pct": 85.5,
+  "top_crop_recommendations": [
+    {
+      "crop": "Rice",
+      "compatibility_pct": 85.5,
+      "raw_score": 95.1,
+      "model_probability_pct": 33.22,
+      "environment_fit_pct": 95.2,
+      "ml_score_component": 95.0,
+      "model_labels": [
+        "rice"
+      ],
+      "condition_comparison": {
+        "status": "available",
+        "crop": "Rice",
+        "scope": "inference_sample",
+        "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+        "rules_version": "0cfc6d568c62d5843e22deaaa7ec4d9050a90d7b8e0899357071dacd0b9f9bbe",
+        "method": "Configured crop growing requirements; not model feature contributions",
+        "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges. Rainfall used in crop scoring is the weakest condition match.",
+        "main_limitation": "Rainfall used in crop scoring is 105.00 mm; the preferred range is 120\u2013360 mm.",
+        "factors": [
+          {
+            "feature": "temp",
+            "label": "Temperature",
+            "unit": "\u00b0C",
+            "value": 27.5,
+            "preferred_min": 23,
+            "preferred_max": 32,
+            "fit": 1.0
+          },
+          {
+            "feature": "humidity",
+            "label": "Humidity",
+            "unit": "%",
+            "value": 80.0,
+            "preferred_min": 70,
+            "preferred_max": 98,
+            "fit": 1.0
+          },
+          {
+            "feature": "ph",
+            "label": "Soil pH",
+            "unit": "pH",
+            "value": 6.0,
+            "preferred_min": 5.5,
+            "preferred_max": 7.0,
+            "fit": 1.0
+          },
+          {
+            "feature": "rain",
+            "label": "Rainfall used in crop scoring",
+            "unit": "mm",
+            "value": 105.0,
+            "preferred_min": 120,
+            "preferred_max": 360,
+            "fit": 0.75
+          },
+          {
+            "feature": "ndvi",
+            "label": "Plant cover (NDVI)",
+            "unit": "index",
+            "value": 0.6,
+            "preferred_min": 0.38,
+            "preferred_max": 0.82,
+            "fit": 1.0
+          },
+          {
+            "feature": "elevation",
+            "label": "Elevation",
+            "unit": "m",
+            "value": 25.0,
+            "preferred_min": 0,
+            "preferred_max": 120,
+            "fit": 1.0
+          },
+          {
+            "feature": "slope",
+            "label": "Slope",
+            "unit": "%",
+            "value": 2.0,
+            "preferred_min": 0,
+            "preferred_max": 3.5,
+            "fit": 1.0
+          }
+        ],
+        "rainfall_context": {
+          "recent_30d_mm": 105,
+          "scoring_mm": 105.0,
+          "regional_monthly_mm": 105.0,
+          "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+        },
+        "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+      },
+      "score_breakdown": {
+        "ml_weight": 0.5,
+        "environment_weight": 0.5,
+        "model_component": 95.0,
+        "environment_component": 95.2,
+        "rule_penalty": 0.0,
+        "raw_score": 95.1,
+        "model_class_available": true,
+        "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+      },
+      "environmental_suitability_pct": 85.5,
+      "season_adjusted_score": 85.5,
+      "season_status": "in_season",
+      "season_label": "In season",
+      "recommended_planting_window": "May\u2013July or October\u2013December",
+      "season_note": "October is within the configured local planting window for Rice.",
+      "season_reorder_eligible": true
+    },
+    {
+      "crop": "Papaya",
+      "compatibility_pct": 76.0,
+      "raw_score": 80.82,
+      "model_probability_pct": 17.39,
+      "environment_fit_pct": 100.0,
+      "ml_score_component": 61.6,
+      "model_labels": [
+        "papaya"
+      ],
+      "condition_comparison": {
+        "status": "available",
+        "crop": "Papaya",
+        "scope": "inference_sample",
+        "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+        "rules_version": "152e9a5600c912ed709fb0bb012191cd89b0b7efdeae1e284ce05f8f60e918c4",
+        "method": "Configured crop growing requirements; not model feature contributions",
+        "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+        "main_limitation": null,
+        "factors": [
+          {
+            "feature": "temp",
+            "label": "Temperature",
+            "unit": "\u00b0C",
+            "value": 27.5,
+            "preferred_min": 24,
+            "preferred_max": 32,
+            "fit": 1.0
+          },
+          {
+            "feature": "humidity",
+            "label": "Humidity",
+            "unit": "%",
+            "value": 80.0,
+            "preferred_min": 60,
+            "preferred_max": 88,
+            "fit": 1.0
+          },
+          {
+            "feature": "ph",
+            "label": "Soil pH",
+            "unit": "pH",
+            "value": 6.0,
+            "preferred_min": 5.8,
+            "preferred_max": 7.2,
+            "fit": 1.0
+          },
+          {
+            "feature": "rain",
+            "label": "Rainfall used in crop scoring",
+            "unit": "mm",
+            "value": 105.0,
+            "preferred_min": 55,
+            "preferred_max": 170,
+            "fit": 1.0
+          },
+          {
+            "feature": "ndvi",
+            "label": "Plant cover (NDVI)",
+            "unit": "index",
+            "value": 0.6,
+            "preferred_min": 0.34,
+            "preferred_max": 0.76,
+            "fit": 1.0
+          },
+          {
+            "feature": "elevation",
+            "label": "Elevation",
+            "unit": "m",
+            "value": 25.0,
+            "preferred_min": 0,
+            "preferred_max": 220,
+            "fit": 1.0
+          },
+          {
+            "feature": "slope",
+            "label": "Slope",
+            "unit": "%",
+            "value": 2.0,
+            "preferred_min": 0,
+            "preferred_max": 8,
+            "fit": 1.0
+          }
+        ],
+        "rainfall_context": {
+          "recent_30d_mm": 105,
+          "scoring_mm": 105.0,
+          "regional_monthly_mm": 105.0,
+          "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+        },
+        "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+      },
+      "score_breakdown": {
+        "ml_weight": 0.5,
+        "environment_weight": 0.5,
+        "model_component": 61.6484481924958,
+        "environment_component": 100.0,
+        "rule_penalty": 0.0,
+        "raw_score": 80.82,
+        "model_class_available": true,
+        "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+      },
+      "environmental_suitability_pct": 76.0,
+      "season_adjusted_score": 76.0,
+      "season_status": "preferred_establishment",
+      "season_label": "Preferred establishment period",
+      "recommended_planting_window": "Year-round; establishment preferred May\u2013November",
+      "season_note": "October is within the preferred establishment period for Papaya.",
+      "season_reorder_eligible": false
+    },
+    {
+      "crop": "Corn (White/Yellow)",
+      "compatibility_pct": 68.2,
+      "raw_score": 77.91,
+      "model_probability_pct": 14.63,
+      "environment_fit_pct": 100.0,
+      "ml_score_component": 55.8,
+      "model_labels": [
+        "maize"
+      ],
+      "condition_comparison": {
+        "status": "available",
+        "crop": "Corn (White/Yellow)",
+        "scope": "inference_sample",
+        "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+        "rules_version": "6c4c87c3bea2ae9dff710d0b9e8fce734a2b4163a3d97dfb0f9e44d9c39fbecd",
+        "method": "Configured crop growing requirements; not model feature contributions",
+        "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+        "main_limitation": null,
+        "factors": [
+          {
+            "feature": "temp",
+            "label": "Temperature",
+            "unit": "\u00b0C",
+            "value": 27.5,
+            "preferred_min": 22,
+            "preferred_max": 32,
+            "fit": 1.0
+          },
+          {
+            "feature": "humidity",
+            "label": "Humidity",
+            "unit": "%",
+            "value": 80.0,
+            "preferred_min": 55,
+            "preferred_max": 88,
+            "fit": 1.0
+          },
+          {
+            "feature": "ph",
+            "label": "Soil pH",
+            "unit": "pH",
+            "value": 6.0,
+            "preferred_min": 5.5,
+            "preferred_max": 7.5,
+            "fit": 1.0
+          },
+          {
+            "feature": "rain",
+            "label": "Rainfall used in crop scoring",
+            "unit": "mm",
+            "value": 105.0,
+            "preferred_min": 60,
+            "preferred_max": 180,
+            "fit": 1.0
+          },
+          {
+            "feature": "ndvi",
+            "label": "Plant cover (NDVI)",
+            "unit": "index",
+            "value": 0.6,
+            "preferred_min": 0.32,
+            "preferred_max": 0.75,
+            "fit": 1.0
+          },
+          {
+            "feature": "elevation",
+            "label": "Elevation",
+            "unit": "m",
+            "value": 25.0,
+            "preferred_min": 0,
+            "preferred_max": 300,
+            "fit": 1.0
+          },
+          {
+            "feature": "slope",
+            "label": "Slope",
+            "unit": "%",
+            "value": 2.0,
+            "preferred_min": 0,
+            "preferred_max": 10,
+            "fit": 1.0
+          }
+        ],
+        "rainfall_context": {
+          "recent_30d_mm": 105,
+          "scoring_mm": 105.0,
+          "regional_monthly_mm": 105.0,
+          "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+        },
+        "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+      },
+      "score_breakdown": {
+        "ml_weight": 0.5,
+        "environment_weight": 0.5,
+        "model_component": 55.82215437276977,
+        "environment_component": 100.0,
+        "rule_penalty": 0.0,
+        "raw_score": 77.91,
+        "model_class_available": true,
+        "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+      },
+      "environmental_suitability_pct": 68.2,
+      "season_adjusted_score": 68.2,
+      "season_status": "in_season",
+      "season_label": "In season",
+      "recommended_planting_window": "January\u2013March, May\u2013July, or September\u2013October",
+      "season_note": "October is within the configured local planting window for Corn (White/Yellow).",
+      "season_reorder_eligible": false
+    },
+    {
+      "crop": "Banana (Saba)",
+      "compatibility_pct": 59.9,
+      "raw_score": 75.0,
+      "model_probability_pct": null,
+      "environment_fit_pct": 100.0,
+      "ml_score_component": 50.0,
+      "model_labels": [],
+      "condition_comparison": {
+        "status": "available",
+        "crop": "Banana (Saba)",
+        "scope": "inference_sample",
+        "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+        "rules_version": "2da75b329c53821fece021025e12e08deea9a476d5fa3312ad7280792b28bfd9",
+        "method": "Configured crop growing requirements; not model feature contributions",
+        "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+        "main_limitation": null,
+        "factors": [
+          {
+            "feature": "temp",
+            "label": "Temperature",
+            "unit": "\u00b0C",
+            "value": 27.5,
+            "preferred_min": 24,
+            "preferred_max": 32,
+            "fit": 1.0
+          },
+          {
+            "feature": "humidity",
+            "label": "Humidity",
+            "unit": "%",
+            "value": 80.0,
+            "preferred_min": 65,
+            "preferred_max": 95,
+            "fit": 1.0
+          },
+          {
+            "feature": "ph",
+            "label": "Soil pH",
+            "unit": "pH",
+            "value": 6.0,
+            "preferred_min": 5.5,
+            "preferred_max": 7.2,
+            "fit": 1.0
+          },
+          {
+            "feature": "rain",
+            "label": "Rainfall used in crop scoring",
+            "unit": "mm",
+            "value": 105.0,
+            "preferred_min": 80,
+            "preferred_max": 240,
+            "fit": 1.0
+          },
+          {
+            "feature": "ndvi",
+            "label": "Plant cover (NDVI)",
+            "unit": "index",
+            "value": 0.6,
+            "preferred_min": 0.42,
+            "preferred_max": 0.85,
+            "fit": 1.0
+          },
+          {
+            "feature": "elevation",
+            "label": "Elevation",
+            "unit": "m",
+            "value": 25.0,
+            "preferred_min": 0,
+            "preferred_max": 260,
+            "fit": 1.0
+          },
+          {
+            "feature": "slope",
+            "label": "Slope",
+            "unit": "%",
+            "value": 2.0,
+            "preferred_min": 0,
+            "preferred_max": 10,
+            "fit": 1.0
+          }
+        ],
+        "rainfall_context": {
+          "recent_30d_mm": 105,
+          "scoring_mm": 105.0,
+          "regional_monthly_mm": 105.0,
+          "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+        },
+        "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+      },
+      "score_breakdown": {
+        "ml_weight": 0.5,
+        "environment_weight": 0.5,
+        "model_component": 50.0,
+        "environment_component": 100.0,
+        "rule_penalty": 0.0,
+        "raw_score": 75.0,
+        "model_class_available": false,
+        "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+      },
+      "environmental_suitability_pct": 59.9,
+      "season_adjusted_score": 59.9,
+      "season_status": "preferred_establishment",
+      "season_label": "Preferred establishment period",
+      "recommended_planting_window": "Year-round with moisture; establishment preferred May\u2013November",
+      "season_note": "October is within the preferred establishment period for Banana (Saba).",
+      "season_reorder_eligible": false
+    },
+    {
+      "crop": "Banana (Cavendish/Lakatan)",
+      "compatibility_pct": 51.5,
+      "raw_score": 71.13,
+      "model_probability_pct": 8.2,
+      "environment_fit_pct": 100.0,
+      "ml_score_component": 42.3,
+      "model_labels": [
+        "banana"
+      ],
+      "condition_comparison": {
+        "status": "available",
+        "crop": "Banana (Cavendish/Lakatan)",
+        "scope": "inference_sample",
+        "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+        "rules_version": "30add4193d6e677c51b79298aab92656004c85c6638875bf8ffd77792f8a3039",
+        "method": "Configured crop growing requirements; not model feature contributions",
+        "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+        "main_limitation": null,
+        "factors": [
+          {
+            "feature": "temp",
+            "label": "Temperature",
+            "unit": "\u00b0C",
+            "value": 27.5,
+            "preferred_min": 25,
+            "preferred_max": 31,
+            "fit": 1.0
+          },
+          {
+            "feature": "humidity",
+            "label": "Humidity",
+            "unit": "%",
+            "value": 80.0,
+            "preferred_min": 70,
+            "preferred_max": 95,
+            "fit": 1.0
+          },
+          {
+            "feature": "ph",
+            "label": "Soil pH",
+            "unit": "pH",
+            "value": 6.0,
+            "preferred_min": 5.5,
+            "preferred_max": 7.0,
+            "fit": 1.0
+          },
+          {
+            "feature": "rain",
+            "label": "Rainfall used in crop scoring",
+            "unit": "mm",
+            "value": 105.0,
+            "preferred_min": 90,
+            "preferred_max": 260,
+            "fit": 1.0
+          },
+          {
+            "feature": "ndvi",
+            "label": "Plant cover (NDVI)",
+            "unit": "index",
+            "value": 0.6,
+            "preferred_min": 0.45,
+            "preferred_max": 0.85,
+            "fit": 1.0
+          },
+          {
+            "feature": "elevation",
+            "label": "Elevation",
+            "unit": "m",
+            "value": 25.0,
+            "preferred_min": 0,
+            "preferred_max": 220,
+            "fit": 1.0
+          },
+          {
+            "feature": "slope",
+            "label": "Slope",
+            "unit": "%",
+            "value": 2.0,
+            "preferred_min": 0,
+            "preferred_max": 8,
+            "fit": 1.0
+          }
+        ],
+        "rainfall_context": {
+          "recent_30d_mm": 105,
+          "scoring_mm": 105.0,
+          "regional_monthly_mm": 105.0,
+          "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+        },
+        "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+      },
+      "score_breakdown": {
+        "ml_weight": 0.5,
+        "environment_weight": 0.5,
+        "model_component": 42.26902126501652,
+        "environment_component": 100.0,
+        "rule_penalty": 0.0,
+        "raw_score": 71.13,
+        "model_class_available": true,
+        "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+      },
+      "environmental_suitability_pct": 51.5,
+      "season_adjusted_score": 51.5,
+      "season_status": "preferred_establishment",
+      "season_label": "Preferred establishment period",
+      "recommended_planting_window": "Year-round with moisture; establishment preferred May\u2013November",
+      "season_note": "October is within the preferred establishment period for Banana (Cavendish/Lakatan).",
+      "season_reorder_eligible": false
+    }
+  ],
+  "model_explanation": {
+    "schema_version": 1,
+    "status": "available",
+    "scope": "global",
+    "method": "random_forest_mean_decrease_in_impurity",
+    "method_label": "Random Forest impurity-based feature importance",
+    "model_type": "RandomForestClassifier",
+    "model_version": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+    "supports_direction": false,
+    "supports_crop_specific": false,
+    "samples": [
+      {
+        "model_version": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+        "inputs": {
+          "N": 80.0,
+          "P": 47.0,
+          "K": 50.0,
+          "temperature": 27.5,
+          "humidity": 80.0,
+          "ph": 6.0,
+          "rainfall": 105.0,
+          "ndvi": 0.6,
+          "elevation": 25.0,
+          "slope": 2.0
+        },
+        "raw_prediction": "rice",
+        "class_probabilities": {
+          "abaca": 0.00043353948368304174,
+          "banana": 0.08195653355059931,
+          "blackgram": 0.0,
+          "cacao": 0.010145620164926096,
+          "cassava": 0.02006759482185337,
+          "coconut": 0.04842714005945167,
+          "durian": 0.016793317342043118,
+          "maize": 0.14627794419773912,
+          "mango": 0.03738611901467229,
+          "mungbean": 0.0,
+          "papaya": 0.17392877846240862,
+          "pigeonpeas": 0.0,
+          "pomelo": 0.05078090331833975,
+          "rice": 0.33221091459096436,
+          "rubber": 0.0008411268852702656,
+          "sweet potato": 0.01477732564210078,
+          "watermelon": 0.06597314246594833
+        },
+        "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd"
+      }
+    ],
+    "features": [
+      {
+        "feature": "N",
+        "label": "Nitrogen",
+        "unit": "unit unspecified",
+        "importance": 0.08195334017489293
+      },
+      {
+        "feature": "P",
+        "label": "Phosphorus",
+        "unit": "unit unspecified",
+        "importance": 0.15530262518216673
+      },
+      {
+        "feature": "K",
+        "label": "Potassium",
+        "unit": "unit unspecified",
+        "importance": 0.15213868323071766
+      },
+      {
+        "feature": "temperature",
+        "label": "Temperature",
+        "unit": "\u00b0C",
+        "importance": 0.04736419830828618
+      },
+      {
+        "feature": "humidity",
+        "label": "Humidity",
+        "unit": "%",
+        "importance": 0.13884888454798633
+      },
+      {
+        "feature": "ph",
+        "label": "Soil pH",
+        "unit": "pH",
+        "importance": 0.07770672288460086
+      },
+      {
+        "feature": "rainfall",
+        "label": "Recent rainfall (30 days)",
+        "unit": "mm / 30 days",
+        "importance": 0.18854783430473399
+      },
+      {
+        "feature": "ndvi",
+        "label": "Plant cover (NDVI)",
+        "unit": "index",
+        "importance": 0.04929929764727964
+      },
+      {
+        "feature": "elevation",
+        "label": "Elevation",
+        "unit": "m",
+        "importance": 0.07047015431991649
+      },
+      {
+        "feature": "slope",
+        "label": "Slope",
+        "unit": "%",
+        "importance": 0.03836825939941909
+      }
+    ],
+    "local_explanation_status": "not_supported",
+    "prediction_context_id": "cce797c1-4db2-4a53-88a6-91a37d1b24cd",
+    "selected_output": "Rice",
+    "selected_score": 85.5,
+    "input_snapshot_hash": "d37c433f8ecf22866b27140d1a1989b14ff5e6526ff8a856bfd35b4cb9037f9f",
+    "ranking": [
+      {
+        "crop": "Rice",
+        "compatibility_pct": 85.5,
+        "raw_score": 95.1,
+        "model_probability_pct": 33.22,
+        "environment_fit_pct": 95.2,
+        "ml_score_component": 95.0,
+        "model_labels": [
+          "rice"
+        ],
+        "condition_comparison": {
+          "status": "available",
+          "crop": "Rice",
+          "scope": "inference_sample",
+          "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+          "rules_version": "0cfc6d568c62d5843e22deaaa7ec4d9050a90d7b8e0899357071dacd0b9f9bbe",
+          "method": "Configured crop growing requirements; not model feature contributions",
+          "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges. Rainfall used in crop scoring is the weakest condition match.",
+          "main_limitation": "Rainfall used in crop scoring is 105.00 mm; the preferred range is 120\u2013360 mm.",
+          "factors": [
+            {
+              "feature": "temp",
+              "label": "Temperature",
+              "unit": "\u00b0C",
+              "value": 27.5,
+              "preferred_min": 23,
+              "preferred_max": 32,
+              "fit": 1.0
+            },
+            {
+              "feature": "humidity",
+              "label": "Humidity",
+              "unit": "%",
+              "value": 80.0,
+              "preferred_min": 70,
+              "preferred_max": 98,
+              "fit": 1.0
+            },
+            {
+              "feature": "ph",
+              "label": "Soil pH",
+              "unit": "pH",
+              "value": 6.0,
+              "preferred_min": 5.5,
+              "preferred_max": 7.0,
+              "fit": 1.0
+            },
+            {
+              "feature": "rain",
+              "label": "Rainfall used in crop scoring",
+              "unit": "mm",
+              "value": 105.0,
+              "preferred_min": 120,
+              "preferred_max": 360,
+              "fit": 0.75
+            },
+            {
+              "feature": "ndvi",
+              "label": "Plant cover (NDVI)",
+              "unit": "index",
+              "value": 0.6,
+              "preferred_min": 0.38,
+              "preferred_max": 0.82,
+              "fit": 1.0
+            },
+            {
+              "feature": "elevation",
+              "label": "Elevation",
+              "unit": "m",
+              "value": 25.0,
+              "preferred_min": 0,
+              "preferred_max": 120,
+              "fit": 1.0
+            },
+            {
+              "feature": "slope",
+              "label": "Slope",
+              "unit": "%",
+              "value": 2.0,
+              "preferred_min": 0,
+              "preferred_max": 3.5,
+              "fit": 1.0
+            }
+          ],
+          "rainfall_context": {
+            "recent_30d_mm": 105,
+            "scoring_mm": 105.0,
+            "regional_monthly_mm": 105.0,
+            "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+          },
+          "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+        },
+        "score_breakdown": {
+          "ml_weight": 0.5,
+          "environment_weight": 0.5,
+          "model_component": 95.0,
+          "environment_component": 95.2,
+          "rule_penalty": 0.0,
+          "raw_score": 95.1,
+          "model_class_available": true,
+          "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+        },
+        "environmental_suitability_pct": 85.5,
+        "season_adjusted_score": 85.5,
+        "season_status": "in_season",
+        "season_label": "In season",
+        "recommended_planting_window": "May\u2013July or October\u2013December",
+        "season_note": "October is within the configured local planting window for Rice.",
+        "season_reorder_eligible": true
+      },
+      {
+        "crop": "Papaya",
+        "compatibility_pct": 76.0,
+        "raw_score": 80.82,
+        "model_probability_pct": 17.39,
+        "environment_fit_pct": 100.0,
+        "ml_score_component": 61.6,
+        "model_labels": [
+          "papaya"
+        ],
+        "condition_comparison": {
+          "status": "available",
+          "crop": "Papaya",
+          "scope": "inference_sample",
+          "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+          "rules_version": "152e9a5600c912ed709fb0bb012191cd89b0b7efdeae1e284ce05f8f60e918c4",
+          "method": "Configured crop growing requirements; not model feature contributions",
+          "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+          "main_limitation": null,
+          "factors": [
+            {
+              "feature": "temp",
+              "label": "Temperature",
+              "unit": "\u00b0C",
+              "value": 27.5,
+              "preferred_min": 24,
+              "preferred_max": 32,
+              "fit": 1.0
+            },
+            {
+              "feature": "humidity",
+              "label": "Humidity",
+              "unit": "%",
+              "value": 80.0,
+              "preferred_min": 60,
+              "preferred_max": 88,
+              "fit": 1.0
+            },
+            {
+              "feature": "ph",
+              "label": "Soil pH",
+              "unit": "pH",
+              "value": 6.0,
+              "preferred_min": 5.8,
+              "preferred_max": 7.2,
+              "fit": 1.0
+            },
+            {
+              "feature": "rain",
+              "label": "Rainfall used in crop scoring",
+              "unit": "mm",
+              "value": 105.0,
+              "preferred_min": 55,
+              "preferred_max": 170,
+              "fit": 1.0
+            },
+            {
+              "feature": "ndvi",
+              "label": "Plant cover (NDVI)",
+              "unit": "index",
+              "value": 0.6,
+              "preferred_min": 0.34,
+              "preferred_max": 0.76,
+              "fit": 1.0
+            },
+            {
+              "feature": "elevation",
+              "label": "Elevation",
+              "unit": "m",
+              "value": 25.0,
+              "preferred_min": 0,
+              "preferred_max": 220,
+              "fit": 1.0
+            },
+            {
+              "feature": "slope",
+              "label": "Slope",
+              "unit": "%",
+              "value": 2.0,
+              "preferred_min": 0,
+              "preferred_max": 8,
+              "fit": 1.0
+            }
+          ],
+          "rainfall_context": {
+            "recent_30d_mm": 105,
+            "scoring_mm": 105.0,
+            "regional_monthly_mm": 105.0,
+            "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+          },
+          "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+        },
+        "score_breakdown": {
+          "ml_weight": 0.5,
+          "environment_weight": 0.5,
+          "model_component": 61.6484481924958,
+          "environment_component": 100.0,
+          "rule_penalty": 0.0,
+          "raw_score": 80.82,
+          "model_class_available": true,
+          "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+        },
+        "environmental_suitability_pct": 76.0,
+        "season_adjusted_score": 76.0,
+        "season_status": "preferred_establishment",
+        "season_label": "Preferred establishment period",
+        "recommended_planting_window": "Year-round; establishment preferred May\u2013November",
+        "season_note": "October is within the preferred establishment period for Papaya.",
+        "season_reorder_eligible": false
+      },
+      {
+        "crop": "Corn (White/Yellow)",
+        "compatibility_pct": 68.2,
+        "raw_score": 77.91,
+        "model_probability_pct": 14.63,
+        "environment_fit_pct": 100.0,
+        "ml_score_component": 55.8,
+        "model_labels": [
+          "maize"
+        ],
+        "condition_comparison": {
+          "status": "available",
+          "crop": "Corn (White/Yellow)",
+          "scope": "inference_sample",
+          "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+          "rules_version": "6c4c87c3bea2ae9dff710d0b9e8fce734a2b4163a3d97dfb0f9e44d9c39fbecd",
+          "method": "Configured crop growing requirements; not model feature contributions",
+          "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+          "main_limitation": null,
+          "factors": [
+            {
+              "feature": "temp",
+              "label": "Temperature",
+              "unit": "\u00b0C",
+              "value": 27.5,
+              "preferred_min": 22,
+              "preferred_max": 32,
+              "fit": 1.0
+            },
+            {
+              "feature": "humidity",
+              "label": "Humidity",
+              "unit": "%",
+              "value": 80.0,
+              "preferred_min": 55,
+              "preferred_max": 88,
+              "fit": 1.0
+            },
+            {
+              "feature": "ph",
+              "label": "Soil pH",
+              "unit": "pH",
+              "value": 6.0,
+              "preferred_min": 5.5,
+              "preferred_max": 7.5,
+              "fit": 1.0
+            },
+            {
+              "feature": "rain",
+              "label": "Rainfall used in crop scoring",
+              "unit": "mm",
+              "value": 105.0,
+              "preferred_min": 60,
+              "preferred_max": 180,
+              "fit": 1.0
+            },
+            {
+              "feature": "ndvi",
+              "label": "Plant cover (NDVI)",
+              "unit": "index",
+              "value": 0.6,
+              "preferred_min": 0.32,
+              "preferred_max": 0.75,
+              "fit": 1.0
+            },
+            {
+              "feature": "elevation",
+              "label": "Elevation",
+              "unit": "m",
+              "value": 25.0,
+              "preferred_min": 0,
+              "preferred_max": 300,
+              "fit": 1.0
+            },
+            {
+              "feature": "slope",
+              "label": "Slope",
+              "unit": "%",
+              "value": 2.0,
+              "preferred_min": 0,
+              "preferred_max": 10,
+              "fit": 1.0
+            }
+          ],
+          "rainfall_context": {
+            "recent_30d_mm": 105,
+            "scoring_mm": 105.0,
+            "regional_monthly_mm": 105.0,
+            "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+          },
+          "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+        },
+        "score_breakdown": {
+          "ml_weight": 0.5,
+          "environment_weight": 0.5,
+          "model_component": 55.82215437276977,
+          "environment_component": 100.0,
+          "rule_penalty": 0.0,
+          "raw_score": 77.91,
+          "model_class_available": true,
+          "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+        },
+        "environmental_suitability_pct": 68.2,
+        "season_adjusted_score": 68.2,
+        "season_status": "in_season",
+        "season_label": "In season",
+        "recommended_planting_window": "January\u2013March, May\u2013July, or September\u2013October",
+        "season_note": "October is within the configured local planting window for Corn (White/Yellow).",
+        "season_reorder_eligible": false
+      },
+      {
+        "crop": "Banana (Saba)",
+        "compatibility_pct": 59.9,
+        "raw_score": 75.0,
+        "model_probability_pct": null,
+        "environment_fit_pct": 100.0,
+        "ml_score_component": 50.0,
+        "model_labels": [],
+        "condition_comparison": {
+          "status": "available",
+          "crop": "Banana (Saba)",
+          "scope": "inference_sample",
+          "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+          "rules_version": "2da75b329c53821fece021025e12e08deea9a476d5fa3312ad7280792b28bfd9",
+          "method": "Configured crop growing requirements; not model feature contributions",
+          "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+          "main_limitation": null,
+          "factors": [
+            {
+              "feature": "temp",
+              "label": "Temperature",
+              "unit": "\u00b0C",
+              "value": 27.5,
+              "preferred_min": 24,
+              "preferred_max": 32,
+              "fit": 1.0
+            },
+            {
+              "feature": "humidity",
+              "label": "Humidity",
+              "unit": "%",
+              "value": 80.0,
+              "preferred_min": 65,
+              "preferred_max": 95,
+              "fit": 1.0
+            },
+            {
+              "feature": "ph",
+              "label": "Soil pH",
+              "unit": "pH",
+              "value": 6.0,
+              "preferred_min": 5.5,
+              "preferred_max": 7.2,
+              "fit": 1.0
+            },
+            {
+              "feature": "rain",
+              "label": "Rainfall used in crop scoring",
+              "unit": "mm",
+              "value": 105.0,
+              "preferred_min": 80,
+              "preferred_max": 240,
+              "fit": 1.0
+            },
+            {
+              "feature": "ndvi",
+              "label": "Plant cover (NDVI)",
+              "unit": "index",
+              "value": 0.6,
+              "preferred_min": 0.42,
+              "preferred_max": 0.85,
+              "fit": 1.0
+            },
+            {
+              "feature": "elevation",
+              "label": "Elevation",
+              "unit": "m",
+              "value": 25.0,
+              "preferred_min": 0,
+              "preferred_max": 260,
+              "fit": 1.0
+            },
+            {
+              "feature": "slope",
+              "label": "Slope",
+              "unit": "%",
+              "value": 2.0,
+              "preferred_min": 0,
+              "preferred_max": 10,
+              "fit": 1.0
+            }
+          ],
+          "rainfall_context": {
+            "recent_30d_mm": 105,
+            "scoring_mm": 105.0,
+            "regional_monthly_mm": 105.0,
+            "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+          },
+          "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+        },
+        "score_breakdown": {
+          "ml_weight": 0.5,
+          "environment_weight": 0.5,
+          "model_component": 50.0,
+          "environment_component": 100.0,
+          "rule_penalty": 0.0,
+          "raw_score": 75.0,
+          "model_class_available": false,
+          "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+        },
+        "environmental_suitability_pct": 59.9,
+        "season_adjusted_score": 59.9,
+        "season_status": "preferred_establishment",
+        "season_label": "Preferred establishment period",
+        "recommended_planting_window": "Year-round with moisture; establishment preferred May\u2013November",
+        "season_note": "October is within the preferred establishment period for Banana (Saba).",
+        "season_reorder_eligible": false
+      },
+      {
+        "crop": "Banana (Cavendish/Lakatan)",
+        "compatibility_pct": 51.5,
+        "raw_score": 71.13,
+        "model_probability_pct": 8.2,
+        "environment_fit_pct": 100.0,
+        "ml_score_component": 42.3,
+        "model_labels": [
+          "banana"
+        ],
+        "condition_comparison": {
+          "status": "available",
+          "crop": "Banana (Cavendish/Lakatan)",
+          "scope": "inference_sample",
+          "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+          "rules_version": "30add4193d6e677c51b79298aab92656004c85c6638875bf8ffd77792f8a3039",
+          "method": "Configured crop growing requirements; not model feature contributions",
+          "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+          "main_limitation": null,
+          "factors": [
+            {
+              "feature": "temp",
+              "label": "Temperature",
+              "unit": "\u00b0C",
+              "value": 27.5,
+              "preferred_min": 25,
+              "preferred_max": 31,
+              "fit": 1.0
+            },
+            {
+              "feature": "humidity",
+              "label": "Humidity",
+              "unit": "%",
+              "value": 80.0,
+              "preferred_min": 70,
+              "preferred_max": 95,
+              "fit": 1.0
+            },
+            {
+              "feature": "ph",
+              "label": "Soil pH",
+              "unit": "pH",
+              "value": 6.0,
+              "preferred_min": 5.5,
+              "preferred_max": 7.0,
+              "fit": 1.0
+            },
+            {
+              "feature": "rain",
+              "label": "Rainfall used in crop scoring",
+              "unit": "mm",
+              "value": 105.0,
+              "preferred_min": 90,
+              "preferred_max": 260,
+              "fit": 1.0
+            },
+            {
+              "feature": "ndvi",
+              "label": "Plant cover (NDVI)",
+              "unit": "index",
+              "value": 0.6,
+              "preferred_min": 0.45,
+              "preferred_max": 0.85,
+              "fit": 1.0
+            },
+            {
+              "feature": "elevation",
+              "label": "Elevation",
+              "unit": "m",
+              "value": 25.0,
+              "preferred_min": 0,
+              "preferred_max": 220,
+              "fit": 1.0
+            },
+            {
+              "feature": "slope",
+              "label": "Slope",
+              "unit": "%",
+              "value": 2.0,
+              "preferred_min": 0,
+              "preferred_max": 8,
+              "fit": 1.0
+            }
+          ],
+          "rainfall_context": {
+            "recent_30d_mm": 105,
+            "scoring_mm": 105.0,
+            "regional_monthly_mm": 105.0,
+            "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+          },
+          "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+        },
+        "score_breakdown": {
+          "ml_weight": 0.5,
+          "environment_weight": 0.5,
+          "model_component": 42.26902126501652,
+          "environment_component": 100.0,
+          "rule_penalty": 0.0,
+          "raw_score": 71.13,
+          "model_class_available": true,
+          "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+        },
+        "environmental_suitability_pct": 51.5,
+        "season_adjusted_score": 51.5,
+        "season_status": "preferred_establishment",
+        "season_label": "Preferred establishment period",
+        "recommended_planting_window": "Year-round with moisture; establishment preferred May\u2013November",
+        "season_note": "October is within the preferred establishment period for Banana (Cavendish/Lakatan).",
+        "season_reorder_eligible": false
+      }
+    ]
+  },
+  "raw_predicted_crop": "rice",
+  "land_type": "arable",
+  "land_status": "ARABLE / VEGETATED",
+  "soil_ph": 6,
+  "ndvi": 0.6,
+  "rainfall_mm": 105,
+  "temperature_c": 27.5,
+  "live_humidity": 80,
+  "nitrogen": 80,
+  "phosphorus": 47,
+  "potassium": 50,
+  "elevation_m": 25,
+  "slope_pct": 2,
+  "intended_planting_month": 10,
+  "intended_planting_month_name": "October",
+  "seasonality_method": "Soft seasonal adjustment after environmental model ranking; reordering limited to crops within 8 percentage points",
+  "alternative_crops": [
+    {
+      "crop": "Papaya",
+      "compatibility_pct": 76.0,
+      "raw_score": 80.82,
+      "model_probability_pct": 17.39,
+      "environment_fit_pct": 100.0,
+      "ml_score_component": 61.6,
+      "model_labels": [
+        "papaya"
+      ],
+      "condition_comparison": {
+        "status": "available",
+        "crop": "Papaya",
+        "scope": "inference_sample",
+        "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+        "rules_version": "152e9a5600c912ed709fb0bb012191cd89b0b7efdeae1e284ce05f8f60e918c4",
+        "method": "Configured crop growing requirements; not model feature contributions",
+        "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+        "main_limitation": null,
+        "factors": [
+          {
+            "feature": "temp",
+            "label": "Temperature",
+            "unit": "\u00b0C",
+            "value": 27.5,
+            "preferred_min": 24,
+            "preferred_max": 32,
+            "fit": 1.0
+          },
+          {
+            "feature": "humidity",
+            "label": "Humidity",
+            "unit": "%",
+            "value": 80.0,
+            "preferred_min": 60,
+            "preferred_max": 88,
+            "fit": 1.0
+          },
+          {
+            "feature": "ph",
+            "label": "Soil pH",
+            "unit": "pH",
+            "value": 6.0,
+            "preferred_min": 5.8,
+            "preferred_max": 7.2,
+            "fit": 1.0
+          },
+          {
+            "feature": "rain",
+            "label": "Rainfall used in crop scoring",
+            "unit": "mm",
+            "value": 105.0,
+            "preferred_min": 55,
+            "preferred_max": 170,
+            "fit": 1.0
+          },
+          {
+            "feature": "ndvi",
+            "label": "Plant cover (NDVI)",
+            "unit": "index",
+            "value": 0.6,
+            "preferred_min": 0.34,
+            "preferred_max": 0.76,
+            "fit": 1.0
+          },
+          {
+            "feature": "elevation",
+            "label": "Elevation",
+            "unit": "m",
+            "value": 25.0,
+            "preferred_min": 0,
+            "preferred_max": 220,
+            "fit": 1.0
+          },
+          {
+            "feature": "slope",
+            "label": "Slope",
+            "unit": "%",
+            "value": 2.0,
+            "preferred_min": 0,
+            "preferred_max": 8,
+            "fit": 1.0
+          }
+        ],
+        "rainfall_context": {
+          "recent_30d_mm": 105,
+          "scoring_mm": 105.0,
+          "regional_monthly_mm": 105.0,
+          "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+        },
+        "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+      },
+      "score_breakdown": {
+        "ml_weight": 0.5,
+        "environment_weight": 0.5,
+        "model_component": 61.6484481924958,
+        "environment_component": 100.0,
+        "rule_penalty": 0.0,
+        "raw_score": 80.82,
+        "model_class_available": true,
+        "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+      },
+      "environmental_suitability_pct": 76.0,
+      "season_adjusted_score": 76.0,
+      "season_status": "preferred_establishment",
+      "season_label": "Preferred establishment period",
+      "recommended_planting_window": "Year-round; establishment preferred May\u2013November",
+      "season_note": "October is within the preferred establishment period for Papaya.",
+      "season_reorder_eligible": false
+    },
+    {
+      "crop": "Corn (White/Yellow)",
+      "compatibility_pct": 68.2,
+      "raw_score": 77.91,
+      "model_probability_pct": 14.63,
+      "environment_fit_pct": 100.0,
+      "ml_score_component": 55.8,
+      "model_labels": [
+        "maize"
+      ],
+      "condition_comparison": {
+        "status": "available",
+        "crop": "Corn (White/Yellow)",
+        "scope": "inference_sample",
+        "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+        "rules_version": "6c4c87c3bea2ae9dff710d0b9e8fce734a2b4163a3d97dfb0f9e44d9c39fbecd",
+        "method": "Configured crop growing requirements; not model feature contributions",
+        "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+        "main_limitation": null,
+        "factors": [
+          {
+            "feature": "temp",
+            "label": "Temperature",
+            "unit": "\u00b0C",
+            "value": 27.5,
+            "preferred_min": 22,
+            "preferred_max": 32,
+            "fit": 1.0
+          },
+          {
+            "feature": "humidity",
+            "label": "Humidity",
+            "unit": "%",
+            "value": 80.0,
+            "preferred_min": 55,
+            "preferred_max": 88,
+            "fit": 1.0
+          },
+          {
+            "feature": "ph",
+            "label": "Soil pH",
+            "unit": "pH",
+            "value": 6.0,
+            "preferred_min": 5.5,
+            "preferred_max": 7.5,
+            "fit": 1.0
+          },
+          {
+            "feature": "rain",
+            "label": "Rainfall used in crop scoring",
+            "unit": "mm",
+            "value": 105.0,
+            "preferred_min": 60,
+            "preferred_max": 180,
+            "fit": 1.0
+          },
+          {
+            "feature": "ndvi",
+            "label": "Plant cover (NDVI)",
+            "unit": "index",
+            "value": 0.6,
+            "preferred_min": 0.32,
+            "preferred_max": 0.75,
+            "fit": 1.0
+          },
+          {
+            "feature": "elevation",
+            "label": "Elevation",
+            "unit": "m",
+            "value": 25.0,
+            "preferred_min": 0,
+            "preferred_max": 300,
+            "fit": 1.0
+          },
+          {
+            "feature": "slope",
+            "label": "Slope",
+            "unit": "%",
+            "value": 2.0,
+            "preferred_min": 0,
+            "preferred_max": 10,
+            "fit": 1.0
+          }
+        ],
+        "rainfall_context": {
+          "recent_30d_mm": 105,
+          "scoring_mm": 105.0,
+          "regional_monthly_mm": 105.0,
+          "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+        },
+        "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+      },
+      "score_breakdown": {
+        "ml_weight": 0.5,
+        "environment_weight": 0.5,
+        "model_component": 55.82215437276977,
+        "environment_component": 100.0,
+        "rule_penalty": 0.0,
+        "raw_score": 77.91,
+        "model_class_available": true,
+        "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+      },
+      "environmental_suitability_pct": 68.2,
+      "season_adjusted_score": 68.2,
+      "season_status": "in_season",
+      "season_label": "In season",
+      "recommended_planting_window": "January\u2013March, May\u2013July, or September\u2013October",
+      "season_note": "October is within the configured local planting window for Corn (White/Yellow).",
+      "season_reorder_eligible": false
+    },
+    {
+      "crop": "Banana (Saba)",
+      "compatibility_pct": 59.9,
+      "raw_score": 75.0,
+      "model_probability_pct": null,
+      "environment_fit_pct": 100.0,
+      "ml_score_component": 50.0,
+      "model_labels": [],
+      "condition_comparison": {
+        "status": "available",
+        "crop": "Banana (Saba)",
+        "scope": "inference_sample",
+        "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+        "rules_version": "2da75b329c53821fece021025e12e08deea9a476d5fa3312ad7280792b28bfd9",
+        "method": "Configured crop growing requirements; not model feature contributions",
+        "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+        "main_limitation": null,
+        "factors": [
+          {
+            "feature": "temp",
+            "label": "Temperature",
+            "unit": "\u00b0C",
+            "value": 27.5,
+            "preferred_min": 24,
+            "preferred_max": 32,
+            "fit": 1.0
+          },
+          {
+            "feature": "humidity",
+            "label": "Humidity",
+            "unit": "%",
+            "value": 80.0,
+            "preferred_min": 65,
+            "preferred_max": 95,
+            "fit": 1.0
+          },
+          {
+            "feature": "ph",
+            "label": "Soil pH",
+            "unit": "pH",
+            "value": 6.0,
+            "preferred_min": 5.5,
+            "preferred_max": 7.2,
+            "fit": 1.0
+          },
+          {
+            "feature": "rain",
+            "label": "Rainfall used in crop scoring",
+            "unit": "mm",
+            "value": 105.0,
+            "preferred_min": 80,
+            "preferred_max": 240,
+            "fit": 1.0
+          },
+          {
+            "feature": "ndvi",
+            "label": "Plant cover (NDVI)",
+            "unit": "index",
+            "value": 0.6,
+            "preferred_min": 0.42,
+            "preferred_max": 0.85,
+            "fit": 1.0
+          },
+          {
+            "feature": "elevation",
+            "label": "Elevation",
+            "unit": "m",
+            "value": 25.0,
+            "preferred_min": 0,
+            "preferred_max": 260,
+            "fit": 1.0
+          },
+          {
+            "feature": "slope",
+            "label": "Slope",
+            "unit": "%",
+            "value": 2.0,
+            "preferred_min": 0,
+            "preferred_max": 10,
+            "fit": 1.0
+          }
+        ],
+        "rainfall_context": {
+          "recent_30d_mm": 105,
+          "scoring_mm": 105.0,
+          "regional_monthly_mm": 105.0,
+          "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+        },
+        "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+      },
+      "score_breakdown": {
+        "ml_weight": 0.5,
+        "environment_weight": 0.5,
+        "model_component": 50.0,
+        "environment_component": 100.0,
+        "rule_penalty": 0.0,
+        "raw_score": 75.0,
+        "model_class_available": false,
+        "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+      },
+      "environmental_suitability_pct": 59.9,
+      "season_adjusted_score": 59.9,
+      "season_status": "preferred_establishment",
+      "season_label": "Preferred establishment period",
+      "recommended_planting_window": "Year-round with moisture; establishment preferred May\u2013November",
+      "season_note": "October is within the preferred establishment period for Banana (Saba).",
+      "season_reorder_eligible": false
+    },
+    {
+      "crop": "Banana (Cavendish/Lakatan)",
+      "compatibility_pct": 51.5,
+      "raw_score": 71.13,
+      "model_probability_pct": 8.2,
+      "environment_fit_pct": 100.0,
+      "ml_score_component": 42.3,
+      "model_labels": [
+        "banana"
+      ],
+      "condition_comparison": {
+        "status": "available",
+        "crop": "Banana (Cavendish/Lakatan)",
+        "scope": "inference_sample",
+        "sample_id": "29acd8a744755470e2cbb8ac933e095ab8cf5a97ea09206c8a2431d71172b4cd",
+        "rules_version": "30add4193d6e677c51b79298aab92656004c85c6638875bf8ffd77792f8a3039",
+        "method": "Configured crop growing requirements; not model feature contributions",
+        "summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges.",
+        "main_limitation": null,
+        "factors": [
+          {
+            "feature": "temp",
+            "label": "Temperature",
+            "unit": "\u00b0C",
+            "value": 27.5,
+            "preferred_min": 25,
+            "preferred_max": 31,
+            "fit": 1.0
+          },
+          {
+            "feature": "humidity",
+            "label": "Humidity",
+            "unit": "%",
+            "value": 80.0,
+            "preferred_min": 70,
+            "preferred_max": 95,
+            "fit": 1.0
+          },
+          {
+            "feature": "ph",
+            "label": "Soil pH",
+            "unit": "pH",
+            "value": 6.0,
+            "preferred_min": 5.5,
+            "preferred_max": 7.0,
+            "fit": 1.0
+          },
+          {
+            "feature": "rain",
+            "label": "Rainfall used in crop scoring",
+            "unit": "mm",
+            "value": 105.0,
+            "preferred_min": 90,
+            "preferred_max": 260,
+            "fit": 1.0
+          },
+          {
+            "feature": "ndvi",
+            "label": "Plant cover (NDVI)",
+            "unit": "index",
+            "value": 0.6,
+            "preferred_min": 0.45,
+            "preferred_max": 0.85,
+            "fit": 1.0
+          },
+          {
+            "feature": "elevation",
+            "label": "Elevation",
+            "unit": "m",
+            "value": 25.0,
+            "preferred_min": 0,
+            "preferred_max": 220,
+            "fit": 1.0
+          },
+          {
+            "feature": "slope",
+            "label": "Slope",
+            "unit": "%",
+            "value": 2.0,
+            "preferred_min": 0,
+            "preferred_max": 8,
+            "fit": 1.0
+          }
+        ],
+        "rainfall_context": {
+          "recent_30d_mm": 105,
+          "scoring_mm": 105.0,
+          "regional_monthly_mm": 105.0,
+          "method": "65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback"
+        },
+        "note": "These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility."
+      },
+      "score_breakdown": {
+        "ml_weight": 0.5,
+        "environment_weight": 0.5,
+        "model_component": 42.26902126501652,
+        "environment_component": 100.0,
+        "rule_penalty": 0.0,
+        "raw_score": 71.13,
+        "model_class_available": true,
+        "display_method": "Existing rank-based display calibration, then seasonal adjustment"
+      },
+      "environmental_suitability_pct": 51.5,
+      "season_adjusted_score": 51.5,
+      "season_status": "preferred_establishment",
+      "season_label": "Preferred establishment period",
+      "recommended_planting_window": "Year-round with moisture; establishment preferred May\u2013November",
+      "season_note": "October is within the preferred establishment period for Banana (Cavendish/Lakatan).",
+      "season_reorder_eligible": false
+    }
+  ],
+  "crop": "Rice",
+  "best_crop": {
+    "crop": "Rice",
+    "compatibility_pct": 85.5
+  },
+  "environmental_suitability_pct": 85.5,
+  "season_adjusted_score": 85.5,
+  "season_status": "in_season",
+  "season_label": "In season",
+  "recommended_planting_window": "May\u2013July or October\u2013December",
+  "season_note": "October is within the configured local planting window for Rice.",
+  "season_name": "In season \u2014 October",
+  "season_advice": "October is within the configured local planting window for Rice.",
+  "xai_explanation": {
+    "method": "Configured crop-condition comparisons (not model attribution)",
+    "scope": "crop_conditions",
+    "crop": "Rice",
+    "plain_summary": "Temperature and humidity are within or close to this crop\u2019s configured ranges. Rainfall used in crop scoring is the weakest condition match.",
+    "supporting_factors": [
+      "October is within the configured local planting window for Rice."
+    ],
+    "limiting_factors": [
+      "Rainfall used in crop scoring is 105.00 mm; the preferred range is 120\u2013360 mm."
+    ],
+    "seasonal_context": "October is within the configured local planting window for Rice.",
+    "summary": "Rice ranked first after combining 85.5% environmental suitability with the October planting calendar, resulting in 85.5% final suitability."
+  },
+  "prediction_context_id": "cce797c1-4db2-4a53-88a6-91a37d1b24cd",
+  "model_version": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "fixture_notice": "Fixed test inputs; real deployed forest outputs. Not farm observations.",
+  "session_id": 901,
+  "farm_id": 1,
+  "farm_name": "Test Field",
+  "owner_display_name": "Fixture Farmer",
+  "place_name": "Panabo City (test inputs)",
+  "analyzed_at": "2026-10-11T01:00:00Z",
+  "verification_status": "draft",
+  "area_hectares": 1.2
+}

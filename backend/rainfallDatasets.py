@@ -5,11 +5,14 @@ import joblib
 import requests
 import os
 import json
+import hashlib
+import io
 import pandas as pd
 import time
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from google.oauth2 import service_account
+from model_explainability import forest_snapshot, content_hash
 
 GEE_PROJECT = os.getenv('GEE_PROJECT_ID') or os.getenv('GEE_PROJECT') or 'capstone-493314'
 GEE_SERVICE_ACCOUNT_JSON = os.getenv('GEE_SERVICE_ACCOUNT_JSON')
@@ -77,7 +80,11 @@ def ensure_earth_engine_initialized():
         raise
 
 
-MODEL              = joblib.load(_asset_path('crop_model.pkl'))
+with open(_asset_path('crop_model.pkl'), 'rb') as model_file:
+    _model_bytes = model_file.read()
+MODEL_VERSION = hashlib.sha256(_model_bytes).hexdigest()
+MODEL = joblib.load(io.BytesIO(_model_bytes))
+del _model_bytes
 ANALYSIS_CACHE     = {}
 CACHE_TTL_SECONDS  = 300
 CROP_COMPAT_MIN    = 70.0
@@ -720,7 +727,7 @@ def _crop_adjustment(crop_name, rain, humidity, ndvi, slope, ph):
     return max(-20.0, min(0.0, adj))
 
 
-def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope, active_crops=None):
+def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope, active_crops=None, inference_context=None):
     # Fair blend: trained model (soil + weather + GIS features) and satellite/weather
     # field fit are weighted equally. No manual bonus for any single crop.
     # `active_crops`, if given, is a set of crop_key strings (from the Super
@@ -744,8 +751,10 @@ def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope,
 
     ml_relative_by_crop = {}
     ml_probability_pct_by_crop = {}
+    probabilities = {}
     if hasattr(MODEL, 'predict_proba'):
         probs = MODEL.predict_proba(input_df)[0]
+        probabilities = {str(label): float(prob) for label, prob in zip(MODEL.classes_, probs)}
         ranked = sorted(zip(MODEL.classes_, probs), key=lambda x: -x[1])
         top_prob = max(float(ranked[0][1]), 0.0001) if ranked else 0.0001
         for crop_label, prob in ranked:
@@ -762,6 +771,14 @@ def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope,
                 ml_probability_pct_by_crop.get(key, 0.0),
                 round(float(prob) * 100.0, 2),
             )
+
+    snapshot = forest_snapshot(
+        MODEL, MODEL_VERSION,
+        {key: float(value) for key, value in input_df.iloc[0].items()},
+        raw_prediction, probabilities,
+    )
+    if inference_context is not None:
+        inference_context.update(snapshot)
 
     candidates = {}
     for key, profile in CROP_ENV_PROFILES.items():
@@ -793,6 +810,18 @@ def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope,
             'model_probability_pct': prob_pct,
             'environment_fit_pct': env_score,
             'ml_score_component': round(ml_score, 1),
+            'model_labels': [label for label in probabilities
+                             if str(get_panabo_recommendation(label)).lower() == key],
+            'condition_comparison': build_condition_comparison(
+                crop_name, temp, humidity, ph, crop_rain, ndvi, elevation, slope,
+                sample_id=snapshot['samples'][0]['sample_id'], recent_rain=rain),
+            'score_breakdown': {
+                'ml_weight': ML_WEIGHT, 'environment_weight': ENV_WEIGHT,
+                'model_component': ml_score, 'environment_component': env_score,
+                'rule_penalty': _crop_adjustment(key, crop_rain, humidity, ndvi, slope, ph),
+                'raw_score': raw_score, 'model_class_available': rel is not None,
+                'display_method': 'Existing rank-based display calibration, then seasonal adjustment',
+            },
         }
 
     ranked_crops = sorted(candidates.values(), key=lambda x: -x['raw_score'])
@@ -833,101 +862,57 @@ def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope,
     return raw_prediction, top_crops
 
 
-def build_xai_explanation(crop_name, crop_score, top_crops, temp, humidity, ph, rain, ndvi, elevation, slope):
-    """Create a local, model-grounded explanation for the selected parcel.
-
-    The explanation combines the trained model's ranked output with per-feature
-    environmental fit for the winning crop. This is intentionally transparent:
-    each statement is tied to a measured input and the crop's learned/localized
-    suitability range rather than a generic sentence.
-    """
-    key = str(crop_name or '').lower()
-    profile = CROP_ENV_PROFILES.get(key)
+def build_condition_comparison(crop_name, temp, humidity, ph, rain, ndvi, elevation, slope,
+                               sample_id=None, recent_rain=None):
+    """Expose the existing scoring rules as comparisons, never model attribution."""
+    profile = CROP_ENV_PROFILES.get(str(crop_name).lower())
     if not profile:
-        return {
-            'method': 'Model ranking with local environmental feature analysis',
-            'summary': f'{crop_name} ranked first with an estimated suitability of {crop_score:.1f}%.',
-            'plain_summary': f'{crop_name} looks like a solid option for this land.',
-            'supporting_factors': [],
-            'limiting_factors': [],
-            'comparison': '',
-        }
+        return {'crop': crop_name, 'status': 'unavailable'}
+    values = dict(temp=temp, humidity=humidity, ph=ph, rain=rain, ndvi=ndvi,
+                  elevation=elevation, slope=slope)
+    labels = {'temp': ('Temperature', '°C'), 'humidity': ('Humidity', '%'),
+              'ph': ('Soil pH', 'pH'), 'rain': ('Rainfall used in crop scoring', 'mm'),
+              'ndvi': ('Plant cover (NDVI)', 'index'), 'elevation': ('Elevation', 'm'),
+              'slope': ('Slope', '%')}
+    factors = []
+    for key, value in values.items():
+        low, high, hard_low, hard_high = profile[key]
+        factors.append({'feature': key, 'label': labels[key][0], 'unit': labels[key][1],
+                        'value': float(value), 'preferred_min': low, 'preferred_max': high,
+                        'fit': _range_fit(value, low, high, hard_low, hard_high)})
+    good = sorted((f for f in factors if f['fit'] >= .78), key=lambda f: -f['fit'])
+    limited = sorted((f for f in factors if f['fit'] < .78), key=lambda f: f['fit'])
+    names = ' and '.join(f['label'].lower() for f in good[:2])
+    summary = (f'{names.capitalize()} are within or close to this crop’s configured ranges.'
+               if names else 'The saved conditions have a limited match with this crop’s configured ranges.')
+    limitation = None
+    if limited:
+        factor = limited[0]
+        limitation = (f"{factor['label']} is {factor['value']:.2f} {factor['unit']}; "
+                      f"the preferred range is {factor['preferred_min']:g}–{factor['preferred_max']:g} {factor['unit']}.")
+        summary += f" {factor['label']} is the weakest condition match."
+    return {'status': 'available', 'crop': crop_name, 'scope': 'inference_sample',
+            'sample_id': sample_id, 'rules_version': content_hash(profile),
+            'method': 'Configured crop growing requirements; not model feature contributions',
+            'summary': summary, 'main_limitation': limitation, 'factors': factors,
+            'rainfall_context': {'recent_30d_mm': recent_rain, 'scoring_mm': float(rain),
+                                 'regional_monthly_mm': PANABO_CONFIG['rainfall_monthly_mm'],
+                                 'method': '65% regional monthly baseline + 35% recent 30-day rainfall; zero recent rainfall uses the existing baseline fallback'},
+            'note': 'These are project-configured ranges, not learned model weights. NDVI describes plant cover, not soil fertility.'}
 
-    values = {
-        'rain': float(rain), 'ndvi': float(ndvi), 'temp': float(temp),
-        'humidity': float(humidity), 'ph': float(ph),
-        'elevation': float(elevation), 'slope': float(slope),
-    }
-    labels = {
-        'rain': ('30-day rainfall', 'mm'), 'ndvi': ('vegetation index (NDVI)', ''),
-        'temp': ('temperature', '°C'), 'humidity': ('humidity', '%'),
-        'ph': ('soil pH', ''), 'elevation': ('elevation', 'm'),
-        'slope': ('slope', '%'),
-    }
-    weights = {'rain': 1.35, 'ndvi': 1.25, 'temp': 1.05, 'humidity': 0.95,
-               'ph': 0.95, 'elevation': 0.8, 'slope': 0.75}
-    ranked_features = []
-    for feature, value in values.items():
-        ideal_min, ideal_max, hard_min, hard_max = profile[feature]
-        fit = _range_fit(value, ideal_min, ideal_max, hard_min, hard_max)
-        ranked_features.append((fit * weights[feature], fit, feature, value, ideal_min, ideal_max))
 
-    ranked_features.sort(reverse=True)
-    supporting = []
-    limiting = []
-    for _, fit, feature, value, ideal_min, ideal_max in ranked_features:
-        label, unit = labels[feature]
-        value_text = f'{value:.2f}'.rstrip('0').rstrip('.')
-        range_text = f'{ideal_min:g}–{ideal_max:g}{unit}'
-        if fit >= 0.78 and len(supporting) < 4:
-            supporting.append(
-                f'{label.capitalize()} is {value_text}{unit}, which is within or close to the preferred {range_text} range for {crop_name}.'
-            )
-        elif fit < 0.55 and len(limiting) < 2:
-            limiting.append(
-                f'{label.capitalize()} at {value_text}{unit} is outside the strongest {range_text} range and reduced the final suitability score.'
-            )
-
-    comparison = ''
-    if top_crops and len(top_crops) > 1:
-        second = top_crops[1]
-        gap = max(0.0, float(crop_score) - float(second.get('compatibility_pct') or 0))
-        comparison = (
-            f'{crop_name} ranked above {second.get("crop", "the next crop")} by {gap:.1f} percentage points '
-            'because its combined model score and local environmental fit were higher for this parcel.'
-        )
-
-    # A short, plain-language version for the Farmer-facing app (Section 11:
-    # "keep wording understandable for non-technical Farmers"). Built from
-    # the SAME ranked_features computed above rather than recomputing —
-    # just worded in everyday language with no raw decimal numbers, and
-    # using simpler labels than the technical factor sentences above
-    # (e.g. "greenery" instead of "vegetation index (NDVI)").
-    plain_labels = {
-        'rain': 'rainfall', 'ndvi': 'greenery', 'temp': 'temperature',
-        'humidity': 'humidity', 'ph': 'soil', 'elevation': 'land height', 'slope': 'slope',
-    }
-    good_labels = [plain_labels[f] for _, fit, f, *_ in ranked_features if fit >= 0.78][:2]
-    bad_labels = [plain_labels[f] for _, fit, f, *_ in ranked_features if fit < 0.55][:1]
-    if good_labels:
-        plain_summary = f"Good match — your {' and '.join(good_labels)} suit {crop_name} well."
-    else:
-        plain_summary = f"{crop_name} is the best option here, though conditions are only an average match."
-    if bad_labels:
-        plain_summary += f" One thing to watch: {bad_labels[0]} isn't quite ideal for this crop."
-
+def build_xai_explanation(crop_name, crop_score, top_crops, temp, humidity, ph, rain, ndvi, elevation, slope):
+    """Compatibility field for older clients; agricultural comparisons only."""
+    crop = next((c for c in top_crops if c.get('crop') == crop_name), {})
+    comparison = crop.get('condition_comparison') or {}
     return {
-        'method': 'Local feature-contribution explanation using the trained crop model ranking and parcel-specific environmental fit',
-        'summary': (
-            f'{crop_name} was selected as the best match with {float(crop_score):.1f}% suitability. '
-            'The explanation below shows the measured conditions that contributed most to that result.'
-        ),
-        'plain_summary': plain_summary,
-        'supporting_factors': supporting,
-        'limiting_factors': limiting,
-        'comparison': comparison,
+        'method': 'Configured crop-condition comparisons (not model attribution)',
+        'scope': 'crop_conditions', 'crop': crop_name,
+        'summary': comparison.get('summary', 'Crop-condition details were not saved.'),
+        'plain_summary': comparison.get('summary', 'Crop-condition details were not saved.'),
+        'supporting_factors': [],
+        'limiting_factors': [comparison['main_limitation']] if comparison.get('main_limitation') else [],
     }
-
 
 
 def build_land_assessment_explanation(land_profile, ndvi, elevation, slope, rainfall, infrastructure_profile):
@@ -1185,13 +1170,15 @@ def analyze_location(lat, lon, active_crops=None):
     is_crop_possible = land_profile['is_crop_recommended']
 
     raw_crop = None
+    model_explanation = {}
     top3_crops = []
     primary_crop = primary_compat = suitability_lvl = None
 
     if is_crop_possible:
         raw_crop, top3_crops = get_ai_prediction(
             n_val, p_val, k_val, temp_val, live_hum, ph_val, rain_val,
-            ndvi_val, elev_val, slope_pct, active_crops=active_crops)
+            ndvi_val, elev_val, slope_pct, active_crops=active_crops,
+            inference_context=model_explanation)
         if top3_crops:
             primary_crop    = top3_crops[0]['crop']
             primary_compat  = top3_crops[0]['compatibility_pct']
@@ -1232,6 +1219,10 @@ def analyze_location(lat, lon, active_crops=None):
         )
     )
 
+    for sample in model_explanation.get('samples', []):
+        sample['location'] = {'lat': float(lat), 'lon': float(lon)}
+        sample['data_quality'] = deepcopy(data_quality)
+
     result = {
         'lat': lat, 'lon': lon,
         'live_humidity': live_hum, 'weather_description': weather_desc,
@@ -1265,6 +1256,7 @@ def analyze_location(lat, lon, active_crops=None):
         ),
         'ml_model_top_crop': ml_model_top_crop,
         'xai_explanation': xai_explanation,
+        'model_explanation': model_explanation or None,
     }
     for key, entry in list(ANALYSIS_CACHE.items()):
         if now_ts - entry['ts'] >= CACHE_TTL_SECONDS:

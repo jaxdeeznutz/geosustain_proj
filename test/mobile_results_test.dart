@@ -94,13 +94,13 @@ void main() {
           ),
         ),
       );
-      expect(find.text('1. Cacao'), findsOneWidget);
+      expect(find.text('Cacao'), findsOneWidget);
       expect(
         find.text('Recorded soil pH matches the crop profile.'),
         findsOneWidget,
       );
       expect(
-        find.text('No crop-specific explanation was returned.'),
+        find.textContaining('Crop-specific conditions were not saved'),
         findsOneWidget,
       );
       final bars = tester

@@ -21,6 +21,7 @@ from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 from pydantic import BaseModel, Field, field_validator
 from email_validator import validate_email, EmailNotValidError
 from geometry import normalize_polygon, polygon_area_m2, in_study_area
+from model_explainability import merge_model_snapshots, finalize_explanation
 from psycopg2 import Error as DatabaseError
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -235,6 +236,19 @@ def apply_local_seasonality(result: Dict[str, Any], planting_month: int) -> Dict
     result["season_name"] = f"{winner['season_label']} — {MONTH_NAMES[month]}"
     result["season_advice"] = winner["season_note"]
 
+    # The seasonal winner may differ from the initial model/environment leader.
+    # Never carry that earlier crop's reasons over to the new winner.
+    comparison = winner.get('condition_comparison') or {}
+    if comparison:
+        result['xai_explanation'] = {
+            'method': 'Configured crop-condition comparisons (not model attribution)',
+            'scope': 'crop_conditions', 'crop': winner['crop'],
+            'plain_summary': comparison.get('summary'),
+            'supporting_factors': [],
+            'limiting_factors': [comparison['main_limitation']] if comparison.get('main_limitation') else [],
+        }
+    elif (result.get('xai_explanation') or {}).get('crop') != winner['crop']:
+        result['xai_explanation'] = {'scope': 'crop_conditions', 'crop': winner['crop']}
     xai = result.get("xai_explanation")
     if isinstance(xai, dict):
         xai = dict(xai)
@@ -709,6 +723,7 @@ def merge_area_results(results: List[Dict[str, Any]]) -> Dict[str, Any]:
         merged['best_crop'] = None
         merged['top_crop_recommendations'] = []
         merged['alternative_crops'] = []
+        merge_model_snapshots(results, merged)
         return merged
 
     # For arable polygons, rank only genuine crop recommendations.
@@ -735,6 +750,7 @@ def merge_area_results(results: List[Dict[str, Any]]) -> Dict[str, Any]:
         for key in ('recommendation_title', 'land_status', 'xai_explanation', 'top_crop_recommendations', 'alternative_crops', 'suitability_level'):
             if representative.get(key) is not None:
                 merged[key] = representative.get(key)
+    merge_model_snapshots(results, merged)
     return merged
 
 
@@ -952,6 +968,7 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         result["temperature_c_combined"] = historical_temp * 0.70 + recent_temp * 0.30
         result["temperature_method"] = "70% multi-year monthly baseline + 30% recent condition"
     result = build_analysis_summary(result)
+    result = finalize_explanation(result)
     return result, analysis_source
 
 

@@ -27,6 +27,7 @@ part 'screens/land_mapping_screen.dart';
 part 'screens/session_gate.dart';
 part 'screens/analyze_screen.dart';
 part 'screens/mobile_results.dart';
+part 'screens/analysis_explanation.dart';
 part 'screens/history_screen.dart';
 part 'screens/profile_screen.dart';
 part 'screens/insights_report_admin_screen.dart';

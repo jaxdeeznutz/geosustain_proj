@@ -105,32 +105,11 @@ void main() {
         ..userLoaded = true;
       final record = {
         ...fixture.analysis(9, 1),
-        'crop_compatibility_pct': 78.4,
-        'predicted_crop': 'Cacao',
-        'land_status': 'Suitable for crops',
-        'analysis_summary':
-            'Cacao fits the recorded soil and climate conditions. Check drainage before planting.',
-        'xai_explanation': {
-          'plain_summary':
-              'Cacao fits the recorded soil and climate conditions.',
-          'supporting_factors': ['Soil pH is within the crop profile.'],
-          'limiting_factors': ['Verify drainage during wet months.'],
-          'planning_advice': 'Confirm soil nutrients with a field test.',
-        },
-        'top_crop_recommendations': [
-          {
-            'crop': 'Cacao',
-            'compatibility_pct': 78.4,
-            'reason': 'Matches the recorded soil pH.',
-          },
-          {
-            'crop': 'Corn',
-            'compatibility_pct': 64.0,
-            'reason': 'Check moisture during establishment.',
-          },
-        ],
-        'soil_ph': 6.2,
-        'ndvi': .61,
+        ...Map<String, dynamic>.from(
+          jsonDecode(
+            File('test/fixtures/model_analysis.json').readAsStringSync(),
+          ),
+        ),
       };
       api.rows = [
         record,
@@ -170,8 +149,20 @@ void main() {
       await capture('profile');
       await tab('Analysis');
       await capture('analysis');
+      await tester.tap(find.text('See more').first);
+      await tester.pumpAndSettle();
+      await capture('analysis-expanded');
+      await tester.ensureVisible(find.text('See less').first);
+      await tester.tap(find.text('See less').first);
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('View details').first);
+      await tester.tap(find.text('View details').first);
+      await tester.pumpAndSettle();
+      await capture('crop-details');
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
       await tester.dragUntilVisible(
-        find.text('Why this result?').hitTestable(),
+        find.text('View detailed explanation').hitTestable(),
         find
             .descendant(
               of: find.byType(MobileAnalysisPage),
@@ -180,14 +171,24 @@ void main() {
             .first,
         const Offset(0, -250),
       );
-      await tester.tap(find.text('Why this result?'));
+      await capture('analysis-chart');
+      await tester.tap(find.text('View detailed explanation'));
       await tester.pumpAndSettle();
       expect(
-        find.textContaining('The score compares crop fit'),
+        find.textContaining('normalized decreases in Gini impurity'),
         findsOneWidget,
       );
       expect(tester.takeException(), isNull);
       await capture('analysis-details');
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Other crops assessed'));
+      await tester.pumpAndSettle();
+      await capture('other-crops');
+      await tester.ensureVisible(find.text('Land conditions'));
+      await tester.pumpAndSettle();
+      await capture('land-conditions');
+      expect(state.result?['session_id'], record['session_id']);
       await tab('History');
       expect(find.text('Unnamed area'), findsOneWidget);
       await capture('history');
