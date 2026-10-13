@@ -463,7 +463,7 @@ class _MapAnalyzePageState extends State<MapAnalyzePage> {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(14, 0, 14, 18),
         children: [
-          const MobileHeader(title: 'Map & Area Selection'),
+          const GeoSustainHeader(title: 'Map & Area Selection'),
           HeroMapCard(state: state, message: message, compact: true),
           const SizedBox(height: 10),
           if (state.result?['heatmap_grid'] is List &&

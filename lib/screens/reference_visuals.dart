@@ -15,46 +15,55 @@ class FarmBanner extends StatelessWidget {
   const FarmBanner(this.title, this.description, {super.key});
   @override
   Widget build(BuildContext context) => Container(
-    margin: const EdgeInsets.symmetric(vertical: 12),
-    padding: const EdgeInsets.all(18),
+    margin: const EdgeInsets.only(bottom: 12),
+    clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(20),
-      image: const DecorationImage(
-        image: AssetImage('assets/images/dashboard/field_header.png'),
-        fit: BoxFit.cover,
-        opacity: 0.18,
-      ),
       color: softGreen,
+      borderRadius: BorderRadius.circular(GeoDesign.cardRadius),
     ),
-    child: Row(
-      children: [
-        Expanded(
-          flex: 3,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w800,
-                  color: darkGreen,
+    child: LayoutBuilder(
+      builder: (context, c) => Stack(
+        children: [
+          if (c.maxWidth >= 330)
+            const Positioned(
+              right: 0,
+              bottom: 0,
+              width: 130,
+              height: 135,
+              child: GeoFieldIllustration(),
+            ),
+          Padding(
+            padding: EdgeInsets.fromLTRB(
+              16,
+              16,
+              c.maxWidth >= 330 ? 116 : 16,
+              16,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 21,
+                    fontWeight: FontWeight.w800,
+                    color: darkGreen,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                description,
-                style: const TextStyle(
-                  fontSize: 14,
-                  height: 1.45,
-                  color: Color(0xFF435A53),
+                const SizedBox(height: 7),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.4,
+                    color: Color(0xFF435A53),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-        ),
-        const Spacer(),
-      ],
+        ],
+      ),
     ),
   );
 }
@@ -169,21 +178,28 @@ class ReferenceStat extends StatelessWidget {
                 ),
                 const SizedBox(width: 7),
                 Flexible(
-                  child: Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 23,
-                      fontWeight: FontWeight.w800,
-                      color: darkGreen,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.w800,
+                        color: darkGreen,
+                      ),
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 5),
-            Text(
-              label,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF45555B)),
+            SizedBox(
+              height: MediaQuery.textScalerOf(context).scale(11) * 2.5,
+              child: Text(
+                label,
+                maxLines: 2,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF45555B)),
+              ),
             ),
           ],
         ),
@@ -207,51 +223,101 @@ class ReferenceAction extends StatelessWidget {
     this.compact = false,
   });
   @override
-  Widget build(BuildContext context) => Card(
-    margin: EdgeInsets.zero,
-    color: blue ? const Color(0xFFEEF9FD) : const Color(0xFFEAF7F0),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(18),
-      child: Padding(
-        padding: EdgeInsets.all(compact ? 8 : 13),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            CircleAvatar(
-              radius: compact ? 17 : 22,
-              backgroundColor: blue
-                  ? const Color(0xFFD9F1FB)
-                  : const Color(0xFFD1F2E1),
-              child: Icon(icon, color: blue ? const Color(0xFF12638A) : green),
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, constraints) {
+      final padding = compact ? 8.0 : 14.0;
+      final titleStyle = TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: compact ? 11 : 14,
+        height: 1.15,
+        fontWeight: FontWeight.w800,
+        color: darkGreen,
+      );
+      final bodyStyle = TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: compact ? 10 : 12,
+        height: 1.3,
+        color: const Color(0xFF53635B),
+      );
+      double sharedHeight(List<String> labels, TextStyle style) {
+        var result = 0.0;
+        for (final label in labels) {
+          final painter = TextPainter(
+            text: TextSpan(text: label, style: style),
+            textDirection: Directionality.of(context),
+            textScaler: MediaQuery.textScalerOf(context),
+          )..layout(maxWidth: constraints.maxWidth - padding * 2);
+          result = math.max(result, painter.height);
+          painter.dispose();
+        }
+        return result.ceilToDouble();
+      }
+
+      final titleHeight = sharedHeight([
+        'Create a Farm Boundary',
+        'Analyze Land Using a Polygon',
+        'View My Farms',
+        'Analysis History',
+      ], titleStyle);
+      final bodyHeight = sharedHeight([
+        'Walk your perimeter with live GPS.',
+        'Outline an area and explore crop suitability.',
+        'Walk or draw your farm area.',
+        'Explore crop suitability.',
+        'Manage your saved areas.',
+        'Check your previous results.',
+      ], bodyStyle);
+      return Card(
+        margin: EdgeInsets.zero,
+        color: blue ? GeoDesign.blue : softGreen,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(GeoDesign.cardRadius),
+          child: Padding(
+            padding: EdgeInsets.all(padding),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  radius: compact ? 17 : 20,
+                  backgroundColor: blue
+                      ? const Color(0xFFD5EDF8)
+                      : const Color(0xFFD2ECDD),
+                  child: Icon(
+                    icon,
+                    size: 24,
+                    color: blue ? const Color(0xFF216D8A) : green,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  height: titleHeight,
+                  child: Text(title, style: titleStyle),
+                ),
+                const SizedBox(height: 6),
+                SizedBox(
+                  height: bodyHeight,
+                  child: Text(subtitle, style: bodyStyle),
+                ),
+                const SizedBox(height: 8),
+                const Align(
+                  alignment: Alignment.bottomRight,
+                  child: CircleAvatar(
+                    radius: 16,
+                    backgroundColor: green,
+                    child: Icon(
+                      Icons.arrow_forward,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+                  ),
+                ),
+              ],
             ),
-            SizedBox(height: compact ? 8 : 13),
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: compact ? 11 : 16,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF092A37),
-              ),
-            ),
-            const SizedBox(height: 7),
-            Text(
-              subtitle,
-              style: TextStyle(
-                fontSize: compact ? 10 : 13,
-                color: const Color(0xFF53636B),
-              ),
-            ),
-            const SizedBox(height: 12),
-            const CircleAvatar(
-              radius: 15,
-              backgroundColor: green,
-              child: Icon(Icons.arrow_forward, color: Colors.white, size: 19),
-            ),
-          ],
+          ),
         ),
-      ),
-    ),
+      );
+    },
   );
 }
 

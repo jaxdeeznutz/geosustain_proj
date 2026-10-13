@@ -15,9 +15,9 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SafeArea(
       child: ListView(
-        padding: const EdgeInsets.fromLTRB(14, 0, 14, 16),
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
-          MobileHeader(
+          GeoSustainHeader(
             title: 'Dashboard',
             trailing: IconButton(
               onPressed: goMap,

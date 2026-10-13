@@ -68,12 +68,16 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
     }
   }
 
-  Future<void> _open(Map<String, dynamic> farm) async {
+  Future<void> _open(Map<String, dynamic> farm, {String? action}) async {
     widget.state.focusFarm(farm);
     final analyzed = await Navigator.push<bool>(
       context,
       MaterialPageRoute(
-        builder: (_) => FarmDetailsPage(state: widget.state, farm: farm),
+        builder: (_) => FarmDetailsPage(
+          state: widget.state,
+          farm: farm,
+          initialAction: action,
+        ),
       ),
     );
     if (!mounted) return;
@@ -81,44 +85,154 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
     await _load();
   }
 
-  Future<void> _analyzeFarm(Map<String,dynamic> farm) async {
-    if(widget.state.loading)return;
-    final error=await widget.state.analyzeSavedFarm(farm);
-    if(!mounted)return;
-    if(error!=null){setState(()=>_error=error);}else{_onAnalyzed();}
+  Future<void> _analyzeFarm(Map<String, dynamic> farm) async {
+    if (widget.state.loading) return;
+    final error = await widget.state.analyzeSavedFarm(farm);
+    if (!mounted) return;
+    if (error != null) {
+      setState(() => _error = error);
+    } else {
+      _onAnalyzed();
+    }
   }
+
   @override
-  Widget build(BuildContext context) => Scaffold(body:SafeArea(child:RefreshIndicator(onRefresh:_load,child:ListView(
-    padding:const EdgeInsets.fromLTRB(12,0,12,24),children:[
-      MobileHeader(title:'My Farms',trailing:Row(mainAxisSize:MainAxisSize.min,children:[IconButton(tooltip:'Search farms',onPressed:()=>setState(()=>_showSearch=!_showSearch),icon:const Icon(Icons.search)),IconButton.filled(tooltip:'Add farm',onPressed:()=>showLandMethodPicker(context,widget.state,_onAnalyzed),icon:const Icon(Icons.add))])),
-      const FarmBanner('Manage Your Farms','View, edit, and analyze your saved farm areas. Create a new boundary or analyze an existing area anytime.'),
-      Row(crossAxisAlignment:CrossAxisAlignment.start,children:[Expanded(child:ReferenceAction('Create a Farm Boundary','Walk your perimeter with live GPS.',Icons.directions_walk,()=>openLandMethod(context,widget.state,true,_onAnalyzed))),const SizedBox(width:9),Expanded(child:ReferenceAction('Analyze Land Using a Polygon','Outline an area and explore crop suitability.',Icons.edit_square,()=>openLandMethod(context,widget.state,false,_onAnalyzed),blue:true))]),
-      const SizedBox(height:18),Wrap(crossAxisAlignment:WrapCrossAlignment.center,spacing:12,children:[const Text('Saved Farms',style:TextStyle(fontSize:24,fontWeight:FontWeight.w800,color:darkGreen)),DropdownButton<String>(value:_filter,items:[for(final f in ['All Farms','Not analyzed','Analyzed'])DropdownMenuItem(value:f,child:Text(f))],onChanged:(v)=>setState(()=>_filter=v!))]),
-      const Text('Your boundaries, results, and review updates.'),const SizedBox(height:12),
-      if(_showSearch) Padding(padding:const EdgeInsets.only(bottom:12),child:TextField(decoration:const InputDecoration(labelText:'Search farms',prefixIcon:Icon(Icons.search)),onChanged:(v)=>setState(()=>_search=v.toLowerCase()))),
-      if(_loading)const LinearProgressIndicator(),if(_error!=null)_MappingNotice(_error!),
-      if(!_loading&&widget.state.farms.isEmpty)const Card(child:Padding(padding:EdgeInsets.all(24),child:Text('No farms saved yet. Walk or draw your first boundary above.'))),
-      for(final farm in widget.state.farms.where((f)=>'${f['farm_name']} ${f['location_name']}'.toLowerCase().contains(_search)&&(_filter=='All Farms'||(_filter=='Analyzed')==((analysisNumber(f['analysis_count'])??0)>0))))
-        Card(margin:const EdgeInsets.only(bottom:12),child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Row(crossAxisAlignment:CrossAxisAlignment.start,children:[BoundaryThumbnail(farm,size:96),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-            Text('${farm['farm_name']??'Saved farm'}',style:const TextStyle(fontSize:18,fontWeight:FontWeight.w800,color:darkGreen)),
-            Text('${farm['location_name']??'Location description not provided'}',style:const TextStyle(fontSize:12,color:Color(0xFF58646B))),
-            Wrap(spacing:5,children:[Chip(label:Text(analysisAreaText(farm))),Chip(label:Text(farm['mapping_method']=='gps_walk'?'GPS boundary':'Drawn polygon'))]),
-            Text('${farm['analysis_count']??0} analyses',style:const TextStyle(color:Color(0xFF17648A))),
-          ]))]),const SizedBox(height:9),
-          Text((analysisNumber(farm['analysis_count'])??0)==0?'Not analyzed yet':'Land analysis completed',style:TextStyle(fontWeight:FontWeight.w700,color:(analysisNumber(farm['analysis_count'])??0)==0?const Color(0xFFAB6C12):green)),
-          if((analysisNumber(farm['analysis_count'])??0)>0)VerificationStatusBadge(status:'${farm['latest_verification_status']??farm['latest_review_status']??'draft'}'),
-          const SizedBox(height:12),Row(children:[Expanded(flex:2,child:FilledButton.icon(onPressed:widget.state.loading?null:()=>_analyzeFarm(farm),icon:const Icon(Icons.center_focus_strong),label:const Text('Analyze This Farm'))),const SizedBox(width:8),Expanded(child:OutlinedButton(onPressed:()=>_open(farm),child:const Text('Manage')))]),
-          if((analysisNumber(farm['analysis_count'])??0)>0)TextButton.icon(onPressed:()=>_open(farm),icon:const Icon(Icons.bar_chart),label:const Text('View Results')),
-        ]))),
-    ]))));
-  bool _showSearch=false;
+  Widget build(BuildContext context) => Scaffold(
+    body: SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            GeoSustainHeader(
+              title: 'My Farms',
+              state: widget.state,
+              trailing: GeoHeaderAction(
+                tooltip: 'Search farms',
+                onPressed: () => setState(() => _showSearch = !_showSearch),
+                icon: Icons.search,
+              ),
+            ),
+            const FarmBanner(
+              'Manage Your Farms',
+              'View, edit, and analyze your saved farm areas. Create a new boundary or analyze an existing area anytime.',
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: ReferenceAction(
+                    'Create a Farm Boundary',
+                    'Walk your perimeter with live GPS.',
+                    Icons.directions_walk,
+                    () => openLandMethod(
+                      context,
+                      widget.state,
+                      true,
+                      _onAnalyzed,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 9),
+                Expanded(
+                  child: ReferenceAction(
+                    'Analyze Land Using a Polygon',
+                    'Outline an area and explore crop suitability.',
+                    Icons.edit_square,
+                    () => openLandMethod(
+                      context,
+                      widget.state,
+                      false,
+                      _onAnalyzed,
+                    ),
+                    blue: true,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 12,
+              children: [
+                const Text(
+                  'Saved Farms',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: darkGreen,
+                  ),
+                ),
+                DropdownButton<String>(
+                  value: _filter,
+                  items: [
+                    for (final f in ['All Farms', 'Not analyzed', 'Analyzed'])
+                      DropdownMenuItem(value: f, child: Text(f)),
+                  ],
+                  onChanged: (v) => setState(() => _filter = v!),
+                ),
+              ],
+            ),
+            const Text('Your boundaries, results, and review updates.'),
+            const SizedBox(height: 12),
+            if (_showSearch)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: TextField(
+                  decoration: const InputDecoration(
+                    labelText: 'Search farms',
+                    prefixIcon: Icon(Icons.search),
+                  ),
+                  onChanged: (v) => setState(() => _search = v.toLowerCase()),
+                ),
+              ),
+            if (_loading) const LinearProgressIndicator(),
+            if (_error != null) _MappingNotice(_error!),
+            if (!_loading && widget.state.farms.isEmpty)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'No farms saved yet. Walk or draw your first boundary above.',
+                  ),
+                ),
+              ),
+            for (final farm in widget.state.farms.where(
+              (f) =>
+                  '${f['farm_name']} ${f['location_name']}'
+                      .toLowerCase()
+                      .contains(_search) &&
+                  (_filter == 'All Farms' ||
+                      (_filter == 'Analyzed') ==
+                          ((analysisNumber(f['analysis_count']) ?? 0) > 0)),
+            ))
+              GeoFarmCard(
+                farm: farm,
+                busy: widget.state.loading,
+                onOpen: () => _open(farm),
+                onAnalyze: () => _analyzeFarm(farm),
+                onResults: () => _open(farm, action: 'results'),
+                onEdit: () => _open(farm, action: 'edit'),
+                onArchive: () => _open(farm, action: 'archive'),
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+  bool _showSearch = false;
 }
 
 class FarmDetailsPage extends StatefulWidget {
   final AnalysisState state;
   final Map<String, dynamic> farm;
-  const FarmDetailsPage({super.key, required this.state, required this.farm});
+  final String? initialAction;
+  const FarmDetailsPage({
+    super.key,
+    required this.state,
+    required this.farm,
+    this.initialAction,
+  });
   @override
   State<FarmDetailsPage> createState() => FarmDetailsPageState();
 }
@@ -134,7 +248,17 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
     super.initState();
     _farm = Map.of(widget.farm);
     widget.state.addListener(_refresh);
-    _load();
+    _load().then((_) {
+      if (!mounted || _notice != null) return;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        if (widget.initialAction == 'edit') _editDetails();
+        if (widget.initialAction == 'archive') _archive();
+        if (widget.initialAction == 'results' && _analyses.isNotEmpty) {
+          _openResult(_analyses.first);
+        }
+      });
+    });
   }
 
   @override
@@ -344,24 +468,25 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
     return PopScope<bool>(
       canPop: !_busy,
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Farm details'),
-          actions: [
-            PopupMenuButton<String>(
-              enabled: !_busy,
-              tooltip: 'Farm actions',
-              onSelected: (action) {
-                if (action == 'refresh') _load();
-                if (action == 'edit') _editDetails();
-                if (action == 'archive') _archive();
-              },
-              itemBuilder: (_) => const [
-                PopupMenuItem(value: 'refresh', child: Text('Refresh')),
-                PopupMenuItem(value: 'edit', child: Text('Edit farm details')),
-                PopupMenuItem(value: 'archive', child: Text('Archive farm')),
-              ],
-            ),
-          ],
+        appBar: GeoSustainHeader(
+          title: 'Farm Details',
+          embedded: false,
+          nested: true,
+          state: widget.state,
+          trailing: PopupMenuButton<String>(
+            enabled: !_busy,
+            tooltip: 'Farm actions',
+            onSelected: (action) {
+              if (action == 'refresh') _load();
+              if (action == 'edit') _editDetails();
+              if (action == 'archive') _archive();
+            },
+            itemBuilder: (_) => const [
+              PopupMenuItem(value: 'refresh', child: Text('Refresh')),
+              PopupMenuItem(value: 'edit', child: Text('Edit farm details')),
+              PopupMenuItem(value: 'archive', child: Text('Archive farm')),
+            ],
+          ),
         ),
         body: SafeArea(
           child: ListView(

@@ -3,38 +3,283 @@ part of '../main.dart';
 class ProfilePage extends StatelessWidget {
   final AnalysisState state;
   final VoidCallback logout;
-  const ProfilePage({super.key,required this.state,required this.logout});
-  void _open(BuildContext c,Widget page)=>Navigator.push(c,MaterialPageRoute(builder:(_)=>page));
-  @override Widget build(BuildContext context){
-    void edit()=>_open(context,EditProfilePage(state:state,logout:logout));
-    Widget tile(IconData icon,String title,String subtitle,VoidCallback tap)=>ProfileActionTile(icon:icon,title:title,subtitle:subtitle,onTap:tap);
-    return SafeArea(child:ListView(padding:const EdgeInsets.fromLTRB(12,0,12,24),children:[
-      MobileHeader(title:'Profile',trailing:IconButton(tooltip:'Notifications',onPressed:()=>_open(context,NotificationsPage(state:state)),icon:const Icon(Icons.notifications_none))),
-      Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),color:green,
-        image:const DecorationImage(image:AssetImage('assets/images/dashboard/field_header.png'),fit:BoxFit.cover,colorFilter:ColorFilter.mode(Color(0xCC00603E),BlendMode.srcATop))),
-        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Align(alignment:Alignment.centerRight,child:OutlinedButton.icon(style:OutlinedButton.styleFrom(foregroundColor:Colors.white,side:const BorderSide(color:Colors.white54)),onPressed:edit,icon:const Icon(Icons.edit_outlined,size:17),label:const Text('Edit Profile'))),
-          Row(crossAxisAlignment:CrossAxisAlignment.start,children:[InkWell(onTap:edit,child:Stack(children:[CircleAvatar(radius:36,backgroundColor:Colors.white24,backgroundImage:state.profilePhotoBytes==null?null:MemoryImage(state.profilePhotoBytes!),child:state.profilePhotoBytes==null?const Icon(Icons.person,size:48,color:Colors.white):null),const Positioned(right:0,bottom:0,child:CircleAvatar(radius:13,backgroundColor:Colors.white,child:Icon(Icons.photo_camera_outlined,size:18,color:green)))])),const SizedBox(width:14),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-            Text(state.userName(),style:const TextStyle(fontSize:26,fontWeight:FontWeight.w800,color:Colors.white)),const SizedBox(height:5),
-            Text('${state.currentUser?['email']??''}',style:const TextStyle(color:Colors.white)),const SizedBox(height:8),Text('${state.userRole()} Account',style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w600)),
-            TextButton.icon(style:TextButton.styleFrom(foregroundColor:Colors.white),onPressed:edit,icon:const Icon(Icons.location_on_outlined,size:17),label:Text(state.userLocation())),
-          ]))]),const SizedBox(height:8),
-        ])),
-      const SizedBox(height:12),Row(children:[Expanded(child:ReferenceStat('${state.profileCounts['analysis_count']??state.historyRecords.length}','Analysis',Icons.map_outlined,()=>_open(context,SavedAnalysesPage(state:state)))),const SizedBox(width:8),Expanded(child:ReferenceStat('${state.farms.length}','Saved Farms',Icons.bookmark_outline,()=>_open(context,MyFarmsPage(state:state)),tint:const Color(0xFFFFF3CE))),const SizedBox(width:8),Expanded(child:ReferenceStat('${state.profileCounts['report_count']??state.generatedReports.length}','Reports',Icons.description_outlined,()=>_open(context,ReportsListPage(state:state)),tint:const Color(0xFFDDF3FC)))]),
-      const SizedBox(height:17),ProfileSection(title:'Account Management',children:[
-        tile(Icons.person_outline,'Personal Information','View and update your account details',edit),
-        tile(Icons.lock_outline,'Security','Change your password',()=>_open(context,ChangePasswordPage(api:state.api))),
-        tile(Icons.location_on_outlined,'Location','Set your default location',edit),
-        tile(Icons.notifications_none,'Notifications','Manage your notification preferences',()=>_open(context,const SettingsPage())),
-        tile(Icons.dark_mode_outlined,'Appearance','Light or dark mode',()=>_open(context,const SettingsPage())),
-      ]),const SizedBox(height:16),ProfileSection(title:'Analysis Library',children:[
-        tile(Icons.bookmark_outline,'Saved Analysis','View saved land and crop analysis records',()=>_open(context,SavedAnalysesPage(state:state))),
-        tile(Icons.description_outlined,'Reports','Open generated land suitability reports',()=>_open(context,ReportsListPage(state:state))),
-      ]),const SizedBox(height:16),ProfileSection(title:'Support & About',children:[
-        tile(Icons.help_outline,'Help & Guide','Learn how to use GeoSustain',()=>showDialog(context:context,builder:(c)=>AlertDialog(title:const Text('Help & Guide'),content:const SingleChildScrollView(child:Text('Create a boundary by walking with GPS or drawing on the map. Saving a farm does not analyze it. Open a saved farm and choose Analyze This Farm. Review every crop?s evidence and limitations in its detail tabs. Submit a completed result for analyst review. Historical results retain the boundary and criteria used at the time.')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Close'))]))),
-        tile(Icons.info_outline,'About','App version and data use',()=>showAboutDialog(context:context,applicationName:'GeoSustain',applicationVersion:'1.0.0+1',children:const[Text('Your account owns its farm boundaries and analysis history. Environmental screening supports planning and requires field verification. Contact your project administrator for the deployed service?s privacy policy and support.')])),
-      ]),const SizedBox(height:16),TextButton.icon(onPressed:logout,icon:const Icon(Icons.logout),label:const Text('Sign Out')),
-    ]));
+  const ProfilePage({super.key, required this.state, required this.logout});
+  void _open(BuildContext c, Widget page) =>
+      Navigator.push(c, MaterialPageRoute(builder: (_) => page));
+  @override
+  Widget build(BuildContext context) {
+    void edit() =>
+        _open(context, EditProfilePage(state: state, logout: logout));
+    Widget tile(
+      IconData icon,
+      String title,
+      String subtitle,
+      VoidCallback tap,
+    ) => ProfileActionTile(
+      icon: icon,
+      title: title,
+      subtitle: subtitle,
+      onTap: tap,
+    );
+    return SafeArea(
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+        children: [
+          GeoSustainHeader(title: 'Profile', state: state),
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(22),
+              color: green,
+              image: const DecorationImage(
+                image: AssetImage('assets/images/dashboard/field_header.png'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Color(0xCC00603E),
+                  BlendMode.srcATop,
+                ),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.white,
+                      backgroundColor: Colors.white.withValues(alpha: .12),
+                      side: const BorderSide(color: Colors.white54),
+                    ),
+                    onPressed: edit,
+                    icon: const Icon(Icons.edit_outlined, size: 17),
+                    label: const Text('Edit Profile'),
+                  ),
+                ),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    InkWell(
+                      onTap: edit,
+                      child: Stack(
+                        children: [
+                          CircleAvatar(
+                            radius: 36,
+                            backgroundColor: Colors.white24,
+                            backgroundImage: state.profilePhotoBytes == null
+                                ? null
+                                : MemoryImage(state.profilePhotoBytes!),
+                            child: state.profilePhotoBytes == null
+                                ? const Icon(
+                                    Icons.person,
+                                    size: 48,
+                                    color: Colors.white,
+                                  )
+                                : null,
+                          ),
+                          const Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: CircleAvatar(
+                              radius: 13,
+                              backgroundColor: Colors.white,
+                              child: Icon(
+                                Icons.photo_camera_outlined,
+                                size: 18,
+                                color: green,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            state.userName(),
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            '${state.currentUser?['email'] ?? ''}',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            state.userRole().toLowerCase().contains('account')
+                                ? state.userRole()
+                                : '${state.userRole()} Account',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          TextButton.icon(
+                            style: TextButton.styleFrom(
+                              foregroundColor: Colors.white,
+                            ),
+                            onPressed: edit,
+                            icon: const Icon(
+                              Icons.location_on_outlined,
+                              size: 17,
+                            ),
+                            label: Text(state.userLocation()),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ReferenceStat(
+                  '${state.profileCounts['analysis_count'] ?? state.historyRecords.length}',
+                  'Analysis',
+                  Icons.map_outlined,
+                  () => _open(context, SavedAnalysesPage(state: state)),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ReferenceStat(
+                  '${state.farms.length}',
+                  'Saved Farms',
+                  Icons.bookmark_outline,
+                  () => _open(context, MyFarmsPage(state: state)),
+                  tint: const Color(0xFFFFF3CE),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ReferenceStat(
+                  '${state.profileCounts['report_count'] ?? state.generatedReports.length}',
+                  'Reports',
+                  Icons.description_outlined,
+                  () => _open(context, ReportsListPage(state: state)),
+                  tint: const Color(0xFFDDF3FC),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 17),
+          ProfileSection(
+            title: 'Account Management',
+            children: [
+              tile(
+                Icons.person_outline,
+                'Personal Information',
+                'View and update your account details',
+                edit,
+              ),
+              tile(
+                Icons.lock_outline,
+                'Security',
+                'Change your password',
+                () => _open(context, ChangePasswordPage(api: state.api)),
+              ),
+              tile(
+                Icons.location_on_outlined,
+                'Location',
+                'Set your default location',
+                edit,
+              ),
+              tile(
+                Icons.notifications_none,
+                'Notifications',
+                'Manage your notification preferences',
+                () => _open(context, const SettingsPage()),
+              ),
+              tile(
+                Icons.dark_mode_outlined,
+                'Appearance',
+                'Light or dark mode',
+                () => _open(context, const SettingsPage()),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ProfileSection(
+            title: 'Analysis Library',
+            children: [
+              tile(
+                Icons.bookmark_outline,
+                'Saved Analysis',
+                'View saved land and crop analysis records',
+                () => _open(context, SavedAnalysesPage(state: state)),
+              ),
+              tile(
+                Icons.description_outlined,
+                'Reports',
+                'Open generated land suitability reports',
+                () => _open(context, ReportsListPage(state: state)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          ProfileSection(
+            title: 'Support & About',
+            children: [
+              tile(
+                Icons.help_outline,
+                'Help & Guide',
+                'Learn how to use GeoSustain',
+                () => showDialog(
+                  context: context,
+                  builder: (c) => AlertDialog(
+                    title: const Text('Help & Guide'),
+                    content: const SingleChildScrollView(
+                      child: Text(
+                        'Create a boundary by walking with GPS or drawing on the map. Saving a farm does not analyze it. Open a saved farm and choose Analyze This Farm. Review every crop?s evidence and limitations in its detail tabs. Submit a completed result for analyst review. Historical results retain the boundary and criteria used at the time.',
+                      ),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(c),
+                        child: const Text('Close'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              tile(
+                Icons.info_outline,
+                'About',
+                'App version and data use',
+                () => showAboutDialog(
+                  context: context,
+                  applicationName: 'GeoSustain',
+                  applicationVersion: '1.0.0+1',
+                  children: const [
+                    Text(
+                      'Your account owns its farm boundaries and analysis history. Environmental screening supports planning and requires field verification. Contact your project administrator for the deployed service?s privacy policy and support.',
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          TextButton.icon(
+            onPressed: logout,
+            icon: const Icon(Icons.logout),
+            label: const Text('Sign Out'),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -182,10 +427,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
       backgroundColor: bg,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
-            MobileHeader(
+            GeoSustainHeader(
               title: 'Account Settings',
+              state: widget.state,
               back: () => Navigator.pop(context),
             ),
             const SizedBox(height: 12),
@@ -352,8 +598,9 @@ class SavedAnalysesPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            MobileHeader(
+            GeoSustainHeader(
               title: 'Saved Analysis',
+              state: state,
               back: () => Navigator.pop(context),
             ),
             Expanded(
@@ -415,7 +662,11 @@ class ReportsListPage extends StatelessWidget {
       body: SafeArea(
         child: Column(
           children: [
-            MobileHeader(title: 'Reports', back: () => Navigator.pop(context)),
+            GeoSustainHeader(
+              title: 'Reports',
+              state: state,
+              back: () => Navigator.pop(context),
+            ),
             Expanded(
               child: rows.isEmpty
                   ? const Center(child: Text('No generated reports yet.'))
@@ -485,10 +736,11 @@ class SavedAnalysisDetailPage extends StatelessWidget {
       backgroundColor: bg,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
-            MobileHeader(
+            GeoSustainHeader(
               title: title,
+              state: state,
               back: () => Navigator.pop(context),
               trailing: IconButton(
                 onPressed: () => generateAnalysisPdf(record, state: state),
@@ -581,21 +833,27 @@ class ProfileSection extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            SectionTitle(title.toUpperCase()),
-            const SizedBox(height: 8),
-            ...children,
-          ],
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      GeoSectionHeader(title),
+      Card(
+        margin: EdgeInsets.zero,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Column(
+            children: [
+              for (final entry in children.indexed) ...[
+                if (entry.$1 > 0)
+                  const Divider(height: 1, color: Color(0xFFEDF1EC)),
+                entry.$2,
+              ],
+            ],
+          ),
         ),
       ),
-    );
-  }
+    ],
+  );
 }
 
 class ProfileActionTile extends StatelessWidget {
@@ -738,7 +996,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Change Password')),
+    appBar: const GeoSustainHeader(
+      title: 'Change Password',
+      embedded: false,
+      nested: true,
+    ),
     body: SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(20),
@@ -844,7 +1106,11 @@ class _LocationGuidancePageState extends State<LocationGuidancePage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Location Permission')),
+    appBar: const GeoSustainHeader(
+      title: 'Location Permission',
+      embedded: false,
+      nested: true,
+    ),
     body: SafeArea(
       child: ListView(
         padding: const EdgeInsets.all(20),

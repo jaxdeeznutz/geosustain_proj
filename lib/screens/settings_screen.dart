@@ -38,9 +38,9 @@ class _SettingsPageState extends State<SettingsPage> {
       backgroundColor: bg,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
-            MobileHeader(title: 'Settings', back: () => Navigator.pop(context)),
+            GeoSustainHeader(title: 'Settings', back: () => Navigator.pop(context)),
             Card(
               child: Column(
                 children: [

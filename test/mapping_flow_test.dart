@@ -275,6 +275,8 @@ void main() {
       gps.fixes.add(fix(7.3002, 5, -40));
       await tester.pumpAndSettle();
       expect(marker().point, const LatLng(7.3001, 125.6));
+      await tester.ensureVisible(find.byTooltip('Recenter on my position'));
+      await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Recenter on my position'));
       await tester.pumpAndSettle();
       expect(

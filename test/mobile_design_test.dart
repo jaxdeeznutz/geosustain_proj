@@ -215,6 +215,7 @@ void main() {
       addTearDown(gpsState.dispose);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await mount(FarmBoundaryPage(state: gpsState));
+      await capture('gps-ready');
       await tester.ensureVisible(find.text('Start'));
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
@@ -249,6 +250,30 @@ void main() {
       await mount(PolygonDrawingPage(state: gpsState));
       await capture('polygon');
       await tester.pumpWidget(const SizedBox());
+      final nestedState = AnalysisState(api: api)
+        ..currentUser = {'id': 10, 'role': 'farmer', 'username': 'Test Farmer'}
+        ..userLoaded = true
+        ..result = record;
+      addTearDown(nestedState.dispose);
+      for (final page in <String, Widget>{
+        'settings': const SettingsPage(),
+        'saved-analyses': SavedAnalysesPage(state: nestedState),
+        'reports': ReportsListPage(state: nestedState),
+        'edit-profile': EditProfilePage(state: nestedState, logout: () {}),
+        'security': ChangePasswordPage(api: api),
+        'notifications': NotificationsPage(state: nestedState),
+        'history-detail': HistoryDetailPage(state: nestedState, record: record),
+        'saved-result': SavedAnalysisDetailPage(
+          state: nestedState,
+          record: record,
+          title: 'Saved Analysis',
+        ),
+        'report-detail': ReportPage(state: nestedState),
+      }.entries) {
+        await mount(page.value);
+        await capture(page.key);
+        await tester.pumpWidget(const SizedBox());
+      }
     });
   }
 }

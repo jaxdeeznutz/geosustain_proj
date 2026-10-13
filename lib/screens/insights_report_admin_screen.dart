@@ -247,10 +247,11 @@ class ReportPage extends StatelessWidget {
       backgroundColor: bg,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
-            MobileHeader(
+            GeoSustainHeader(
               title: 'Land Suitability Report',
+              state: state,
               back: () => Navigator.pop(context),
               trailing: IconButton(
                 onPressed: () => generateAnalysisPdf(d ?? {}, state: state),
@@ -426,9 +427,9 @@ class AdminDashboardPage extends StatelessWidget {
       backgroundColor: bg,
       body: SafeArea(
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
-            MobileHeader(
+            GeoSustainHeader(
               title: 'Admin Dashboard',
               back: () => Navigator.pop(context),
             ),
@@ -520,7 +521,7 @@ class NotificationsPage extends StatelessWidget {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              MobileHeader(
+              GeoSustainHeader(
                 title: 'Notifications',
                 back: () => Navigator.pop(context),
                 trailing: const SizedBox(width: 48),
@@ -561,7 +562,7 @@ class NotificationsPage extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.all(16),
                 children: [
-                  MobileHeader(
+                  GeoSustainHeader(
                     title: 'Notifications',
                     back: () => Navigator.pop(context),
                     trailing: const SizedBox(width: 48),

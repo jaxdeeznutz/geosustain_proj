@@ -21,6 +21,7 @@ import 'farm_geometry.dart';
 
 part 'screens/mobile_visuals.dart';
 part 'screens/reference_visuals.dart';
+part 'screens/design_system.dart';
 part 'screens/reference_analysis.dart';
 part 'screens/home_screen.dart';
 part 'screens/map_screen.dart';
@@ -56,10 +57,10 @@ void main() async {
 
 final appThemeMode = ValueNotifier<ThemeMode>(ThemeMode.light);
 
-const green = Color(0xFF08733F);
-const darkGreen = Color(0xFF055C34);
-const softGreen = Color(0xFFEAF6EF);
-const bg = Color(0xFFF8FAF4);
+const green = GeoDesign.green;
+const darkGreen = GeoDesign.darkGreen;
+const softGreen = GeoDesign.lightGreen;
+const bg = GeoDesign.background;
 const cream = Color(0xFFFFF6EB);
 const panaboCenter = LatLng(7.2915, 125.6255);
 
@@ -175,6 +176,11 @@ class GeoSustainApp extends StatelessWidget {
           navigationBarTheme: const NavigationBarThemeData(
             backgroundColor: Colors.white,
             indicatorColor: Color(0xFFD5EDDD),
+            height: 76,
+            iconTheme: WidgetStatePropertyAll(IconThemeData(size: 24)),
+            labelTextStyle: WidgetStatePropertyAll(
+              TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+            ),
           ),
           scaffoldBackgroundColor: bg,
           useMaterial3: true,
@@ -215,7 +221,7 @@ class GeoSustainApp extends StatelessWidget {
             style: FilledButton.styleFrom(
               backgroundColor: green,
               foregroundColor: Colors.white,
-              minimumSize: const Size.fromHeight(52),
+              minimumSize: const Size(64, GeoDesign.buttonHeight),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -225,11 +231,23 @@ class GeoSustainApp extends StatelessWidget {
               ),
             ),
           ),
+          outlinedButtonTheme: OutlinedButtonThemeData(
+            style: OutlinedButton.styleFrom(
+              minimumSize: const Size(64, GeoDesign.buttonHeight),
+              foregroundColor: green,
+              backgroundColor: softGreen,
+              disabledForegroundColor: const Color(0xFF7D8C83),
+              side: const BorderSide(color: Color(0xFFD2E6D9)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(GeoDesign.buttonRadius),
+              ),
+            ),
+          ),
           cardTheme: CardThemeData(
             color: Colors.white,
             elevation: 0,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(18),
+              borderRadius: BorderRadius.circular(GeoDesign.cardRadius),
               side: const BorderSide(color: Color(0xFFE7EEE8)),
             ),
           ),
@@ -463,7 +481,7 @@ class _LoginPageState extends State<LoginPage> {
             onPressed: loading ? null : login,
             style: FilledButton.styleFrom(
               backgroundColor: green,
-              minimumSize: const Size.fromHeight(52),
+              minimumSize: const Size(64, GeoDesign.buttonHeight),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -716,7 +734,7 @@ class _RegisterPageState extends State<RegisterPage> {
             onPressed: loading ? null : register,
             style: FilledButton.styleFrom(
               backgroundColor: green,
-              minimumSize: const Size.fromHeight(52),
+              minimumSize: const Size(64, GeoDesign.buttonHeight),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -2673,74 +2691,4 @@ class InfoChip extends StatelessWidget {
       ],
     ),
   );
-}
-
-class MobileHeader extends StatelessWidget {
-  final String title;
-  final bool showMenu;
-  final Widget? trailing;
-  final VoidCallback? back;
-  const MobileHeader({
-    super.key,
-    required this.title,
-    this.showMenu = true,
-    this.trailing,
-    this.back,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-      decoration: const BoxDecoration(color: green),
-      child: IconTheme(
-        data: const IconThemeData(color: Colors.white),
-        child: Row(
-          children: [
-            if (back != null)
-              IconButton(
-                onPressed: back,
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-              ),
-            const Icon(Icons.eco, color: Colors.white, size: 37),
-            const SizedBox(width: 9),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'GeoSustain',
-                    style: TextStyle(
-                      fontSize: 23,
-                      fontWeight: FontWeight.w800,
-                      color: Colors.white,
-                    ),
-                  ),
-                  if (title != 'GeoSustain')
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: Colors.white70,
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            trailing ??
-                IconButton.filledTonal(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => const NotificationsPage(),
-                    ),
-                  ),
-                  icon: const Icon(Icons.notifications_none_rounded),
-                ),
-          ],
-        ),
-      ),
-    );
-  }
 }

@@ -449,7 +449,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
         }
       },
       child: Scaffold(
-        appBar: _mappingHeader(context, gps: true),
+        appBar: _mappingHeader(context, state: widget.state, gps: true),
         body: SafeArea(
           child: Theme(
             data: _mappingTheme(context),
@@ -474,53 +474,74 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                   closed: _review || _saved != null,
                 ),
                 const SizedBox(height: 12),
-                _BoundarySummary(points: _points),
-                const SizedBox(height: 10),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: [
-                    Chip(
-                      avatar: _RecordingDot(
-                        key: const ValueKey('recording-indicator'),
-                        active: _recording && _fresh,
-                      ),
-                      label: Text(
-                        _saved != null
-                            ? 'Saved'
-                            : _review
-                            ? 'Boundary preview'
-                            : _recording
-                            ? (_fresh ? 'Recording' : 'Waiting for GPS')
-                            : (_hasStarted ? 'Paused' : 'Ready'),
-                      ),
-                    ),
-                    Chip(
-                      label: AnimatedSwitcher(
-                        duration: MediaQuery.disableAnimationsOf(context)
-                            ? Duration.zero
-                            : const Duration(milliseconds: 220),
-                        child: Text(
-                          '${_points.length} points',
-                          key: ValueKey(_points.length),
+                IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: GeoInfoCard(
+                          icon: _RecordingDot(
+                            key: const ValueKey('recording-indicator'),
+                            active: _recording && _fresh,
+                          ),
+                          label: _saved != null
+                              ? 'Saved'
+                              : _review
+                              ? 'Boundary preview'
+                              : _recording
+                              ? (_fresh ? 'Recording' : 'Waiting for GPS')
+                              : (_hasStarted ? 'Paused' : 'Ready'),
+                          subtitle: _saved != null
+                              ? 'Farm boundary saved'
+                              : _review
+                              ? 'Check the closing edge'
+                              : _recording
+                              ? 'Walk your perimeter'
+                              : _hasStarted
+                              ? 'Tap Resume to continue'
+                              : 'Tap Start to begin',
                         ),
                       ),
-                    ),
-                    Chip(
-                      label: Text(
-                        _accuracy == null
-                            ? 'Accuracy unknown'
-                            : 'GPS ±${_accuracy!.toStringAsFixed(0)} m',
-                      ),
-                    ),
-                    if (_points.length >= 3 && area > 0)
-                      Chip(
-                        label: Text(
-                          '${analysisAreaText({'area_hectares': area})} (estimate)',
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GeoInfoCard(
+                          icon: const Icon(
+                            Icons.polyline_outlined,
+                            size: 19,
+                            color: Color(0xFF216D8A),
+                          ),
+                          label: '${_points.length} points',
+                          subtitle: _points.isEmpty
+                              ? 'Boundary not started'
+                              : 'Accepted boundary points',
+                          color: GeoDesign.blue,
                         ),
                       ),
-                  ],
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: GeoInfoCard(
+                          icon: const Icon(
+                            Icons.signal_cellular_alt,
+                            size: 19,
+                            color: Color(0xFFBC9418),
+                          ),
+                          label: _accuracy == null
+                              ? 'Accuracy unknown'
+                              : 'GPS \u00b1${_accuracy!.toStringAsFixed(0)} m',
+                          subtitle: _accuracy == null || _accuracy! > 20
+                              ? 'Open sky improves GPS'
+                              : 'Current reported accuracy',
+                          color: GeoDesign.yellow,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
+                if (_points.length >= 3 && area > 0) ...[
+                  const SizedBox(height: 12),
+                  _BoundarySummary(points: _points),
+                ],
+                const SizedBox(height: 14),
                 if (_notice != null) _MappingNotice(_notice!),
                 if (_showAppSettings && !kIsWeb)
                   TextButton.icon(
@@ -549,48 +570,54 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                     label: const Text('Open location settings'),
                   ),
                 if (_saved == null && !_review) ...[
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  SizedBox(
+                    width: double.infinity,
+                    child: GeoButton(
+                      primary: true,
+                      label: _starting
+                          ? 'Finding GPS...'
+                          : _recording
+                          ? 'Pause'
+                          : !_hasStarted
+                          ? 'Start'
+                          : 'Resume',
+                      icon: _recording ? Icons.pause : Icons.play_arrow,
+                      onPressed: _starting || _busy
+                          ? null
+                          : _recording
+                          ? () => _pause()
+                          : _start,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
                     children: [
-                      FilledButton.icon(
-                        onPressed: _starting || _busy
-                            ? null
-                            : _recording
-                            ? () => _pause()
-                            : _start,
-                        icon: Icon(_recording ? Icons.pause : Icons.play_arrow),
-                        label: Text(
-                          _starting
-                              ? 'Finding GPS…'
-                              : _recording
-                              ? 'Pause'
-                              : !_hasStarted
-                              ? 'Start'
-                              : 'Resume',
+                      Expanded(
+                        child: GeoButton(
+                          label: 'Finish',
+                          icon: Icons.stop,
+                          onPressed: _points.isEmpty || _busy || _starting
+                              ? null
+                              : _finish,
                         ),
                       ),
-                      OutlinedButton.icon(
-                        onPressed: _points.isEmpty || _busy || _starting
-                            ? null
-                            : _finish,
-                        icon: const Icon(Icons.stop),
-                        label: const Text('Finish'),
-                      ),
-                      OutlinedButton.icon(
-                        onPressed: _recording || _points.isEmpty || _busy
-                            ? null
-                            : () {
-                                setState(() {
-                                  _points.removeLast();
-                                  _times.removeLast();
-                                  _accuracies.removeLast();
-                                  _notice =
-                                      'Last point removed. Resume from the new last point.';
-                                });
-                              },
-                        icon: const Icon(Icons.undo),
-                        label: const Text('Undo last point'),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: GeoButton(
+                          label: 'Undo last point',
+                          icon: Icons.undo,
+                          onPressed: _recording || _points.isEmpty || _busy
+                              ? null
+                              : () {
+                                  setState(() {
+                                    _points.removeLast();
+                                    _times.removeLast();
+                                    _accuracies.removeLast();
+                                    _notice =
+                                        'Last point removed. Resume from the new last point.';
+                                  });
+                                },
+                        ),
                       ),
                     ],
                   ),
@@ -648,6 +675,8 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                 ],
                 if (_busy) const LinearProgressIndicator(),
                 const SizedBox(height: 12),
+                const _GpsTipCard(),
+                const SizedBox(height: 8),
                 const ExpansionTile(
                   tilePadding: EdgeInsets.zero,
                   title: Text('Recording help', style: TextStyle(fontSize: 14)),
@@ -804,7 +833,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   Widget build(BuildContext context) => PopScope<bool>(
     canPop: !_busy,
     child: Scaffold(
-      appBar: _mappingHeader(context),
+      appBar: _mappingHeader(context, state: widget.state),
       body: SafeArea(
         child: Theme(
           data: _mappingTheme(context),
@@ -949,72 +978,39 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   );
 }
 
-AppBar _mappingHeader(BuildContext context, {bool gps = false}) => AppBar(
-  backgroundColor: green,
-  foregroundColor: Colors.white,
-  centerTitle: false,
-  toolbarHeight: 76,
-  title: Column(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Text(
-        gps ? 'Farm Boundary' : 'Land Analysis',
-        style: const TextStyle(
-          fontSize: 19,
-          fontWeight: FontWeight.w800,
-          color: Colors.white,
+GeoSustainHeader _mappingHeader(
+  BuildContext context, {
+  required AnalysisState state,
+  bool gps = false,
+}) => GeoSustainHeader(
+  title: gps ? 'Create a Farm Boundary' : 'Analyze Land',
+  embedded: false,
+  nested: true,
+  state: state,
+  trailing: GeoHeaderAction(
+    icon: Icons.help_outline,
+    tooltip: 'Guide',
+    onPressed: () => showDialog(
+      context: context,
+      builder: (c) => AlertDialog(
+        title: const Text('Boundary guide'),
+        content: Text(
+          gps
+              ? 'Start recording, then walk the perimeter. Pause to stop collecting points. Finish to review the closing edge and save your farm. GPS permission is required for recording.'
+              : 'Draw: tap each corner. Edit: select a numbered vertex, then its new position. Move map: pan without adding points. Undo reverses the last edit. Device location is optional.',
         ),
-      ),
-      Text(
-        gps ? 'Walk and map your farm area' : 'Draw and analyze your farm area',
-        style: const TextStyle(fontSize: 11, color: Colors.white70),
-      ),
-    ],
-  ),
-  actions: [
-    TextButton.icon(
-      onPressed: () => showDialog(
-        context: context,
-        builder: (c) => AlertDialog(
-          title: const Text('Boundary guide'),
-          content: Text(
-            gps
-                ? 'Start recording, then walk the perimeter. Pause to stop collecting points. Finish to review the closing edge and save your farm. GPS permission is required for recording.'
-                : 'Draw: tap each corner. Edit: select a numbered vertex, then its new position. Move map: pan without adding points. Undo reverses the last edit. Device location is optional.',
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(c),
+            child: const Text('Close'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(c),
-              child: const Text('Close'),
-            ),
-          ],
-        ),
+        ],
       ),
-      icon: const Icon(Icons.map_outlined, color: Colors.white, size: 20),
-      label: const Text('Guide', style: TextStyle(color: Colors.white)),
     ),
-  ],
+  ),
 );
 
-ThemeData _mappingTheme(BuildContext context) => Theme.of(context).copyWith(
-  outlinedButtonTheme: OutlinedButtonThemeData(
-    style: OutlinedButton.styleFrom(
-      foregroundColor: green,
-      backgroundColor: const Color(0xFFF0F8F4),
-      minimumSize: const Size(104, 48),
-      side: const BorderSide(color: Color(0xFFB9DDCE)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
-    ),
-  ),
-  filledButtonTheme: FilledButtonThemeData(
-    style: FilledButton.styleFrom(
-      backgroundColor: green,
-      foregroundColor: Colors.white,
-      minimumSize: const Size(104, 50),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-    ),
-  ),
-);
+ThemeData _mappingTheme(BuildContext context) => Theme.of(context);
 
 class _BoundaryBanner extends StatelessWidget {
   final bool gps;
@@ -1023,45 +1019,130 @@ class _BoundaryBanner extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: const Color(0xFFEAF5EF),
-      borderRadius: BorderRadius.circular(20),
+      color: softGreen,
+      borderRadius: BorderRadius.circular(GeoDesign.cardRadius),
     ),
-    child: Row(
+    child: LayoutBuilder(
+      builder: (context, constraints) => Row(
+        children: [
+          Expanded(
+            flex: 3,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  gps ? 'Walk the perimeter' : 'Draw Your Farm Boundary',
+                  style: const TextStyle(
+                    fontSize: 19,
+                    fontWeight: FontWeight.w800,
+                    color: darkGreen,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  gps
+                      ? 'and return to your starting point.'
+                      : 'Tap around your farm to draw its boundary. Edit or move points anytime. Device location is optional.',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    height: 1.35,
+                    color: Color(0xFF53635B),
+                  ),
+                ),
+                if (gps) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final step in [
+                        'Tap Start',
+                        'Walk around your land',
+                        'Return to starting point',
+                      ].indexed)
+                        Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 2),
+                            child: Column(
+                              children: [
+                                CircleAvatar(
+                                  radius: 13,
+                                  backgroundColor: const Color(0xFFC2E5CB),
+                                  child: Text(
+                                    '${step.$1 + 1}',
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: darkGreen,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  step.$2,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 10,
+                                    height: 1.25,
+                                    color: Color(0xFF53635B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+          if (constraints.maxWidth >= 330 &&
+              MediaQuery.textScalerOf(context).scale(1) <= 1.3) ...[
+            const SizedBox(width: 8),
+            const Expanded(
+              flex: 1,
+              child: SizedBox(height: 120, child: GeoFieldIllustration()),
+            ),
+          ],
+        ],
+      ),
+    ),
+  );
+}
+
+class _GpsTipCard extends StatelessWidget {
+  const _GpsTipCard();
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: softGreen,
+      borderRadius: BorderRadius.circular(GeoDesign.smallRadius),
+    ),
+    child: const Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(
-          padding: const EdgeInsets.all(12),
-          decoration: BoxDecoration(
-            color: const Color(0xFFBCE4C8),
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Icon(
-            gps ? Icons.directions_walk : Icons.eco,
-            color: green,
-            size: 28,
-          ),
+        CircleAvatar(
+          radius: 18,
+          backgroundColor: Color(0xFFD5ECDB),
+          child: Icon(Icons.lightbulb_outline, color: green, size: 21),
         ),
-        const SizedBox(width: 14),
+        SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                gps ? 'Walk Your Farm Boundary' : 'Draw Your Farm Boundary',
-                style: const TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.w800,
-                ),
+                'Tip',
+                style: TextStyle(fontWeight: FontWeight.w700, color: darkGreen),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 4),
               Text(
-                gps
-                    ? 'Walk the perimeter and return to your starting point. Pause anytime, then review your boundary before saving.'
-                    : 'Tap around your farm to draw its boundary. You can edit or move the points anytime. Device location access is not required.',
-                style: const TextStyle(
-                  fontSize: 13,
+                'For best accuracy, walk slowly with a clear view of the sky and avoid tall buildings or dense trees.',
+                style: TextStyle(
+                  fontSize: 12,
                   height: 1.4,
-                  color: Color(0xFF58656B),
+                  color: Color(0xFF53635B),
                 ),
               ),
             ],
@@ -1247,7 +1328,7 @@ class _BoundaryMapState extends State<_BoundaryMap> {
     return Column(
       children: [
         ClipRRect(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(GeoDesign.cardRadius),
           child: SizedBox(
             height: _fullscreen
                 ? MediaQuery.sizeOf(context).height * .8
@@ -1414,9 +1495,8 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF354449),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: const CircleBorder(),
+                          fixedSize: const Size.square(48),
                         ),
                         tooltip: widget.onRecenter == null
                             ? 'My location'
@@ -1424,39 +1504,39 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                         onPressed: widget.onRecenter ?? _locate,
                         icon: const Icon(Icons.my_location),
                       ),
+                      const SizedBox(height: 8),
                       IconButton.filledTonal(
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF354449),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: const CircleBorder(),
+                          fixedSize: const Size.square(48),
                         ),
                         tooltip: 'Zoom in',
                         onPressed: () =>
                             _map.move(_map.camera.center, _map.camera.zoom + 1),
                         icon: const Icon(Icons.add),
                       ),
+                      const SizedBox(height: 8),
                       IconButton.filledTonal(
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF354449),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: const CircleBorder(),
+                          fixedSize: const Size.square(48),
                         ),
                         tooltip: 'Zoom out',
                         onPressed: () =>
                             _map.move(_map.camera.center, _map.camera.zoom - 1),
                         icon: const Icon(Icons.remove),
                       ),
+                      const SizedBox(height: 8),
                       IconButton.filledTonal(
                         style: IconButton.styleFrom(
                           backgroundColor: Colors.white,
                           foregroundColor: const Color(0xFF354449),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
+                          shape: const CircleBorder(),
+                          fixedSize: const Size.square(48),
                         ),
                         tooltip: 'Fullscreen map',
                         onPressed: () =>

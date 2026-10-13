@@ -5,60 +5,332 @@ class HomePage extends StatelessWidget {
   final ValueChanged<int> go;
   final VoidCallback logout;
   final ValueChanged<String> message;
-  const HomePage({super.key,required this.state,required this.go,required this.logout,required this.message});
-  Future<void> openRecord(Map<String,dynamic> record) async {final error=await state.selectAnalysis(record);if(error!=null){message(error);return;}go(2);}
-  void crops(BuildContext context)=>showModalBottomSheet(context:context,showDragHandle:true,isScrollControlled:true,builder:(_)=>SafeArea(child:SingleChildScrollView(child:Padding(padding:const EdgeInsets.all(20),child:Column(mainAxisSize:MainAxisSize.min,children:[
-    const Text('Supported crops',style:TextStyle(fontSize:22,fontWeight:FontWeight.w800)),
-    const Text('Seven Panabo commodities. New results show which factors could be assessed.'),
-    for(final name in supportedCropNames) ListTile(leading:CropArtwork(name),title:Text(name)),
-  ])))));
-  @override
-  Widget build(BuildContext context){
-    final pending=state.historyRecords.where((r)=>r['verification_status']=='pending').length;
-    final weather=state.liveWeather;
-    return SafeArea(child:RefreshIndicator(onRefresh:()async{await Future.wait([state.refreshFarms(),state.refreshHistoryData(),state.refreshLiveWeather()]);},
-      child:ListView(padding:const EdgeInsets.fromLTRB(12,0,12,24),children:[
-        MobileHeader(title:'GeoSustain',trailing:Row(mainAxisSize:MainAxisSize.min,children:[
-          IconButton(tooltip:'Notifications',onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>NotificationsPage(state:state))),icon:const Icon(Icons.notifications_none)),
-          InkWell(onTap:()=>go(4),child:CircleAvatar(backgroundColor:green,child:Text(state.userName().isEmpty?'':state.userName()[0].toUpperCase(),style:const TextStyle(color:Colors.white)))),
-        ])),
-        Container(padding:const EdgeInsets.all(21),decoration:BoxDecoration(borderRadius:BorderRadius.circular(20),
-          image:const DecorationImage(image:AssetImage('assets/images/dashboard/farm_hero.png'),fit:BoxFit.cover),color:darkGreen),
-          child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-            Text('Welcome, ${state.userName()}!',style:const TextStyle(color:Colors.white,fontSize:15)),const SizedBox(height:8),
-            const Text('Understand\nyour land.',style:TextStyle(fontSize:25,height:1.1,fontWeight:FontWeight.w800,color:Colors.white)),
-            const Text('Plan your farm.',style:TextStyle(fontSize:25,height:1.1,fontWeight:FontWeight.w800,color:Color(0xFF79F1BE))),
-            const SizedBox(height:9),const SizedBox(width:230,child:Text('Map your boundary, discover suitable crops, and plan with confidence.',style:TextStyle(fontSize:12,height:1.4,color:Colors.white))),
-            const SizedBox(height:12),SizedBox(width:230,child:FilledButton.icon(onPressed:()=>showLandMethodPicker(context,state,()=>go(2)),icon:const Icon(Icons.eco),label:const Text('Get Started'))),
-            const SizedBox(height:12),
-          ])),
-        const SizedBox(height:12),Row(children:[
-          Expanded(child:ReferenceStat('${state.farms.length}','Saved Farms',Icons.agriculture_outlined,()=>go(1))),const SizedBox(width:7),
-          Expanded(child:ReferenceStat('$pending','Pending Reviews',Icons.description_outlined,()=>go(3),tint:const Color(0xFFFFF0CF))),const SizedBox(width:7),
-          Expanded(child:ReferenceStat('${supportedCropNames.length}','Supported Crops',Icons.eco_outlined,()=>crops(context),tint:const Color(0xFFDDF2FC))),
-        ]),
-        if(state.historyError!=null||state.farmsError!=null) Padding(padding:const EdgeInsets.all(8),child:Text(state.historyError??state.farmsError!)),
-        _heading('Quick Actions',()=>showLandMethodPicker(context,state,()=>go(2))),
-        LayoutBuilder(builder:(context,c)=>Wrap(spacing:8,runSpacing:8,children:[
-          for(final item in [
-            ('Create a Farm Boundary','Walk or draw your farm area.',Icons.map_outlined,()=>openLandMethod(context,state,true,()=>go(2))),
-            ('Analyze Land Using a Polygon','Explore crop suitability.',Icons.bar_chart,()=>openLandMethod(context,state,false,()=>go(2))),
-            ('View My Farms','Manage your saved areas.',Icons.search,()=>go(1)),
-            ('Analysis History','Check your previous results.',Icons.history,()=>go(3)),
-          ].indexed) SizedBox(width:c.maxWidth>=350 && MediaQuery.textScalerOf(context).scale(1) <= 1.2?(c.maxWidth-24)/4:(c.maxWidth-8)/2,child:ReferenceAction(item.$2.$1,item.$2.$2,item.$2.$3,item.$2.$4,blue:item.$1.isOdd,compact:c.maxWidth>=350 && c.maxWidth<600 && MediaQuery.textScalerOf(context).scale(1) <= 1.2)),
-        ])),
-        _heading('Recent Activity',()=>go(3)),
-        if(state.historyRecords.isEmpty) const Card(child:Padding(padding:EdgeInsets.all(20),child:Text('Your completed analyses will appear here.'))),
-        for(final row in newestAnalysisRecords(state.historyRecords).take(3)) Card(child:ListTile(contentPadding:const EdgeInsets.all(9),leading:BoundaryThumbnail(row,size:61),title:Text('${row['farm_name']??row['place_name']??'Unnamed area'}',style:const TextStyle(fontSize:14,fontWeight:FontWeight.w700)),subtitle:Text('${analysisDateText(analysisRecordDate(row))}\n${_farmReviewLabel(row['verification_status'])}',style:const TextStyle(fontSize:12)),trailing:const Icon(Icons.chevron_right),onTap:()=>openRecord(row))),
-        _heading('Current Weather',()async{final error=await state.refreshLiveWeather();if(error!=null)message(error);}),
-        Container(padding:const EdgeInsets.all(16),decoration:BoxDecoration(borderRadius:BorderRadius.circular(18),gradient:const LinearGradient(colors:[Color(0xFFDFF4FC),Colors.white])),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          Row(children:[const Icon(Icons.wb_cloudy_outlined,size:43,color:Color(0xFF4791B5)),const SizedBox(width:12),Expanded(child:Text(weather==null?'Weather unavailable':'${state.numText(weather['temperature_c'])} C',style:const TextStyle(fontSize:25,fontWeight:FontWeight.w800,color:darkGreen)))]),
-          Text(weather==null?'Pull to refresh. Live conditions are separate from saved analyses.':'${weather['weather_description']??'Conditions unavailable'} | Humidity ${state.numText(weather['live_humidity'])}% | Wind ${state.numText(weather['wind_speed_kmh'])} km/h'),
-          Text('Panabo City | ${weather?['updated_at']??weather?['observed_at']??'Update time unavailable'}',style:const TextStyle(fontSize:11,color:Color(0xFF53636B))),
-        ])),
-      ])));
+  const HomePage({
+    super.key,
+    required this.state,
+    required this.go,
+    required this.logout,
+    required this.message,
+  });
+  Future<void> openRecord(Map<String, dynamic> record) async {
+    final error = await state.selectAnalysis(record);
+    if (error != null) {
+      message(error);
+      return;
+    }
+    go(2);
   }
-  Widget _heading(String title,VoidCallback tap)=>Padding(padding:const EdgeInsets.fromLTRB(5,18,0,8),child:Row(children:[Expanded(child:Text(title,style:const TextStyle(fontSize:20,fontWeight:FontWeight.w800,color:darkGreen))),TextButton(onPressed:tap,child:Text(title=='Current Weather'?'Refresh':'See all'))]));
+
+  void crops(BuildContext context) => showModalBottomSheet(
+    context: context,
+    showDragHandle: true,
+    isScrollControlled: true,
+    builder: (_) => SafeArea(
+      child: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Supported crops',
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+              ),
+              const Text(
+                'Seven Panabo commodities. New results show which factors could be assessed.',
+              ),
+              for (final name in supportedCropNames)
+                ListTile(leading: CropArtwork(name), title: Text(name)),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+  @override
+  Widget build(BuildContext context) {
+    final pending = state.historyRecords
+        .where((r) => r['verification_status'] == 'pending')
+        .length;
+    final weather = state.liveWeather;
+    return SafeArea(
+      child: RefreshIndicator(
+        onRefresh: () async {
+          await Future.wait([
+            state.refreshFarms(),
+            state.refreshHistoryData(),
+            state.refreshLiveWeather(),
+          ]);
+        },
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+          children: [
+            GeoSustainHeader(title: 'Home', state: state),
+            Container(
+              padding: const EdgeInsets.all(21),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(20),
+                image: const DecorationImage(
+                  image: AssetImage('assets/images/dashboard/farm_hero.png'),
+                  fit: BoxFit.cover,
+                ),
+                color: darkGreen,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Welcome, ${state.userName()}!',
+                    style: const TextStyle(color: Colors.white, fontSize: 15),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Understand\nyour land.',
+                    style: TextStyle(
+                      fontSize: 25,
+                      height: 1.1,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const Text(
+                    'Plan your farm.',
+                    style: TextStyle(
+                      fontSize: 25,
+                      height: 1.1,
+                      fontWeight: FontWeight.w800,
+                      color: Color(0xFF79F1BE),
+                    ),
+                  ),
+                  const SizedBox(height: 9),
+                  const SizedBox(
+                    width: 230,
+                    child: Text(
+                      'Map your boundary, discover suitable crops, and plan with confidence.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        height: 1.4,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: 230,
+                    child: FilledButton.icon(
+                      onPressed: () =>
+                          showLandMethodPicker(context, state, () => go(2)),
+                      icon: const Icon(Icons.eco),
+                      label: const Text('Get Started'),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ReferenceStat(
+                    '${state.farms.length}',
+                    'Saved Farms',
+                    Icons.agriculture_outlined,
+                    () => go(1),
+                  ),
+                ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: ReferenceStat(
+                    '$pending',
+                    'Pending Reviews',
+                    Icons.description_outlined,
+                    () => go(3),
+                    tint: const Color(0xFFFFF0CF),
+                  ),
+                ),
+                const SizedBox(width: 7),
+                Expanded(
+                  child: ReferenceStat(
+                    '${supportedCropNames.length}',
+                    'Supported Crops',
+                    Icons.eco_outlined,
+                    () => crops(context),
+                    tint: const Color(0xFFDDF2FC),
+                  ),
+                ),
+              ],
+            ),
+            if (state.historyError != null || state.farmsError != null)
+              Padding(
+                padding: const EdgeInsets.all(8),
+                child: Text(state.historyError ?? state.farmsError!),
+              ),
+            _heading(
+              'Quick Actions',
+              () => showLandMethodPicker(context, state, () => go(2)),
+            ),
+            LayoutBuilder(
+              builder: (context, c) => Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final item in [
+                    (
+                      'Create a Farm Boundary',
+                      'Walk or draw your farm area.',
+                      Icons.map_outlined,
+                      () => openLandMethod(context, state, true, () => go(2)),
+                    ),
+                    (
+                      'Analyze Land Using a Polygon',
+                      'Explore crop suitability.',
+                      Icons.bar_chart,
+                      () => openLandMethod(context, state, false, () => go(2)),
+                    ),
+                    (
+                      'View My Farms',
+                      'Manage your saved areas.',
+                      Icons.search,
+                      () => go(1),
+                    ),
+                    (
+                      'Analysis History',
+                      'Check your previous results.',
+                      Icons.history,
+                      () => go(3),
+                    ),
+                  ].indexed)
+                    SizedBox(
+                      width:
+                          c.maxWidth >= 350 &&
+                              MediaQuery.textScalerOf(context).scale(1) <= 1.2
+                          ? (c.maxWidth - 24) / 4
+                          : (c.maxWidth - 8) / 2,
+                      child: ReferenceAction(
+                        item.$2.$1,
+                        item.$2.$2,
+                        item.$2.$3,
+                        item.$2.$4,
+                        blue: item.$1.isOdd,
+                        compact:
+                            c.maxWidth >= 350 &&
+                            c.maxWidth < 600 &&
+                            MediaQuery.textScalerOf(context).scale(1) <= 1.2,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            _heading('Recent Activity', () => go(3)),
+            if (state.historyRecords.isEmpty)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('Your completed analyses will appear here.'),
+                ),
+              ),
+            for (final row in newestAnalysisRecords(
+              state.historyRecords,
+            ).take(3))
+              Card(
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(9),
+                  leading: BoundaryThumbnail(row, size: 61),
+                  title: Text(
+                    '${row['farm_name'] ?? row['place_name'] ?? 'Unnamed area'}',
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                  subtitle: Text(
+                    '${analysisDateText(analysisRecordDate(row))}\n${_farmReviewLabel(row['verification_status'])}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => openRecord(row),
+                ),
+              ),
+            _heading('Current Weather', () async {
+              final error = await state.refreshLiveWeather();
+              if (error != null) message(error);
+            }),
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(18),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFDFF4FC), Colors.white],
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.wb_cloudy_outlined,
+                        size: 43,
+                        color: Color(0xFF4791B5),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          weather == null
+                              ? 'Weather unavailable'
+                              : '${state.numText(weather['temperature_c'])} C',
+                          style: const TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.w800,
+                            color: darkGreen,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    weather == null
+                        ? 'Pull to refresh. Live conditions are separate from saved analyses.'
+                        : '${weather['weather_description'] ?? 'Conditions unavailable'} | Humidity ${state.numText(weather['live_humidity'])}% | Wind ${state.numText(weather['wind_speed_kmh'])} km/h',
+                  ),
+                  Text(
+                    'Panabo City | ${weather?['updated_at'] ?? weather?['observed_at'] ?? 'Update time unavailable'}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF53636B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _heading(String title, VoidCallback tap) => Padding(
+    padding: const EdgeInsets.fromLTRB(5, 18, 0, 8),
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w800,
+              color: darkGreen,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: tap,
+          child: Text(title == 'Current Weather' ? 'Refresh' : 'See all'),
+        ),
+      ],
+    ),
+  );
 }
 
 class SmartConditionCard extends StatelessWidget {

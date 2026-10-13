@@ -358,8 +358,9 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              MobileHeader(
+              GeoSustainHeader(
                 title: 'Analysis',
+                state: state,
                 trailing: IconButton(
                   tooltip: 'Refresh',
                   onPressed: busy ? null : _refresh,
@@ -460,7 +461,8 @@ class MobileAnalysisResult extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => ReferenceAnalysisContent(state:state,record:record);
+  Widget build(BuildContext context) =>
+      ReferenceAnalysisContent(state: state, record: record);
 }
 
 class _AnalysisParagraph extends StatelessWidget {
