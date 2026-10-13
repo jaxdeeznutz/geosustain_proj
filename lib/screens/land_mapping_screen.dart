@@ -801,10 +801,8 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
           Navigator.pop(context, true);
         }
       } else if (mounted) {
-        setState(
-          () => _notice =
-              'Farm saved. Select Analyze Area when you are ready. Saving does not request analyst review.',
-        );
+        setState(() => _busy = false);
+        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FarmDetailsPage(state: widget.state, farm: _saved!)));
       }
     } catch (error) {
       if (mounted) setState(() => _notice = friendlyErrorMessage(error));
@@ -817,14 +815,14 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   Widget build(BuildContext context) => PopScope<bool>(
     canPop: !_busy,
     child: Scaffold(
-      appBar: AppBar(title: const Text('Analyze Land Using a Polygon')),
+      appBar: AppBar(backgroundColor:const Color(0xFF176B5C),foregroundColor:Colors.white,centerTitle:false,
+        title:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Land Analysis',style:TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:21)),Text('Draw and analyze your farm area',style:TextStyle(color:Colors.white70,fontSize:12))]),
+        actions:[TextButton.icon(onPressed:()=>showDialog(context:context,builder:(c)=>AlertDialog(title:const Text('Boundary guide'),content:const Text('Draw: tap at each corner. Edit: select a numbered vertex, then its new position. Move Map: pan without adding points. Undo reverses the last edit. Saving stores only the boundary; Analyze Area starts an assessment.'),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Close'))])),icon:const Icon(Icons.map_outlined,color:Colors.white),label:const Text('Guide',style:TextStyle(color:Colors.white)))],),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            const Text(
-              'Tap around your farm to draw its boundary. Use Edit to select a numbered point and tap its new position. Device location access is not needed.',
-            ),
+            const FarmBanner('Draw Your Farm Boundary','Tap around your farm to draw its boundary. You can edit or move the points anytime. Device location access is not required.'),
             const SizedBox(height: 12),
             _BoundaryMap(
               controller: _controller,
@@ -841,7 +839,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
             const SizedBox(height: 8),
             Text(
               '${_points.length} vertices · ${(FarmGeometry.areaSquareMetres(_points) / 10000).toStringAsFixed(3)} ha (estimate)',
-              style: const TextStyle(fontWeight: FontWeight.w800),
+              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: darkGreen),
             ),
             if (_saved == null) ...[
               const SizedBox(height: 8),
@@ -929,12 +927,6 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
               icon: const Icon(Icons.analytics_outlined),
               label: Text(_busy ? 'Please wait…' : 'Analyze Area'),
             ),
-            if (_saveAsFarm && _saved == null)
-              OutlinedButton.icon(
-                onPressed: _busy ? null : () => _run(analyze: false),
-                icon: const Icon(Icons.save_outlined),
-                label: const Text('Save Farm Without Analysis'),
-              ),
             const SizedBox(height: 12),
             const Text(
               'Analysis is automated. You can request analyst review from the result after it completes.',
@@ -989,6 +981,19 @@ class _BoundaryMap extends StatefulWidget {
 }
 
 class _BoundaryMapState extends State<_BoundaryMap> {
+  bool _satellite=true, _fullscreen=false;
+  final MapController _ownController=MapController();
+  MapController get _map=>widget.controller??_ownController;
+  @override void dispose(){_ownController.dispose();super.dispose();}
+  Future<void> _locate() async {
+    try {
+      var permission=await Geolocator.checkPermission();
+      if(permission==LocationPermission.denied)permission=await Geolocator.requestPermission();
+      if(permission==LocationPermission.denied||permission==LocationPermission.deniedForever)throw Exception('Location permission is needed only to locate you. Drawing remains available.');
+      final p=await Geolocator.getCurrentPosition();
+      if(mounted)_map.move(LatLng(p.latitude,p.longitude),17);
+    }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(friendlyErrorMessage(e))));}
+  }
   bool _tileFailed = false;
   int _tileAttempt = 0;
   void _tileError() {
@@ -1006,11 +1011,11 @@ class _BoundaryMapState extends State<_BoundaryMap> {
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: SizedBox(
-            height: math.min(330, MediaQuery.sizeOf(context).height * .40),
+            height: _fullscreen ? MediaQuery.sizeOf(context).height * .8 : math.min(420, MediaQuery.sizeOf(context).width * .88),
             child: Stack(
               children: [
                 FlutterMap(
-                  mapController: widget.controller,
+                  mapController: _map,
                   options: MapOptions(
                     backgroundColor: const Color(0xFFE9EEE9),
                     initialCenter: points.firstOrNull ?? panaboCenter,
@@ -1035,7 +1040,7 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                     TileLayer(
                       key: ValueKey(_tileAttempt),
                       urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          _satellite ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.geosustain.mobile',
                       maxNativeZoom: 19,
                       maxZoom: 22,
@@ -1056,8 +1061,8 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                         polygons: [
                           Polygon(
                             points: points,
-                            color: green.withValues(alpha: .18),
-                            borderColor: green,
+                            color: green.withValues(alpha: .35),
+                            borderColor: const Color(0xFF8CFFD2),
                             borderStrokeWidth: 3,
                           ),
                         ],
@@ -1111,6 +1116,14 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                     ),
                   ],
                 ),
+                Positioned(left:8,top:8,child:SegmentedButton<bool>(segments:const [ButtonSegment(value:true,label:Text('Satellite'),icon:Icon(Icons.layers)),ButtonSegment(value:false,label:Text('Map'),icon:Icon(Icons.map_outlined))],selected:{_satellite},onSelectionChanged:(v)=>setState(()=>_satellite=v.first),style:const ButtonStyle(backgroundColor:WidgetStatePropertyAll(Colors.white)))),
+                Positioned(right:8,top:65,child:Column(children:[
+                  IconButton.filledTonal(tooltip:'My location',onPressed:widget.onRecenter??_locate,icon:const Icon(Icons.my_location)),
+                  IconButton.filledTonal(tooltip:'Zoom in',onPressed:()=>_map.move(_map.camera.center,_map.camera.zoom+1),icon:const Icon(Icons.add)),
+                  IconButton.filledTonal(tooltip:'Zoom out',onPressed:()=>_map.move(_map.camera.center,_map.camera.zoom-1),icon:const Icon(Icons.remove)),
+                  IconButton.filledTonal(tooltip:'Fullscreen map',onPressed:()=>setState(()=>_fullscreen=!_fullscreen),icon:Icon(_fullscreen?Icons.fullscreen_exit:Icons.fullscreen)),
+                ])),
+                Positioned(bottom:4,left:5,child:ColoredBox(color:Colors.white70,child:Text(_satellite?'Imagery ? Esri, Maxar, Earthstar Geographics':'? OpenStreetMap contributors',style:const TextStyle(fontSize:9)))),
                 if (widget.onRecenter != null)
                   Positioned(
                     right: 10,

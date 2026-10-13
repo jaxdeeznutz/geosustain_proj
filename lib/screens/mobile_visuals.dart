@@ -93,34 +93,6 @@ class _FieldPainter extends CustomPainter {
   bool shouldRepaint(_FieldPainter oldDelegate) => false;
 }
 
-class _HarvestSurface extends StatelessWidget {
-  final Widget child;
-  const _HarvestSurface({required this.child});
-  @override
-  Widget build(BuildContext context) => Container(
-    clipBehavior: Clip.antiAlias,
-    decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0xFFE3F1DF), cream],
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-      ),
-      borderRadius: BorderRadius.circular(26),
-      border: Border.all(color: const Color(0xFFD9E7D4)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        child,
-        const SizedBox(
-          height: 66,
-          child: ExcludeSemantics(child: CustomPaint(painter: _FieldPainter())),
-        ),
-      ],
-    ),
-  );
-}
-
 /// Only the recording status pulses; location markers always reflect device fixes.
 class _RecordingDot extends StatefulWidget {
   final bool active;

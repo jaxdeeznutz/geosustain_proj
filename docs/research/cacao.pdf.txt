@@ -1,0 +1,4752 @@
+PHILIPPINE
+ROADMAP 2021-2025
+CACAO
+INDUSTRY
+
+PHILIPPINE
+ROADMAP 2021-2025
+CACAO
+INDUSTRY
+HIGH VALUE CROPS 
+DEVELOPMENT PROGRAM
+Department of Agriculture
+
+i i
+The Philippine Cacao Industry Roadmap (2021-2025)
+Copyright 2022. All rights reserved.
+No part of this publication may be reproduced, distributed, or transmitted in any form or by any 
+means, including photocopying, recording, or other electronic or mechanical methods, without 
+the prior written permission of the Coordinating Office, except in the case of brief quotations 
+embodies in critical reviews and certain other noncommercial uses permitted by copyright law. 
+Editorial correspondence and requests to publish, reproduce or translate this publication in 
+part or in whole should be addressed to the authors and the publisher.
+ 
+Published by:
+ 
+Department of Agriculture - Bureau of Agricultural Research
+through the UPLB Foundation, Inc.
+in collaboration with the Philippine Council for Agriculture and Fisheries  
+Coordinating Office:
+High Value Crops Development Program 
+Department of Agriculture
+Diliman, Quezon City, Philippines
+Cover & Book Design:
+Alphabet Communications Graphics & Print
+Quezon City, Philippines
+alphabetprinting@gmail.com
+
+i i i
+PHILIPPINE CACAO INDUSTRY ROADMAP 
+DEVELOPMENT TEAM 
+Team Leader
+Consul Armi Lopez Garcia, Philippine Cacao Industry Council
+Co-Team Leader 
+Ms. Josephine Ramos, OPTIONS, Inc.
+Technical and Industry Experts
+Dr. Nelly Aggangan, UPLB
+Prof. Juma Novie A. Alviola, UPMin
+Dr. Nora Carambas, UPLB
+Industry Experts
+Ms. Sylvia Ordoñez, PCIC Vice-Chair, Luzon Island Representative
+Mr. Buen Mondejar, PCIC Vice-Chair Visayas Island Representative
+Mr. Christopher Lindo, PCIC Vice-Chair Mindanao Island Representative
+Dr. Romulo Cena, USM
+Mr. Dante R. Muyco Jr., Chokolate de San Isidro, Inc. 
+Ms. Magel Bacalso. KIDLAT MPC
+Mr. Pedro Cruz, CIDAMI
+Mr. Simon Bakker, Kennemer Foods International
+Mr. Sherwin Paul Barrameda, Aurora Cacao Agricultural Cooperative
+Chef Jill Sandique
+
+i v
+Representatives from the Government Sector
+Undersecretary Evelyn G. Laviña, DA HVCRC
+Ms. Judy Anne Placido, DA HVCDP
+Ms. Asther Paglinawan, DA BPI
+Mr. Noli Garcia, DA BPI
+Mr. Bernardo Pascua, DA BSWM
+Ms. Angelica L. Ecito, DA BSWM
+Ms. Jonalyn Villasis, DA ATI
+Mr. Manuel Dimalaluan, DA ATI
+Engr. Critsy Cecilia Polido, DA BAFE
+Engr. Denver Camania, DA BAFE
+Ms. Leonora Gabriel, DA AMAS
+Ms. Loredie De Jesus, DA AMAS
+Mr. Manuel Corinas, DA PCIC
+Ms. Joan Basay, DA ACPC
+Ms. Michelle Imperial, DA ACPC
+Mr. Joseph Manicad, DA PMS
+Mr. Alexander Estoesta II, DA PMS
+Ms. Faustina Baradas, DOST-PCAARRD
+Representatives from the other agencies
+Dir. Romeo Castañaga, DTI
+Mr. Blair Panong, DTI
+Ms. Gelyn Llana, DTI
+Technical Writers
+Ms. Mayla Viray-Blaskie
+Ms. Ethel Reynda Calivoso
+
+v
+TABLE
+OF CONTENTS
+v
+vii
+viii
+ix
+x
+xii
+xiv
+xv
+1
+5
+5
+6
+7
+9
+9
+10
+13
+20
+22
+26
+TABLE OF CONTENTS
+LIST OF TABLES
+LIST OF FIGURES
+LIST OF APPENDICES
+ACRONYMS 
+MESSAGES
+FOREWORD
+PREFACE
+EXECUTIVE SUMMARY 
+INTRODUCTION	
+	
+	
+	
+	
+	
+	
+Rationale	
+	
+Objectives	
+ 
+Definition of Terms
+INDUSTRY SITUATION AND OUTLOOK
+ 
+Product
+ 
+Product Forms
+ 
+Cacao Production
+ 
+Consumption
+ 
+Trade (Import and Export)
+ 
+Prices
+
+v i
+ANALYSIS OF THE COMMODITY  INDUSTRY	
+ 
+Value Chain Analysis
+ 
+SWOT Analysis
+ 
+Cost and Return Analysis 
+ 
+Benchmark Analysis
+ 
+Competitive Analysis
+MARKET TRENDS AND PROSPECTS
+	
+Local
+ 
+International
+PRIORITY CONCERNS & OPPORTUNITIES /  
+CONSTRAINTS & OPPORTUNITIES
+TARGET SETTING	
+RECOMMENDATIONS FOR POLICIES, STRATEGIES,  
+AND PROGRAMS
+ 
+Development Directions and Upscaling Strategies
+ 
+Cacao Industry Action Plans
+INDUSTRY CLUSTER GOVERNANCE NETWORK
+REFERENCES	
+APPENDICES
+29
+29
+41
+44
+51
+54
+57
+57
+58
+61
+64
+67
+ 
+67
+68
+77
+81
+83
+
+v i i
+LIST OF TABLES
+Table 1. 
+Top Cacao Producing Provinces in the Philippines
+Table 2.	
+Planting Materials Distributed per Government Program
+Table 3.	
+Volume of Production and Area Planted/Harvested
+Table 4. 
+Utilization of Cacao in the Philippines from 2010 to 2019
+Table 5. 
+Volume and Value of Export and Import of Cocoa Products 
+in Thousand Metric Tons, CY 2020
+Table 6. 
+Value of Imports of the Top Cocoa-Importing countries, 
+2016-2020
+Table 7. 
+Value of Philippine Cacao Imports by Country of Origin 
+(US $) 2016- 2020
+Table 8. 
+Cacao Industry Value Chain Map
+Table 9. 
+Agricultural Credit Programs
+Table 10. SWOT Analysis of the Philippine Cacao Industry
+Table 11. Costs and Returns per Hectare as Intercrop  
+(600 trees per hectare)
+Table 12. Costs and Returns per Hectare as Monocrop  
+(1,100 cacao trees per hectare)
+Table 13. Farmers’ Assessment of the Effect of the Current Practices 
+on Income and Environment with Proposed Solutions  
+and Intervention Approach
+Table 14. Financial Requirement for Cacao Production
+Table 15. The Philippine Cacao and Chocolate Industry Action Plan
+Table 16. Industry Cluster Governance Network
+15
+16
+17
+20
+23
+ 
+24
+ 
+25
+ 
+32
+39
+42
+45
+ 
+48
+ 
+52
+ 
+ 
+66
+69
+79 
+
+v i i i
+LIST OF FIGURES
+Figure 1.	
+Map Showing the Major Production Areas 
+of Cacao in the World
+Figure 2.	
+Top Producing Region in the Philippines
+Figure 3.	
+Map Showing the Cacao Production of the Davao 
+Region
+Figure 4.	
+Performance of Cacao Industry, CY 2010-2020
+Figure 5.	
+Graph Showing the Utilization of Cacao in the 
+Philippines from 2010 to 2019
+Figure 6.	
+Global Cocoa Bean Production by Country 
+(in 1,000 metric tons)
+Figure 7.	
+Wholesale Prices of Cocoa Beans from 
+January 2016 to May 2021 (Philippine Peso per Kilogram)
+Figure 8.	
+Farmgate Prices of Cacao Beans from 
+January 2016 to May 2021 (Philippine Peso per Kilogram)
+Figure 9.	
+Cacao Industry Road Mapping Process
+13
+ 
+14
+15
+ 
+18
+21
+ 
+22
+ 
+26
+ 
+27
+ 
+63
+
+i x
+LIST OF 
+APPENDICES
+Appendix 1. Agro-Climatic Requirements for Growth 
+and Development of Cacao 
+Appendix 2. Climate Suitability Map
+Appendix 3. Land Suitability Maps
+Appendix 4.  Philippine Cacao Industry Council Directory
+84
+ 
+87
+88
+135 
+
+x
+ACRONYMS
+ACPC
+Agricultural Credit Policy Council
+ASEAN
+Association of Southeast Asian Nations
+BAFS
+Bureau of Agriculture and Fisheries Standards
+BIST
+Business Innovation through Science and Technology
+BPI
+Bureau of Plant Industry
+CIDAMI
+Cacao Industry Development Association of Mindanao
+CPB
+Cocoa Pod Borer
+CRADLE
+Collaborative Research and Development to Leverage Philippine Economy
+DA
+Department of Agriculture
+DA-HVCDP
+Department of Agriculture – High Value Crops Development Program
+DA-RFOs
+Department of Agriculture –Regional Field Offices
+DAR
+Department of Agrarian Reform 
+DENR
+Department of Environment and Natural Resources
+DOST
+Department of Science and Technology
+DTI
+Department of Trade and Industry
+FFC
+Fine Flavoured Cocoa
+GAP
+Good Agricultural Practices 
+ICT
+Information Communication Technology
+KFI
+Kennemer Foods International
+LGU
+Local Government Unit
+MCDC
+Mars Cocoa Development Center
+MinSAAD
+Mindanao Sustainable Agrarian and Agriculture Development
+MPEX
+Manufacturing Productivity Extension Program
+MRP
+Manufacturing Resurgence Program
+
+x i
+NCITWG
+National Cacao Industry Technical Working Group
+NGO
+Non-government Organization
+NICER
+Niche Centers in the Regions for R&D Program
+NSIC
+National Seeds Industry Council
+NSO-FTS
+National Statistics Office – Foreign Trade Statistics
+PAPs
+Programs, Activities, and Projects 
+PCA
+Philippine Coconut Authority
+PCAARRD
+Philippine Council for Agriculture, Aquatic,  
+and Natural Resources Research and Development 
+PCIA
+Philippine Cacao Industry Association
+PCIC
+Philippine Cacao Industry Council
+PhilMECH
+Philippine Center for Postharvest Development and Mechanization
+PSA
+Philippine Statistics Authority
+RDLead
+Research and Development Leadership
+SBC
+Small Business Corporation
+SETUP
+Small Enterprise Technology Upgrading Program
+UPLB
+University of the Philippines – Los Bańos
+USM
+University of Southern Mindanao
+VCA
+Value Chain Analysis
+VSD
+Vascular Streak Dieback
+
+x i i
+MESSAGE
+In the wake of unprecedented events and emerging 
+crises, the Department of Agriculture (DA) launched the 
+Plant, Plant, Plant Program to ensure that all Filipino 
+families would have adequate supply of nutritious, 
+healthy, accessible and affordable food to meet the 
+demands of these challenging times.
+As a testament of our firm resolve to triumph over this 
+formidable foe, the DA was re-energized to act as one, 
+but is committed at the same time to delivering results 
+from various projects under the different major programs 
+of the Department.
+In light of this, I wish to congratulate all the principal actors who paved the way for the crafting and 
+updating of High Value Crops Development Program (HVCDP) Roadmap. Through the completion 
+and publication of this HVCDP Roadmap, we enshrine the spirit of excellence, collaboration, and 
+resilience as inherent characteristics of our agricultural inheritance and legacy.
+The progressive cross-cutting and continuing collaboration among all stakeholders in pursuit of 
+attaining competitive advantage and relevant growth is an output designed into the pages of this 
+roadmap.
+I am proud and grateful that such a focused work on this commodity could be undertaken to 
+ensure that a brighter future for the industry can reasonably be expected and attained because this 
+blueprint already exists to assure it.
+Marami pong salamat at Mabuhay!
+WILLIAM D. DAR, Ph.D.
+Secretary
+Department of Agriculture
+x i i
+
+x i i i
+MESSAGE
+In the wake of unprecedented events and emerging 
+crises, the Department of Agriculture (DA) launched the 
+Plant, Plant, Plant Program to ensure that all Filipino 
+families would have adequate supply of nutritious, 
+healthy, accessible and affordable food to meet the 
+demands of these challenging times.
+As a testament of our firm resolve to triumph over this 
+formidable foe, the DA was re-energized to act as one, 
+but is committed at the same time to delivering results 
+from various projects under the different major programs 
+of the Department.
+In light of this, I wish to congratulate all the principal actors who paved the way for the crafting and 
+updating of High Value Crops Development Program (HVCDP) Roadmap. Through the completion 
+and publication of this HVCDP Roadmap, we enshrine the spirit of excellence, collaboration, and 
+resilience as inherent characteristics of our agricultural inheritance and legacy.
+The progressive cross-cutting and continuing collaboration among all stakeholders in pursuit of 
+attaining competitive advantage and relevant growth is an output designed into the pages of this 
+roadmap.
+I am proud and grateful that such a focused work on this commodity could be undertaken to 
+ensure that a brighter future for the industry can reasonably be expected and attained because this 
+blueprint already exists to assure it.
+Marami pong salamat at Mabuhay!
+WILLIAM D. DAR, Ph.D.
+Secretary
+Department of Agriculture
+MESSAGE
+The Philippine coffee and cacao industries play a 
+fundamental role in the socio-economic advancement 
+of our country as they create employment opportunities 
+and promote a culture of quality for local products that 
+highlight the professionalism of our people and services. 
+With coffee and cacao considered high-value crops 
+and emerging agriculture products in the country, it is 
+only imperative that we bridge the various gaps in our 
+supply chain towards a more responsive and globally-
+competitive coffee and cacao industries.
+Throughout the years, the Department of Agriculture 
+(DA) has been an invaluable and dedicated partner of 
+the 
+Department of Trade and Industry (DTI) in this endeavor. Together with the commitment of industry 
+organizations and the participation of our private sector partners and stakeholders, our combined 
+efforts for a more unified action at the national and local levels have provided enabling mechanisms 
+that empower and support the long-term development of farmers.
+The updated Philippine Coffee and Cacao Industry Roadmaps serve as guides in improving 
+production while ensuring that the respective industries are cost-competitive, aligned with global 
+quality standards, reliable and environment-friendly, and will provide sustainable benefits to farmers, 
+processors, traders, and exporters. These, in turn, will accelerate the growth of the agriculture sector 
+as we address issues on food security, economic prosperity, and social inclusion for micro, small, and 
+medium enterprises (MSMEs).
+As we strengthen and position the Philippine brand of coffee and cacao on the global stage, let 
+us remain steadfast in charting realistic, responsive, and strategic actions in promoting our local 
+produce so that we may be able to secure the sustainable and inclusive growth of our industries and 
+provide a more comfortable life for all Filipinos.
+RAMON M. LOPEZ
+Secretary
+Department of Trade and Industry
+x i i i
+
+FOREWORD
+The Covid-19 pandemic that ravaged life and livelihood 
+in the country for almost 2 years now proved to be an 
+existential threat to our way of life.  On the positive side, 
+it elicited generosity and a sense of community in all of 
+us, and became a catalyst of change in many areas of our 
+lives.
+It is in these multi-faceted circumstances that the High 
+Value Crops & Rural Credit (HVCRC) of the Department 
+of Agriculture (DA), working collaboratively with various 
+stakeholders and industry experts, undertook the needed 
+updating of this industry roadmap as an integral part of the Secretary of the Department of 
+Agriculture, Dr. William D. Dar’s 18 transformative strategies, and formulated in alignment to 
+his One‑DA to Transform Vision of Philippine Agriculture, in order to achieve a Food Secure 
+and Resilient Philippines, with empowered and prosperous farmers and fisher-folk.  While this 
+industry roadmap is the handiwork of many minds and multi-stakeholders, in its core it subscribes 
+to the interdependent and inter-related approaches of Industrialization, Farm Consolidation, 
+Mechanization, and Professionalization as pillars of its foundation.
+This roadmap is envisioned to serve as a guide to all industry stakeholders for the realization of 
+the targets set in it for 2021 – 2025.  It is an embodiment of how the industry will achieve its goals 
+of transformative growth through the value chain approach, as well as increase in quality and 
+sustained yields and incomes.  It is with pride and pleasure that I express my heartfelt gratitude to 
+everyone both in the private sector and government, who unselfishly lent their time and talent for 
+this timely and necessary endeavor.  More than the lofty legacy and memorable milestone we shall 
+leave behind because of this worthwhile work, it is more the comfort in the knowledge that the 
+entire industry would have a clear pathway to follow in the years ahead to realize its vision that is 
+truly more meaningful to remember us all by.  Thank you.
+ 
+EVELYN G. LAVIÑA
+Undersecretary for High Value Crops and Rural Credit
+Department of Agriculture
+x i v
+
+x v
+PREFACE
+Big Congratulations are in order to all high value 
+crops stakeholders in cacao, coffee,mango, banana, 
+vegetables and onions who have successfully updated 
+the commodity roadmaps of the country.
+The updating of the high value crop roadmaps 
+addresses the major challenges of our food and 
+agricultural sustainability in the light of climate change 
+and other natural calamities that hit most of our 
+regions in recent memories. We have actively worked 
+on a unified strategic initiative with the premise that 
+agriculture should be a positive contributor to food security, jobs creation and economic 
+opportunities and environmental sustainability.
+As head of the Philippine Cacao Industry Council and being an active lead and participant 
+of the cacao industry cluster discussions, this particular roadmap including the rest of the 
+updated roadmaps have outlined the different industry-appropriate frameworks for action 
+to implement multi-stakeholders’ solutions that are directly tied to our national agricultural 
+development priorities.
+These agricultural roadmaps have carried key messages that the private sector which most 
+of us are ably represented in these industry clusters are able and ready partners and driver 
+of solutions for responsive and sustainable agriculture. Laying down the ground works with 
+government and private sector partners and effective government leadership is an active 
+ingredient for success.
+We do hope and pray that these roadmaps will encourage many others to initiate action 
+and strengthen collaborative engagements to achieve our shared goals for sustainable 
+future.
+CONSUL ARMI LOPEZ-GARCIA, Philippine Cacao Industry Council
+Team Leader                                                       
+Cacao Industry Roadmap Development Team
+
+
+1
+EXECUTIVE SUMMARY
+The crafting of the revised Philippine Cacao and Chocolate Industry was necessitated to 
+realign its vision, mission, goals, strategies and interventions with the Philippine Republic 
+Act 8435 (Agriculture and Fisheries Modernization Act of 1997), the United Nation’s 
+Sustainable Development Goals (UN SDGs), the AmBisyon Natin 2040, the Philippine 
+Development Plan (PDP) and the proposed Philippine Cacao Industry Development 
+Act”. This revised roadmap contains new strategies and interventions as well as retain 
+some Action Plans in the 2017-2022 Philippine Cacao Industry roadmap that are deemed 
+relevant and doable but need more push in its implementation. Two of the major revisions 
+made in the existing roadmap are (1) the vision spells out the focus on building strong 
+Philippine branding and (2) anchor the strategies and interventions on the principle of 
+industry clustering, localization and market demands, as well as heightening a context of 
+inclusivity in its scoping and application.
+Where are we?
+In recent years, the Cacao Industry has been gaining recognition in the domestic and 
+export markets as the supply and demand gap of cocoa beans is increasing. One of 
+the primary drivers of this increase is the growing middle class, increasing discretionary 
+household income in developing countries, new and innovative uses of cocoa in the food, 
+cosmetics and pharmaceutical industries, and the positioning of cacao as health food. 
+Based on PSA data, the Philippine cacao has a slow but increasing production trend 
+with an average increase of 2,743 ha per year from 2013 to 2020. Such increase may be 
+attributed to area expansion and the seed/seedling dispersal programs of DA, DENR and 
+PCA. However, despite the increasing trend in production, supply still fall short to meet 
+the increasing market demand domestically and globally. Low productivity is due to high 
+mortality of planting materials and the lack of knowledge of cacao growers.
+
+2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Like most countries that grow cacao, majority of the cacao farms in the country are small 
+holdings and are being owned and managed by farmers. Thus, the need for localization 
+and clustering. 
+Based on the Food and Agriculture Organization survey in 2017, the Philippines is placed 
+24th among the top countries producing cacao beans. However, the country placed 72nd 
+in terms of exports with a global market share of less than 0.01%. 
+The Philippines is a net importer of cacao with an average of USD 168.3-M worth of 
+import but  with only USD 22.1-M export value. The large import of cocoa powder and 
+export value of chocolate is being credited to major chocolate manufacturers in the 
+country who seldom buy local cocoa beans. Instead, they use imported powder and 
+cocoa butter for their raw materials.
+Based on the recent Philippine Cacao Industry forum, the Philippines has an estimated 
+global demand of about 4.7 million to 5 million metric tons (MT) by 2020. Nonetheless, 
+a cocoa shortage is also predicted at 1 million metric tons (MT). The annual local 
+consumption is at 50,000 metric tons (MT) but the local supply is only around 10,000 
+metric tons (MT).
+With the Philippines’ location conducive for cacao production and accessible to domestic 
+and foreign trade, there is a heightened interest among local farmers and exporters to 
+push for a more dynamic and competitive cacao industry that can compete with other 
+major cacao-growing nations.
+Moreover, the presence of players from all stages in the cacao value chain places the 
+Philippines at a competitive edge. Another strength of the industry are the support 
+services provided by the enablers in the form of technical and financial interventions, 
+which facilitate the development and strengthening of the industry. Furthermore, the 
+convergence of government support programs and projects touches various levels of 
+the cacao industry value chain and is expected to transform and empower cacao farmers 
+into thriving cocoa communities, which are the essential foundation for sustainable cocoa 
+farming.
+
+3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Where do we want to go?
+To be globally competitive and sustainable cacao industry, efforts should be geared 
+towards the following:
+a. Nationwide adoption of the upgraded harmonized cacao production and 
+postharvest protocols to pursue poverty alleviation, job generation and 
+environmental protection while advancing economic development and inclusive 
+growth;
+b. Promotion of cacao production in areas highly suitable for cacao growing to 
+improve farm efficiency and ensure increased farmers’ income thereby raising 
+their economic status;
+c. Promotion of continual applied research and development collaborations; 
+d. Mobilization of all stakeholders and relevant government agencies to provide 
+the needed extension support services for concerted industry-wide development 
+efforts; 
+e. Harmonized information gathering to establish a management information 
+system; and
+f. Stronger participation in the global cacao and chocolate value chain by building/
+promoting Philippine Brand.
+How do we get there?
+One Sector-One Voice is one of the avenues that the cacao stakeholder wants to pursue. 
+Through the leadership of the Philippine Cacao Industry Council (PCIC), in collaboration 
+with the Department of Agriculture (DA), the Philippine Cacao Industry Association, Inc. 
+(PCIA) will be organized and registered at the Securities and Exchange Commission (SEC) 
+as a private organization composed of cacao industry stakeholders. It will serve as the 
+Private sector partner and counterpart of the PCIC in the promotion of the Cacao Industry 
+through the effective implementation of the Harmonized Production and Postharvest 
+Protocols and Action Plans stipulated in the Cacao and Chocolate Industry Roadmap.
+
+4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Implementation of the revised roadmap will be localized to ascertain timely and up-to-
+date execution of programs and plans. Yearly review of the roadmap and assessment of 
+milestones will be performed to ensure that the interventions are properly implemented 
+and to make revisions on the course of action, when deemed necessary.  Moreover, active 
+participation in local and international events to promote Philippine Brand of quality 
+cacao will be continued as well as forging linkages with international stakeholders will be 
+strengthened.
+This revised roadmap is a product of the collective efforts of the cacao stakeholders. 
+Series of meetings and consultations were conducted in crafting this roadmap. This 
+revised roadmap will serve as a guide in the implementation of interventions and the 
+close monitoring of Action Plans. All the stakeholders who participated in crafting this 
+roadmap made a commitment to continue working together to ensure that the short-term 
+goals will be achieved and the medium- and long-term goals be realized. 
+
+5
+INTRODUCTION
+Rationale
+In the recent National Food Security Summit (NFSS), the importance of engaging a wide 
+range of stakeholders in the agriculture value chain was realized as timely feedback 
+can be obtained through them. The updating of the Philippine Cacao and Chocolate 
+Industry Roadmap is aligned in such modality and complies with the Memorandum Order 
+No. 37, Series of 2021 by the Office of the Secretary of the Department of Agriculture. 
+This revised roadmap gives emphasis on the active participation of all stakeholders 
+especially the private sector, and stresses the need for a Unified Action at the national 
+and local level. The significance of harmonizing all efforts from production to marketing 
+at the regional and local level was further elaborated in its strategies and Action Plans. 
+Hence, this updated roadmap will serve as a guide in improving production as well as 
+strengthening and positioning the Philippine brand of cacao and chocolate industry to be 
+globally competitive.
+But why invest in Cacao? Basically, cacao may significantly contribute to poverty 
+alleviation and inclusive growth through livelihood and job generation. This is because 
+cacao production only requires a small monetary investment or start-up capital. This 
+explains why 90% of the growers are of small farm holdings. The suitability of cacao as an 
+intercrop for coconut and banana, the two-week harvest interval, and an early gestation 
+period of 18 months are some of the most valued advantages of this high value crop. 
+The early return of investments and high profitability of the product also ensure good 
+income augmentation potential. Moreover, cacao is considered one of the world’s most 
+valuable crops. It is a multi-million-dollar industry that has an increasing global and 
+domestic market demands. Above all, the industry is market-driven considering that 
+cacao has no product substitute. The gaining popularity of cacao products not only in 
+the chocolate industry but also in cosmetics and pharmaceutical industries could not 
+be over-emphasized. Hence, cacao’s diversified usage as food and non-food warrants a 
+sustainable market opportunity. 
+
+6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+On the other hand, cacao industry also faces some hurdles and challenges that need to 
+be addressed as shortage of supply due to low productivity has been observed. This is 
+one of the reasons why an updated roadmap needs to be crafted.
+Following the guidelines set in the Philippine Republic Act 8435 (Agriculture and Fisheries 
+Modernization Act of 1997), the United Nation’s Sustainable Development Goals (UN 
+SDGs), the AmBisyon Natin 2040, the Philippine Development Plan (PDP), and the One 
+DA Reform Agenda: Key Strategies along with addressing the issues and constraints 
+raised by stakeholders, this updated roadmap will outline how the Philippines may 
+address the following challenges:
+a. At the regional level, crafting harmonized production and postharvest protocols and 
+strengthening technical support to ensure that Good Agricultural Practices (GAP) 
+leading to excellent cacao bean quality is adopted;
+b. At the national level, improving farm productivity and efficiency to increase farmer’s 
+income;
+c. At the global level, expanding Philippine presence in cacao-chocolate industry by 
+building and promoting Philippine Branding to be globally competitive.
+Objectives
+The general objectives of this roadmap are to harmonize the production and postharvest 
+practices of cacao growers and to establish Philippine brand in the global market. To 
+achieve these objectives, interventions will be focused on the following directions:
+•	
+Expansion of production areas in areas suitable for cacao growing based on the 
+Climate and Soil Suitability Map
+•	
+Increase in fermented bean productivity level
+•	
+Moving Up of the Cacao Industry Value Chain
+•	
+Strengthening of Market Presence through Branding
+•	
+Focus on Fine Flavour Beans Market
+•	
+Apply the principle of clustering, localization and market demands
+
+7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Moreover, the strategies and Action Plans are geared towards meeting the following 
+specific objectives:
+•	
+Ensure availability and accessibility of quality cacao planting materials;
+•	
+Rehabilitate existing aging trees;
+•	
+Increase production areas;
+•	
+Raise crop yield to 2 kg/tree/year;
+•	
+Ensure availability of high-quality fermented cocoa beans to support and sustain 
+value-adding activities; 
+•	
+Contribute to the goal of attaining inclusive growth and poverty alleviation
+Definition of Terms
+•	
+Agri-preneurship – refers to the application of the principles of entrepreneurship to 
+agriculture. 
+•	
+Geo-tagging – is the process of adding geographical information through the use of 
+pictures, videos, websites, and other media channels in the form of metadata. This 
+comprises latitude and longitude, altitude, bearing, and a range of other location-
+specific data.
+•	
+Good Agricultural Practices (GAP) – are practices that address environmental, 
+economic and social sustainability for on-farm processes, and result in safe and quality 
+food and non-food agricultural products.
+•	
+High-Value Crop – refers to high-yielding crops that provide competitive returns on 
+investment per hectare. These crops generate potential opportunities in the domestic 
+and international markets and command high prices.
+•	
+Intercropping – refers to growing two or more crops in the same field at the same 
+time
+•	
+LGU-recognized model farm – a recognition given by LGU to a cacao farm that 
+showcases the advantages and benefits of adopting GAP in growing cacao and 
+hopefully inspire other cacao growers to adopt GAP 
+
+8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+•	
+Monocropping – refers to the practice of growing only one crop in the same land 
+season after season.
+•	
+Non-self-pollinating – is a feature of plants in which they do not have the ability 
+to fertilize themselves. Vectors (insect or wind) are required to facilitate pollination. 
+(Cross-pollination needs a pollinator or the wind to get the pollen to another flower of 
+the same species.)
+•	
+One Sector-One Voice – strengthening PCIC/PCIA to serve as the voice of the Cacao 
+Industry
+•	
+Pod-index – the number of pods needed to produce a kilogram of dried beans
+•	
+Quality planting materials – grafted and scions coming from certified mother 
+trees; planting materials asexually propagated using propagules/scions from NSIC 
+registered cacao trees.
+•	
+Single-origin chocolates - are made from cocoa beans produced in a specific country, 
+region or even a specific plantation. Due to the climate and soil, together with the 
+techniques of cacao farming and harvesting, origin chocolates have its own signature 
+flavor profile.
+•	
+Supply chain – refers to the network of individual and/or organizations from the 
+delivery of raw materials from the supplier to the manufacturer until the product’s 
+delivery to the end user.
+•	
+Value chain – characterizes the full range of activities necessary to create a product or 
+service, which allows businesses to determine competitive opportunities.
+•	
+Varietal improvement – refers to improving the characteristics of current varieties.
+
+9
+INDUSTRY SITUATION 
+AND OUTLOOK
+Product
+Theobroma cacao, the scientific name of Cacao, literally translates as “food of the gods” 
+in Greek. The name Theobroma cacao was first given to the cocoa tree by Carolus 
+Linnaeus – the Father of Modern Day Taxonomic Plant Classification. Cacao is the Mayan 
+root word to describe the tree and its product. It is grown mainly for its seeds known as 
+the cocoa beans which are used to make cocoa mass, cocoa powder and chocolate.
+In the Philippines, there are three major cultivar groups being grown by farmers. Each 
+cultivar possesses its unique properties and qualities. These cultivars are:
+The Criollo is considered as the most prized, rare and expensive variety. It is native 
+to Central and South America. It is believed that the first cacao seed planted in the 
+Philippines was the Criollo variety brought via the Acapulco-Manila Galleon Trade 
+in 1670. Only 5% of the world’s cacao production is Criollo because it is extremely 
+susceptible to pests and diseases, thus difficult to grow. The beans are white to pale pink 
+in colour and recognized as a superior quality, less bitter and more aromatic. Considered 
+as the “Prince of Cocoas,” Criollo is an ingredient in premium chocolates.
+The Forastero, a native of the Amazon basin, is the most versatile variety and most 
+commonly grown cocoa. It is mainly grown in Africa, Ecuador and Brazil and accounts 
+for 80% of the world’s cocoa supply. It is significantly harder, disease resistant and high 
+yielding. Beans are purple-coloured and mainly used to give chocolate its full-bodied 
+flavor. They have bitter taste, thus often blended with superior cocoas.
+The Trinitario, a crossbreed variety of Criollo and Forastero, combines the best qualities of 
+the two varieties: the hardiness and high yielding traits of Forastero and the refined taste of 
+Criollo. It is the predominant fine flavour cocoa and is being used in about 10% of the world 
+
+1 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+cacao supply. Trinitario can be found in all the countries where Criollo cocoa was once grown 
+including Southeast Asia and the Philippines. About 70% of Philippine production is Trinitario.
+The soil and water composition differ in different locations, thus identical varieties of 
+cacao may taste differently. Like wine sources, cacao bears the distinct flavor of the land 
+where it originates. 
+Cacao is said to be a non-self-pollinating plant thus scientists and industry experts are 
+recommending to have at least 3-5 clones in one farm site to facilitate pollination. In 
+the Philippines, there are 13 approved varieties/clones registered in the National Seeds 
+Industry Council, to wit: UF 18, BR 25, K 1, K 2, PBC 123, K 9, ICS 40, UIT 1, DR 1, P 7, S 
+5, USM Ch 1 and USM Ch 2. Of these major clones, six (6) are prevalently used, namely: 
+UF18, PBC123, BR25, K1, K2 and K9. Among the six clones, UF18, BR25 and PBC123 are 
+seen to have high performance and great potentials in the market. These clones possess 
+the following traits: early maturing, early fruit-bearing, high-yielding, high fat content, 
+tolerant to Vascular Streak Dieback (VSD) and have an average pod index of 20-34.
+Product Forms
+Cacao is the main ingredient that has no product substitute in chocolate production. 
+There are six (6) intermediate products that can be derived from cacao beans: cocoa 
+nibs, cocoa liquor (tablea), cocoa cake, cocoa butter, cocoa powder and chocolate 
+confectionary blocks. These products gained popularity not only in the chocolate industry 
+but also in cosmetics and pharmaceutical industries. Hence, cacao’s diversified use for 
+food and non-food industries provides broader market opportunities. As a health food, 
+cacao is considered as a super food as it is packed with vitamins, antioxidants and 
+essential minerals such as magnesium, calcium and iron.
+Cacao products come in different forms, which can be differentiated as follows:
+a. Cacao Nibs are made from fermented and dried cacao beans, which are de-hulled 
+then broken into smaller pieces. They contain the whole cacao bean, thus possess the 
+full flavor that cacao has to offer. 
+
+1 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+b. Cacao Paste, known as cacao liquor, is made from milling whole cacao beans into a 
+creamy, rich paste. The paste is allowed to solidify into a solid block, which can also 
+be considered 100% chocolate as it contains only pure, whole cacao beans.
+c. Cacao Butter is the combined butter made from all of the fat-based components in 
+whole cacao beans. This is made by pressing the milled cacao beans to separate the 
+cacao butter from non-fat cacao mass or solid. 
+d.	 Cacao powder is obtained from milling whole cacao beans and pressing them to 
+remove the fat content. The milled cacao mass can then be grounded into a fine 
+powder.
+e. Cacao beans are the raw form, which can be sold as wet or dry and fermented. It can 
+be heat treated by roasting, to produce cocoa-based products. 
+Cocoa-based products traded in the local and international market include: 
+•	
+Wet cacao beans
+•	
+Ready to sow cacao seeds (seedling purposes)
+•	
+Cocoa nibs (beans, whole/broken, raw/roast
+•	
+Tablea (Cocoa paste or liquor, not defatted)
+•	
+Cocoa powder (not containing added sugar/other sweetening matter)
+•	
+Cocoa butter, fat/oil
+•	
+Chocolates
+•	
+Chocolate Confectionery
+On the other hand, some of the by-products that can be derived from cacao are as follows:
+a. Cocoa Pulp Juice, also known as sweatings, is a whitish liquid extracted from wet 
+cocoa beans. It contains predominant minerals such as potassium, sodium, calcium 
+and magnesium. The pectin obtained from cocoa pulp juice is comparable with 
+pectins that are derived from apples and lemons.  Fermentation of the sugars in 
+sweatings may lead to the production of alcoholic drinks, such as gin and brandy, as 
+well as production of wine and vinegar.
+
+1 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+b. Cocoa Pod Husk (CPH) is the leftover pod material of matured cocoa fruit after the 
+wet beans, sweatings and placenta have been removed. By-products that can be 
+derived from CPH are as follows: 
+i. 
+Briquettes - dried cocoa pod husk is compressed to form a brick-shaped mass 
+used for fuel. It is environment-friendly and has a high heating element. 
+ii. 
+Animal feed – CPH is incorporated into animal feeds for pigs, poultry and 
+livestock, and is blended in tilapia feed. 
+iii. 
+Alkali - CPH ash can be used as a source of alkali for soap making. 
+iv. 
+Fertilizer - CPH ash can also be converted into a potassium-rich fertilizer by 
+adding starch and pelletizing the mixture.
+c. Cocoa Bean Shell is the seed coat removed from the cocoa beans, which can be used 
+as a mulch.
+d. Cocoa butter extracted from discarded cocoa beans may be used in the 
+production of toilet soap, soft soap and body pomade.
+The processing of cocoa waste into the above-mentioned by-products will not only help 
+preserve the environment but also has the potential to augment cocoa farmers’ income. 
+Continual research and development are being undertaken to further assess the viability 
+and profitability of the above-mentioned by-products. Likewise, new initiatives are being 
+done to develop other by-products that can be derived from cocoa waste.
+
+1 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Cacao Production
+Cacao is a perennial crop that grows in tropical environments, mostly concentrated in a 
+region called the Cacao belt, which is anywhere within 20 degrees north or south of the 
+Equator. It grows most notably in Central and South America, West Africa and Southeast 
+Asia specifically Malaysia, Indonesia and the Philippines. The climate conditions in these 
+areas are well suited for growing cacao trees. The tree is often grown under the shades of 
+other trees and can be as tall as 40 feet. It typically bears fruits in 18 months but reaches 
+full bearing capacity in 5 years producing 70 to 100 pods or more per tree per year. The 
+suitability of cacao as an intercrop for coconut and banana and the two-week harvest 
+interval are some of the most valued advantages of this high value crop.
+The tree is cultivated in many countries. Africa contributes 77.3% of the world cacao 
+production, followed by Latin America (17.2%) while Asia and Oceania at 5.5%. At 
+present, the leading suppliers of cacao are Ivory Coast, Ghana, Indonesia, Nigeria, 
+Cameroon, Brazil, Ecuador, Peru, Dominican Republic and Colombia. 
+Figure 1: Map Showing the Major Production Areas of Cacao in the World
+Source: ICCO Quarterly Bulletin of Cocoa Statistics, Cocoa year 2020/21, August 31, 2021 
+Ninety percent (90%) of existing cacao farms are small. This ownership profile holds true 
+even in the global scenario where most cacao farms are also small, ranging from 1-3 
+hectares.
+
+1 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+According to the Global Market Report for Cocoa (2019), global supply was able to 
+keep up with the demand in the recent years, with a small excess in 2018. However, The 
+Economist Intelligence Unit still forecasts insufficiency in supply in the long-term due to 
+low yield and prices. Among the production constraints faced by the suppliers are wild 
+weather pattern, pests and diseases, competition with other plantation crops, aging of 
+cacao trees in major production areas, and low productivity level. Other factors involved 
+are social unrest/civil war, low investments in postharvest and limited production inputs.
+Local Production
+In the Philippines, most cacao growing areas are located in the Mindanao island. As 
+illustrated below, the Davao Region contributes 78% of the national cacao production having 
+7,257.85 metric tons (MT) planted in 19,975 hectares of land in 2020. The rest of Mindanao 
+contributes almost 90% while the remaining 10% is being shared by Luzon and Visayas.
+Figure 2: Top Producing Region in the Philippines
+Nine of the top ten producing provinces are located in Mindanao island and one in the 
+Luzon island. Though majority of the top producers are in the Mindanao island, it is 
+noteworthy to recognize that Luzon and Visayas islands are continuously encouraging 
+new growers and existing growers to expand its areas thereby predicting to increase its 
+contribution in the overall cacao production in the future. Currently, the top producing 
+
+1 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+provinces in Luzon and Visayas are Aurora, Palawan, Iloilo and Bohol. The highest 
+producers in Luzon and Visayas are Aurora province and Iloilo with 333.91 metric tons 
+(MT) and 82.46 metric tons (MT) production, respectively.
+Table 1: Top Cacao-Producing Provinces in the Philippines
+Province
+2020 Volume of Production (MT)
+Area Planted (HA)
+City of Davao
+2,508.98
+5,458
+Davao del Norte
+1,435.59
+5,999
+Davao del Sur
+1,247.93
+915
+Davao Occidental
+750.33
+585
+Davao de Oro (Compostela Valley)
+741.68
+5,580
+Davao Oriental
+573.34
+1,438
+Aurora
+333.91
+182
+Zamboanga del Norte
+282.02
+1,502
+Bukidnon
+185.04
+158
+North Cotabato
+138.31
+1,800
+Source: OpenStat, Philippine Statistics Authority (PSA), 2020
+Figure 3 shows that in Davao region, the City of Davao has contributed the highest 
+production in 2020 with a record of 2,508.98 metric tons (MT), which is equivalent to 27% 
+of Davao region’s contribution nationwide. It was followed by Davao del Norte and Davao 
+del Sur with 15% and 13% contribution, respectively.
+Figure 3: Map Showing the Cacao 
+Production of the Davao Region
+Source: ICCO Quarterly Bulletin of Cocoa Statistics, 
+Cocoa year 2020/21, August 31, 2021 
+
+1 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+AREA PLANTED/HARVESTED
+The first cacao in Asia was planted in the Philippines in 1670 while commercial farms 
+were established in the 1950s. Production level reached 35,000 metric tons (MT) by 1990. 
+However, production started to decline due to several factors such as typhoon, pests 
+and diseases infestation, aging trees and possible genetic deterioration on commonly 
+used varieties. The decline was further aggravated by decreasing world market price and 
+competition with other plantation crops such as banana and palm oil, which led to a shift 
+on planting preferences.
+Despite its competitive advantage, the Philippine cacao production at present only stands 
+at 9,340.73 metric tons (MT) from the 31,285.36 hectares of land planted with cacao 
+based on the figures released by the 2020 Philippine Statistical Authority (PSA).
+Around 77,648,326 pieces of seedlings were distributed and planted through the 
+programs of Department of Agriculture-High Value Crops Development Program (DA-
+HVCDP), the Department of Agrarian Reform (DAR), the Department of Environment and 
+Natural Resources–National Greening Program (DENR-NGP), and the Philippine Coconut 
+Authority-Kaanib Program (PCA-Kaanib Program). About twenty million (20M) planting 
+materials were distributed from 2016 to 2020 through the Department of Agriculture-High 
+Value Crops Development Program (DA-HVCDP). However, monitoring was not regularly 
+conducted, resulting in inaccurate and outdated data, which need to be addressed 
+immediately. High mortality on the planting materials distributed and inefficient 
+procurement and distribution system of planting materials were also identified as issues. 
+Most of the materials distributed in the past did not thrive because of its untimely 
+distribution and the seedlings were not yet mature when distributed.
+Table 2: Planting Materials Distributed per Government Program
+Year
+DA-HVCDP
+DAR
+DENR-NGP
+PCA-Kaanib
+2010-2020
+24,940,910
+1,628,556
+39,571,832
+11,507,028
+The seedling dispersal programs could have provided a big push for the industry if 
+proper trainings were provided to beneficiaries and appropriate production protocols 
+were observed. For this reason, the Harmonized Production and Postharvest Protocols for 
+cacao is currently being crafted.
+
+1 7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Table 3: Volume of Production and Area Planted/harvested
+Year
+Volume of Production (MT)
+Area Planted/Harvested (HA)
+2010
+5,019
+9,462
+2011
+4,856
+9,582
+2012
+4,831
+9,339
+2013
+4,876
+9,431
+2014
+5,428
+12,035
+2015
+6,023
+13,911
+2016
+6,263
+14,815
+2017
+7,009
+18,264
+2018
+7,983
+27,133
+2019
+8,489
+30,257
+2020
+9,341
+31,285
+Source: OpenStat, Philippine Statistics Authority (PSA), 2010-2020
+Table 4 shows that there was a slight decrease in area planted for cacao from 9,582 
+to 9,339 ha in 2011-2012 due to high number of mortality rate. However, a gradual 
+increase in area planted was observed in 2013 up to 2020 from 9,431 to 31,285 ha, 
+which accounts for an average increase of 2,743 ha per year. Such increase could be 
+associated with the DA, DENR and PCA seedling dispersal programs as well as the 
+increasing interest of private sectors in cacao growing. Despite an increase in hectarage 
+of cacao farm, the cacao production only increased slightly with an average volume of 
+563 metric tons (MT). As of the 2020 PSA release, there are 6 million cacao bearing trees 
+planted nationwide. This may be attributed to the unclear data on how many trees have 
+been planted in a hectare to match the computation for the expected production.  It is 
+therefore recommended that in conducting data gathering, the number of trees instead 
+of hectarage should be collected in order to reflect a more realistic scenario of cacao 
+production.   
+
+1 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+YIELD
+Despite the availability of high-yielding varieties of cacao, the 2.0 kg per tree yield 
+performance has not been achieved in most farms. This is due to the limited supply of 
+quality planting materials and lack of trainings on good agricultural practices. 
+In spite of the availability of high-yielding varieties, area expansion and planting material 
+distribution initiatives, the yield has declined from 0.53 metric tons (MT) per hectare (ha) 
+to 0.30 metric tons (MT) per hectare (ha) during the period of 2010 to 2020. The volume 
+of production at 0.5 kg to 1.0 kg per tree per year was observed, which is way below the 
+targeted 2 kg per tree per year yield performance set by the industry to beat the 2022 
+Cacao Challenge. The genetic expression of the existing varieties is expected to produce 
+3.5 kg per tree per year. 
+Aging cacao trees, possible genetic deterioration on commonly used varieties, lack of 
+good agricultural practices, and scarcity of high-yielding planting materials are among 
+the factors affecting the yield and production volume of the industry. Thus, aside from 
+expansion area and provision of inputs, massive rehabilitation/rejuvenation of old cacao 
+trees is strongly recommended to increase yield.  An estimate of 19 million trees also 
+need to be fertilized with an expected yield of 39 metric tons (MT) by 2025. 
+Figure 4: Performance of Cacao Industry, CY 2010-2020
+
+1 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+The Philippine Coconut Farmers and Industry Development Plan (CFIDP) includes a 
+collaborative effort in the implementation of the Coconut-Coffee/Cacao-Based Enterprise 
+Development project under the Republic Act No. 11524 otherwise known as the Coconut 
+Farmers and Industry Trust Fund Act. This targets to rehabilitate about three (3) million 
+cacao trees over a five-year period, expand the priority cacao area to 7,300 hectares over 
+five years, and establish cacao nurseries with production training to achieve a capacity 
+of 10,000 seedlings per year. The goal of this project is to group farmers into clusters, 
+create long-term jobs, and conserve natural resources. Farmers-owners will be the direct 
+beneficiaries of this project, while tenants, laborers, and caretakers will benefit as skilled 
+farm and processing service providers/workers.
+A total of 2,982,676 cocoa trees to be rehabilitated/rejuvenated across all regions. There 
+are 7,601 hectares accessible for intercropping growth across the country. In addition, 
+84 nurseries will be established to ensure the availability and accessibility of planting 
+materials while also lowering seedling mortality rates. This will be done in collaboration 
+with the High Value Crops Development Program (HVCDP) and the Bureau of Plant 
+Industry (BPI) in conducting trainings for proper nursery operation and management. To 
+serve its members and any interested clients, these nurseries must produce a minimum of 
+10,000 trees once they begin operations.
+In addition, intercropping coconut and cacao might help meet the roadmap’s targets of 
+3,792.98 metric tons by 2025 and 10,362.33 by 2028.
+
+2 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Consumption
+According to the recent Philippine Cacao Industry forum, the Philippines has an estimated 
+global demand of between 4.7 million to 5 million metric tons (MT) by 2020, however, 
+a cocoa shortage is also predicted at 1 million MT. The annual local consumption is at 
+50,000 metric tons (MT) while the local supply is around 10,000 metric tons (MT). In order 
+to address the underutilization of the capacity of local grinders, it is evident that the 
+expansion and strengthening of the production aspect of the industry be given emphasis.
+The growing number of restaurants and coffee shops serving cocoa-based drinks and 
+food items, and the growing industry of medium and small-scale chocolatiers requiring 
+high quality cocoa beans contributed to the attractive price of cacao in the domestic 
+market. Moreover, changes in consumer preferences such as increasing consumption of 
+“Tsokolate” (Tablea) drinks and chocolates, and increasing purchasing power of middle-
+aged working class pose opportunities for manufacturers of tablea and chocolates 
+including cocoa beans producers. 
+Table 4: Utilization of Cacao in the Philippines from 2010 to 2019 
+Year
+Exports
+Processing
+Total Net Food 
+Disposable
+Per Capita Consumption
+(kg/year)
+2010
+181
+76
+7,485
+0.08
+2011
+124
+50
+4,984
+0.05
+2012
+298
+47
+4,634
+0.05
+2013
+498
+72
+7,138
+0.07
+2014
+1,770
+65
+6,431
+0.06
+2015
+1,804
+62
+6,118
+0.06
+2016
+2,233
+60
+5,911
+0.06
+2017
+3,094
+70
+6,952
+0.07
+2018
+2,733
+75
+7,412
+0.07
+2019
+3,049
+66
+6,497
+0.06
+Source: OpenStat, Philippine Statistics Authority
+
+2 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Based on the Supply and Utilization Accounts data generated by the PSA, a Filipino 
+consumed an average of 0.063 kg of cacao per year for the 10-year period (2010-2019).  
+It can be observed that the per capita consumption dropped from 0.08 kg/year in 2010 
+to 0.06 kg/year in 2019. The average volume of imports during the period is 23% of the 
+total supply of cacao in the country. 
+On the other hand, cacao intended for exports generally increased over the years, from 
+181 metric tons (MT) in 2010 to 3,049 metric tons (MT) in 2019. The drastic increase 
+started in 2014 wherein eight (8) Filipino firms participated in the cocoa-chocolate global 
+value chain. On the average, 17.75% of the cacao supply in the country was exported. 
+Meanwhile, volume intended for processing exhibit volatility. The average volume allotted 
+for the said activity is just 0.82% of the total available supply in the country.
+Furthermore, total net disposable continuously takes up majority of the available supply 
+with an average of 81.43% for the same period. Net Food Disposable pertains to the 
+amount of food commodity available in its original or unprocessed form which is intended 
+for human consumption. 
+Figure 5: Graph Showing the Utilization of Cacao in the Philippines from 2010 to 2019
+
+2 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Trade (Import and Export)
+Cacao is an equatorial plant that grows only within 20 degrees from the equator. Thus, 
+cacao production is commonly seen in tropical regions such as Africa, Latin America, and 
+some parts of Asia. Hence, it is not surprising that the top producing countries of cocoa 
+beans are found in these areas which include Côte d’Ivoire, Ghana, Ecuador, Cameroon, 
+Nigeria, Indonesia, Brazil and Papua New Guinea. According to UNComtrade (2016), the 
+majority of the global production of cocoa comes from only two countries: Cote D’Ivoire 
+and Ghana. The combined supply from these countries constitutes 61% of global exports.
+Figure 6 shows the production of cocoa beans by country from 2018/19 and 2019/20, 
+with a forecast for 2020/21. In crop year 2020/21, the top producer is still Côte d’Ivoire 
+with about 2.225 million metric tons (MT) of cocoa beans. All of the top eight (8) cacao-
+producing nations exhibited increases in the production comparing the 2018/2019 and 
+2020/21 data, except for Indonesia. Only Indonesia is the Asian country among the said 
+list with 0.200 million metric tons (MT) in 2020/21.
+Figure 6. Global cocoa bean production by country (in 1,000 metric tons)
+In 2017, the Philippines placed 24th in the cocoa beans production with 7,009 metric tons 
+(MT). This is according to the survey conducted by the Food and Agriculture Organization 
+(FAO). However, the country placed 72nd in terms of exports with a global market share 
+of less than 0.01%.
+
+2 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Table 6 shows the volume and value of exported and imported cocoa products in 2020. 
+Based on volume, the major cocoa product exported by the country in 2020 is still cocoa 
+beans with 5,153 kg (equivalent to USD 13,657). The diversified use of cocoa beans in 
+the manufacturing, pharmaceutical, and cosmetics industries generally pushes the global 
+demand of cocoa beans on an upward trend. Other cocoa products exported by the 
+Philippines include cocoa paste (48 kg), cocoa butter, fat and oil (381 kg), cocoa powder 
+(241 kg), and chocolate and other food preparations containing cocoa (609 kg).
+Meanwhile, the largest volume imported is still cocoa powder with 28,389 kg (equivalent 
+to USD 59,511). This is being credited to major chocolate manufacturers in the country 
+that use imported powder and cocoa butter for their raw materials. On the other hand, 
+the biggest importation of cocoa products in terms of value is on Chocolate and other 
+food preparations containing cocoa with USD 82,058 (equivalent to 19,886 kg). 
+The country also imported cocoa beans (175kg), cocoa shells, husks, skins and other 
+cocoa waste (1841kg), cocoa paste (884kg), and cocoa butter, fat and oil (60kg). The 
+total value of exported cocoa products is USD 22,130 while the imported cocoa products 
+is USD 168,311. Clearly, there is a trade deficit in cocoa, which is equivalent to USD 
+146,181.
+Table 5: Volume and Value of export and import of cocoa products in thousand metric tons, CY 2020 
+COCOA PRODUCTS
+EXPORT
+IMPORT
+Quantity (kg)
+Value (US$)
+Quantity (kg)
+Value (US$)
+Cocoa beans, whole or broken, raw or 
+roasted
+5,153
+13,657
+175
+412
+Cocoa shells, husks, skins and other cocoa 
+waste
+-
+-
+1,841
+348
+Cocoa paste, whether or not defatted
+48
+122
+884
+3,062
+Cocoa butter, fat and oil
+381
+1,831
+60
+353
+Cocoa powder, not containing added sugar 
+or other sweetening matter
+241
+659
+28,389
+59,511
+Chocolate and other food preparations 
+containing cocoa
+609
+2,113
+19,886
+82,058
+Others
+1,334
+3,749
+10,947
+22,566
+Total
+7,766
+22,130
+62,181
+168,311
+
+2 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+On import trade, countries engaged in cocoa-based products consistently top the world 
+importers of cacao and its preparations. As shown in Table 7, USA has an imported 
+value of almost USD 5,189,358 in 2020 followed by Germany  (USD 5,167,840) and 
+the Netherlands (USD 4,801,631). Most of the cacao beans exported by the cacao-
+producing regions are marketed to grinders in these countries, being the home of giant 
+confectionery companies such as Mars Inc., Mondelez International Inc., and Hershey 
+Foods Corporation, among others.
+Other countries in the list include France, United Kingdom, Belgium, Canada, Poland, 
+Italy and Russian Federation. It can be noted that the value of the cocoa imported by 
+the top 10 cocoa-importing countries ranges from 57 to 59% of the total value imported 
+from 2016 to 2020. The growing demand of cocoa beans is positively correlated with 
+the demand for chocolates given that cocoa is the primary raw material that cannot be 
+substituted by other commodities. 
+Table 6: Value of Imports of the Top Cocoa-Importing countries, 2016-2020 
+Country/Year
+2016
+2017
+2018
+2019
+2020
+World
+47,934,704
+47,891,387
+49,313,420
+49,935,825
+49,534,209
+United States of America
+5,208,799
+5,145,881
+4,856,588
+5,127,504
+5,189,358
+Germany
+5,171,772
+5,035,967
+5,150,192
+5,167,529
+5,167,840
+Netherlands
+4,655,973
+4,631,770
+4,832,779
+4,699,580
+4,801,631
+France
+3,372,693
+3,383,133
+3,463,365
+3,351,070
+3,533,514
+United Kingdom
+2,517,449
+2,628,473
+2,781,130
+2,767,815
+2,968,990
+Belgium
+2,106,722
+1,915,644
+1,899,152
+1,998,365
+2,033,189
+Canada
+1,546,398
+1,520,439
+1,552,647
+1,562,011
+1,622,209
+Poland
+1,133,996
+1,224,283
+1,324,682
+1,330,595
+1,531,381
+Italy
+1,268,153
+1,289,793
+1,271,023
+1,264,366
+1,369,448
+Russian Federation
+971,057
+1,048,556
+1,179,825
+1,248,863
+1,221,288
+Source: International Trade Center (ITC) Trade Map accessed through http://www.trademap.org
+
+2 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Table 7: Value of Philippine Cacao Imports by Country of Origin (US $), 2016- 2020 
+Import Market
+2016
+2017
+2018
+2019
+2020
+Total
+% Share
+Malaysia
+35,095
+38,151
+36,337
+45,083
+47,865
+202,531
+20%
+Indonesia
+31,046
+27,544
+32,494
+32,416
+35,442
+158,942
+16%
+United States of America
+44,541
+37,303
+22,796
+17,552
+14,041
+136,233
+14%
+Switzerland
+46,099
+25,958
+11,884
+8,968
+2,750
+95,659
+10%
+Singapore
+20,247
+17,294
+17,429
+20,268
+18,305
+93,543
+9%
+Source: International Trade Center (ITC) Trade Map accessed through http://www.trademap.org
+On the other hand, as shown in Table 8, most of the Philippine Cacao Imports are sourced 
+from Malaysia with USD 202,531 from 2016 to 2020 followed by Indonesia with USD 
+158,942 and USA with USD 136,233. Bigger percentage of importations from Malaysia 
+and Indonesia may be due to the proximity of these countries to the Philippines.  
+For the 2019/20 forecast, world cocoa grindings are expected to expand to 4.860 million 
+tons, up by 157,000 tons, representing a 3.3% increase compared to the revised estimate 
+of 4.703 million tons. It is anticipated that processing activities will grow by 5.1% to 1.164 
+million tons in Asia and Oceania, whereas a growth of 7.6% to 961,000 tons is projected 
+for the Americas. In Africa, processing activities are forecast to expand by 0.5% to 1.001 
+million tons while a 1.6% increase to 1.734 million tons is envisaged in grinding activities for 
+Europe compared to the level attained in the same period of the previous season (ICCO).
+The high grinding capacity has already exceeded the bean production, thus, widening the 
+gap of demand and supply. In the Philippines, current production is not even enough to 
+supply local grinding requirements estimated to be at 40,000 metric tons (MT). 
+Among the primary drivers of this increase are: the big cocoa consumption demand 
+of the United States and Europe, the increasing discretionary household income in 
+developing countries, and the positioning of cocoa as health food, among others.
+While demand is on an uptrend, supply gap continues to widen due to production 
+constraints brought about by factors such as changing weather condition, pests and 
+diseases, low productivity, aging trees, possible genetic deterioration on commonly used 
+varieties, competing crops and unsustainable cacao farms. The one (1) million metric tons 
+
+2 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+projected shortfall by 2020 is forecasted by experts to be felt earlier. The scarcity of bean 
+supply also resulted in the closure of grinding facilities. 
+Prices
+Normally, the local price of the country’s cocoa beans is correlated with the international 
+commodities pricing. However, when there is an increased volume in local cacao 
+processing on a certain period (i.e. tablea processors) and the supply of raw materials is 
+nil, it pushes the local price up considering that ‘tablea’ does not at all times conform to 
+world market prices. 
+Figure 7. Wholesale Prices of Cocoa Beans from January 2016 to May 2021 
+(Philippine Peso per Kilogram)
+The wholesale price of cocoa beans in the Philippines ranged from Php 98.00-138.00/kg. 
+As of May 2021, the wholesale price of dried cacao beans is at Php 115.52/kg. 
+
+2 7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+From 2016 to July 2021, the farmgate price of dried cacao beans per month ranged from 
+PhP 82.00 to 126.00/kg. As of July 2021, the farmgate price of dried cacao beans is at 
+P96.01/kg.
+Cacao is the only agricultural commodity that defies the law of Supply and Demand. 
+Unlike other commodities, the price of cocoa beans is generally higher during peak 
+season. Low production is between January to April with the price at its lowest. However, 
+during the peak production period, i.e. October up to early January, the price is at its 
+highest. Incidentally, this period is also the peak inventory month for cacao bean for 
+occasions such as Halloween, Christmas and Valentine’s Day. 
+Figure 8. Farmgate Prices of Cacao Beans from January 2016 to May 2021 
+(Philippine Peso per Kilogram)
+
+
+2 9
+ANALYSIS OF
+THE CACAO INDUSTRY
+Value Chain Analysis
+The Value Chain Analysis (VCA) is a concept from business management popularized 
+by Michael Porter in 1985 with the objective of identifying the behavior of costs and 
+the areas for differentiation. It is an approach for breaking down the sequence (chain) 
+of business functions into strategically relevant activities through which value is added 
+by the business. The industry value chain is composed of all the value-adding activities 
+within the industry, beginning with raw materials and ending with the completed product 
+delivered to the customer. In the Philippines, various government agencies complement 
+the Industry Clustering Approach with VCA in order to diagnose industry performance 
+and illustrate the interdependence and relationship among industry players. 
+As shown in Table 9, there are eight (8) segments in the Cacao industry chain, namely: 
+input provision; cacao farm maintenance and beans production; fermentation, drying, 
+and storage; local trading/marketing; beans processing; exporting; trading of finished 
+products; and final sale in domestic and export markets. 
+Input Provision
+Input suppliers, farmer cooperatives and nursery operators are the sources of raw 
+materials used in cacao production. The most important raw material that these key 
+players provide is the seedling. To provide these seedlings, the following activities 
+are necessary: establishment/expansion and maintenance of budwood gardens/scion 
+groves; propagation and distribution; and nursery accreditation.  The destination of 
+these inputs are farmer cooperatives and individual farmers. Moreover, organic fertilizer 
+(such as biofertilizers and biopesticides) and inorganic farm inputs, pod sleeves, 
+packaging materials and other input requirements of the upper level functions are 
+made accessible by the input providers. Most importantly, they provide technical and 
+extension services to producers.
+
+3 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Cacao Farm Maintenance and Beans Production
+Producers may be farmer cooperatives or individual farmers. Their activities include 
+planting/replanting/rehabilitation, farm maintenance, nutrient management, water 
+management, pest and disease management and pod harvesting. These activities are 
+necessary to produce cacao pods and wet beans. 
+Fermentation, Drying and Storage
+There are farmer cooperatives which may be involved in processing activities. These 
+cooperatives eventually coordinate with local processors, which sell to the local market 
+and exporters, for the sale of their produce to the export market. Farmer cooperatives 
+together with wet beans buyers are tasked to do the following activities to produce 
+either dried or fermented beans and dried beans: pod breaking; fermentation; drying; 
+packaging; storage; utilization of cacao waste and by-products; and other value-adding 
+activities.
+Local Marketing/Trading
+In local marketing/trading of dried and fermented beans, farmer cooperatives and traders 
+organize activities related to consolidation, cleaning, packaging and labelling, hauling, 
+transporting, wholesaling, and retailing.
+Beans Processing
+Beans are further processed by farmer cooperatives and processors into nibs, tablea, 
+butter and powder (set A) or chocolates and chocolate products (set B). For the first set 
+of products, the tasks to be undertaken include cleaning, roasting, winnowing, grinding, 
+pressing, pulverizing, packaging and storage. For chocolates and chocolate products, the 
+activities are cleaning, roasting, winnowing, grinding, mixing/refining, conching, moulding 
+and packaging.
+
+3 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Exporting
+Products are then transported/shipped by exporters and processors to traders and other 
+exporters. These products include tablea, cocoa beans, cocoa butter, cocoa powder, 
+chocolates, and cocoa paste.
+Trading of Finished Products and Final Sale in Domestic and Export 
+Markets
+The above-mentioned products are sold in retail by traders and exporters in the local 
+and export markets. Supermarkets and retailers undertake the selling function. Final 
+consumers include local households and consumers, OFWs, and tourists.   
+
+3 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Table 8: Cacao Industry Value Chain Map
+Functions
+Input Provision
+Cacao Farm 
+Maintenance 
+and Beans 
+Production
+Fermentation, 
+Drying and 
+Storage
+Local Mar-
+keting/Trad-
+ing
+Beans Pro-
+cessing
+Exporting
+Trading of 
+Finished 
+Products
+Final sale in 
+Domestic 
+and Export 
+Markets
+Tasks/roles
+•  Provision of 
+seedlings:
+a. establishemnt/
+expansion, 
+maintenance of 
+budwood gardens/
+scion groves
+b. propagation and 
+distribution
+c. nursery accreditation
+•  Make accessible 
+fertilizer, pesticide, 
+pod sleeves
+•  Make accessible 
+design and 
+packaging materials 
+and other input 
+requirements of the 
+upper level functions
+•  Technical, extension 
+services
+•  Planting/
+replanting/
+rehabilita-
+tion
+•  Farm main-
+tenance
+•  Nutrient 
+manage-
+ment
+•  Water man-
+agement
+•  Pest and 
+disease 
+manage-
+ment
+•  Pod harvest-
+ing
+• Pod breaking
+• Fermentation
+• Drying
+• Packaging
+• Storage
+• Utilization of 
+cacao waste 
+and by-
+products
+• Other value-
+adding 
+activities
+•  Consolida-
+tion
+•  Cleaning
+•  Packaging 
+& labeling
+•  Hauling
+•  Transport-
+ing
+•  Wholesal-
+ing
+•  Retailing
+Set A
+•  Cleaning
+•  Roasting
+•  Winnow-
+ing
+•  Grinding
+•  Pressing
+•  Pulveriz-
+ing
+•  Packaging
+•  Storage
+Set B
+•  Cleaning
+•  Roasting
+•  Winnow-
+ing
+•  Grindling
+•  Mixing/
+Refining
+•  Conching
+•  Moulding
+•  Packaging
+•  Transport-
+ing/Shipping
+•  Retailing
+•  Buying
+
+3 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Functions
+Input Provision
+Cacao Farm 
+Maintenance 
+and Beans 
+Production
+Fermentation, 
+Drying and 
+Storage
+Local Mar-
+keting/Trad-
+ing
+Beans Pro-
+cessing
+Exporting
+Trading of 
+Finished 
+Products
+Final sale in 
+Domestic 
+and Export 
+Markets
+Role players/
+Operators
+Input Suppliers
+Farmer Cooperatives
+Nursery Operators
+Farmer Coop-
+eratives
+Individual 
+Farmers
+Wet beans 
+buyers
+Farmer Coops
+Farmer
+Cooperatives
+Local Traders
+Farmer Co-
+operatives
+Processors
+Exporters
+Processors
+Traders
+Exporters
+Consump-
+tion
+Product
+- Seedlings
+- Organic ferilizers
+Technical services
+Cacao pods, 
+wet beans
+Dried beans, 
+fermented and 
+dried beans
+Dried beans, 
+fermented 
+and driend 
+beans
+Set A: Nibs, 
+Tableam 
+Butter, Pow-
+der
+Set B: choc-
+olates and 
+chocolate 
+products
+Tablea, Cocoa 
+Benas, Cocoa 
+Butter, Cocoa 
+Powder, Choc-
+olates, Cocoa 
+paste
+Tablea, Co-
+coa Beans, 
+Cocoa But-
+ter, Cocoa 
+Powder, 
+Chocolates, 
+Cocoa 
+paste
+Local 
+Households 
+and Con-
+sumers, 
+OFWs, 
+Tourists, Su-
+permarkets, 
+Retailers, 
+Export Mar-
+ket
+Enablers
+DA, DA-HVCDP, DA-BPI, DA-ATI, DA-BAFS, DA-BSWM, 
+DA-BAR, PCA, DAR, DENR, DTI, DOST, PCIC/PCIA, LGUs, 
+MinDA, Academe, Government, other private sector 
+group, ACPC, LBP and other Funding Institutions
+DA, DA-HVC-
+DP, DA-
+AMAS, DTI, 
+PCIC/PCIA 
+LGUs
+DA, 
+DA-HVCDP, 
+ATI, TESDA, 
+PhilMech, 
+DTI, DOST, 
+PCIC/PCIA, 
+LGUs
+DA, DTI, PCIC/
+PCIA, Attaches
+---
+DA, DTI, 
+PCIC/PCIA
+Tablea, Co-
+coa Beans, 
+Cocoa But-
+ter, Cocoa 
+Powder, 
+Chocolates, 
+Cocoa paste
+
+3 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+As shown in Table 9, the cacao industry is packed with industry enablers from the 
+government sector, private sector, and non-government organizations. These enablers 
+provide support services in the form of technical and financial interventions including 
+the provision of postharvest facilities and support infrastructures as indicated in their 
+respective mandates. These generally enable the development and strengthening of the 
+industry.
+One of the players that has a major role in the realization of the different interventions 
+is the strengthened Philippine Cacao Industry Council (PCIC). The PCIC was created to 
+spearhead the development of the industry. It is a private sector led council composed 
+of public and private sector representatives. To provide co-leadership, the Department 
+of Agriculture acts as a co-chair. Furthermore, at the Regional level, the Regional Cacao 
+Industry Councils were established. These councils spearhead the development of the 
+industry in their respective regions. The elected chairpersons represent their regions at 
+the Philippine National Cacao Industry Council (Philippine Cacao). To date, sixteen (16) 
+regional councils and five (5) provincial councils have already been created.
+Enablers
+The potential and significant contributions of the cacao industry to employment and 
+income generation have led the various government agencies to initiate interventions 
+that will support the development of the industry. Among the programs designed to 
+provide support are as follows:
+•	
+High Value Crops Development Program of the Department of Agriculture (DA);
+•	
+Philippine Rural Development Program of DA; 
+•	
+National Greening Program of the Department of Environment and Natural Resources;
+•	
+Coconut-Cacao Enterprise Development Project of Philippine Coconut Authority;
+•	
+Industry Clustering, Market Assistance, Trade Promotion and Shared Service Facility 
+Programs of the Department of Trade and Industry (DTI);
+•	
+Market Resurgence Program (MRP) of DTI;
+•	
+Agrarian Production Credit Program of the Department of Agrarian Reform;
+
+3 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+•	
+Mindanao Sustainable Agrarian and Agriculture Development (MinSAAD) Project;
+•	
+Credit Program of the DA-Agricultural Credit Policy Council;
+•	
+SETUP, MPEX, and CAPE, NICER, RDLead, CRADLE and BIST Programs of DOST; and
+•	
+Research and Development Projects of the DA-Bureau of Plant Industry and academe.
+The convergence of government support programs and projects touches various levels of 
+the cacao industry value chain and is expected to transform and empower cacao farmers 
+into thriving cocoa communities, which are the essential foundation for sustainable cocoa 
+farming. To reach this goal of transformation and empowerment, there is a need for 
+collaborative and harmonized interventions among government agencies, private and 
+non-government organizations.
+Infrastructure Support and Logistics
+Postharvest Facilities
+Availability of efficient postharvest facility in every region is necessary to produce quality 
+cocoa. In line with the goal in positioning the Philippines as producer and exporter of Fine 
+Flavour Beans, postharvest facilities for fermentation and drying need to be provided. 
+At present, majority of the cacao farmers ferment and dry the cacao beans at their farms 
+or homes using makeshift equipment. Cacao beans are dried on the ground or makeshift 
+platforms, which may expose the beans to surface contamination and infestation. The 
+absence of appropriate solar dryers or mechanical dryers slows down the drying of 
+cocoa beans during rainy season, allowing moulds to develop. On the other hand, rapid 
+drying prevents the oxidation of acetic acid, which leads to excess acid trapped within 
+the beans. Hence, this lack of appropriate machinery may cause serious problems for the 
+industry as it affects the flavor and quality of the beans.
+To attain these quality requirements, appropriate postharvest facilities must be available 
+in all cacao-growing communities. These facilities include cacao bean grading kits, 
+fermentary facility, solar dryer with UV cover, mechanical dryer, multipurpose dryer 
+pavement, and warehouse.
+
+3 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Nursery and Budwood Garden
+Given the competitive advantage and marketing potentials of cacao in the local and 
+world market, many farmers have ventured in the industry in the recent years. However, 
+the supply of quality planting materials was not enough to meet the demand of the 
+increasing number of cacao growers as nursery and budwood gardens are limited.
+There are over 150 nursery operators in Davao Region with combined production of more 
+than five (5) million seedlings per year. These nursery operators are supplying the Davao 
+Region and Mindanao areas as well as Luzon and Visayas areas. Ready to sow seeds and 
+bud sticks, which are the primary inputs to nursery operation, are also sourced out from 
+Davao. However, high mortality on planting materials was observed due to improper 
+handling and transport.
+The existing supply gap and the proliferation of non-accredited nurseries are major 
+concerns that hamper the expansion and development of the industry. Hence, ensuring 
+easy access and availability of quality planting materials should be given top priority.  In 
+order to address these concerns, there is a need to establish additional nurseries and 
+budwood gardens at the provincial level. In addition, plant nursery accreditation and 
+certification in the province should be strengthened at the same time more nurseries in 
+the municipalities be accredited.
+Farm-to-Market Road
+Accessibility to farm-to-market road (FMR) plays a vital role in the production and 
+marketing aspects of the industry.
+In the production side, the lack of FMR affects the farmers’ capacity to transport farm 
+inputs and farm products, thus increasing their production costs. The delay of movement 
+in the harvested cacao to postharvest facilities and/or marketing channels also affects the 
+quality of beans, thus resulting in low farm gate prices.
+As for the marketing aspect, poor road networks limit the farmers’ opportunities to gain 
+access to larger commercial channels and to choose buyers who can provide higher prices. 
+Oftentimes, farmers rely on middlemen who often buy their beans at a much lower price. 
+
+3 7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Since most cacao farms are located in the rural areas, issues on product consolidation, 
+delays in the movements of crops, farm inputs, and finished product, which affect 
+production costs and farm gate prices, are very evident.
+To help farmers gain better leverage on market and have better access to inputs, it is 
+recommended that Farm-to-Market Road (FMR) initiatives put priority on the locations 
+where cacao growing is suitable as presented in Appendices 2 and 3: Climate and Soil 
+Suitability map.
+Research for Development
+Improvement and innovation across the different areas of the value chain (input provision 
+to production and processing) are necessary in gaining competitive and comparative 
+advantage. Accordingly, both the private and public sectors including the academe 
+have been independently doing research and development on cacao production and 
+management as well as product development and enhancement in order to attain its 
+competitive advantage.
+On cacao production and management, the agriculture-based academic institution such 
+as the University of Southern Mindanao (USM) undertakes various researches that aim to 
+develop new generation of superior clones that are high-yielding, high fat content, and 
+resistant to Cocoa Pod Borer (CPB), Phytophthora pod rot, and Vascular Streak Dieback 
+(VSD). Together with the DA-BPI, new cacao hybrids were developed, and studies on 
+varietal appropriateness to local conditions were made. 
+To complement the research and development (R&D), the University of the Philippines 
+Los Baños (UPLB), DA-BPI and the DOST in partnership with the private sector undertook 
+research and development interventions to develop new technologies in nursery 
+operation, farm production protocols and postharvest processing. These initiatives aim to 
+increase farm efficiency and productivity as well as enhance product quality.
+Although product development and enhancement are commonly initiated by the private 
+sector engaged in processing/manufacturing, the government sector such as the DOST 
+is also conducting researches for quality improvement of various cocoa-based products 
+such as tablea, liquor, etc.
+
+3 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+While there have been a number of researches conducted, the stakeholders believe 
+that continual research and development across the value chain is necessary. However, 
+research results should not be confined in R&D centers, therefore better and wider 
+dissemination of research findings and transfer of technologies should also be prioritized. 
+The establishment of a Cacao Research Center is being pushed by the industry players in 
+order to have a focal center for R&D and depository of all cacao researches.
+Human Resource Development
+At present, the private sector and non-government organizations such as the Kennemer 
+Foods International (KFI), CSI Trade Ventures., Cacao Industry Development Association 
+of Mindanao (CIDAMI), and ACDI/VOCA provide technical support to cacao farmers 
+across the country. Likewise, public sector initiatives led by DA, DAR, DENR, and DTI in 
+partnership with Cacao Industry Development Association of Mindanao Inc. (CIDAMI) 
+provide human resource trainings not only in the field of production but also on 
+entrepreneurship.  
+It is evident that the importance of capacity building has been recognized and given 
+priority by all sectors. However, most of the training centers are located in Region XI, 
+thus making it less accessible to other regions such as Luzon and Visayas. To address this 
+gap, PCIC in collaboration with TESDA will design and conduct trainings nationwide. 
+Alongside with this initiative is the preparation of the Harmonized Cacao Production and 
+Postharvest Protocols that will be published and made in digital format to reach more 
+cacao growers.
+Credit Support & Insurance
+Credit is essential in the modernization and transformation of the country’s cacao 
+industry into a dynamic, high-growth sector. Access to timely and affordable credit is 
+crucial to eliminate the cacao farmers’ financial constraints to invest in farm activities, 
+improve technologies, and increase productivity. The government has been implementing 
+agricultural credit programs that cacao farmers and cacao-based micro and small 
+enterprises (MSEs) and other players in the cacao value chain can access to finance the 
+
+3 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+capital requirements of their production, processing, marketing as well as farm rehabilitation 
+and/or expansion undertaking, and other activities along the cacao value chain.
+The Department of Agriculture (DA) including its attached agencies and the Department 
+of Agrarian Reform are the government agencies responsible for the majority of 
+the lending programs for the agricultural sector. The government credit programs 
+administered by DA, DAR and other related agencies are designed to provide preferential 
+(subsidized) loans to smallholder farmers, including those in cacao farming. 
+Majority of DA and DAR credit programs are implemented in partnership with the Land 
+Bank of the Philippines (LBP). A number of the DA programs are also in partnership with 
+cooperatives, farmers’ associations and rural banks in delivering credit to smallholder 
+farmers. Loans are granted for the purpose of purchasing inputs, as working capital, and/
+or for the acquisition of farm equipment, machineries and post-harvest facilities. DA and 
+DAR also make available financing support for immediate relief and recovery of small 
+farmers affected by calamities and other disastrous and fortuitous events.
+Cacao farmers and cacao-based MSEs may also avail financing through the lending 
+windows provided by government-owned financing institutions such as the Land Bank of 
+the Philippines (LBP) and the Small Business Corporation (SBC).
+Shown below is the list of these programs.
+Table 9. Agricultural Credit Programs  
+Agency
+Program Name
+Description
+DA
+Agricultural Competitive 
+Enhancement Fund (ACEF)
+Designed to increase productivity of farmers and fishers by 
+providing credit for the purchase of farm inputs, machineries, 
+equipment, and establishment and improvements of production 
+and post-harvest facilities. 
+DA
+Agrarian Production Credit 
+Program (APCP)
+Provides agri-production and enterprise credit, capacity 
+building, and other support services to agrarian reform 
+beneficiaries and their organizations. 
+
+4 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Agency
+Program Name
+Description
+ACPC
+AgriNegosyo Program 
+(ANYO) and its subprograms
+Provides accessible and affordable credit to eligible borrowers 
+to finance income-generating activities (production, processing, 
+or marketing or agri-fishery income generating activity and 
+non-farm micro-enterprise) and  working capital and/or fixed 
+asset acquisition (agricultural facilities construction/acquisition, 
+machinery/ equipment acquisition) requirements of the micro 
+and small agribusiness enterprise and farmers and fisherfolk 
+cooperatives/ associations
+ACPC
+Kapital Access for Young 
+Agripreneurs (KAYA)
+Finance working capital and/or fixed asset acquisition 
+requirement of start-up or existing agri-based projects of young 
+entrepreneurs and agri-fishery graduates. 
+ACPC
+Survival and Recovery Loan 
+Assistance (SURE) Program
+Provides immediate financing relief to small farmers and 
+fishers affected by natural and other calamities, animal disease 
+outbreak, and other disastrous events.
+DAR
+Expanded Assistance 
+to Restore and Install 
+Sustainable Enterprise for 
+Agrarian Reform Beneficiaries 
+and Small Farm Holders 
+(E-ARISE-ARBs)
+Financing support for disaster affected ARBOs and small farmer 
+holders and their families to restore livelihoods and farming 
+activities.
+DAR
+Credit Assistance Program 
+for Program Beneficiaries 
+Development (CAP-PBD)
+Provides credit assistance to existing CAP-PBP Window III 
+cooperative/farmers association borrowers to ensure their 
+sustained economic development.
+LBP
+Credit Assistance for Cacao
+Agribusiness Entities and 
+Other Organizations 100 
+(Cacao 100)
+Finance cacao industry stakeholders and help them attain their 
+mission of producing 100,000 metric tons of dried fermented 
+beans by 2022
+SBC
+MSME Financing Programs
+Direct lending to registered micro, small and medium 
+enterprises (MSMEs), which aims to bridge the financing gap 
+of “pre-bankable but viable” MSMEs that are at the moment 
+“unserved” by the banking system. 
+Through this program, MSMEs are provided with a conducive 
+environment by financing their business needs, training them to 
+get credit track record and experience, and building up business 
+size necessary to access bank financing in the future.
+Source: ACPC, DAR, LBP, DTI
+
+4 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+While there are government-initiated interventions, it is imperative to increase the 
+participation of the private sector in the provision of financing services to cacao farmers, 
+in particular to the smallholders who lack capitalization, to advance their production 
+activities and enable them to viably and sustainably contribute to the economy. 
+Enhancing the enabling policy and regulatory environment is crucial to allow (1) adoption 
+of market-based financial and credit policies, (2) focus on proper management and 
+utilization of loan fund, (3) engagement and active participation of banks and government 
+financial institutions, and (4) provision of critical support services in order to serve and 
+provide accessible financing to more farmers including those engaged in cacao farming 
+and cacao-based enterprises. Moreover, current programs only fund new farms that are 
+operating for 0 to 3 years. Cacao growers with farms that need rehabilitation are having 
+difficulty in raising funds for their farm activities.
+In terms of insurance, the Philippine Crop Insurance Corporation (PCIC) has been offering 
+insurance coverage to both commercial and non-commercial cacao growers/farmers 
+under its tree and seedling mortality insurance products. These insurance products serve 
+as a form of protection against losses due to natural calamities and pest and diseases 
+infestation. The PCIC also provides free subsidized insurance coverage to subsistence 
+cacao farmers that are listed in the Registry System for Basic Sector in Agriculture 
+(RSBSA). Cacao farmers who are not in the list may go to their respective Municipal or 
+Provincial Agriculturist to register and be included in the said list. Additionally, Crop 
+Insurance may be bundled with certain agricultural credit programs, such as those offered 
+by ACPC. These agricultural credit programs are in a form of loan and income security 
+programs that are extended to the farmers.
+SWOT Analysis
+The series of consultative meetings and national convergence allowed the stakeholders to 
+discuss strengths, weaknesses, opportunities and threats that are prevalent in the industry. 
+These are as follows:
+
+4 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Table 10. SWOT Analysis of the Philippine Cacao Industry 
+Value Chain Activities
+Strengths
+Weaknesses
+Opportunities
+Threats
+Final sale in the Domestic 
+and Export Markets
+•	 Accessibility to domestic 
+and foreign trade
+•	 Global recognition of 
+Philippine cacao beans 
+and products
+•	 Six (6) cacao products sold 
+to local and international 
+markets
+•	 No product substitutes
+•	 Presence of players from 
+all stages of the value 
+chain
+•	 Cacao prices defies the 
+law of supply and demand
+•	 Convergence of 
+government support 
+programs and projects
+•	 Continuous R&D
+•	 Presence of enablers from 
+the government sector, 
+private sector and NGOs
+•	 Strengthened Philippine 
+Cacao Industry Council, 
+regional and provincial 
+councils
+•	 Limited number of 
+processors (Common 
+Service Facilities)
+•	 Underutilization of the 
+capacity of local grinders
+•	 Insufficient/inappropriate/ 
+Lack of knowledge on the 
+use of PH facilities
+•	 Lack of Philippine Cacao 
+Brand
+•	 Inefficient Market 
+Linkages
+•	 Trade-deficit in cacao
+•	 Weak technology 
+commercialization
+•	 Increasing discretionary 
+household income in 
+developing countries
+•	 New and innovative 
+uses of cocoa in the 
+food, cosmetics and 
+pharmaceutical industries
+•	 Increasing awareness of 
+consumers to fair trade 
+and health & wellness
+•	 Positioning of cacao as 
+health food
+•	 Growing number of 
+restaurants and coffee 
+shops serving cocoa-
+based drinks and 
+food items
+•	 Growing industry of 
+medium and small-scale 
+chocolatiers requiring 
+high quality cocoa beans
+•	 Increasing purchasing 
+power of middle-aged 
+working class
+•	 Decreasing world market 
+price
+•	 Setback from pandemic
+Trading of Finished Products
+Exporting
+Beans Processing
+Local Marketing/Trading
+Fermentation, Drying and 
+Storage
+·	
+
+4 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Value Chain Activities
+Strengths
+Weaknesses
+Opportunities
+Threats
+Cacao Farm Maintenance 
+and Beans Production
+•	 Suitability of location for 
+production
+•	 Suitability of cacao as 
+intercrop
+•	 Early gestation period
+•	 Two-week harvest interval
+•	 Early Return on 
+Investment and high 
+profitability
+•	 Low productivity level
+•	 Unstable yield from 
+2020-2014 despite area 
+expansion
+•	 Aging cacao trees in 
+major production areas
+•	 Dominance of small-scale 
+production
+•	 Inadequate R&D Centers
+•	 Inaccessibility to credit
+2M hectares of coconut 
+farms ideal for cacao 
+cropping
+•	 Occurrence of pests and 
+diseases
+•	 Wild weather pattern
+•	 Competition with other 
+plantation crops
+•	 Possible genetic 
+deterioration on 
+commonly used varieties
+Input provision
+•	 Massive distribution and 
+cultivation of planting 
+materials
+•	 On-going crafting of 
+harmonized production 
+and postharvest protocols
+•	 Non-self-pollinating 
+characteristic of cacao
+•	 Inefficient procurement 
+and distribution system of 
+planting materials
+•	 Proliferation of non-
+accredited nurseries
+
+4 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Cost and Return Analysis
+Production
+Consistent with the bright market opportunities of the industry is the promising return on 
+investments (ROI) for those who are or will be engaged in cacao production. As illustrated 
+in the table below, production cost of planting cacao (monocrop or intercrop) is relatively 
+low. For monocrop production, initial production cost for the first year is at PhP89,628.00 
+per hectare (equivalent to 1,100 cacao trees) while intercrop planting is estimated to be at 
+PhP61,148.00 per hectare (equivalent to 600 cacao trees). 
+Based on the data provided, material cost for cacao production is higher than the labor 
+cost in intercrop planting from the first year until the third year of production. Material 
+costs during these years comprise 65 to 75% of the total production, which went to 
+the investment on seedlings, tools and other inputs. On the other hand, for monocrop 
+production, material cost is higher than the labor cost during the first year of production 
+only. This is due to the maintenance cost per year after the first year of production, which 
+is equivalent to Php60,000. 
+Furthermore, production cost can even be lower when low-cost organic farm inputs such 
+as biofertilizers and biopesticides are utilized. Biofertilizers like MYKOVAM is applied 
+once only throughout the life time of the crop.  It is composed of mycorrhizal fungi that 
+proliferate in the roots and rhizosphere and aids in the absorption of more nutrients and 
+water especially in marginal areas exposed to drought and high temperature.  Only a 
+very minimal amount of chemical fertilizer (from 25 to 50% of the recommended rate) is 
+needed during the early establishment period of the field planted seedling.
+Unlike other crops, ROI of cacao production can be gained within three (3) years both 
+for monocrop and intercrop areas since harvest may be done within 18 months for well-
+managed farms. Profitability is higher on the third year as net income doubles relative 
+with the production cost. 
+The promising income that the industry can offer accompanied with the numerous 
+employment (being a labour-intensive industry) it can generate through cacao production will 
+ultimately help in the government’s goal for countryside development and poverty alleviation.
+
+4 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Table 11: Costs and Returns per Hectare as Intercrop (600 trees per hectare) 
+PARTICULARS
+YEAR 1
+YEAR 2
+YEAR 3
+YEAR 4
+YEAR 5
+Yield
+Trees per Hectare
+ 600 
+ 600 
+ 600 
+ 600 
+ 600 
+Pods per Tree
+ 7 
+ 34 
+ 59 
+ 70 
+Total Pods per Hectare
+ 4,200 
+ 20,400 
+ 35,400 
+ 42,000 
+Pod Index
+ 20 
+ 20 
+ 20 
+ 20 
+ 20 
+Wet beans (kg/ha)
+ 630 
+ 3,060 
+ 5,280 
+ 6,300 
+A. MATERIALS
+Tools
+Knapsack sprayer for insecticides 
+2,500
+Hand tools: spade, bolo, pruners, others
+2,000
+Sub-total (PhP)
+4,500
+Seedlings 
+Total seedlings needed 
+(Add: 10% for replacements of mortalities)
+660
+Cost per seedling 
+20
+Sub-total (PhP)
+13,200
+Dolomite (for soil pH correction)
+No. of kilos applied
+1,000
+1,000
+No. of bags required
+20
+20
+Cost per bag
+180
+180
+Sub-total (PhP)
+3,600
+3,600
+Fertilizer: 16-16-16
+Application rate (grams per tree)
+340
+560
+600
+600
+600
+Total kilos
+240
+336
+360
+360
+360
+Cost per bag
+1,510
+1,510
+1,510
+1,510
+1,510
+PARTICULARS
+YEAR 1
+YEAR 2
+YEAR 3
+YEAR 4
+YEAR 5
+Cost per kilo
+30
+30
+30
+30
+30
+Sub-total (PhP)
+7,248
+10,080
+10,800
+10,800
+10,800
+Fertilizer: Organics
+Application rate (kilos per tree)
+3
+3
+3
+Total kilos
+1,800
+1,800
+1,800
+Cost per kilo
+7.50
+7.50
+7.50
+
+4 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+PARTICULARS
+YEAR 1
+YEAR 2
+YEAR 3
+YEAR 4
+YEAR 5
+Sub-total (PhP)
+13,500
+13,500
+13,500
+Agri. chemicals (foliar; fungicide; 
+insecticide)
+No. of application cycles
+24
+24
+24
+24
+24
+Cost/knapsack 
+29
+29
+29
+29
+29
+No. of Knapsack
+1.50
+3
+4
+5
+6
+Sub-total (PhP)
+1,100
+2,088
+2,784
+3,480
+4,176
+Herbicide Spray
+No. of application cycles
+4
+4
+3
+2
+1
+Cost/knapsack 
+41
+41
+41
+41
+41
+No. of Knapsack
+12
+12
+12
+12
+12
+Sub-total (PhP)
+2,000
+2,000
+1,500
+1,000
+500
+Plastic sleeves for CPB control
+Total sleeves needed
+4,200
+20,400
+35,400
+42,000
+Cost per piece 
+0.06
+0.06
+0.06
+0.06
+Sub-total (PhP)
+252
+1,224
+2,124
+2,520
+Provision for harvest sacks for pods
+525
+2,550
+4,425
+5,250
+TOTAL MATERIALS COSTS (PhP)
+45,148
+14,945
+32,358
+25,429
+36,746
+B. LABOR
+Clearing
+Cost per man day
+200
+No. of man days
+5
+Sub-total (PhP)
+1,000
+Layout / staking
+Cost per man day
+200
+No. of man days
+4
+Sub-total (PhP)
+800
+Digging of holes
+Piece rate
+5
+No. of holes
+600
+Sub-total (PhP)
+3,000
+Planting
+Cost per man day
+200
+
+4 7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+PARTICULARS
+YEAR 1
+YEAR 2
+YEAR 3
+YEAR 4
+YEAR 5
+No. of man days
+12
+Sub-total (PhP)
+2,400
+Round weeding & mulching
+Piece rate
+2
+2
+Total per cycle
+1,200
+1,200
+Number of cycles
+4
+4
+Sub-total (PhP)
+4,800
+4,800
+Foliar Spray
+Cost per man day
+200
+200
+200
+200
+200
+No. of knapsack
+1.50
+3
+4
+5
+6
+No. of man days
+25
+50
+62.50
+75
+87.50
+Number of cycles
+24
+24
+24
+24
+24
+Sub-total (PhP)
+600
+1,200
+1,500
+1,800
+2,100
+Herbicide Spray 
+No. of application cycles
+4
+4
+3
+2
+1
+PARTICULARS
+YEAR 1
+YEAR 2
+YEAR 3
+YEAR 4
+YEAR 5
+No. of Knapsack
+12
+12
+12
+12
+12
+Sub-total (PhP)
+800
+800
+600
+400
+800
+Dolomite application/liming for soil pH
+Correction
+Cost per man day
+200
+200
+No. of kilos applied
+1,000
+1,000
+Application efficiency (i.e., kilos/man day)
+150
+150
+No. of man days required
+1
+1
+Sub-total (PhP)
+200
+200
+Fertilizer application
+Cost per man day
+200
+200
+200
+200
+200
+Total man days
+2
+2
+2
+2
+2
+No. of application cycles
+4
+4
+2
+2
+2
+Sub-total (PhP)
+1,600
+1,600
+800
+800
+800
+Tree pruning, chupon pruning, shaping
+Cost per man day
+200
+200
+200
+200
+200
+Total man  days
+1
+4
+3
+3
+3
+
+4 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+PARTICULARS
+YEAR 1
+YEAR 2
+YEAR 3
+YEAR 4
+YEAR 5
+No. of cycles
+4
+3
+3
+2
+2
+Sub-total (PhP)
+800
+2,400
+1,800
+1,200
+1,200
+Pod sleeving
+No. of pods for sleeving
+-
+4,200
+20,400
+35,400
+42,000
+Piece rate
+0.10
+0.10
+0.10
+0.10
+0.10
+Sub-total (PhP)
+-
+420
+2,040
+3,540
+4,200
+Harvesting, pod breaking
+Kilos of wet beans harvested
+-
+630
+3,060
+5,280
+6,300
+Labor cost per kilo of wet bean harvested
+3.50
+3.50
+3.50
+3.50
+3.50
+Sub-total (PhP)
+-
+2,020
+10,710
+18,400
+22,050
+PARTICULARS
+YEAR 1
+YEAR 2
+YEAR 3
+YEAR 4
+YEAR 5
+TOTAL LABOR COSTS (PhP)
+16,000
+13,240
+17,450
+26,340
+31,150
+C. TOTAL MATERIALS AND LABOR 
+COSTS (PhP)
+61,148
+28,185
+49,808
+51,769
+67,896
+REVENUES
+Wet beans  (kg/ha)
+-
+630
+3,060
+5,280
+6,300
+Gross Value Wet beans (at PhP28/kg)
+10,080
+85,680
+147,840
+176,400
+D. NET INCOME
+-
+(18,105)
+35,872
+96,071
+108,504
+E. RETURN OF INVESTMENT (%)
+(64.24)
+72.02
+185.58
+159.81
+**600 trees per hectare (with 10% for replacement of mortalities)
+**50 kg per bag of Dolomite and Inorganic fertilizer
+Table 12: Costs and Returns per Hectare as Monocrop (1,100 cacao trees per hectare)
+PARTICULARS
+YEAR 1
+YEAR 2
+YEAR 3
+YEAR 4
+YEAR 5
+1.     Cacao seedlings (1,100 pcs. @  PhP 
+25/seedling
+27,500
+4.	
+Fertilization at Planting (PhP 1300/
+bag)
+       -  Inorganic at 50 grams/hill
+       -  Organic Fertilizer at 200 grams/hill     
+          (P300/bag)
+2,750
+
+4 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+PARTICULARS
+YEAR 1
+YEAR 2
+YEAR 3
+YEAR 4
+YEAR 5
+5.	
+Maintenance Fertilization (PhP 1300/
+Bag of 50 kg)
+       -  Vegetative Stage at 100-150g/ 
+          application/tree
+      -  Productive Stage at 200-250g/
+          application/tree
+8,580
+17,160
+22,800
+28,599
+28,600
+4.    Pesticides, Application as needed
+1,850
+2,775
+3,700
+3,700
+3,700
+5.    Hand tools and Equipment
+3,000
+1,000
+1,000
+1,000
+1,000
+6.    Sacks and Crates
+1,000
+2,000
+3,000
+3,000
+7.    Establishment Cost: (Labor Piece Rate  
+PhP 350)
+Land Prep (Clearing, staking, liming)
+8,000
+Holing & Planting  at P15.00 X 1,100 holes
+16,500
+Weeding Quarterly  12 MD
+4,200
+Pruning quarterly at 10 MD
+3,500
+Fertilizer application, quarterly  at 4 MD
+1,400
+Chemical Spraying,    12MD
+4,200
+8.     Farm Maintenance: PhP 10,000/
+Month for 2 Ha
+60,000
+60,000
+60,000
+60,000
+9.     Pod Breaking at PhP 1.50/kg
+1,350
+4,500
+6,750
+9,000
+TOTAL EXPENSES
+81,480
+83,285
+94,000
+103,050
+105,300
+ 10% Contingency 
+89,628
+91,613
+103,400
+113,355
+115,830
+TOTAL PRODUCTION COST
+Yield at 90% productive trees or say 
+1000   trees productive. 100% good 
+beans
+15%
+50%
+75%
+100%
+    Total Dried Bean Production at 2kg/Tree
+300
+1,000
+1,500
+2,000
+    Gross Value (Price index PhP 110/kg)
+33,000
+110,000
+165,000
+220,000
+Net Income for Productivity Level of 
+2kg DFCB
+(89,628)
+(58,613)
+(6,600)
+65,065
+112,090
+    Total Dried Bean Production at 3 kg/
+    Tree
+450
+1,500
+2,250
+3,000
+    Gross Value (Price Index  PhP 110/kg)
+49,500
+165,000
+247,500
+330,000
+Net Income for Productivity Level of 
+3kg DFCB
+(89,628)
+(42,113)
+61,600
+134,210
+214,170
+
+5 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+PARTICULARS
+YEAR 1
+YEAR 2
+YEAR 3
+YEAR 4
+YEAR 5
+    Total Dried Bean Production at 4 kg/
+    Tree
+600
+2,000
+3,000
+4,000
+    Gross Value (Price Index PhP 110/kg)
+66,000
+220,000
+330,000
+440,000
+Net Income for Productivity Level of 
+4kg DFCB
+(89,628)
+(25,613)
+116,600
+216,645
+324,170
+Key to Higher Income:  Higher Productivity. At least 3 kg/tree/year
+ 
+Percentage of Productive Tree should be not less than 90%
+ 
+Beans rejection/damage beans should not be more than 10%
+	
+Field Operation Efficiency, Good alignment & Branching at 1 meter
+ 
+High Planting Density; Go for 1,450 trees per hectares
+ 
+Proper fruit care. 
+ 
+High percentage of good pods and good beans
+ 
+Convert fixed cost to variable cost
+Value-added products
+In the Philippines, there are seven cacao products sold to local and international markets. 
+These are the wet beans, dried beans, dried fermented beans, cacao nibs, tablea, cocoa 
+powder, and cocoa butter. Value of each product generally depends on the value-added 
+inputs and demand in the market.
+Products that have undergone value-adding processes are more valued. Per industry 
+estimate, the value of beans increases four times when converted to tablea and increases 
+eight times when converted to chocolate. This entails that in order to gain higher 
+profitability, producers must value-add their products instead of settling into wet or dried 
+beans alone.   
+In the previous roadmap, it was mentioned that among the most valued cacao product is 
+the cocoa butter which is being sold at PhP750.00 per kilogram or higher. This product 
+is a pale-yellow, edible fat extracted from the cocoa beans. It accounts 45-57% of the 
+bean content and is the most expensive. It is a major ingredient in practically all types of 
+chocolates and also being used in making ointments, toiletries, and pharmaceuticals.
+
+5 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+In selling beans, the dried fermented ones are more valued compared to the wet and 
+dried beans. Farmers may have an additional PhP10-15.00 per kilogram in selling dried 
+fermented beans. However, in order to market this type of product, availability and 
+accessibility to postharvest facilities are very important to farmers.
+In terms of tablea product, the farmers get the highest profitability with 38% or equivalent 
+to PhP130.00 based on the PhP 215.00 selling price of 1.5 kg of beans. Production cost 
+is estimated at PhP45.00 - PhP50.00 per kilo of dried fermented beans. The minimal 
+requirement for additional inputs and overhead costs, and the prevailing market price 
+based on supply and demand, contribute to the bigger profitability of the farmers.  On 
+the other hand, tablea processors gain the next highest profit as compared to other levels 
+of the value chain.  A twenty-nine percent profit, equivalent to PhP99.00 per kilogram, 
+is gained by the processors out of the PhP450.00 selling price per kilogram. Traders and 
+wholesalers/retailers only acquire 4% and 14% profitability shares, respectively. 
+Under the value chain distribution in the international scenario, 6.6% profit goes to the 
+farmer for every bar of chocolate, while the chocolate producer and retailer take 35% and 
+44% of the shares, respectively.
+Farmers with value-adding activities gained more economically. Thus, the cocoa sector 
+can contribute much in terms of inclusive economic growth. This is very important in 
+spurring up rural economic development. This is on top of the jobs created and other 
+related livelihood opportunities that can be created.
+Benchmark Analysis
+Majority of the cacao farms in the country are small holdings and are being owned and 
+managed by farmers. These farmers are generally undergraduates who have gained 
+knowledge in farming from their descendants or from experience. Consequently, majority 
+of them have limited technical skills and knowledge on production, marketing, and 
+entrepreneurship. Further, farmers have limited access to relevant and updated data, 
+information, and technologies that they can use.
+
+5 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+This human resource gap often becomes a hindrance in attaining the desired productivity 
+and competitiveness of the industry. For instance, the lack of knowledge on Good 
+Agricultural Practices (GAP) led to improper farm management resulting in low yield and 
+vulnerability of cacao plant to pest and diseases.  Likewise, the lack of knowledge on 
+postharvest processing and the use of postharvest facilities also affects the quality of the 
+cocoa beans. These inadequate skills and knowledge have greatly impacted the farmers’ 
+ability to maximize income potential from cacao growing. Addressing these gaps are 
+relevant to the industry given that cacao production is labour-intensive rather than capital-
+intensive.
+The table below shows the assessment of farmers on the effect of their current practices 
+on income and the environment as well as their proposed solutions. This was adopted 
+from the Value Chain Analysis and Competitive Strategy: Davao Del Norte Cocoa Bean.
+Table 13: Farmers’ Assessment of the Effect of the Current Practices on Income and Environment with 
+Proposed Solutions and Intervention Approach 
+Common Practices
+Impact on 
+Environment (IE)
+Impact on 
+Business (IB)
+Solution
+Intervention 
+Approach
+Use of pesticides 
+(Fungicide/ Herbicide) 
+Decis, Dithane, 
+Malathione, Alliete, 
+Ader Round-up, Power 
+Teeweed, Clear-up
+Death of pollinator: 
+tag-nok, bees, 
+bat, butterfly Air 
+contamination Health 
+hazardous
+Low production 
+High cost of 
+production
+Practice 
+integrated pest 
+management 
+Transition to 
+organic farming 
+practices
+Encourage farmers 
+group to supply 
+organic pesticides 
+& organic 
+fertilizers
+ 
+Conduct training 
+on organic farming
+Regular 
+monitoring of 
+organic farming 
+practices
+Fertilizer/ synthetic 
+Urea, complete, 
+ammonium sulphate, 
+potash, Viking
+high phosphate/ 
+nitrate acidic soil water 
+contamination
+High cost of 
+production, 
+low profit not 
+sustainable
+Disposal of cacao 
+pods
+-use as substrate of 
+vermiculture
+-non-utilization of 
+cacao pods scattered 
+in the area
+Recycling - organic 
+fertilizer
+Spread of fungus 
+infestation in the area; 
+more mosquitoes - 
+dengue
+Low production 
+cost
+ 
+Loss of income
+ 
+Conversion of 
+cacao pods to 
+compost
+Acquisition of pod 
+shredder Training 
+on equipment 
+maintenance
+Transportation to 
+procure inputs
+Use of energy Carbon 
+emission
+Additional Cost
+On-site nursery 
+establishment
+Capacity building
+
+5 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Moreover, the characteristics of cocoa produced depends on the genotype, soil, climate 
+and harvest conditions, and postharvest activities, particularly fermentation, drying and 
+roasting. Fermentation and drying, when done appropriately, remove all unpleasant flavors 
+and initiate chemical processes required to produce the true cocoa and chocolate flavours 
+that occurs after roasting. According to Mikkelsen, the factors that affect the quality of 
+the final beans in the fermenting step include degree of ripeness of pods; type of cocoa; 
+climate and season; quantity of cocoa beans in a batch; and duration of fermentation.
+Drying is a necessary step in the processing of cocoa. Through this process, the good 
+condition of beans for storage and transport is obtained. It is also necessary to reduce the 
+bitterness and astringency of the beans.  Furthermore, it facilitates the development of 
+the chocolate brown color characteristic of well-fermented beans as well as prevent the 
+development of off-flavors within the beans.
+In the country, facilities and systems used in drying and fermentation vary. This variation 
+affects the quality of the beans. Agents of multinational companies have their own 
+fermentary facilities, solar dryers, and bean grading kits, while farmers still do the 
+fermentation and drying at their production areas or homes using makeshift equipment. 
+Most likely, the beans are dried on the ground or makeshift platforms, which results in 
+surface contamination that is a major source of fungi in fermented and dried cocoa beans. 
+Moreover, there is a high risk on mould development during rainy days wherein drying of 
+cocoa beans is done on prolonged periods and on an intermittent basis. This results in 
+off-flavours that is created when the moulds penetrate the testa, which can be a serious 
+problem. On the other hand, when drying is too fast, the oxidation of acetic acid can be 
+prevented. This results in too much acid trapped within the beans, which adversely affects 
+the flavour of the nib.
+
+5 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Competitive Analysis
+The cases of Ecuador and Indonesia provide examples of how countries are moving 
+up in the value chain. One of the most important upgrading that the two countries are 
+undertaking is process upgrading at the agricultural level. This is a response to the global 
+trend as cocoa production has remained the same in the past 10 years while demand 
+continues to increase. 
+Hence, the study conducted by the Duke University entitled “The Philippines in the 
+Cocoa Value Chain” provided upgrading trajectory recommendations. If these will be 
+achieved, the country is expected to move into higher value processing segment of the 
+value chain. The following are the recommendations as stated in the said document:
+a. Short Term Process Upgrading (agriculture): Taking the lead from major cocoa 
+bean producers, the Philippines needs to improve their agriculture production to 
+be competitive and participate in the cocoa-chocolate GVC. The starting point for 
+the country is to expand and improve the productivity. Aging trees, and inefficient 
+agricultural operations have undermined productivity of the sector. Increasing the 
+production should first satisfy the domestic market and later the international market. 
+This should be the very first step that the country should follow. Efforts to boost 
+processing at this stage will likely drive less expensive beans imports from other 
+countries, and undermine production efforts at home. 
+b. Short Term Process Upgrading (certification): Taking the lead from major cocoa 
+bean producers, the Philippines needs to seek certification from the international 
+certifying organizations, such as UTZ and Rainforest Alliance. While these certifications 
+do not command a high price premium in the market, the commitment of several 
+global cocoa processors and chocolate manufacturers to source only certified 
+beans by 2020 represents a potential shift in the global demand market and new 
+requirement for export. The Philippines needs to begin assisting farmers now to meet 
+the requirements of these organizations to ensure competitiveness as production 
+increases.
+
+5 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+c. Short Term Product Upgrading: Continue to encourage the diversification of cocoa 
+bean variety in the nation. Since the geography of the Philippines allows for the 
+cultivation of the three major types of beans: Trinitario, Criollo and Forastero, it is 
+advisable that the country diversifies risks by growing all varieties that can cater to 
+different end markets. However, more effort should be done towards diversifying into 
+Forastero beans as demand for Criollo beans is a niche market with relatively small 
+demand. Furthermore, it is advisable to explore high value hybrids to take advantage 
+of new markets and new cocoa bean varieties.
+d. Medium Term Functional Upgrading (manufacturing): Once the country is able to 
+meet the minimum requirements of cocoa production, manufacturing of the beans will 
+be the next step. Other lead countries such as Ghana, Cote D’Ivoire, and Indonesia 
+have attracted investment from big processors when they secured a good and stable 
+production volume. Olam, Cargill and Barry Callebaut are present in these countries 
+having state-of-the art factories and training specialists to run these cocoa plants that 
+produce cocoa liquor and butter. Hence, this functional upgrading, moving to higher 
+stages of the value chain, will provide additional export revenues as well as new jobs 
+for the country.
+
+
+5 7
+MARKET TRENDS 
+AND PROSPECTS
+Local 
+The Philippines is said to be the first country in Asia that planted cacao. The 
+conduciveness of the country’s location for cacao production and accessibility to domestic 
+and foreign trade heightened the interest of local farmers and exporters to push for a 
+more dynamic and competitive cacao industry that can participate in the cacao global 
+cacao and chocolate value chain. For this to materialize, there is a need to build and 
+promote a Philippine Cacao Brand. 
+In 2017, the Cocoa of Excellence Program first recognized cacao-beans from the 
+Philippines as part of the best 50 beans for the said year’s edition. The Cocoa of 
+Excellence Program is the first stage for cacao producers to join the International 
+Cocoa Awards (ICA). The ICA is a global competition, coordinated by the Biodiversity 
+International and Event International, that acknowledges the quality, flavor and diversity 
+of cacao according to their origin. This year (2021), one entry from the Davao Region and 
+one entry from Region VI were recognized as gold awardees. In addition, one entry from 
+Davao Region received a silver award.
+However, market linkages still remain inefficient which resulted in extensive market 
+failures, high transaction costs and risks, and service gaps.  Furthermore, the country is 
+still an importer of cocoa products such as chocolate, cocoa powder, cocoa beans, cocoa 
+paste, cocoa butter and cocoa husks. The large import of cocoa powder and export 
+value of chocolate is being credited to major chocolate manufacturers in the country that 
+seldom buy local cocoa beans. Instead, they use imported powder and cocoa butter for 
+their raw materials. This in effect increases the importation of cocoa powder making it the 
+leading cacao product import in 2014. Consequently, some of the finished by-products 
+produced by local manufacturers are being exported to other countries. 
+
+5 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+While considered a snack food in developed countries, chocolate in the Philippines 
+is mostly eaten during special occasion or given as gifts. Among the major chocolate 
+manufacturers located in the country are Universal Robina Corporation, Commonwealth 
+Foods, Inc., Goya, Inc., and Columbia International Food Products Inc. Most of these 
+companies are situated in Luzon, with capacity ranging from 20,000 to 36,000 metric 
+tons (MT) of processed cocoa annually. Universal Robina accounts 38% of the chocolate 
+market, with Cloud Nine and Nips as top selling products.
+Grinding requirement of local chocolate manufacturers is at 40,000 metric tons (MT) while 
+national production is only at 10,000 metric tons (MT).  A portion of this 10,000 metric 
+tons (MT) is also being exported or processed at source, hence, not all local production is 
+being consumed by the local grinders prompting them to import cocoa beans from other 
+countries. It is reported that the Philippines imports 50,000 metric tons (MT) of cocoa and 
+cocoa preparations to meet the local demand.  
+The presence of players from all stages in the cacao value chain places the Philippines 
+at a competitive edge. Locally, the discrepancy between the grinding requirements 
+of manufacturers and the existing national production entails more opportunities for 
+production expansion to meet local demand. In addition, local processors offer higher 
+buying price for cocoa beans compared to bean exporters.
+For bean exporters, more opportunities are open due to the widening of supply and 
+demand gap in the world market. A 10% market share in the world supply may provide a 
+profitable income to the country and its producers.
+International
+The spread of the COVID-19 pandemic in the early part of 2020 had led to disruptions 
+of supply chains, industries and markets across the globe. Just like the other sectors, 
+the global cocoa and chocolate industry was affected by the changing demand and 
+distribution channels in one way or another. Nevertheless, according to Fortune Business 
+Insights (2020), the global cocoa and chocolate market size is still forecasted to grow 
+exponentially with the increasing demand for specialty and premium chocolates in the 
+
+5 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+developed economies. The market may hit USD 67.22 billion by 2025 while presenting a 
+compound annual growth rate of 5.7% between 2018 and 2025.
+There is also an increasing consumer interest in single-origin chocolates. These are made 
+from cocoa beans produced in a specific country, region or even a specific plantation. 
+Due to the climate and soil, together with the techniques of cacao farming and 
+harvesting, origin chocolates has its own signature flavor profile.
+On the other hand, value-added cocoa-based products like chocolates are being made 
+predominantly in non-cacao producing countries such as the United States and European 
+countries. At present, Europe remains the main market for premium quality beans since 
+majority of the grinders are based in the country. Of the 60% world grinding capacity, 
+39% are from grinders based in Europe, while the remaining 22% are based in America.  
+This elucidates why main exporters of cacao and its preparations in 2015 were from 
+countries in Europe such as Germany and Netherlands. Cacao producing countries such 
+as Cote d’Ivoire and Ghana were the top exporters of cocoa beans in 2015.
+With the increasing awareness and concerns on healthy eating, healthy alternatives within 
+chocolate confectionery may be included to the current offerings. Major brands seek to 
+affect the direction of new product development over the next five years. For example, 
+there were reports that Nestlé has created a vegan version of its popular Kit Kat brand of 
+lines (called Kit Kat V). This poses a challenge to cacao producing regions as most of the 
+cacao farms are small holdings owned by farmers who have limited investment. 
+On the other hand, the growing demand for sustainably produced cocoa beans entails 
+more profitability to farmers, which consequently demands higher prices for the premium 
+quality beans they produce. This is observed over the last decade especially in Northern 
+and Western Europe. In 2018, the World Cocoa Berlin Declaration was released, which 
+recognizes that a sustainable cocoa sector can only be achieved through collaboration. 
+In addition, the first international standard for sustainable and traceable cocoa was 
+published in May 2019. Hence, it is increasingly necessary for producers to transform 
+their current farming practices to more sustainable ones, such as the utilization of fewer 
+synthetic fertilizers and conduct of good water management.
+
+6 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Moreover, supermarkets and sari-sari stores (other grocery retailers) still dominate the 
+distribution of chocolate confectionery in the Philippines and this is expected to continue 
+even with the effect of the COVID 19 pandemic. However, e-commerce is still seen to 
+have some scope for development having made strong gains in chocolate confectionery 
+during 2020 and 2021. In March 2020, the Fine Cacao and Chocolate Institute (FCCI) 
+conducted a survey to better understand the impact of COVID-19 on small chocolate 
+businesses. While several lockdowns were implemented, postage and delivery systems 
+were still operating in different countries. With this, small chocolate businesses used this 
+platform to improve their sales. Thirty percent of those who participated in the survey are 
+planning to move sales entirely online while as much as 59% look forward to boosting 
+digital marketing endeavors over the immediate future. Also, according to National 
+Confectioners Association, online chocolate engagement grew, rising from 25 percent of 
+shoppers in 2018 to 40 percent in 2021.
+
+6 1
+PRIORITY CONCERNS 
+& OPPORTUNITIES/ 
+CONSTRAINTS & 
+OPPORTUNITIES
+The Philippine Cacao Industry Roadmap – Way Forward
+This updated Cacao and Chocolate Industry roadmap is a revision of the 2016-2022 
+Harmonized Cacao Industry Roadmap. It is anchored on the principle of clustering and 
+localization. The approach is scientific and dynamic as it will be backed-up by science and 
+will be evaluated and revised, when deemed necessary, yearly. The aim to be globally 
+competitive and sustainable is in line with the context in making the cacao industry 
+environmentally sound, socially desirable, and economically viable.
+One Sector-One Voice is one of the avenues that the cacao stakeholder wants to pursue. 
+Through the leadership of the Philippine Cacao Industry Council (PCIC), in co-leadership 
+with the Department of Agriculture (DA), the Philippine Cacao Industry Association, Inc. 
+(PCIA) will be organized and registered at the Securities and Exchange Commission (SEC) 
+as a private organization composed of cacao industry stakeholders. It will serve as the 
+Private sector partner and counterpart of the PCIC in the promotion of the Cacao Industry 
+through the effective implementation of the Harmonized production and postharvest 
+protocols and Action Plans stipulated in the Cacao and Chocolate Industry Roadmap.
+Implementation of the revised roadmap will be localized to ascertain timely and up-to- 
+date execution of programs and plans. Yearly review of the roadmap and assessment of 
+milestones will be performed to ensure that the interventions are properly implemented 
+and to make revisions on the course of action, when deemed necessary.  Moreover, active 
+participation in local and international events to promote Philippine Brand of quality 
+cacao will be continued as well as forging linkages with international stakeholders will be 
+strengthened.
+
+6 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+On the environmental context, this roadmap seeks to achieve production with special 
+consideration for the environment. Thus Programs, Activities, and Projects (PAPs) that 
+will be undertaken to spur development will be in consonance with environmental 
+preservation and protection.
+Socially desirable PAPs for the development of cocoa-growing communities are also laid 
+down to ensure human resource development especially in cocoa-growing communities. 
+This is being accompanied with economically viable practices that encourage fair and 
+profitable supply chain with the goal of attaining inclusive business growth with much 
+emphasis on the economic well-being of the cocoa farmers.
+Philippine cocoa production is less than 0.1% of the global production. Philippines, 
+Thailand and Vietnam share the 1% out of the 13% production of Asia, while Indonesia 
+and Malaysia share the remaining 12%. The production and market position of the 
+Philippine cocoa bean should be geared towards the Fine Flavour Bean (FFB) so as not to 
+compete in the Bulk Bean (BB) market, which accounts for 95% of the world production.  
+FFB accounts for only 5% of the world production but commands a much higher price. 
+In addition, production of FFB will provide the right quality of beans needed to support 
+the development of the Philippine Chocolate Industry. This is also one way of de-
+commoditizing the products so as not to be greatly affected by the price fluctuations in 
+the global market, thus bringing more income to the farmers.
+For the aforementioned plans and programs to materialize, it will require a concerted 
+effort among the industry enablers and the private sectors to ensure an improved delivery 
+of service particularly on postharvest facilities, among others. Given this aspiration, 
+stakeholders have set their vision, mission, and goal, which will be the basis and direction 
+of the industry. 
+
+6 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Figure 9: Cacao Industry Road Mapping Process
+
+6 4
+TARGET SETTING
+Vision, Mission, Goals and Objectives
+The updated Philippine Cacao and Chocolate Industry Roadmap was formulated, drafted 
+and finalized after a series of industry consultations, meetings, and regional convergence 
+sessions. The following are the Vision, Mission, Goal and Objectives that were agreed 
+upon by stakeholders:
+VISION
+A globally competitive and sustainable Philippine Cacao and Chocolate Industry built on 
+a strong Philippine Brand of quality cacao.
+MISSION
+Anchored on the principle of strengthened marketing through industry clustering and 
+localization, the Philippine Cacao and Chocolate Industry will be strengthened by 2025 
+through:
+•	
+Nationwide adoption of the upgraded harmonized cacao production and postharvest 
+protocols to pursue poverty alleviation, job generation and environmental protection 
+while advancing economic development and inclusive growth;
+•	
+Promotion of cacao production in areas highly suitable for cacao growing to improve 
+farm efficiency and ensure increased farmers’ income thereby raising their economic 
+status
+•	
+Promotion of continual applied research and development collaborations;
+•	
+Mobilization of all stakeholders and relevant government agencies to provide the 
+needed extension support services for concerted industry-wide development efforts; 
+
+6 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+•	
+Harmonized information gathering to establish a management information system; 
+and
+•	
+Stronger participation in the global cacao and chocolate value chain by building and 
+promoting Philippine Brand.
+GOAL AND OBJECTIVES
+The goal is to produce 50,000 metric tons (MT) of quality fermented beans by 2025 to 
+meet the demand of the export and domestic markets through a 40% annual increase in 
+production.
+In order to achieve the 2025 roadmap goal, the following objectives are deemed to be 
+attained:
+• 
+To make available and accessible quality cacao planting materials as well as 
+rehabilitate existing 31,000 hectares (600 trees/hectare);
+• 
+To increase 7,000 hectares of newly planted trees in 5 years;
+• 
+To raise yield to 2 kg/tree/year;
+• 
+To ensure availability of quality fermented cocoa beans to support and sustain value-
+adding activities; 
+• 
+To contribute to the goal of attaining inclusive growth and poverty alleviation through:
+ 
+Increase farmers’ gross income to at least PhP 130,000 per hectare per year; 
+ 
+Increase export sales by at least USD 75-M by 2025; 
+ 
+Generate at least 17,000 jobs by 2025;
+ 
+Encourage young people to go into cacao production.
+
+6 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Table 14: Financial Requirement for Cacao Production  
+PROGRAM/ ACTIVITY/ 
+PROJECT
+FINANCIAL TARGETS
+2021
+2022
+2023
+2024
+2025
+Expansion Area (ha)
+35,520,000
+53,280,000
+79,920,000
+127,872,000
+204,595,200
+Inorganic Fertilizer
+750,000
+1,125,000
+1,687,500
+2,700,000
+4,320,000
+Organic Fertilizer
+400,000
+600,000
+900,000
+1,440,000
+2,304,000
+Training and training-related 
+activities
+7,980,000
+11,970,000
+17,955,000
+28,728,000
+45,964,800
+Technology Demonstration 
+Establishment
+16,110,000
+24,165,000
+36,247,500
+57,996,000
+92,793,600
+Rehabilitation/Rejuvenation of 
+Old trees
+12,904,000
+19,356,000
+29,034,000
+46,454,400
+74,327,040
+Research for Development
+5,542,000
+8,313,000
+12,469,500
+19,951,200
+31,921,920
+Agricultural Machinery, 
+Equipment, Facilities and 
+Infrastructures
+21,707,000
+32,560,500
+48,840,750
+78,145,200
+125,032,320
+*50kg/sack of organic and inorganic fertilizer
+* Agricultural Machinery, Equipment, Facilities and Infrastructures (comprises farm production and postharvest-related 
+machinery and equipment, postharvest facilities and irrigation)
+
+6 7
+RECOMMENDATIONS 
+FOR POLICIES, 
+STRATEGIES AND 
+PROGRAMS
+Development Directions  
+and Upscaling Strategies
+The constraints and opportunities identified by the stakeholders served as the basis 
+in setting the development directions of this roadmap. This is also aligned to the One 
+DA Reform Agenda: 18 Key Strategies, highlighting the four pillars of consolidation, 
+modernization, industrialization and professionalization. The following development 
+directions need to be noted in the implementation of this roadmap:
+• 
+Expansion of production areas in areas suitable for cacao growing based on the 
+Climate and Soil Suitability Map
+• 
+Increase in fermented bean productivity level
+• 
+Moving Up of the Cacao Industry Value Chain
+• 
+Strengthening of Market Presence through Branding
+• 
+Focus on Fine Flavour Beans Market
+• 
+Apply the principle of clustering, localization and market demands
+
+6 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Aligned with the development directions to strengthen, expand and promote the industry 
+are the seven (7) upscaling strategies, which are as follows:
+• 
+Increase production and access to quality planting materials based on the Climate 
+and Soil Suitability Map
+• 
+Improve farm productivity by adopting the harmonized production and postharvest 
+protocol
+• 
+Aggressive promotion of value-added products
+• 
+Strengthen market linkage and Philippine Branding of quality cacao
+• 
+Continual research and development across the value chain
+• 
+Continual provision of technical support on production, processing and marketing
+• 
+Resource generation and mobilization
+Cacao Industry Action Plans
+The Cacao and Chocolate Industry Action Plan is based on the seven (7) upscaling 
+strategies identified by stakeholders where interventions from the government and 
+the private sector were laid down. This Action Plan will facilitate the convergence and 
+collaboration among stakeholders. Government interventions are distributed based on 
+the agency’s mandate. 
+Through this Action Plan, harmonization and integration of development initiatives from 
+various sectors are made possible. This provides transparency in the programs and 
+projects implementation as well as facilitates stricter and closer monitoring and evaluation 
+of industry performance to achieve the target goals.
+The timeframe on this Action Plan is set as follows: 
+a. Short-term (2021-2025), which coincides with the National Agriculture and Fisheries 
+Modernization and Industrialization Plan (NAFMIP) implementation
+b. Medium-term (2026-2030), which coincides with the UN’s Sustainable Development 
+Goals (SDG) 2030 deadline
+c. Long-term (2031-2040), which coincides with NEDA’s AmBisyon 2040
+
+6 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+The Roadmap Development Team believes that some activities and programs can be 
+implemented in a year’s period, thus a one-year timeframe was included in the Action 
+Plan. These activities and programs falling under the one-year period will be evaluated 
+and modified, when deemed necessary, after a year.
+Table 15: The Philippine Cacao and Chocolate Industry Action Plan 
+Programs, Activities, and Projects
+Implementing Agencies
+Timeline
+Strategy 1: Increase production and access to quality planting materials based on the Climate and Soil 
+Suitability Map
+Establish additional Nurseries & Budwood Gardens 
+at the provincial level
+DA, BPI, DA-RFOs, DAR, 
+Cacao stakeholders
+Short term- 1st Year
+Craft a Harmonized production and postharvest 
+protocols
+DA, Academe, Technical 
+experts, Cacao stakeholders
+Short term- 1st Year
+Strengthen Plant Nursery Accreditation and 
+Certification in the Province and accredit more 
+nurseries in the municipalities
+DA, DA BPI accredited 
+nurseries, Farmers, Cacao 
+stakeholders
+Short term- 1st Year
+Forge partnership between farmer/grower and 
+those with bud wood garden
+Cacao stakeholders
+Short term- 1st Year
+Facilitate national implementation of the 
+Implementing Rules and Regulations (IRR) 
+on genetic material procurement to improve 
+procurement process and delivery system on 
+planting materials
+DA, DA BPI, DA RFOs
+Short term
+Improve planting material distribution (DA to 
+strengthen the existing foundation groves/
+budwood gardens as source of propagules for 
+propagation and the LGU to produce quality 
+planting materials)
+DA, PCA, DENR,  LGU, DAR, 
+Cacao stakeholders
+Short term
+Assist in the provision supplies and materials to 
+expand the established nurseries 
+DA, DOST-PCAARRD, BPI, DA 
+RFOs, LGUs
+Short term
+Facilitate the acquisition and supply of quality 
+planting materials should only be sourced from 
+accredited nursery operators in a particular region/
+province
+DA, PCA, DAR, LGUs, Cacao 
+stakeholders
+Medium term
+Provide farm infrastructures (Farm-to-Market Road, 
+Irrigation system)
+DA, DA RFOs, DPWH
+Medium term
+
+7 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Programs, Activities, and Projects
+Implementing Agencies
+Timeline
+Strategy 2: Improve farm productivity by adopting the harmonized production and post-harvest   
+protocol
+Ensure Good Agricultural Practices (GAP) 
+certification on Cacao in the provincial level
+DA, BPI, Cacao stakeholders
+Short term- 1st Year
+Implement Integrated Pest and Disease 
+Management Program, Plant Nutrition Program 
+and Cultural Practices/Management Program
+DA, PhilMech, BPI, DOST 
+Academe, RCPC, Cacao 
+stakeholders
+Short term- 1st Year
+Provide Postharvest Facilities (Fermentation, Dryers, 
+etc.)
+DA, PhilMech
+Short term
+Strengthen Science and Technology Community-
+Based Farming (STCBF) Program
+DOST-PCAARRD
+Short term
+Conduct a comprehensive inventory of existing & 
+potential/suitable cacao production areas
+DAR, DA, LGU, PCA, DENR, 
+Cacao stakeholders
+Short term
+Implement massive rehabilitation and maintenance 
+program all-over the country
+DA, PCIC Regional Councils
+Short term
+Establish LGU-recognized model farm in the 
+municipalities or provinces
+DA, LGU, Cacao stakeholders, 
+DILG
+Short term
+Strengthen existing Common Service Facilities to 
+be Linked to Expert Chocolatiers 
+DA, DOST, DTI, Cacao 
+stakeholders
+Short term
+Strategy 3: Aggressive promotion of value-added products
+Conduct of Product Development Clinics and 
+Technology upgrading
+DTI, DOST
+Short term- 1st Year
+Provide Cacao Processing Facilities (Common 
+Service Facilities)
+DA, DTI, DAR
+Short term- 1st Year
+Utilize cacao pod husk as fuel briquettes, cellulose 
+acetate, feeds, and pectin as well as cacao dripping 
+as wine, vinegar, ethanol and pectin
+PhilMech, DOST
+Short term- 1st Year
+Build cacao waste village enterprise models in 
+strategic growing areas
+PhilMech, DOST, LGU, DA 
+RFO
+Short term- 1st Year
+Product upgrading focused on high quality cacao 
+mass (Tablea and Chocolate) 
+DTI, DA, DOST
+Short term- 1st Year
+Strategy 4: Strengthen market linkage and Philippine Branding of quality cacao
+Establish/upgrade trading post facilities in the 
+regional and provincial level
+DA, AMAS, DTI, Cacao 
+stakeholders
+Short term- 1st Year
+
+7 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Programs, Activities, and Projects
+Implementing Agencies
+Timeline
+Strongly recommend decentralization of testing 
+hubs for Certificate of Product Registration (CPR) 
+accreditation to simplify/shorten the processing 
+time
+DOH-FDA, DA, DTI, Cacao 
+stakeholders, DOST
+Short term- 1st Year
+Conduct Quality standards & certification advocacy 
+DA, BAFS, DTI, DOST, 
+PhilMech, Cacao 
+stakeholders, FDA
+Short term- 1st Year
+Organize the Philippine Cacao Festival
+DTI, DA, Cacao stakeholders
+Short term- 1st Year
+Conduct Annual Celebration of the World 
+Chocolate Day
+DTI, DA, Cacao stakeholders
+Short term- 1st Year
+Develop a local awarding system
+DA, DTI, Cacao stakeholders
+Short term- 1st Year
+Participate in International, National & Regional 
+Exhibits/Fairs
+DTI, DA, Cacao stakeholders, 
+DFA
+Short term- 1st Year
+Participate in the Annual Cocoa of Excellence 
+Competition in Paris, France
+DTI, DA, Cacao stakeholders
+Short term- 1st Year
+Conduct an Orientation on Single Origin, 
+Traceability & Geographic Information System (GIS)
+DA, BAFS, BPI, DTI
+Short term- 1st Year
+Encourage DA-AMAS to be more proactive in its 
+Actions to support the development of the cacao 
+industry
+ DA, DA AMAS
+Short term- 1st Year
+Improve Packaging and Labelling 
+DOST, DTI
+Short term
+Promote a Collective Trademark/Brand for 
+Philippine Cacao Export Products
+DTI, MinDA
+Short term
+Start the ground work for the International Cocoa 
+Organization (ICCO) membership
+DA, DTI, Cacao stakeholders, 
+Philippine Government
+Short term
+Apply for Certification of Philippines as suppliers of 
+Fine Flavour Cacao Beans
+DA, Cacao stakeholders
+Short to Medium 
+term
+Strengthen market linkages and referrals (local and 
+foreign)
+DTI, DA, BOI
+Short to Medium 
+term
+Conduct of Asia Pacific Cacao Conference
+DA, DTI, Cacao stakeholders
+Short to Medium 
+term
+Define/Develop Standards for Philippine Cacao 
+Products
+DA, DTI-BPS, DOST, DA-BAFS
+Short to Medium 
+term
+Promote the Philippine Brand Quality Cacao Beans 
+and Chocolates Locally and Globally
+AMAS, DTI, Cacao 
+stakeholders, MinDA
+Medium term
+
+7 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Programs, Activities, and Projects
+Implementing Agencies
+Timeline
+Strategy 5: Continual research and development across the value chain
+Support the Science for Change Programs i.e. 
+Niche Centers in the Regions for R&D; (NICER 
+Program), R&D Leadership (RDLead), Collaborative 
+Research and Development to Leverage Philippine 
+Economy (CRADLE) for RDIs and Industry Program 
+and Business Innovation through S&T (BIST) for 
+Industry Program
+BAR, DOST, Cacao 
+stakeholders
+Short term- 1st Year
+Improve Postharvest Technologies and establish 
+R&D Center including Cacao testing laboratory 
+facilities
+UPLB, DOST PHILMECH, 
+Cacao stakeholders, 
+Academe
+Short term- 1st Year
+Conduct Cacao Industry Profiling, Mapping and 
+Geo-Tagging
+DA, DA-RFOs, DAR, DENR, 
+Cacao stakeholders
+Short term- 1st Year
+Continuously conduct studies on the local and 
+global markets and its channels
+DTI, AMAS
+Short term- 1st Year
+Continuously conduct feasibility and suitability 
+studies based on the suitability map to identify best 
+regions for selected high potential varieties
+DA, BAR, DOST, Academe, 
+Cacao stakeholders
+Short term- 1st Year
+Conduct researches based on the needs of the 
+industry and how to level up the quality of cacao 
+beans
+DA, BAR, Academe, Cacao 
+stakeholders, DOST, DTI 
+Short term- 1st Year
+Continuously conduct dissemination, promotion 
+and commercialization of developed technologies/
+R&D results
+PCIC, DTI, DOST, Academe, 
+Private sector, DA, BAR
+Short term- 1st Year
+Continuously conduct dissemination, promotion 
+and commercialization of developed technologies/
+R&D results
+PCIC, DTI, DOST, Academe, 
+Private sector, DA, BAR
+Short term- 1st Year
+Disseminate information on the existence of R&D 
+centers and its function and services
+BAR, DOST, Academe
+Short term- 1st Year
+Utilize the research stations in the State, 
+Universities and Colleges (SUCs)
+DA, DA BAR, Academe, 
+DOST
+Short term- 1st Year
+Implement Varietal Improvement Program
+DA BAR, LGUs, Academe, 
+Cacao stakeholders, DOST-
+PCAARRD, DA HVC
+Short term
+Establish additional research centers in different 
+islands 
+DA, Cacao stakeholders, 
+DOST, Academe
+Short term
+
+7 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Programs, Activities, and Projects
+Implementing Agencies
+Timeline
+Analyze high value bean varieties and hybrids 
+available globally for potential production in the 
+country as well as its market demand
+DA, DA BAR, Cacao 
+stakeholders
+Short to Medium 
+term
+Encourage the academe to offer food technology 
+course as part of their curriculum in their respective 
+schools
+DOST, Academe
+Short to Medium 
+term
+Explore R&D Collaborations with Cacao Industry 
+Experts
+DA, MinDA, DOST, Academe, 
+DTI
+Long term
+Conduct of Benchmarking Activities in Malaysia 
+and Indonesia
+DA, Academe, DTI
+Long term
+Strategy 6: Continual provision of technical support on production, processing and marketing
+Validate Regional Cacao Industry Baseline data 
+and improve harmonized data collection with the 
+help of the LGUs to accurately track production 
+and planting in the country to establish Industry 
+Databank
+DA, BPI, DAR, DENR, PCA, 
+PSA, Cacao stakeholders, 
+LGUs
+Short term- 1st Year
+Generate LGU cooperation and support (local 
+policy, resources, data generation)
+Cacao stakeholders, LGUs, 
+DILG
+Short term- 1st Year
+Strengthen capacity building/training of LGUs 
+(MAOs and PAOs) on Cacao 
+DA, BPI, ATI, Cacao 
+stakeholders
+Short term- 1st Year
+Conduct farmer’s field day and industry forum
+DA, DOST-PCARRD, ATI, DTI, 
+LGUs, Cacao stakeholders,
+Short term- 1st Year
+Collaborate with TESDA on the training plan
+DA, ATI, Cacao stakeholders, 
+DTI, TESDA, 
+Short term- 1st Year
+Provide support to Farmer Information Technology 
+(FITS) Centers, School on the Air, Farmers’ Field 
+Schools, etc.
+DA, ATI, TESDA, Farm 
+Schools, LGUs, NGOs, Cacao 
+stakeholders,
+Short term- 1st Year
+Conduct Skills and Techno Transfer Training on 
+Postharvest i.e., Cacao Fermentation and Drying
+ATI, CIDAMI, DTI, DOST, 
+Cacao stakeholders, TESDA, 
+DA-PhilMech, Farm Schools
+Short term- 1st Year
+Connect grower associations and processors 
+through contract buying programs
+DA, AMAS
+Short term- 1st Year
+Promote agri-preneur and conduct Agri-
+preneurship Seminars to enable the farmers to be 
+self-reliant
+DA, AMAS, DTI, ATI, Cacao 
+stakeholders,
+Short term- 1st Year
+Conduct of Productivity Enhancement Trainings
+DA, Cacao stakeholders, DTI
+Short term- 1st Year
+
+7 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Programs, Activities, and Projects
+Implementing Agencies
+Timeline
+Conduct capacity building for Resource Generation
+DA, Cacao stakeholders, 
+Landbank
+Short term- 1st Year
+Develop and implement specific technical training 
+programs for capabilities gaps
+DA, ATI, Cacao stakeholders, 
+TESDA, Farm Schools, NGOs
+Short term- 1st Year
+Create an Inter-Agency Convergence Initiatives 
+to support Capacity Building Activities for cacao 
+processing
+LGUs, DA, DTI, Academe, 
+Cacao stakeholders,
+Short term- 1st Year
+Conduct Investment and Techno Forum
+DTI, DA, CIDAMI, MinDA, 
+Cacao stakeholders,
+Short term- 1st Year
+Continue the organization of the Philippine Cacao 
+Quality Awards Competition Program (Cacao Beans 
+Award)
+DA,  PCIC/PCIA
+Short term- 1st Year
+Encourage youth organizations to participate in the 
+Cacao Industry as agri-preneurs
+DA, TESDA, ATI, PCIC/PCIA
+Short term- 1st Year
+Programs, Activities, and Projects
+Implementing Agencies
+Timeline
+Integrate Gender and Development (GAD) 
+program in capacitating different stakeholders on 
+gender equality and women’s empowerment.
+DA, GAD, PCIC/PCIA
+Short term- 1st Year
+Publish a compendium that will compile R&D 
+results
+DA, BAR, PCIC/PCIA, 
+Academe, DOST
+Short term- 1st Year
+Digitalization of the Cacao Industry
+DA, PCIC/PCIA, ATI, DTI, 
+Academe
+Short term- 1st Year
+Conduct capacity building/training of BPI-NSQCS 
+staff on molecular marking/tagging
+BPI, DOST-PCAARRD funded 
+project with USM
+Short term
+Develop and implement traceability training 
+programs for small holders 
+DA, ATI, PCIC/PCIA
+Short term
+Strategy 7: Resource generation and mobilization
+Facilitate the involvement of Philippine Cacao 
+Industry Council in the government cacao seedling 
+procurement program 
+DA, Cacao stakeholders
+Short term- 1st Year
+Credit Access Facilitation
+•	
+Inventory of financing programs which can be 
+accessed by cacao growers
+o	
+Land Bank of the Philippines Cacao 100
+o	
+Small Business Corporation (SBC) 
+Financing Program
+o	
+DA, DAR, and ACPC-administered credit 
+programs
+DA, DAR, DTI, LBP, PCIC/
+PCIA, ACPC
+LBP, Cacao stakeholders
+SBC, DTI, Cacao stakeholders
+DA, DAR, ACPC (through 
+partner lending conduits)
+Short term- 1st Year
+
+7 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Programs, Activities, and Projects
+Implementing Agencies
+Timeline
+Design Special Programs on Credit
+•	
+Credit & Marketing Assistance Program for 
+Agrarian Reform Beneficiaries Organizations 
+(ARBOs)
+•	
+Credit facilitation through DA’s Loan 
+Facilitation Teams (LoFTs)2
+DA, ACPC, LBP, Cacao 
+stakeholders
+DAR
+DA, ACPC
+Short term- 1st Year
+Facilitate financing thru Agrarian Production Credit 
+Program (APCP) & Land Bank of the Philippines
+DAR, DA, Cacao stakeholders
+Short term- 1st Year
+Institutionalize a Convergence Mechanism at 
+Regional Level for the preparation of Agency 
+Budgets and Performance Targets Re: Cacao 
+Industry Development
+DA, Cacao stakeholders, DTI, 
+other government agencies, 
+DA RFOs, LGUs
+Short term- 1st Year
+Institutionalize the membership of the Regional 
+Cacao Industry Councils to the Regional 
+Development Councils (RDC)
+DA, DTI, NEDA
+Short term- 1st Year
+Draft a one-year Action Plan to be drawn from the 
+short-term five-year Action Plan complete with 
+targets, timelines and Persons responsible 
+Cacao Industry Roadmap 
+Development Team
+Short term- 1st Year
+Create a Cacao Roadmap Implementation Team 
+to oversee the implementation of the first year 
+Action PLAN. Composed of PCIC, PCIA, DA and 
+DTI; recommended adjustments on the Roadmap 
+as needed.
+Cacao Industry Roadmap 
+Development Team
+Short term- 1st Year
+“Raise funds to re-visit the Cacao Roadmap: 
+(1)	 to prepare a more in-depth study of the 
+markets (local and international) and 
+(2)	 conduct more comprehensive studies to 
+identify sites suitable for cacao production 
+based on the Climate and Soils Suitability 
+map for cacao, which will form the basis for 
+PCIC/PCIA strategic Actions following the 
+principles of localization, clustering and market 
+demands.”
+DA, AMAS, DTI, Cacao 
+stakeholders
+Short term- 1st Year
+Involve the participation of the different 
+government agencies in the implementation of the 
+Cacao Roadmap to ensure a unified Action at the 
+national and local level
+DA agencies, Bureaus and 
+Attached Corporations, 
+Cacao stakeholders, DENR
+Short term- 1st Year
+
+7 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Programs, Activities, and Projects
+Implementing Agencies
+Timeline
+Organize the Philippine Cacao Industry 
+Association (PCIA) and register it with the Security 
+and Exchange Commission (SEC) as a private 
+organization
+ Cacao stakeholders
+Short term- 1st Year
+Strengthen the collaboration of Regional Councils 
+with the Provincial councils, LGUs (MAOs and 
+PAOs) in support of the implementation of the 
+Mandanas Law
+DA, LGUs, Cacao 
+stakeholders
+Short term- 1st Year
+Achieve international certification for cocoa beans 
+to add more value to the product
+DA, DTI, Cacao stakeholders, 
+Short term- 1st Year
+Implement the Credit & Marketing Assistance 
+Program for Agrarian Reform Beneficiaries 
+Organizations (ARBOs)
+DAR
+Short term
+
+7 7
+INDUSTRY CLUSTER 
+GOVERNANCE 
+FRAMEWORK
+The industry stakeholders recognize the need to strengthen structural capability and 
+control mechanism in the development and promotion of the cacao industry at the 
+national level. Thus, initially, the National Cacao Industry Technical Working Committee 
+(NCITWG) was created on August 2015 to spearhead the cacao industry development 
+and paved the way for the organization of 15 Regional Cacao Industry Development 
+Councils. 
+At the Regional level, Regional Cacao Industry Councils have been established. These 
+councils spearhead the development of the industry in their respective regions. The 
+elected chairpersons represent their regions at the Philippine National Cacao Industry 
+Council (Philippine Cacao). To date, sixteen (16) regional councils and five (5) provincial 
+councils have already been created.
+The finalization of the 2016-2022 Philippine Cacao Industry Roadmap, necessitated 
+the creation of a permanent national structure that will spearhead the cacao industry 
+development thus, the creation of the Philippine Cacao. The Council is expected to attain 
+the following organizational objectives:
+•	
+Provide leadership in the cacao industry development;
+•	
+Strengthen structural capability and control mechanism in the development and 
+promotion of the cacao industry at the national level;
+•	
+Forge/strengthen public and private sector partnership for better coordination of 
+development initiatives; and, 
+•	
+Represent the industry to international cacao governing bodies;
+
+7 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+To ensure a harmonized and synchronized industry development as well as instill a certain 
+level of industry disciple, the following functions and responsibilities of the Philippine 
+Cacao are further defined below:
+•	
+Support Passage of House Bill Nos. 1475, 1771, 3253, 4082, 5344, 5585 and 6429 
+known as the “Philippine Cacao Industry Development Act”;
+•	
+Spearhead the development and promotion of the Philippine Cacao Industry; 
+•	
+Assist in organizing the Philippine Cacao Industry Association (PCIA), which will be 
+registered at the Securities and Exchange Commission (SEC) as a private organization;
+•	
+Formulate/advocate industry-related policies; 
+•	
+Serve as the forum and coordinating body to discuss strategic issues affecting the 
+cacao industry at the national level;
+•	
+Integrate and harmonize development efforts, programs and projects of the private 
+and government sectors;
+•	
+Conceptualize, recommend, and monitor/evaluate project implementation;  
+•	
+Promote transparency on project implementation; and
+•	
+Establish/harmonize cacao technical production and postharvest protocol.
+The Council is composed of public and private sectors, with at least 60% of the members 
+coming from the latter. Government representatives are from agencies involved in the 
+development and promotion of the cacao industry. On the other hand, the private sector 
+is composed of chairpersons of the Regional Cacao Industry Development Councils and 
+representatives of cacao industry organizations that are national in scope.
+The Council is a private sector led, thus representative from the private sector take the 
+chairmanship and co-chaired by the DA being the lead government agency. There are 
+two (2) vice chairpersons, one from the private and another from the government sector 
+with the latter represented by the DTI. The DTI-XI, being the DTI National Cacao Industry 
+Cluster Coordinator of the agency, serves as the Council’s secretariat in close coordination 
+with the DA-BPI.  Tenure of office shall be two (2) years. (see Appendix 4)
+ 
+
+7 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Monitoring and Evaluation
+The PCIC/PCIA together with the Cacao Roadmap Development Team (RDT) is 
+committed in ensuring that the target goals will be achieved and the action plans be 
+delivered. Close monitoring and yearly re-visitation of the roadmap will be done in order 
+to make the necessary adjustments on programs and activities identified.
+The PCIC/PCIA once established will come up with a harmonized data collection and 
+monitoring and evaluation system to keep track of the development of the industry. This 
+will involve the participation of all stakeholders particularly the participating government 
+institutions as they will be required to submit periodic report. 
+Through the harmonized data collection, which will be facilitated with the help of LGUs, a 
+more accurate tracking of production and planting are expected to be achieved thereby 
+narrowing, if not eliminating, data gaps particularly on the production area, volume of 
+production and productivity level. 
+Monitoring Report Forms will be developed and distributed to concerned agencies for 
+periodic submission. This will be consolidated by the secretariat and presented to the 
+council every semester for evaluation.
+Table 16.  Industry Cluster Governance Network 
+ROLES
+ACTORS
+RESPONSIBILITIES
+Overall implementing 
+and monitoring body
+•  Department of Agriculture
+•  National High Value Crops 
+Development Program
+•  Department of Trade and 
+Industry
+Spearhead the implementation of the 
+strategies and programs in the Philippine 
+Cacao Industry Roadmap
+Conduct an internal periodic review of the 
+Roadmap
+Mediate planning and regular consultations 
+between the public and provate sectors
+Establish partnership with private investors/
+companies and tap foreign funding 
+institutions
+
+8 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+ROLES
+ACTORS
+RESPONSIBILITIES
+Implementing Agency
+Private Sector
+Private counterpart support to scale-up 
+investments
+•  DA Regional Field Offices
+•  DA Services, Bureaus & Attached 
+Agencies
+•  State Universities and Colleges 
+(SUCs)
+•  Other National Government 
+Agencies
+•  Local Government Units
+Implement the targets and strategies 
+identified in the roadmap
+Monitoring Agency
+PCAF, DA-PMED, PSA
+Conduct periodic assessment of the 
+roadmap implementation
+
+8 1
+REFERENCES
+Cacao Industry Development Association of Mindanao Inc., (2012). Cacao Industry Cluster 
+Roadmap
+Department of Agriculture-Bureau of Plant Industry. (2014).  Cacao Industry Roadmap
+Department of Agriculture-Bureau of Soils and Water Management. Land Resources Evaluation 
+and Suitability Assessment of Strategic Production Areas: Land Suitability Map (Cacao)
+Board of Investments. 2015. The Philippine Cocoa “Tablea” Industry Roadmap, 2015
+International Cocoa Organization (ICCO), Quarterly Bulletin Forecasts and Estimates
+Philippine Statistical Authority (PSA), OpenStat
+Department of Trade and Industry (DTI). (2017). The Philippines in the Cocoa-Chocolate Global 
+Value Chain
+International Institute for Sustainable Development (IISD). (2019).  Sustainable Commodities 
+Marketplace Series 2019, Global Market Report: Cocoa
+International Trade Center (ITC) Trade Map accessed through http://www.trademap.org
+Climate Information for Agriculture, Department of Science and Technology-Philippine 
+Atmospheric, Geophysical and Astronomical Services Administration accessed thru https://
+www.pagasa.dost.gov.ph/
+
+
+8 3
+APPENDICES
+
+8 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Appendix 1: Agro-climatic requirements for growth and development of Cacao
+FACTORS
+CACAO
+Elevation (MASL)
+300 – 1,200
+Temperature (oC)
+Minimum of 18°C and maximum of 30-32°C
+Soil pH
+5.0 – 7.5
+Soil Depth
+150
+Organic Matter (OM)
+Rich in organic matter
+Relative Humidity (%)
+75-90
+Rainfall (mm)
+1,250 to 3,000 mm per annum
+*A suitable temperature is generally observed at an altitude up to 700 m.
+*Cacao thrives best under Type IV climate which has an evenly distributed rainfall throughout the year.
+Selecting a suitable cacao growing farm is vital in order to ensure maintaining cacao tree’s 
+vitality and productivity (refer to Annexes: Climate and Soil Suitability Map). An elevation 
+of 300-1,200 meters above sea level (MASL) is recommended with soil depth of 150 cm 
+and pH level from 5.0 to 7.5. The area needs to be rich in compounds that serves as 
+reservoir of nutrients such as organic matter. Cacao thrives best under Type IV climate, 
+which has an evenly distributed rainfall throughout the year as the ideal rainfall is about 
+1,250 to 3,000 mm. However, in areas where lesser rainfall occurs, an irrigation system is 
+recommended. On the other hand, the temperature should be from 18oC to 32oC with 
+75-90% relative humidity.
+The Philippines is among the countries in Asia seen to have a competitive advantage on 
+cacao production given its strategic location and climatic condition. The three (3) million 
+(M) hectares of coconut farms ideal for cacao intercropping supplement the industry’s 
+competitive advantage.
+Climate of the Philippines
+The Climate of the Philippines is tropical and maritime. It is characterized by relatively 
+high temperature, high humidity and abundant rainfall. It is similar in many respects to 
+the climate of the countries of Central America. Temperature, humidity, and rainfall, which 
+are discussed hereunder, are the most important elements of the country’s weather and 
+climate.
+
+8 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Temperature
+Based on the average of all weather stations in the Philippines, excluding Baguio, the 
+mean annual temperature is 26.6o C. The coolest months fall in January with a mean 
+temperature of 25.5oC while the warmest month occurs in May with a mean temperature 
+of 28.3oC. Latitude is an insignificant factor in the variation of temperature while altitude 
+shows greater contrast in temperature. Thus, the mean annual temperature of Baguio 
+with an elevation of 1,500 meters is 18.3oC. This makes the temperature of Baguio 
+comparable with those in the temperate climate and because of this, it is known as the 
+summer capital of the Philippines.
+The difference between the mean annual temperature of the southernmost station in 
+Zamboanga and that of the northermost station in Laoag is insignificant. In other words, 
+there is essentially no difference in the mean annual temperature of places in Luzon, 
+Visayas or Mindanao measured at or near sea level.
+Humidity
+Humidity refers to the moisture content of the atmosphere. Due to high temperature 
+and the surrounding bodies of water, the Philippines has a high relative humidity. The 
+average monthly relative humidty varies between 71 percent in March and 85 percent 
+in September. The combination of warm temperature and high relative and absolute 
+humidities give rise to high sensible temperature throughout the archipelago. It is 
+especially uncomfortable during March to May, when temperature and humidity attain 
+their maximum levels.
+Rainfall
+Rainfall is the most important climatic element in the Philippines. Rainfall distribution 
+throughout the country varies from one region to another, depending upon the direction 
+of the moisture-bearing winds and the location of the mountain systems.
+The mean annual rainfall of the Philippines varies from 965 to 4,064 millimeters annually. 
+Baguio City, eastern Samar, and eastern Surigao receive the greatest amount of rainfall 
+
+8 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+while the southern portion of Cotabato receives the least amount of rain. At General 
+Santos City in Cotabato, the average annual rainfall is only 978 millimeters.
+The Seasons
+Using temperature and rainfall as bases, the climate of the country can be divided into 
+two major seasons: (1) the rainy season, from June to November; and (2) the dry season, 
+from December to May. The dry season may be subdivided further into (a) the cool dry 
+season, from December to February; and (b) the hot dry season, from March to May.
+
+8 7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Appendix 2: Climate Suitability Map 
+
+8 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Appendix 3. Land Suitability Map
+
+8 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+9 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+9 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+9 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+9 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+9 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+9 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+9 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+9 7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+9 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+9 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 0 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 0 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 0 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 0 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 0 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 0 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 0 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 0 7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 0 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 0 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 1 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 1 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 1 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 1 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 1 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 1 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 1 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 1 7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 1 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 1 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 2 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 2 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 2 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 2 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 2 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 2 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 2 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 2 7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 2 8
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 2 9
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 3 0
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 3 1
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 3 2
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 3 3
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+
+1 3 4
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+
+1 3 5
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Appendix 4. Directory of the Philippine Cacao Industry Council
+Membership
+Representative
+Designation
+Contact Details
+Chairperson:
+Armson Corporation
+Consul Armi Lopez 
+Garcia
+Director
+09173222764
+armilopezgarcia@yahoo.com
+Co-Chairperson:
+Department of 
+Agriculture
+USec. Evelyn Laviña
+Undersecretary
+(02) 8 926 8444
+agri.hvc.da@gmail.com
+Vice-Chair (Private Sector):
+- Luzon Island
+Sylvia Ordoñez
+Chairperson, R3-
+Central Luzon
+09178403711; sylviaordonez@gmail.
+com
+- Visayas Island
+Buen Mondejar
+Chairperson, R6-
+Western Visayas
+09998803022; buenmondejar@gmail.
+com
+- Mindanao Island
+Christopher H. Lindo
+Chairperson, R13-
+CARAGA
+09177060600; chrizlindo24@gmail.
+com
+Vice-Chair (Gov’t Sector):
+Department of Trade 
+and Industry
+USec. Blesila A. 
+Lantayona
+Undersecretary
+(02) 751 3335
+rog@dti.gov.ph
+Value Chain Cluster Representative:
+- Trader/Export    
+Simon Bakker
+CEO, Kennemer 
+Foods 
+International
+simon.bakker@kennemerfoods.com
+ - Nursery
+Charita Puentespina
+Proprietor, 
+Malagos 
+AgriVenture 
+Corp.
+charitap1939@gmail.com 
+09176327686
+ - Production
+Cristopher Fadriga
+Farmer 
+chrisfadriga1958@gmail.com; 
+09565919071
+ - Processing
+Auro Chocolate
+Kelly Go, 
+Managing 
+Director
+k.go@aurochocolate.com
+Secretariat:
+Department of Trade 
+and Industry
+Romeo L. Castañaga
+DTI-NICC for 
+Cacao
+RomeoCastanaga@dti.gov.ph
+
+1 3 6
+D E P A R T M E N T O F A G R I C U L T U R E H I G H V A L U E C R O P S D E V E L O P M E N T P R O G R A M
+Membership
+Representative
+Designation
+Contact Details
+Government Sector:
+Mindanao Dev’t 
+Authority
+Atty. Nathaniel D. 
+Dalumpines
+OIC-Chairperson
+(082) 221 8109
+info@minda.gov.ph; 
+officeofthechairman@minda.gov.ph; 
+ernie.tomas@minda.gov.ph
+Dept. of Science and 
+Technology
+Dir. Leila C. America, 
+PhD
+Director., DOST 
+PCAARRD
+(049) 521 8564
+leila_america@yahoo.com; tinbar16@
+yahoo.com
+Philippine Coconut 
+Authority
+Dennis Andres
+Manager of 
+Operations Dept.
+(02) 928 4501 loc. 509 / Fax no. (02) 
+926 7631
+pca_ofad@yahoo.com; ofad@pca.
+gov.ph; admin@pca.gov.ph
+Dept. of Environment 
+and Natural Resources
+Nonito M. Tamayo, 
+Ceso IV
+Director
+(02) 920-6215; 927-4788; 925-2139 
+mbdenr@mozcom.com; 
+jiniayaneza@yahoo.com
+Dept. of Agrarian 
+Reform
+Usec. Emily Padilla
+Undersecretary
+(02) 426-7484
+dar.gov.ph@gmail.com; usec.sso@
+dar.gov.ph
+Land Bank of the 
+Philippines
+Edgardo S. Luzano
+Dept. Head , LBP
+(02) 405-7450; 405-7309
+Small Business 
+Corporation
+Ma. Luna E. 
+Cacanando
+President & CEO 
+(02) 751 1888 / (02) 813 5720
+mlunacacanando@sbgfc.org.ph; 
+fgonzaga@mail.sbgfc.org.ph
+Private Sector:
+R E G I O N A L
+C A C A O
+C O U N C I L
+Victorino B. Barona 
+Jr.
+CAR
+09159340038
+vbbaronajr@gmail.com; vbbarona@
+gmail.com
+Atty. Robert B. 
+Tudayan
+R1-Ilocos Region
+09163712021
+tudayanattyrobert@yahoo.com
+Pepito Dizon
+R2-Cagayan 
+Valley
+09194891899
+pdizonjr2017@yahoo.com
+Sylvia Ordonez
+R3-Central Luzon
+09178403711
+sylvia.ordonez@gmail.com
+
+1 3 7
+P H I L I P P I N E C A C A O I N D U S T R Y R O A D M A P 2 0 2 1 - 2 0 2 5
+Membership
+Representative
+Designation
+Contact Details
+Florencio A. Flores
+R4A-
+CALABARZON
+09989800477
+florencio.a.flores@gmail.com
+Bernardo F. 
+Sampayan
+R4B-MIMAROPA
+09175414945
+bern_fsampayan@yahoo.com
+Eduardo R. Pilapil Jr
+R5-Bicol Region
+09175014000
+edpilapil@gmail.com
+Buen Mondejar
+R6-Western 
+Visayas
+09998803022
+c/o andreareyes@dti.gov.ph
+Consul Armi Lopez 
+Garcia
+R7-Central 
+Visayas
+09173222764
+armilopezgarcia@yahoo.com
+Isidro Estrerra
+R8-Eastern 
+Visayas
+09166204648
+c/o bdd.dti8@gmail.com
+Louie Nova
+R9-Zamboanga 
+Peninsula
+09459610336
+jasagriventureszc@gmail.com
+Agustin Mercado, Jr.
+R10-Northern 
+Mindanao
+09179843780
+agustin_mercado@yahoo.com
+Charita Puentespina
+R11-Davao 
+Region
+09176327686
+charitap1939@gmail.com
+Ronie L. Jitotowani
+R12-SOCCSK-
+SARGEN
+09515353143
+rljitotowani.tibudskmpc@gmail.com
+Christopher H. Lindo
+R13-CARAGA
+09177060600
+chrizlindo24@gmail.com
+Non-Government Organizations:
+Cacao Industry Dev’t 
+Assn of Mindanao Inc.
+Valente D. Turtur
+President
+v_turtur@yahoo.com; cidami.center@
+gmail.com
+Pilipinas Cacao Sensory 
+Resources, Inc.
+Jo-ann Sandique
+President
+ 
+Academe:
+University of Southern 
+Mindanao
+Dr. Edward Barlaan
+Agricultural 
+Research Center
+(064) 248 2426; 248 2672
+University of the 
+Philippines Los Baños
+Dr. Calixto M. 
+Protacio
+Professor 9, Crop 
+Science Cluster, 
+College of 
+Agriculture
+(049)536-2567/536-2894/536-2354; 
+Fax 536-3673;
+

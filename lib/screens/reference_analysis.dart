@@ -1,0 +1,109 @@
+part of '../main.dart';
+
+class ReferenceAnalysisContent extends StatefulWidget {
+  final AnalysisState state;
+  final Map<String,dynamic> record;
+  const ReferenceAnalysisContent({super.key,required this.state,required this.record});
+  @override State<ReferenceAnalysisContent> createState()=>_ReferenceAnalysisContentState();
+}
+class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
+  int tab=0;
+  @override Widget build(BuildContext context){
+    final r=widget.record, crops=assessedCrops(widget.record);
+    final score=analysisNumber(r['crop_compatibility_pct']);
+    final modern=r['scoring_version']!=null;
+    return Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+      Card(child:Padding(padding:const EdgeInsets.all(13),child:Row(crossAxisAlignment:CrossAxisAlignment.start,children:[BoundaryThumbnail(r,size:100),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[AnalysisIdentity(record:r,compact:true),const SizedBox(height:7),VerificationStatusBadge(status:'${r['verification_status']??'draft'}')]))]))),
+      const SizedBox(height:8),Container(decoration:BoxDecoration(color:softGreen,borderRadius:BorderRadius.circular(14),border:Border.all(color:const Color(0xFFD7EBDF))),child:Row(children:[
+        for(final item in [(Icons.bar_chart,'Overview'),(Icons.eco_outlined,'Recommended'),(Icons.list,'Key Factors'),(Icons.map_outlined,'Map')].indexed)
+          Expanded(child:InkWell(onTap:()=>setState(()=>tab=item.$1),child:Container(padding:const EdgeInsets.symmetric(vertical:12,horizontal:2),decoration:BoxDecoration(color:tab==item.$1?green:Colors.transparent,borderRadius:BorderRadius.circular(12)),child:Column(children:[Icon(item.$2.$1,color:tab==item.$1?Colors.white:darkGreen),const SizedBox(height:4),Text(item.$2.$2,textAlign:TextAlign.center,style:TextStyle(fontSize:10,color:tab==item.$1?Colors.white:darkGreen))])))),
+      ])),
+      if(tab==0)_AnalysisSection(title:'Land suitability',icon:Icons.spa_outlined,children:[
+        Text(modern?'REFERENCE-BASED SCREENING':farmerLandType(r).toUpperCase(),style:const TextStyle(fontSize:13,fontWeight:FontWeight.w700)),
+        const SizedBox(height:7),Wrap(spacing:10,crossAxisAlignment:WrapCrossAlignment.center,children:[Text(score==null?'Insufficient data':'${score.toStringAsFixed(1)}%',style:const TextStyle(fontSize:29,fontWeight:FontWeight.w800,color:green)),Text('${r['suitability_level']??(score==null?'':farmerSuitability(score))}',style:const TextStyle(fontSize:12,color:green))]),
+        if(score!=null)Padding(padding:const EdgeInsets.symmetric(vertical:9),child:ClipRRect(borderRadius:BorderRadius.circular(9),child:LinearProgressIndicator(value:(score/100).clamp(0,1),minHeight:8,backgroundColor:softGreen))),
+        AnalysisReadableText('${r['analysis_summary']??analysisMapValue(r['xai_explanation'])['summary']??'No summary was recorded.'}'),
+      ]),
+      if(tab==0||tab==1)_AnalysisSection(title:'Recommended crops',icon:Icons.spa_outlined,children:[
+        if(crops.isEmpty)const Text('No crop assessment was saved.'),
+        for(final entry in (tab==0?crops.take(3):crops).toList().indexed)_cropRow(entry.$2,entry.$1+1,r),
+        if(tab==0&&crops.length>3)TextButton(onPressed:()=>setState(()=>tab=1),child:Text('See all ${crops.length} crops')),
+        if(modern)const Text('Ordered by evidence completeness, then limiting-factor index. Equal results share a rank.',style:TextStyle(fontSize:12,color:Color(0xFF5D6A61))),
+      ]),
+      if(tab==0||tab==2)...[
+        _AnalysisSection(title:'Key factors',icon:Icons.bar_chart,children:[
+          LayoutBuilder(builder:(context,c)=>Wrap(spacing:8,runSpacing:8,children:[
+            for(final item in [('ndvi','Vegetation (NDVI)','',Icons.eco_outlined),('temperature_c','Climate temperature','C',Icons.thermostat),('annual_rainfall_mm','Annual rainfall','mm/year',Icons.water_drop_outlined),('soil_ph','Soil pH','',Icons.science_outlined),('slope_pct','Slope','%',Icons.terrain),('live_humidity','Current humidity','%',Icons.water_drop)].where((i)=>modern||i.$1!='annual_rainfall_mm'))
+              Container(width:(c.maxWidth-8)/2,padding:const EdgeInsets.all(10),decoration:BoxDecoration(color:const Color(0xFFF5FAF7),borderRadius:BorderRadius.circular(12),border:Border.all(color:const Color(0xFFEDF2EF))),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Icon(item.$4,color:green,size:21),const SizedBox(height:5),Text(item.$2,style:const TextStyle(fontSize:12)),Text('${analysisNumber(r[item.$1])?.toStringAsFixed(2)??'Unassessed'} ${analysisNumber(r[item.$1])==null?'':item.$3}',style:const TextStyle(fontSize:16,fontWeight:FontWeight.w700,color:green)),if(item.$1=='ndvi')const Text('Vegetation only; not crop suitability',style:TextStyle(fontSize:10)),if(item.$1=='live_humidity')const Text('Not a climate average',style:TextStyle(fontSize:10))])),
+          ])),
+          TextButton(onPressed:()=>_analysisDetails(context,'Data sources and limitations',[AnalysisIndicatorsCard(record:r),if(modern)SelectableText('${r['recommendation_scoring']}')]),child:const Text('See all details')),
+        ]),
+        if(!modern)ModelExplanationCard(record:r) else _LegacyModelSummary(record:r),
+      ],
+      if(tab==3)AnalysisBoundaryPreview(record:r),
+      if(tab==0)...[AnalysisReviewCard(state:widget.state,record:r),OutlinedButton.icon(onPressed:()async{try{await generateAnalysisPdf(r,state:widget.state);}catch(e){if(context.mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(friendlyErrorMessage(e))));}},icon:const Icon(Icons.download_outlined),label:const Text('Export analysis report'))],
+    ]);
+  }
+  Widget _cropRow(Map<String,dynamic> crop,int order,Map<String,dynamic> r){
+    final score=analysisNumber(crop['compatibility_pct']);
+    return InkWell(onTap:()=>_showCropDetails(context,crop,r),child:Padding(padding:const EdgeInsets.symmetric(vertical:10),child:Row(children:[CropArtwork('${crop['crop']}'),const SizedBox(width:10),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+      Text('${crop['rank']??order}. ${crop['crop']}',style:const TextStyle(fontSize:14,fontWeight:FontWeight.w700)),const SizedBox(height:5),
+      Text(score==null?'Insufficient data':'${score.toStringAsFixed(1)}% · ${crop['classification']??farmerSuitability(score)}',style:const TextStyle(fontSize:12,color:green,fontWeight:FontWeight.w700)),
+      if(score!=null)Padding(padding:const EdgeInsets.only(top:5),child:LinearProgressIndicator(value:(score/100).clamp(0,1),minHeight:5,backgroundColor:softGreen)),
+      if(crop['assessed_count']!=null)Text('${crop['assessed_count']}/6 factors assessed',style:const TextStyle(fontSize:11,color:Color(0xFF64756C))),
+    ])),const Icon(Icons.chevron_right,size:20)])));
+  }
+}
+
+class _ReferenceCropDetails extends StatefulWidget {
+  final Map<String,dynamic> crop,record;
+  const _ReferenceCropDetails({required this.crop,required this.record});
+  @override State<_ReferenceCropDetails> createState()=>_ReferenceCropDetailsState();
+}
+class _ReferenceCropDetailsState extends State<_ReferenceCropDetails>{
+  int tab=0;
+  @override Widget build(BuildContext context){
+    final crop=widget.crop, score=analysisNumber(widget.crop['compatibility_pct']);
+    final factors=analysisListValue(crop['factors']).whereType<Map>();
+    return SafeArea(child:SizedBox(height:MediaQuery.sizeOf(context).height*.83,child:Column(children:[
+      Padding(padding:const EdgeInsets.fromLTRB(16,0,8,12),child:Row(children:[CropArtwork('${crop['crop']}',size:60),const SizedBox(width:12),Expanded(child:Text('${crop['crop']} details',style:const TextStyle(fontSize:22,fontWeight:FontWeight.w800))),IconButton(tooltip:'Close',onPressed:()=>Navigator.pop(context),icon:const Icon(Icons.close))])),
+      Padding(padding:const EdgeInsets.symmetric(horizontal:12),child:Row(children:[for(final label in ['Overview','Growing Requirements','Why Recommended'].indexed)Expanded(child:TextButton(style:TextButton.styleFrom(backgroundColor:tab==label.$1?green:softGreen,foregroundColor:tab==label.$1?Colors.white:darkGreen),onPressed:()=>setState(()=>tab=label.$1),child:Text(label.$2,textAlign:TextAlign.center,style:const TextStyle(fontSize:10))))])),
+      Expanded(child:SingleChildScrollView(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+        if(tab==0)_AnalysisSection(title:'Crop overview',children:[Text(cropReason(crop,widget.record)),const SizedBox(height:14),Text(score==null?'Insufficient data':'Screening index: ${score.toStringAsFixed(1)}%',style:const TextStyle(fontWeight:FontWeight.w700)),const SizedBox(height:8),const Text('This index compares documented requirements with the available observations. It is not a harvest probability, yield forecast, or model prediction.')]),
+        if(tab==1)for(final factor in factors)_AnalysisSection(title:'${factor['label']}',children:[
+          if(factor['requirement'] is Map)...[
+            Text('Preferred range: ${analysisListValue(factor['requirement']['optimal']).map((v)=>v??'unbounded').join(' – ')} ${factor['unit']}'),
+            if(factor['requirement']['absolute']!=null)Text('Absolute range: ${factor['requirement']['absolute']}'),
+            if(factor['requirement']['classes']!=null)Text('Published factor classes: ${factor['requirement']['classes']}'),
+            Text('Period: ${factor['period']}'),
+            SelectableText('${factor['requirement']['source']['title']}\n${factor['requirement']['source']['section']}\n${factor['requirement']['source']['url']}',style:const TextStyle(fontSize:12,color:green)),
+            Text('${factor['requirement']['limitations']}',style:const TextStyle(fontSize:12)),
+          ]else const Text('No verified numerical criterion configured. This factor is unassessed.'),
+        ]),
+        if(tab==2)...[
+          _AnalysisSection(title:'Suitability calculation',children:[Text('${crop['explanation']}'),const SizedBox(height:10),Text('${crop['method']}'),Text('Configuration: ${crop['scoring_version']}',style:const TextStyle(fontSize:12))]),
+          for(final factor in factors)_AnalysisSection(title:'${factor['label']}',children:[Text('${factor['value']??'Unavailable'} ${factor['unit']} · ${factor['result']}'),Text('${analysisMapValue(factor['measurement'])['source']??'Source unavailable'}',style:const TextStyle(fontSize:12)),if(analysisMapValue(factor['measurement'])['start']!=null)Text('${factor['measurement']['start']} to ${factor['measurement']['end_exclusive']} (end excluded)',style:const TextStyle(fontSize:12))]),
+        ],
+      ]))),
+    ])));
+  }
+}
+
+class _LegacyModelSummary extends StatelessWidget {
+  final Map<String,dynamic> record;
+  const _LegacyModelSummary({required this.record});
+  @override Widget build(BuildContext context){
+    final snapshots=[if(record['legacy_model_explanation'] is Map)record['legacy_model_explanation'],...analysisListValue(record['legacy_model_samples'])].whereType<Map>().toList();
+    final snapshot=snapshots.isEmpty?<String,dynamic>{}:Map<String,dynamic>.from(snapshots.first);
+    return _AnalysisSection(title:'Actual model · research output',icon:Icons.insights_outlined,children:[
+      Text(snapshots.isEmpty?'The legacy model could not run with the available inputs. It does not determine these crop scores.':'The retained forest ran on ${snapshots.length} sampled location(s). Its outputs are separate from these suitability calculations.'),
+      const Text('Training includes synthetic local rows and GIS features. Panabo field validation has not been established.',style:TextStyle(fontSize:12)),
+      if(snapshots.isNotEmpty)...[
+        Text('Raw model outputs: ${snapshots.expand((s)=>analysisListValue(s['samples'])).whereType<Map>().map((s)=>s['raw_prediction']).toSet().join(', ')}'),
+        for(final f in analysisListValue(snapshot['features']).whereType<Map>().take(3))_ModelImportanceBar(feature:Map<String,dynamic>.from(f)),
+        const Text('Global, unsigned feature importance; not an explanation of a particular prediction or crop ranking.',style:TextStyle(fontSize:12)),
+        TextButton(onPressed:()=>_analysisDetails(context,'Actual model details',[for(final s in snapshots)...[SelectableText('Model SHA-256: ${s['model_version']}'),for(final f in analysisListValue(s['features']).whereType<Map>())_ModelImportanceBar(feature:Map<String,dynamic>.from(f)),SelectableText(const JsonEncoder.withIndent('  ').convert(s['samples']))]]),child:const Text('View detailed explanation')),
+      ],
+    ]);
+  }
+}

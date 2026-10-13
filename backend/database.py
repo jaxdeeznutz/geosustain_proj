@@ -13,7 +13,7 @@ DATABASE_URL = os.getenv(
 
 def get_conn():
     """Open and return a fresh psycopg2 connection."""
-    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor)
+    return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor, connect_timeout=10)
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS users (
@@ -317,6 +317,11 @@ def init_db():
                     ('pomelo', 'Pomelo', '3-5 Years (first harvest)', '10-20 Tons / Ha', 'A Davao-associated fruit crop suited for warm areas with moderate rainfall.')
                 ON CONFLICT (crop_key) DO NOTHING
             """)
+
+            # Add the new catalog without deleting historical crops or snapshots.
+            from crop_requirements import REQUIREMENTS
+            for name in REQUIREMENTS:
+                cur.execute("INSERT INTO crop_reference (crop_key,label) VALUES (%s,%s) ON CONFLICT (crop_key) DO NOTHING", (name.lower(),name))
 
             # --- Super Administrator: audit log for security-sensitive actions ---
             cur.execute("""

@@ -17,3 +17,6 @@ venv/
 .env.*
 !.env.example
 *.log
+
+.tools/
+docs/research/*.pdf

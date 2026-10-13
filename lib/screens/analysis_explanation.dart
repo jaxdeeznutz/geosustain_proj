@@ -23,6 +23,10 @@ String farmerLandType(Map<String, dynamic> record) {
 }
 
 List<Map<String, dynamic>> assessedCrops(Map<String, dynamic> record) {
+  if (record['scoring_version'] != null) {
+    return analysisListValue(record['crop_assessments']).whereType<Map>()
+        .map((e) => Map<String,dynamic>.from(e)).toList();
+  }
   final flag = record['is_crop_recommended'];
   if (flag == false || '$flag' == 'false' || '$flag' == '0') return [];
   final crops = analysisListValue(
@@ -325,6 +329,13 @@ void _showCropDetails(
   Map<String, dynamic> crop,
   Map<String, dynamic> record,
 ) {
+  if (record['scoring_version'] != null) {
+    showModalBottomSheet(context: context, isScrollControlled: true, showDragHandle: true,
+      backgroundColor: const Color(0xFFF5FBF5),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
+      builder: (_) => _ReferenceCropDetails(crop:crop,record:record));
+    return;
+  }
   final condition = cropConditions(crop);
   final scoring = analysisMapValue(crop['score_breakdown']);
   final rain = analysisMapValue(condition['rainfall_context']);

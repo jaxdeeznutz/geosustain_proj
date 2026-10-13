@@ -1,11 +1,5 @@
 part of '../main.dart';
 
-String _farmDate(dynamic value) {
-  final parsed = DateTime.tryParse('$value')?.toLocal();
-  if (parsed == null) return value == null ? 'Date unavailable' : '$value';
-  return '${parsed.day.toString().padLeft(2, '0')}/${parsed.month.toString().padLeft(2, '0')}/${parsed.year}';
-}
-
 String _farmReviewLabel(dynamic value) => switch ('$value'.toLowerCase()) {
   'pending' => 'Pending Review',
   'verified' || 'approved' => 'Approved',
@@ -27,6 +21,7 @@ class MyFarmsPage extends StatefulWidget {
 }
 
 class _MyFarmsPageState extends State<MyFarmsPage> {
+  String _search = '', _filter = 'All Farms';
   bool _loading = true;
   String? _error;
   @override
@@ -86,161 +81,38 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
     await _load();
   }
 
+  Future<void> _analyzeFarm(Map<String,dynamic> farm) async {
+    if(widget.state.loading)return;
+    final error=await widget.state.analyzeSavedFarm(farm);
+    if(!mounted)return;
+    if(error!=null){setState(()=>_error=error);}else{_onAnalyzed();}
+  }
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text('My Farms'),
-      actions: [
-        IconButton(
-          onPressed: _loading ? null : _load,
-          tooltip: 'Refresh farms',
-          icon: const Icon(Icons.refresh),
-        ),
-      ],
-    ),
-    body: SafeArea(
-      child: RefreshIndicator(
-        onRefresh: _load,
-        child: ListView(
-          physics: const AlwaysScrollableScrollPhysics(),
-          padding: const EdgeInsets.all(16),
-          children: [
-            const Text(
-              'Map your land',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-            ),
-            const SizedBox(height: 8),
-            _LandMethodCard(
-              gps: true,
-              onTap: () =>
-                  openLandMethod(context, widget.state, true, _onAnalyzed),
-            ),
-            _LandMethodCard(
-              gps: false,
-              onTap: () =>
-                  openLandMethod(context, widget.state, false, _onAnalyzed),
-            ),
-            const SizedBox(height: 20),
-            const Text(
-              'Saved farms',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-            ),
-            const Text('Your boundaries, results, and review updates.'),
-            const SizedBox(height: 12),
-            if (_loading) const LinearProgressIndicator(),
-            if (_error != null) ...[
-              _MappingNotice(_error!),
-              TextButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry loading farms'),
-              ),
-            ],
-            if (!_loading && _error == null && widget.state.farms.isEmpty)
-              const Card(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      _FieldLandscape(),
-                      SizedBox(height: 16),
-                      Text(
-                        'Your next season starts here',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w800,
-                          color: darkGreen,
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      Text(
-                        'No farms saved yet. Walk or draw your first boundary above.',
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ...widget.state.farms.map(
-              (farm) => Card(
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(12),
-                  onTap: () => _open(farm),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const _FieldIcon(Icons.landscape_outlined),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Text(
-                                '${farm['farm_name'] ?? 'Saved farm'}',
-                                style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${farm['location_name'] ?? ''}'.trim().isEmpty
-                              ? 'Location description not provided'
-                              : '${farm['location_name']}',
-                        ),
-                        Wrap(
-                          spacing: 6,
-                          runSpacing: 4,
-                          children: [
-                            Chip(
-                              label: Text(
-                                farm['area_hectares'] == null
-                                    ? 'Area unavailable'
-                                    : '${(double.tryParse('${farm['area_hectares']}') ?? 0).toStringAsFixed(3)} ha',
-                              ),
-                            ),
-                            Chip(
-                              label: Text(
-                                farm['mapping_method'] == 'gps_walk'
-                                    ? 'GPS boundary'
-                                    : 'Drawn polygon',
-                              ),
-                            ),
-                            Chip(
-                              label: Text(
-                                '${farm['analysis_count'] ?? 0} analyses',
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          farm['last_analyzed_at'] == null &&
-                                  farm['latest_analysis_date'] == null
-                              ? 'Not analyzed yet'
-                              : 'Latest analysis: ${_farmDate(farm['last_analyzed_at'] ?? farm['latest_analysis_date'])}',
-                        ),
-                        if (farm['latest_review_status'] != null ||
-                            farm['latest_verification_status'] != null)
-                          Text(
-                            'Latest analysis review: ${_farmReviewLabel(farm['latest_review_status'] ?? farm['latest_verification_status'])}',
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 24),
-          ],
-        ),
-      ),
-    ),
-  );
+  Widget build(BuildContext context) => Scaffold(body:SafeArea(child:RefreshIndicator(onRefresh:_load,child:ListView(
+    padding:const EdgeInsets.fromLTRB(12,0,12,24),children:[
+      MobileHeader(title:'My Farms',trailing:Row(mainAxisSize:MainAxisSize.min,children:[IconButton(tooltip:'Search farms',onPressed:()=>setState(()=>_showSearch=!_showSearch),icon:const Icon(Icons.search)),IconButton.filled(tooltip:'Add farm',onPressed:()=>showLandMethodPicker(context,widget.state,_onAnalyzed),icon:const Icon(Icons.add))])),
+      const FarmBanner('Manage Your Farms','View, edit, and analyze your saved farm areas. Create a new boundary or analyze an existing area anytime.'),
+      Row(crossAxisAlignment:CrossAxisAlignment.start,children:[Expanded(child:ReferenceAction('Create a Farm Boundary','Walk your perimeter with live GPS.',Icons.directions_walk,()=>openLandMethod(context,widget.state,true,_onAnalyzed))),const SizedBox(width:9),Expanded(child:ReferenceAction('Analyze Land Using a Polygon','Outline an area and explore crop suitability.',Icons.edit_square,()=>openLandMethod(context,widget.state,false,_onAnalyzed),blue:true))]),
+      const SizedBox(height:18),Wrap(crossAxisAlignment:WrapCrossAlignment.center,spacing:12,children:[const Text('Saved Farms',style:TextStyle(fontSize:24,fontWeight:FontWeight.w800,color:darkGreen)),DropdownButton<String>(value:_filter,items:[for(final f in ['All Farms','Not analyzed','Analyzed'])DropdownMenuItem(value:f,child:Text(f))],onChanged:(v)=>setState(()=>_filter=v!))]),
+      const Text('Your boundaries, results, and review updates.'),const SizedBox(height:12),
+      if(_showSearch) Padding(padding:const EdgeInsets.only(bottom:12),child:TextField(decoration:const InputDecoration(labelText:'Search farms',prefixIcon:Icon(Icons.search)),onChanged:(v)=>setState(()=>_search=v.toLowerCase()))),
+      if(_loading)const LinearProgressIndicator(),if(_error!=null)_MappingNotice(_error!),
+      if(!_loading&&widget.state.farms.isEmpty)const Card(child:Padding(padding:EdgeInsets.all(24),child:Text('No farms saved yet. Walk or draw your first boundary above.'))),
+      for(final farm in widget.state.farms.where((f)=>'${f['farm_name']} ${f['location_name']}'.toLowerCase().contains(_search)&&(_filter=='All Farms'||(_filter=='Analyzed')==((analysisNumber(f['analysis_count'])??0)>0))))
+        Card(margin:const EdgeInsets.only(bottom:12),child:Padding(padding:const EdgeInsets.all(14),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Row(crossAxisAlignment:CrossAxisAlignment.start,children:[BoundaryThumbnail(farm,size:96),const SizedBox(width:12),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+            Text('${farm['farm_name']??'Saved farm'}',style:const TextStyle(fontSize:18,fontWeight:FontWeight.w800,color:darkGreen)),
+            Text('${farm['location_name']??'Location description not provided'}',style:const TextStyle(fontSize:12,color:Color(0xFF58646B))),
+            Wrap(spacing:5,children:[Chip(label:Text(analysisAreaText(farm))),Chip(label:Text(farm['mapping_method']=='gps_walk'?'GPS boundary':'Drawn polygon'))]),
+            Text('${farm['analysis_count']??0} analyses',style:const TextStyle(color:Color(0xFF17648A))),
+          ]))]),const SizedBox(height:9),
+          Text((analysisNumber(farm['analysis_count'])??0)==0?'Not analyzed yet':'Land analysis completed',style:TextStyle(fontWeight:FontWeight.w700,color:(analysisNumber(farm['analysis_count'])??0)==0?const Color(0xFFAB6C12):green)),
+          if((analysisNumber(farm['analysis_count'])??0)>0)VerificationStatusBadge(status:'${farm['latest_verification_status']??farm['latest_review_status']??'draft'}'),
+          const SizedBox(height:12),Row(children:[Expanded(flex:2,child:FilledButton.icon(onPressed:widget.state.loading?null:()=>_analyzeFarm(farm),icon:const Icon(Icons.center_focus_strong),label:const Text('Analyze This Farm'))),const SizedBox(width:8),Expanded(child:OutlinedButton(onPressed:()=>_open(farm),child:const Text('Manage')))]),
+          if((analysisNumber(farm['analysis_count'])??0)>0)TextButton.icon(onPressed:()=>_open(farm),icon:const Icon(Icons.bar_chart),label:const Text('View Results')),
+        ]))),
+    ]))));
+  bool _showSearch=false;
 }
 
 class FarmDetailsPage extends StatefulWidget {

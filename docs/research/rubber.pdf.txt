@@ -1,0 +1,5512 @@
+LAND RESOURCES EVALUATION AND SUITABILITY 
+ASSESSMENT OF STRATEGIC PRODUCTION AREAS
+LAND SUITABILITY MAP
+NATURAL RUBBER
+PROVINCE OF DAVAO DEL SUR
+DEPA R TMEN T OF AG RI CULTUR E
+DEPA R TMEN T OF AG RI CULTUR E
+BUREAU OF SOILS AND WATER MANAGEMENT
+SRDC Bldg., Elliptical Road Cor. Visayas Avenue, Diliman, Quezon City 1101
+R E P U B L I C O F T H E P H I L I P P I N E S
+Tel/Fax No. : (+632) 332-9534     E-mail : bswmclientcenter@yahoo.com
+
+LAND RESOURCES EVALUATION AND SUITABILITY ASSESSMENT OF STRATEGIC PRODUCTION AREAS
+MAP INDEX
+PROVINCE OF DAVAO DEL SUR
+MALUNGON
+PADADA
+MAKILALA
+MAGSAYSAY
+TAMPAKAN
+SANTA MARIA
+MATANAO
+COLUMBIO
+SANTA CRUZ
+SULOP
+BALABAG
+MAGPET
+PRESIDENT ROXAS
+KIBLAWAN
+POLOMOLOK
+HAGONOY
+ANTIPAS
+MALALAG
+KIDAPAWAN
+DIGOS
+4013-IV
+Mount Matutum
+4013-I
+Kabayawa
+4014-III
+Lambayong
+4014-II
+Padada
+4014-IV
+Malasila
+4014-I
+Sirawan
+4015-III
+Kidapawan
+Places
+Administrative Boundary
+Topographic Relief
+Index grid
+\
+Capital City
+^
+City
+P
+Capital Town
+!
+Town
+Regional
+Provincial
+City
+Municipal
+Map Index
+Bathymetry
+LOCATION MAP
+LEGEND
+MISCELLANEOUS INFORMATION
+Land suitabilityinformation produced by the Bureau of Soils and Water 
+Management (BSWM) through the Land Resources Evaluation and 
+Suitability Assessment of Strategic Production Areas for Major
+Commodities Project duly supported by the Philippine Council on 
+Agriculture and Fisheries (PCAF) and funded by the Bureau of 
+Agricultural Research (BAR).
+Map produced by the Geomatics and Soil Information Technology 
+Division, Bureau of Soils and Water Management (BSWM).
+Users noting errors or omissions in this publication are requested to 
+inform the  Bureau of Soils and Water Management.
+DEPARTMENT OF AGRICULTURE
+DEPARTMENT OF AGRICULTURE
+BUREAU OF SOILS AND WATER MANAGEMENT
+Diliman, Quezon City 1101 Philippines
+REPUBLIC OF THE PHILIPPINES
+Tel/Fax No. : (+632) 332-9534     E-mail : bswmclientcenter@yahoo.com
+Unless otherwise noted, copyright and any 
+other intellectual property rights is owned 
+by the Philippine Government.
+SRDC Bldg., Elliptical Road Cor. Visayas Avenue, 
+
+LAND RESOURCES EVALUATION AND SUITABILITY ASSESSMENT OF STRATEGIC PRODUCTION AREAS
+LAND SUITABILITY MAP FOR 
+RUBBER
+DAVAO DEL SUR, REGION XI
+EXTENT OF SUITABILITY FOR RUBBER PRODUCTION BY MUNICIPALITY
+Note: Delivery of rubber planting materials must be started on the onset of rainy season.
+          *establishment of shade trees prior to planting of rubber.
+SUITABILITY CLASSES:
+Moderately Suitable (S2)
+Land having limitation which in aggregate are 
+moderately  severe  for  sustained application  of a 
+given use; the limitation will reduce productivity  or  
+benefits and increase  required  inputs  to  the  extent 
+that  the  overall advantage  to be gained from the  
+use,  although still attractive, will  be appreciably 
+inferior  to that expected on class S1 land.
+Marginally Suitable (S3)
+Land having limitations which in aggregate are 
+severe for sustained application of a given use and 
+will so reduce productivity or benefits, or increase 
+required inputs, that this expenditure will be only 
+marginally justified.
+Not Suitable / Not Relevant
+Land having limitations which may be surmountable 
+in time but which cannot be corrected with existing 
+knowledge at currently acceptable cost; the 
+limitations are so severe as to preclude successful 
+sustained use of the land in the given manner. 
+Existing forest, shrubland greater than 18% slope,
+ irrigated paddy rice and miscellaneous land types 
+such as built up areas, roads, etc are considered 
+as not relevant.
+Highly Suitable (S1)
+Land having no significant limitation to sustained 
+application of a given use, or only minor limitations 
+that will not significantly reduce productivity or 
+benefits and will not raise inputs above an 
+acceptable level.
+Davao Del Sur is classified as climatic Type IV.
+TYPE IV  : 
+TYPE II   : 
+CLIMATE TYPE
+TYPE III  : No very pronounced maximum rain period, with a dry 
+season lasting only from one to three months, either 
+during the period from December to February or from 
+March to May. This type resembles Type I since it has 
+a short dry season. 
+Rainfall is more or less evenly distributed throughout the 
+year. This type resembles Type II since it has no dry 
+season.
+TYPE I     : Two pronouced season, dry from November to April and 
+wet during the rest of the year. Maximum rain period is 
+from June to September
+No dry season with a very pronounced maximum rain 
+period from December to February. There is not a single 
+dry month. Maximum monthly rainfall occurs during the 
+period from March to May.
+S1
+S2
+S3
+S1
+S2
+S1
+S2
+S1
+S2
+S1
+S2
+S1
+S2
+S1
+S2
+S1
+S2
+S1
+S2
+BANSALAN
+86
+          
+105
+       
+6
+             
+197
+                        
+3,019
+    
+2,960
+    
+-
+108
+       
+-
+-
+1,371
+    
+1,151
+    
+-
+1
+             
+23
+          
+1
+             
+19
+          
+10
+          
+11
+          
+146
+       
+8,820
+                    
+CITY OF DIGOS
+8
+             
+-
+-
+8
+                             
+2,631
+    
+948
+       
+13
+          
+-
+31
+          
+8
+             
+627
+       
+43
+          
+65
+          
+-
+47
+          
+-
+16
+          
+1
+             
+115
+       
+60
+          
+4,605
+                    
+HAGONOY
+-
+-
+-
+-
+                         
+678
+       
+14
+          
+-
+-
+-
+-
+96
+          
+2
+             
+1,214
+    
+105
+       
+42
+          
+1
+             
+13
+          
+-
+187
+       
+78
+          
+2,429
+                    
+KIBLAWAN
+-
+-
+-
+-
+                         
+450
+       
+1,099
+    
+-
+179
+       
+-
+553
+       
+13
+          
+17
+          
+756
+       
+1,012
+    
+417
+       
+1,215
+    
+754
+       
+622
+       
+-
+-
+7,086
+                    
+MAGSAYSAY
+8
+             
+10
+          
+232
+       
+250
+                        
+2,465
+    
+3,028
+    
+-
+9
+             
+-
+280
+       
+301
+       
+122
+       
+-
+-
+37
+          
+89
+          
+-
+-
+1,196
+    
+838
+       
+8,365
+                    
+MALALAG
+-
+-
+-
+-
+                         
+2,783
+    
+2,820
+    
+13
+          
+43
+          
+1
+             
+77
+          
+83
+          
+44
+          
+447
+       
+95
+          
+125
+       
+30
+          
+17
+          
+4
+             
+-
+-
+6,583
+                    
+MATANAO
+1
+             
+-
+-
+1
+                             
+742
+       
+1,186
+    
+-
+-
+-
+254
+       
+3,436
+    
+602
+       
+18
+          
+-
+338
+       
+217
+       
+688
+       
+18
+          
+21
+          
+47
+          
+7,566
+                    
+PADADA
+-
+-
+-
+-
+                         
+1,586
+    
+86
+          
+-
+-
+-
+-
+21
+          
+9
+             
+677
+       
+80
+          
+72
+          
+1
+             
+-
+-
+-
+-
+2,531
+                    
+SANTA CRUZ
+-
+-
+-
+-
+                         
+2,465
+    
+2,948
+    
+-
+-
+59
+          
+9
+             
+1
+             
+-
+105
+       
+106
+       
+-
+-
+-
+-
+177
+       
+700
+       
+6,569
+                    
+SULOP
+2
+             
+-
+-
+2
+                             
+3,605
+    
+1,850
+    
+6
+             
+140
+       
+-
+10
+          
+82
+          
+53
+          
+478
+       
+1,089
+    
+131
+       
+29
+          
+31
+          
+30
+          
+-
+-
+7,534
+                    
+TOTAL
+106
+       
+116
+       
+238
+       
+459
+                      
+20,424
+ 
+16,939
+ 
+32
+          
+478
+       
+91
+          
+1,192
+    
+6,030
+    
+2,042
+    
+3,759
+    
+2,487
+    
+1,231
+    
+1,584
+    
+1,537
+    
+685
+       
+1,707
+    
+1,869
+    
+62,089
+               
+TOTAL 
+POTENTIAL 
+EXPANSION 
+AREA (Ha)
+Coconut
+Shrubland, 
+unmanaged*
+Grassland,                 
+unmanaged*
+Mango
+Corn
+Sugarcane
+Other crops
+MUNICIPALITY
+EXISTING RUBBER (Ha)
+TOTAL 
+EXISTING 
+AREA (Ha)
+EXPANSION AREA (Ha)
+CONFLICT RESOLUTION (Ha)
+Banana
+Climatological Normals (Rainfall),Philippine Atmospheric, 
+Source: PAGASA 2018, 
+Geophysical and Astronomical Services Administration (PAGASA), accessed 27 July 2018, 
+<https://www1.pagasa.dost.gov.ph/index.php/climate/climatological-normals>.
+CODE
+LANDUSE
+CODE
+LANDUSE
+4
+Corn
+105
+Fruit trees, mixed
+34
+Diversified crops
+107
+Abaca
+50
+Rootcrops
+112
+Sugarcane
+81
+Coffee
+116
+Coconut
+84
+Pineapple
+126
+Grassland           
+85
+Mango
+134
+Shrubs, unmanaged
+89
+Durian
+137
+Rubber (T)
+90
+Pomelo
+91
+Banana
+93
+Mangosteen
+CODE
+LIMITATION
+CODE
+LIMITATION
+CODE
+LIMITATION
+CODE
+LIMITATION
+CODE
+LIMITATION
+1
+El2
+11
+T2-E2-Sh2-Rc2
+21
+T2-El2-Sh2-Rc3
+31
+T3-E3-Sh3-Rc3
+41
+T3-E3-Rc3
+2
+El2-Sh2-Rc2
+12
+T2-E3
+22
+T2-El3-E3
+32
+T3-El2
+42
+T3-E3-Sh3-Rc3
+3
+El3
+13
+T2-E3-Rc2
+23
+T2-El3-E3-Sh2-Rc2
+33
+T3-El2-E3
+43
+T3-El2
+4
+El3-Sh2-Rc2
+14
+T2-E3-Sh2-Rc2
+24
+T2-El3-Sh2-Rc2
+34
+T3-El2-E3-Sh3-Rc2
+44
+T3-El2-E3
+5
+F2-D2
+15
+T2-E3-Sh2-Rc3
+25
+T2-F2-D2
+35
+T3-El2-E3-Sh3-Rc3
+45
+T3-El2-E3-Sh3-Rc3
+6
+F2-Tc
+16
+T2-El2
+26
+T2-F3-D2
+36
+T3-El3-E3-Sh3-Rc2
+46
+T3-El3-E3-Sh3-Rc3
+7
+F3-D2
+17
+T2-El2-E3
+27
+T3
+37
+T3-F2-D2
+47
+T3-El3
+8
+Sh2
+18
+T2-El2-E3-Sh2-Rc2
+28
+T3-E3
+38
+T3-F3-D2
+48
+Tc
+9
+Sh2-Rc2
+19
+T2-El2-E3-Sh2-Rc3
+29
+T3-E3-Rc2
+39
+T3
+10
+T2
+20
+T2-El2-Sh2-Rc2
+30
+T3-E3-Sh3-Rc2
+40
+T3-E3
+AGRONOMIC REQUIREMENT OF RUBBER PRODUCTION
+SOIL DRAINAGE
+0 - 3
+- level to gently sloping
+ED
+- excessively drained
+< 4.5
+- extremely acid
+Coarse
+3 - 8
+- gently sloping to undulating
+WD
+- well drained
+4.5 - 5.0
+- very strongly acid
+S
+- sand
+SC
+- sandy clay
+8 - 18
+- undulating to rolling
+MWD
+- moderately well drained
+5.1 - 5.5
+- strongly acid
+LS
+- loamy sand
+SiC
+- silty clay
+18 - 30
+- rolling to moderately steep
+SPD
+- somewhat poorly drained
+5.6 - 6.0
+- medium acid
+CSL
+- coarse sandy loam
+C
+- clay
+30 - 50
+- steep
+PD
+- poorly drained
+6.1 - 6.5
+- slightly acid
+SL
+- sandy loam
+HC
+- heavy clay
+> 50
+- very steep
+VPD
+- very poorly drained
+6.6 - 7.2
+- neutral
+Medium
+7.3 - 7.8
+- mildly alkaline
+FSL
+- fine sandy loam
+SOIL DEPTH (cm)
+SURFACE IMPEDIMENT
+7.9 - 8.4
+- moderately alkaline
+L
+- loam
+0 - 30
+- very shallow
+ROCK OUTCROPS
+> 8.5
+- strongly alkaline
+SiL
+- silt loam
+30 - 50
+- shallow
+< 10%
+- none - few
+CL
+- clay loam
+50 - 100
+- moderately deep
+10 - 30%
+- common
+SiCL
+- silty clay loam
+> 100
+- deep to very deep
+> 30%
+- many
+SCL
+- sandy clay loam
+SLOPE (%)
+SOIL TEXTURE
+Fine
+SOIL REACTION (pH)
+LAND LIMITATIONS DESCRIPTION AND COMBINATIONS
+ELEVATION
+SOIL DRAINAGE
+SOIL DEPTH
+SOIL EROSION
+El2
+- 500 - 1000m or 2000 - 2500m
+D2
+- Somewhat poorly drained to poorly drained
+Sh2
+- Shallow to moderately deep (30 - 100cm)
+E2
+- Moderate erosion
+El3
+- < 500m or > 2500m
+D3
+- Very poorly drained or excessively drained
+Sh3
+- Very shallow (< 30cm)
+E3
+- Severe erosion
+SLOPE/TOPOGRAPHY
+SOIL TEXTURE
+ROCK OUTCROPS
+FLOODING
+T2
+- Undulating to moderately steep
+Tc
+- Coarse texture
+Rc2
+- Common
+F2
+- Moderate seasonal flooding
+T3
+- Steep to very steep
+Rc3
+- Many
+F3
+- Severe seasonal flooding
+S1
+<8
+>100
+CL, SiCL, SCL, 
+SC, SiC, C, HC
+WD,MWD, SPD
+5.6 -7.2
+high
+none-slight
+none-slight
+none-few
+<500
+1000-2000
+III, IV
+S2
+8 - 30
+30 - 100
+FSL, L, SiL, SL
+PD,VPD
+4.5 - 5.5                          
+7.3 - 7.8
+medium
+moderate
+moderate
+common
+500-1000
+2001-4500
+I, II, III
+S3
+>30
+<30
+S, LS, CSL
+ED
+<4.5 - > 7.9
+low
+severe
+severe
+many
+>1000
+<1000           
+>4500
+Rubber Tree
+SOIL 
+DRAINAGE
+SUITABILITY 
+RATING
+SLOPE      (%)
+SOIL DEPTH 
+(cm)
+ELEVATION 
+(masl)
+ ANNUAL 
+RAINFALL 
+(mm)
+CLIMATIC 
+TYPE
+SOIL 
+REACTION 
+(pH)
+INHERENT 
+FERTILITY
+FLOODING 
+CLASS
+EROSION 
+CLASS
+ROCK 
+OUTCROPS
+SOIL 
+TEXTURE
+LAND 
+UTILIZATION 
+TYPE
+
+\
+!
+!
+!
+Nuangan
+Indangan
+Kalaisan
+Magsaysay
+Poblacion
+Manongol
+Lanao
+Mount Apo National Park
+under Jurisdiction of
+Kidapawan City, Cotabato
+Perez
+Balindog
+Balabag
+Sudapin
+Berada
+Paco
+Meochao
+Kalasuyan
+Ilomavis
+Benoligan
+Luvimin
+New Bohol
+Mua-an
+Ginatilan
+Sikitan
+Mateo
+Mount Apo National
+Park under Jurisdiction
+of Magpet, Cotabato
+Kisandal
+Bongolanon
+Sibawan
+Katipunan
+Owas
+Santo Niño
+Kinarum
+San Isidro
+Marbel
+(Embac)
+Linangcob
+Kamada
+Kauswagan
+Gubatan
+Magcaalam
+Gayola
+Tagbac
+New Cebu
+Ilian
+Bangkal
+Alibayon
+Del Pilar
+Sagcungan
+Poblacion
+Manobo
+Del Carmen
+Lomonay
+Inac
+Pangao-an
+Sallab
+Alegria
+Kamarahan
+Bantac
+Doles
+Labu-o
+Tuael
+Idaoman
+Binay
+Noa
+Poblacion
+Cabangbangan
+Don Panaca
+Mabuhay
+Amabel
+Manobisa
+Imamaling
+Greenhill
+Bagumbayan
+F. Cajelo
+(New
+Maasin)
+Luhong
+Camasi
+Basak
+Datu Celo
+Kiyaab
+Dolores
+Linao
+Libertad
+Magsaysay
+Poblacion
+Canaan
+Mahongcog
+Temporan
+Balete
+Ganatan
+KIDAPAWAN
+MAGPET
+PRESIDENT ROXAS
+ANTIPAS
+D
+A
+V
+A
+O
+ 
+D
+E
+L
+ 
+S
+U
+R
+N
+O
+R
+T
+H
+ 
+C
+O
+T
+A
+B
+A
+T
+O
+125°15'
+125°15'
+125°10'
+125°10'
+125°5'
+125°5'
+125°0'
+125°0'
+7°15'
+7°15'
+7°10'
+7°10'
+7°5'
+7°5'
+7°0'
+7°0'
+4015-III
+Kidapawan 
+PROVINCE OF DAVAO DEL SUR
+0
+1
+2
+3
+4
+5
+0.5
+Kilometers
+0
+1
+2
+3
+0.5
+Miles
+LAND RESOURCES EVALUATION AND SUITABILITY 
+ASSESSMENT OF STRATEGIC PRODUCTION AREAS 
+LAND SUITABILITY MAP
+RUBBER
+:
+SCALE  1 : 50 000
+DISCLAIMER : All political boundaries are not authoritative.
+Universal Transverse Mercator Zone 51 N. PRS 1992 Datum
+Sheet No. 4015-III
+Sheet 1  of  7
+PROVINCE OF DAVAO DEL SUR
+4015-III
+4014-I
+4014-IV
+4015-III
+ADJOINING SHEETS
+INDEX MAP
+LAND USE
+Built-up
+Fishpond
+Mangrove
+CONVENTIONAL SIGNS
+HYDROLOGY
+Lakes / Rivers
+ROADS
+Expressway
+Trunk line
+Primary
+Secondary
+Tertiary
+Capital City / City
+Capital Town / Town
+PLACES
+Sea / Shoreline
+P
+!
+\ ^
+BOUNDARY
+Region
+District
+Barangay
+Municipality
+Province
+!
+LEGEND
+SUITABILITY CLASSES
+OTHER SIGNS
+NGP Areas
+Cacao
+Highly Suitable - Land having no significant limitations to sustained 
+application of a given use, or only minor limitations that will not signifi-
+cantly reduce productivity or benefits and will not raise inputs above
+an acceptable level.
+Moderately Suitable - Land having limitations which in aggregate are 
+moderately severe for sustained application of a given use; the limitations 
+will reduce productivity or benefits and increase required inputs to the 
+extent that the overall advantage to be gained from the use, although still 
+attractive, will be appreciably inferior to that expected on class S1 land.
+Marginally Suitable - Land having limitations which in aggregate are 
+severe for sustained application of a given use and will so reduce produc-
+tivity or benefits, or increase required inputs, that this expenditure will be 
+only marginally justified.
+Not Suitable/ Not Relevant
+S1
+S2
+S3
+Land limitation
+Land use
+116
+1
+MISCELLANEOUS INFORMATION
+SOURCES OF INFORMATION : Topographic information taken from NAMRIA Topographic Map 
+at 1:50,000 scale. Land resources information from the Agricultural Land Management and 
+Evaluation Division (ALMED), Soils Survey Division (SSD) and Laboratory Services Division (LSD) 
+of BSWM. Rice areas obtained from the Land Use System (FAO, 2015) and Philippine Rice 
+Information System (PRISM) (IRRI, 2015). Data analysis and compilation through the Land 
+Resources Evaluation and Suitability Assessment of Strategic Production Areas for Major
+Commodities Project implemented by BSWM (2017).
+Map produced by the Geomatics and Soil Information Technology Division, Bureau of Soils and 
+Water Management (BSWM).
+Users noting errors or omissions in this publication are requested to inform the  Bureau of Soils 
+and Water Management.
+D EPAR T M E N T O F AG R I C ULT U R E
+D EPAR T M E N T O F AG R I C ULT U R E
+BUREAU OF SOILS AND WATER MANAGEMENT
+SRDC Bldg., Elliptical Road Cor. Visayas Avenue, Diliman, Quezon City 1101
+R E P U B L I C O F T H E P H I L I P P I N E S
+Tel/Fax No. : (+632) 332-9534     E-mail : bswmclientcenter@yahoo.com
+This publication is licensed under a Creative Commons Attribution 4.0 
+International License. Unless otherwise noted, copyright and any other 
+intellectual property rights, in this publication is owned by the
+Philippine Government. This publication should be attributed as :
+BSWM, 2019. Land Suitability Map Series for Rubber of the PROVINCE OF DAVAO DEL SUR
+(50,000 Scale) . CC BY NC SA 4.0.
+Funding Agency                 :    Department of Agriculture - Bureau of Agricultural Research (DA-BAR) 
+Collaborating Agencies   :    Philippine Council on Agriculture and Fisheries (PCAF)
+                                                 :    Department of Agriculture and Fisheries - ARMM, Department of 
+                                                      Agriculture Regional Field Office of Region IX, X, XI, XII and XIII (Caraga)
+                                                 :    Local Government Unit (LGU) of covered provinces and municipalities
+Project Leader                    :  BERNARDO B. PASCUA
+GIS and Cartography        :  IRVIN K. SAMALCA
+
+!
+!
+!
+Tagaytay
+New Clarin
+(Miral)
+Dalawinon
+Poblacion
+Balnate
+Sinawilan
+Mabuhay
+Poblacion
+New Ilocos
+Poblacion
+Dos
+Mabunga
+Rizal
+Maibo
+San Isidro
+Barayong
+Tubod
+Bonifacio
+Union
+Daig
+Dolo
+Buenavista
+Bacong
+Tacul
+Santo Niño
+Libertad
+Lower Bala
+Mabini
+Magbok
+Malongon
+Paraiso
+Linawan
+Marber
+Upper Bala
+Bituan
+Kanapulo
+Sibayan
+Malungon
+Batang
+New Opon
+Bitaug
+Kinuskusan
+Eman
+Cabilao
+Villaflores
+Anonang
+New Caridad
+Guangan
+Bato
+Genoveva
+Baynosa
+Malabuan
+Rodero
+Luna Sur
+Luayon
+New Baguio
+Darapuay
+Old Bulatukan
+New Bulatukan
+Leboce
+Luna Norte
+Dagupan
+New Israel
+Kawayanon
+Kisante
+Santo Niño
+Biangan
+Bulakanon
+Santa
+Felomina
+Alta Vista
+Taluntalunan
+Malasila
+Sinkatulan
+Alegre
+San Vicente
+New Cebu
+Concepcion
+Katipunan II
+Poblacion
+Garsika
+Buena Vida
+Jose Rizal
+Libertad
+Saguing
+Indangan
+Batasan
+Buhay
+Singao
+MAKILALA
+MAGSAYSAY
+BANSALAN
+D
+A
+V
+A
+O
+ 
+D
+E
+L
+ 
+S
+U
+R
+N
+O
+R
+T
+H
+C
+O
+T
+A
+B
+A
+T
+O
+S U L T A N 
+K U D A R A T
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+107
+107
+107
+107
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+126
+126
+126
+126
+126
+126
+126
+126
+126
+126
+126
+134
+134
+134
+134
+134
+134
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+137
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4 4
+4
+4
+4
+4
+81
+85
+85
+85
+85
+85
+85
+85
+85
+91
+91
+91
+91
+91
+91
+91
+10
+10
+10
+10
+10
+10
+10
+16
+16
+16
+20
+20
+1
+1
+1
+2
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+16
+20
+20
+20
+20
+20
+20
+20
+125°15'
+125°15'
+125°10'
+125°10'
+125°5'
+125°5'
+125°0'
+125°0'
+7°0'
+7°0'
+6°55'
+6°55'
+6°50'
+6°50'
+6°45'
+6°45'
+4014-IV
+Malasila 
+PROVINCE OF DAVAO DEL SUR
+0
+1
+2
+3
+4
+5
+0.5
+Kilometers
+0
+1
+2
+3
+0.5
+Miles
+LAND RESOURCES EVALUATION AND SUITABILITY 
+ASSESSMENT OF STRATEGIC PRODUCTION AREAS 
+LAND SUITABILITY MAP
+RUBBER
+:
+SCALE  1 : 50 000
+DISCLAIMER : All political boundaries are not authoritative.
+Universal Transverse Mercator Zone 51 N. PRS 1992 Datum
+Sheet No. 4014-IV
+Sheet 2  of  7
+PROVINCE OF DAVAO DEL SUR
+4014-IV
+4014-I
+4014-II
+4014-III
+4015-III
+4014-IV
+ADJOINING SHEETS
+INDEX MAP
+LAND USE
+Built-up
+Fishpond
+Mangrove
+CONVENTIONAL SIGNS
+HYDROLOGY
+Lakes / Rivers
+ROADS
+Expressway
+Trunk line
+Primary
+Secondary
+Tertiary
+Capital City / City
+Capital Town / Town
+PLACES
+Sea / Shoreline
+P
+!
+\ ^
+BOUNDARY
+Region
+District
+Barangay
+Municipality
+Province
+!
+LEGEND
+SUITABILITY CLASSES
+OTHER SIGNS
+NGP Areas
+Cacao
+Highly Suitable - Land having no significant limitations to sustained 
+application of a given use, or only minor limitations that will not signifi-
+cantly reduce productivity or benefits and will not raise inputs above
+an acceptable level.
+Moderately Suitable - Land having limitations which in aggregate are 
+moderately severe for sustained application of a given use; the limitations 
+will reduce productivity or benefits and increase required inputs to the 
+extent that the overall advantage to be gained from the use, although still 
+attractive, will be appreciably inferior to that expected on class S1 land.
+Marginally Suitable - Land having limitations which in aggregate are 
+severe for sustained application of a given use and will so reduce produc-
+tivity or benefits, or increase required inputs, that this expenditure will be 
+only marginally justified.
+Not Suitable/ Not Relevant
+S1
+S2
+S3
+Land limitation
+Land use
+116
+1
+MISCELLANEOUS INFORMATION
+SOURCES OF INFORMATION : Topographic information taken from NAMRIA Topographic Map 
+at 1:50,000 scale. Land resources information from the Agricultural Land Management and 
+Evaluation Division (ALMED), Soils Survey Division (SSD) and Laboratory Services Division (LSD) 
+of BSWM. Rice areas obtained from the Land Use System (FAO, 2015) and Philippine Rice 
+Information System (PRISM) (IRRI, 2015). Data analysis and compilation through the Land 
+Resources Evaluation and Suitability Assessment of Strategic Production Areas for Major
+Commodities Project implemented by BSWM (2017).
+Map produced by the Geomatics and Soil Information Technology Division, Bureau of Soils and 
+Water Management (BSWM).
+Users noting errors or omissions in this publication are requested to inform the  Bureau of Soils 
+and Water Management.
+D EPAR T M E N T O F AG R I C ULT U R E
+D EPAR T M E N T O F AG R I C ULT U R E
+BUREAU OF SOILS AND WATER MANAGEMENT
+SRDC Bldg., Elliptical Road Cor. Visayas Avenue, Diliman, Quezon City 1101
+R E P U B L I C O F T H E P H I L I P P I N E S
+Tel/Fax No. : (+632) 332-9534     E-mail : bswmclientcenter@yahoo.com
+This publication is licensed under a Creative Commons Attribution 4.0 
+International License. Unless otherwise noted, copyright and any other 
+intellectual property rights, in this publication is owned by the
+Philippine Government. This publication should be attributed as :
+BSWM, 2019. Land Suitability Map Series for Rubber of the PROVINCE OF DAVAO DEL SUR
+(50,000 Scale) . CC BY NC SA 4.0.
+Funding Agency                 :    Department of Agriculture - Bureau of Agricultural Research (DA-BAR) 
+Collaborating Agencies   :    Philippine Council on Agriculture and Fisheries (PCAF)
+                                                 :    Department of Agriculture and Fisheries - ARMM, Department of 
+                                                      Agriculture Regional Field Office of Region IX, X, XI, XII and XIII (Caraga)
+                                                 :    Local Government Unit (LGU) of covered provinces and municipalities
+Project Leader                    :  BERNARDO B. PASCUA
+GIS and Cartography        :  IRVIN K. SAMALCA
+
+!
+Zone 2
+(Pob.)
+Cabligan
+(Managa)
+Tiguman
+Zone 1
+(Pob.)
+Sinaragan
+Colorado
+Cogon
+Camanchiles
+San Vicente
+Matti
+Sinawilan
+San Roque
+San Agustin
+Tres De Mayo
+Kibao
+Bato
+Kiagot
+Mahayahay
+Lungag
+Ruparan
+Soong
+Matutungan
+Tagabuli
+Tuban
+Zone IV
+(Pob.)
+Zone III
+(Pob.)
+Melilia
+Tinongtongan
+Saliducon
+Zone I (Pob.)
+Binaton
+Dulangan
+Zone II
+(Pob.)
+Goma
+Coronon
+Balabag
+Sinoron
+Astorga
+Jose Rizal
+Darong
+Tibolo
+Inawayan
+Kapatagan
+(Rizal)
+Sibulan
+Binugao
+Atan-Awe
+Tibuloy
+Managa
+Baracatan
+Sirawan
+Sibulan
+Mount Apo National Park
+under Jurisdiction
+of Davao City
+SANTA CRUZ
+D
+A
+V
+A
+O
+ 
+D
+E
+L
+ 
+S
+U
+R
+Tagabuli Bay
+D A V A O 
+G U L F
+Badi
+a
+ng C
+o
+ve
+105
+105
+105
+107
+107
+112
+112
+112
+112
+112
+112
+112
+112 112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116 116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+126
+126
+126
+126
+126
+126
+126
+126
+134
+134
+134
+134
+134
+134
+134
+134
+137
+150
+150
+150
+150
+150 150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+34
+34
+34
+34
+34
+34
+34
+34
+34
+34
+34
+34
+34
+34
+34
+34
+34
+4
+4
+4
+4
+4
+4
+47
+47
+47
+47
+47
+50
+81
+84
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+90
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+93
+1
+1
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10 10
+10
+10
+10
+10
+10
+10
+10 10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+16
+16
+16
+16
+16
+16
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+125°30'
+125°30'
+125°25'
+125°25'
+125°20'
+125°20'
+125°15'
+125°15'
+7°0'
+7°0'
+6°55'
+6°55'
+6°50'
+6°50'
+6°45'
+6°45'
+4014-I
+Sirawan 
+PROVINCE OF DAVAO DEL SUR
+0
+1
+2
+3
+4
+5
+0.5
+Kilometers
+0
+1
+2
+3
+0.5
+Miles
+LAND RESOURCES EVALUATION AND SUITABILITY 
+ASSESSMENT OF STRATEGIC PRODUCTION AREAS 
+LAND SUITABILITY MAP
+RUBBER
+:
+SCALE  1 : 50 000
+DISCLAIMER : All political boundaries are not authoritative.
+Universal Transverse Mercator Zone 51 N. PRS 1992 Datum
+Sheet No. 4014-I
+Sheet 3  of  7
+PROVINCE OF DAVAO DEL SUR
+4014-I
+4014-IV
+4014-II
+4014-III
+4015-III
+4014-I
+ADJOINING SHEETS
+INDEX MAP
+LAND USE
+Built-up
+Fishpond
+Mangrove
+CONVENTIONAL SIGNS
+HYDROLOGY
+Lakes / Rivers
+ROADS
+Expressway
+Trunk line
+Primary
+Secondary
+Tertiary
+Capital City / City
+Capital Town / Town
+PLACES
+Sea / Shoreline
+P
+!
+\ ^
+BOUNDARY
+Region
+District
+Barangay
+Municipality
+Province
+!
+LEGEND
+SUITABILITY CLASSES
+OTHER SIGNS
+NGP Areas
+Cacao
+Highly Suitable - Land having no significant limitations to sustained 
+application of a given use, or only minor limitations that will not signifi-
+cantly reduce productivity or benefits and will not raise inputs above
+an acceptable level.
+Moderately Suitable - Land having limitations which in aggregate are 
+moderately severe for sustained application of a given use; the limitations 
+will reduce productivity or benefits and increase required inputs to the 
+extent that the overall advantage to be gained from the use, although still 
+attractive, will be appreciably inferior to that expected on class S1 land.
+Marginally Suitable - Land having limitations which in aggregate are 
+severe for sustained application of a given use and will so reduce produc-
+tivity or benefits, or increase required inputs, that this expenditure will be 
+only marginally justified.
+Not Suitable/ Not Relevant
+S1
+S2
+S3
+Land limitation
+Land use
+116
+1
+MISCELLANEOUS INFORMATION
+SOURCES OF INFORMATION : Topographic information taken from NAMRIA Topographic Map 
+at 1:50,000 scale. Land resources information from the Agricultural Land Management and 
+Evaluation Division (ALMED), Soils Survey Division (SSD) and Laboratory Services Division (LSD) 
+of BSWM. Rice areas obtained from the Land Use System (FAO, 2015) and Philippine Rice 
+Information System (PRISM) (IRRI, 2015). Data analysis and compilation through the Land 
+Resources Evaluation and Suitability Assessment of Strategic Production Areas for Major
+Commodities Project implemented by BSWM (2017).
+Map produced by the Geomatics and Soil Information Technology Division, Bureau of Soils and 
+Water Management (BSWM).
+Users noting errors or omissions in this publication are requested to inform the  Bureau of Soils 
+and Water Management.
+D EPAR T M E N T O F AG R I C ULT U R E
+D EPAR T M E N T O F AG R I C ULT U R E
+BUREAU OF SOILS AND WATER MANAGEMENT
+SRDC Bldg., Elliptical Road Cor. Visayas Avenue, Diliman, Quezon City 1101
+R E P U B L I C O F T H E P H I L I P P I N E S
+Tel/Fax No. : (+632) 332-9534     E-mail : bswmclientcenter@yahoo.com
+This publication is licensed under a Creative Commons Attribution 4.0 
+International License. Unless otherwise noted, copyright and any other 
+intellectual property rights, in this publication is owned by the
+Philippine Government. This publication should be attributed as :
+BSWM, 2019. Land Suitability Map Series for Rubber of the PROVINCE OF DAVAO DEL SUR
+(50,000 Scale) . CC BY NC SA 4.0.
+Funding Agency                 :    Department of Agriculture - Bureau of Agricultural Research (DA-BAR) 
+Collaborating Agencies   :    Philippine Council on Agriculture and Fisheries (PCAF)
+                                                 :    Department of Agriculture and Fisheries - ARMM, Department of 
+                                                      Agriculture Regional Field Office of Region IX, X, XI, XII and XIII (Caraga)
+                                                 :    Local Government Unit (LGU) of covered provinces and municipalities
+Project Leader                    :  BERNARDO B. PASCUA
+GIS and Cartography        :  IRVIN K. SAMALCA
+
+!
+!
+Pasig
+Danlag
+Palo
+Cogon-Bacaca
+Kimlawis
+Kisulan
+Abnate
+Ihan
+San Jose
+Datablao
+Panaglib
+Waterfall
+Bagong
+Silang
+Maraga-a
+Tacul
+Santo Niño
+Kibongbong
+Saub
+San Isidro
+Manual
+Tibongbong
+Dongan-Pekong
+Bagumbayan
+Bagumbayan
+Saboy
+Towak
+La Suerte
+Molopolo
+Asbang
+Colonsabak
+Kauswagan
+Buri
+Bangkal
+Sinapulan
+Malabang
+Damsite
+Asinan
+Manga
+Langa-an
+Tamlangon
+Kabasagan
+Buas
+Glamang
+Kapok
+La Union
+Ceboza
+San Miguel
+Sucob
+New Katipunan
+Malawanit
+Poblacion
+New Murcia
+New Quezon
+Blocon
+Polomolok
+Lower Marber
+San Jose
+Bacungan
+Dalumay
+Kasuga
+San Miguel
+New Visayas
+Elbebe
+MATANAO
+D
+A
+V
+A
+O
+ 
+D
+E
+L
+ 
+S
+U
+R
+S
+O
+U
+T
+H
+C
+O
+T
+A
+B
+A
+T
+O
+S
+U
+L
+T
+A
+N
+K
+U
+D
+A
+R
+A
+T
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112 112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112 112
+112
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+126
+126
+126
+126
+126
+126
+126
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+137
+137
+137
+137
+137
+137
+150
+150
+150
+150
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2 2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+22
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+4
+4
+4 4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+44
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+44
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10 10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+16
+16
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+20
+125°15'
+125°15'
+125°10'
+125°10'
+125°5'
+125°5'
+125°0'
+125°0'
+6°45'
+6°45'
+6°40'
+6°40'
+6°35'
+6°35'
+6°30'
+6°30'
+4014-III
+Lambayong 
+PROVINCE OF DAVAO DEL SUR
+0
+1
+2
+3
+4
+5
+0.5
+Kilometers
+0
+1
+2
+3
+0.5
+Miles
+LAND RESOURCES EVALUATION AND SUITABILITY 
+ASSESSMENT OF STRATEGIC PRODUCTION AREAS 
+LAND SUITABILITY MAP
+RUBBER
+:
+SCALE  1 : 50 000
+DISCLAIMER : All political boundaries are not authoritative.
+Universal Transverse Mercator Zone 51 N. PRS 1992 Datum
+Sheet No. 4014-III
+Sheet 4  of  7
+PROVINCE OF DAVAO DEL SUR
+4014-III
+4014-II
+4013-I
+4014-I
+4013-IV
+4014-IV
+4014-III
+ADJOINING SHEETS
+INDEX MAP
+LAND USE
+Built-up
+Fishpond
+Mangrove
+CONVENTIONAL SIGNS
+HYDROLOGY
+Lakes / Rivers
+ROADS
+Expressway
+Trunk line
+Primary
+Secondary
+Tertiary
+Capital City / City
+Capital Town / Town
+PLACES
+Sea / Shoreline
+P
+!
+\ ^
+BOUNDARY
+Region
+District
+Barangay
+Municipality
+Province
+!
+LEGEND
+SUITABILITY CLASSES
+OTHER SIGNS
+NGP Areas
+Cacao
+Highly Suitable - Land having no significant limitations to sustained 
+application of a given use, or only minor limitations that will not signifi-
+cantly reduce productivity or benefits and will not raise inputs above
+an acceptable level.
+Moderately Suitable - Land having limitations which in aggregate are 
+moderately severe for sustained application of a given use; the limitations 
+will reduce productivity or benefits and increase required inputs to the 
+extent that the overall advantage to be gained from the use, although still 
+attractive, will be appreciably inferior to that expected on class S1 land.
+Marginally Suitable - Land having limitations which in aggregate are 
+severe for sustained application of a given use and will so reduce produc-
+tivity or benefits, or increase required inputs, that this expenditure will be 
+only marginally justified.
+Not Suitable/ Not Relevant
+S1
+S2
+S3
+Land limitation
+Land use
+116
+1
+MISCELLANEOUS INFORMATION
+SOURCES OF INFORMATION : Topographic information taken from NAMRIA Topographic Map 
+at 1:50,000 scale. Land resources information from the Agricultural Land Management and 
+Evaluation Division (ALMED), Soils Survey Division (SSD) and Laboratory Services Division (LSD) 
+of BSWM. Rice areas obtained from the Land Use System (FAO, 2015) and Philippine Rice 
+Information System (PRISM) (IRRI, 2015). Data analysis and compilation through the Land 
+Resources Evaluation and Suitability Assessment of Strategic Production Areas for Major
+Commodities Project implemented by BSWM (2017).
+Map produced by the Geomatics and Soil Information Technology Division, Bureau of Soils and 
+Water Management (BSWM).
+Users noting errors or omissions in this publication are requested to inform the  Bureau of Soils 
+and Water Management.
+D EPAR T M E N T O F AG R I C ULT U R E
+D EPAR T M E N T O F AG R I C ULT U R E
+BUREAU OF SOILS AND WATER MANAGEMENT
+SRDC Bldg., Elliptical Road Cor. Visayas Avenue, Diliman, Quezon City 1101
+R E P U B L I C O F T H E P H I L I P P I N E S
+Tel/Fax No. : (+632) 332-9534     E-mail : bswmclientcenter@yahoo.com
+This publication is licensed under a Creative Commons Attribution 4.0 
+International License. Unless otherwise noted, copyright and any other 
+intellectual property rights, in this publication is owned by the
+Philippine Government. This publication should be attributed as :
+BSWM, 2019. Land Suitability Map Series for Rubber of the PROVINCE OF DAVAO DEL SUR
+(50,000 Scale) . CC BY NC SA 4.0.
+Funding Agency                 :    Department of Agriculture - Bureau of Agricultural Research (DA-BAR) 
+Collaborating Agencies   :    Philippine Council on Agriculture and Fisheries (PCAF)
+                                                 :    Department of Agriculture and Fisheries - ARMM, Department of 
+                                                      Agriculture Regional Field Office of Region IX, X, XI, XII and XIII (Caraga)
+                                                 :    Local Government Unit (LGU) of covered provinces and municipalities
+Project Leader                    :  BERNARDO B. PASCUA
+GIS and Cartography        :  IRVIN K. SAMALCA
+
+!
+!
+!
+\
+!
+!
+!
+Osmeña
+San Roque
+Lapu-Lapu
+(Lapla)
+Lapla
+Litos
+Malalag Tubig
+Pitu
+Malungon
+Gamay
+Mabini
+San Isidro
+Ibo
+Cadaatan
+Clib
+Labon
+Tagansule
+Santo Niño
+Laperas
+Poblacion
+Bolton
+Lati-an
+Caputian
+Kiblagon
+Tagolilong
+Buguis
+Bulacan
+Luparan
+Kiblagon
+Waterfall
+San Agustin
+Carre
+Dapok
+Poblacion
+New Baclayon
+Mamacao
+Baybay
+Bagumbayan
+Ogpao
+Mckinley
+Roxas
+Poblacion
+San Pedro
+Balasinon
+New Cebu
+Palili
+Talas
+Poblacion
+Palili
+Tanglad
+Harada Butai
+Harada Butai
+Tala-o
+Solongvale
+N C Ordaneza
+District (Pob.)
+Quirino
+District (Pob.)
+Almendras
+(Pob.)
+Punta Piape
+Lower
+Limonzo
+Tanwalang
+Upper Limonzo
+Lower
+Katipunan
+Piape
+Tulogan
+Southern
+Paligue
+Katipunan
+New Sibonga
+Don Sergio
+Osmeña, Sr.
+Northern
+Paligue
+San Isidro
+Lower Malinao
+San Guillermo
+Upper Malinao
+Paligue
+Tologan
+Lapulabao
+Clib
+Guihing
+Guihing
+Aplaya
+Poblacion
+Mahayahay
+Hagonoy
+Crossing
+Leling
+Maliit Digos
+Sinayawan
+Sacub
+San Isidro
+Balutakay
+Lanuro
+Dawis
+San Jose
+(Balutakay)
+Kibuaya
+Igpit
+Zone 3
+(Pob.)
+San
+Miguel
+(Odaca)
+Aplaya
+PADADA
+SANTA MARIA
+DIGOS
+SULOP
+KIBLAWAN
+HAGONOY
+MALALAG
+D
+A
+V
+A
+O
+ 
+D
+E
+L
+ 
+S
+U
+R
+D A V A O 
+O C C I D E N T A L
+S
+A
+R
+A
+N
+G
+A
+N
+I
+M A L A L A G B A Y
+K U L U N G A N B A Y
+D
+A
+V
+A
+O
+ 
+G
+U
+L
+F
+105
+105
+105
+105
+105
+105
+105
+105
+105
+105
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+112
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116 116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+116
+126
+126
+126
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+137
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150
+150 150
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2 2
+2
+22
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+22
+2
+2
+2
+2
+2
+2
+2
+22
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2 2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+2
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+215
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4 4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+4
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+85
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+91
+9
+9
+9
+9
+9
+99
+9
+9
+9
+9
+9
+9
+9
+9
+9
+9
+9
+9
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+1010
+10
+10
+10
+10
+10
+10
+10
+10
+11
+11
+11
+11
+11
+11
+11
+11
+11
+11
+11
+11
+125°30'
+125°30'
+125°25'
+125°25'
+125°20'
+125°20'
+125°15'
+125°15'
+6°45'
+6°45'
+6°40'
+6°40'
+6°35'
+6°35'
+6°30'
+6°30'
+4014-II
+Padada 
+PROVINCE OF DAVAO DEL SUR
+0
+1
+2
+3
+4
+5
+0.5
+Kilometers
+0
+1
+2
+3
+0.5
+Miles
+LAND RESOURCES EVALUATION AND SUITABILITY 
+ASSESSMENT OF STRATEGIC PRODUCTION AREAS 
+LAND SUITABILITY MAP
+RUBBER
+:
+SCALE  1 : 50 000
+DISCLAIMER : All political boundaries are not authoritative.
+Universal Transverse Mercator Zone 51 N. PRS 1992 Datum
+Sheet No. 4014-II
+Sheet 5  of  7
+PROVINCE OF DAVAO DEL SUR
+4014-II
+4014-III
+4013-I
+4014-I
+4013-IV
+4014-IV
+4014-II
+ADJOINING SHEETS
+INDEX MAP
+LAND USE
+Built-up
+Fishpond
+Mangrove
+CONVENTIONAL SIGNS
+HYDROLOGY
+Lakes / Rivers
+ROADS
+Expressway
+Trunk line
+Primary
+Secondary
+Tertiary
+Capital City / City
+Capital Town / Town
+PLACES
+Sea / Shoreline
+P
+!
+\ ^
+BOUNDARY
+Region
+District
+Barangay
+Municipality
+Province
+!
+LEGEND
+SUITABILITY CLASSES
+OTHER SIGNS
+NGP Areas
+Cacao
+Highly Suitable - Land having no significant limitations to sustained 
+application of a given use, or only minor limitations that will not signifi-
+cantly reduce productivity or benefits and will not raise inputs above
+an acceptable level.
+Moderately Suitable - Land having limitations which in aggregate are 
+moderately severe for sustained application of a given use; the limitations 
+will reduce productivity or benefits and increase required inputs to the 
+extent that the overall advantage to be gained from the use, although still 
+attractive, will be appreciably inferior to that expected on class S1 land.
+Marginally Suitable - Land having limitations which in aggregate are 
+severe for sustained application of a given use and will so reduce produc-
+tivity or benefits, or increase required inputs, that this expenditure will be 
+only marginally justified.
+Not Suitable/ Not Relevant
+S1
+S2
+S3
+Land limitation
+Land use
+116
+1
+MISCELLANEOUS INFORMATION
+SOURCES OF INFORMATION : Topographic information taken from NAMRIA Topographic Map 
+at 1:50,000 scale. Land resources information from the Agricultural Land Management and 
+Evaluation Division (ALMED), Soils Survey Division (SSD) and Laboratory Services Division (LSD) 
+of BSWM. Rice areas obtained from the Land Use System (FAO, 2015) and Philippine Rice 
+Information System (PRISM) (IRRI, 2015). Data analysis and compilation through the Land 
+Resources Evaluation and Suitability Assessment of Strategic Production Areas for Major
+Commodities Project implemented by BSWM (2017).
+Map produced by the Geomatics and Soil Information Technology Division, Bureau of Soils and 
+Water Management (BSWM).
+Users noting errors or omissions in this publication are requested to inform the  Bureau of Soils 
+and Water Management.
+D EPAR T M E N T O F AG R I C ULT U R E
+D EPAR T M E N T O F AG R I C ULT U R E
+BUREAU OF SOILS AND WATER MANAGEMENT
+SRDC Bldg., Elliptical Road Cor. Visayas Avenue, Diliman, Quezon City 1101
+R E P U B L I C O F T H E P H I L I P P I N E S
+Tel/Fax No. : (+632) 332-9534     E-mail : bswmclientcenter@yahoo.com
+This publication is licensed under a Creative Commons Attribution 4.0 
+International License. Unless otherwise noted, copyright and any other 
+intellectual property rights, in this publication is owned by the
+Philippine Government. This publication should be attributed as :
+BSWM, 2019. Land Suitability Map Series for Rubber of the PROVINCE OF DAVAO DEL SUR
+(50,000 Scale) . CC BY NC SA 4.0.
+Funding Agency                 :    Department of Agriculture - Bureau of Agricultural Research (DA-BAR) 
+Collaborating Agencies   :    Philippine Council on Agriculture and Fisheries (PCAF)
+                                                 :    Department of Agriculture and Fisheries - ARMM, Department of 
+                                                      Agriculture Regional Field Office of Region IX, X, XI, XII and XIII (Caraga)
+                                                 :    Local Government Unit (LGU) of covered provinces and municipalities
+Project Leader                    :  BERNARDO B. PASCUA
+GIS and Cartography        :  IRVIN K. SAMALCA
+
+!
+!
+Crossing
+Palkan
+Lam-Caliaf
+Upper Labay
+Polo
+Malandag
+Datal Tampal
+Palkan
+Kinilis
+Maligo
+Landan
+Atlae
+Kablon
+Datal Bila
+Alkikan
+Kibala
+Kiblat
+Datal Batong
+Albagan
+B'Laan
+Miasong
+Malabod
+Pula-bato
+Bulol-Salo
+Balasiao
+Tacub
+Tablu
+D
+A
+V
+A
+O
+ 
+D
+E
+L
+ 
+S
+U
+R
+S
+A
+R
+A
+N
+G
+A
+N
+I
+S
+O
+U
+T
+H
+C
+O
+T
+A
+B
+A
+T
+O
+112
+112
+112
+112
+126
+126
+126
+126
+126
+126
+126
+126
+126
+126
+126
+126
+126
+126
+126
+126
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+134
+2
+2
+4
+91
+1
+1
+1
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+16
+16
+16
+16
+16
+20
+20
+20
+20
+20
+20
+20
+20
+125°15'
+125°15'
+125°10'
+125°10'
+125°5'
+125°5'
+125°0'
+125°0'
+6°30'
+6°30'
+6°25'
+6°25'
+6°20'
+6°20'
+6°15'
+6°15'
+4013-IV
+Mount Matutum 
+PROVINCE OF DAVAO DEL SUR
+0
+1
+2
+3
+4
+5
+0.5
+Kilometers
+0
+1
+2
+3
+0.5
+Miles
+LAND RESOURCES EVALUATION AND SUITABILITY 
+ASSESSMENT OF STRATEGIC PRODUCTION AREAS 
+LAND SUITABILITY MAP
+RUBBER
+:
+SCALE  1 : 50 000
+DISCLAIMER : All political boundaries are not authoritative.
+Universal Transverse Mercator Zone 51 N. PRS 1992 Datum
+Sheet No. 4013-IV
+Sheet 6  of  7
+PROVINCE OF DAVAO DEL SUR
+4013-IV
+4013-I
+4014-II
+4014-III
+4013-IV
+ADJOINING SHEETS
+INDEX MAP
+LAND USE
+Built-up
+Fishpond
+Mangrove
+CONVENTIONAL SIGNS
+HYDROLOGY
+Lakes / Rivers
+ROADS
+Expressway
+Trunk line
+Primary
+Secondary
+Tertiary
+Capital City / City
+Capital Town / Town
+PLACES
+Sea / Shoreline
+P
+!
+\ ^
+BOUNDARY
+Region
+District
+Barangay
+Municipality
+Province
+!
+LEGEND
+SUITABILITY CLASSES
+OTHER SIGNS
+NGP Areas
+Cacao
+Highly Suitable - Land having no significant limitations to sustained 
+application of a given use, or only minor limitations that will not signifi-
+cantly reduce productivity or benefits and will not raise inputs above
+an acceptable level.
+Moderately Suitable - Land having limitations which in aggregate are 
+moderately severe for sustained application of a given use; the limitations 
+will reduce productivity or benefits and increase required inputs to the 
+extent that the overall advantage to be gained from the use, although still 
+attractive, will be appreciably inferior to that expected on class S1 land.
+Marginally Suitable - Land having limitations which in aggregate are 
+severe for sustained application of a given use and will so reduce produc-
+tivity or benefits, or increase required inputs, that this expenditure will be 
+only marginally justified.
+Not Suitable/ Not Relevant
+S1
+S2
+S3
+Land limitation
+Land use
+116
+1
+MISCELLANEOUS INFORMATION
+SOURCES OF INFORMATION : Topographic information taken from NAMRIA Topographic Map 
+at 1:50,000 scale. Land resources information from the Agricultural Land Management and 
+Evaluation Division (ALMED), Soils Survey Division (SSD) and Laboratory Services Division (LSD) 
+of BSWM. Rice areas obtained from the Land Use System (FAO, 2015) and Philippine Rice 
+Information System (PRISM) (IRRI, 2015). Data analysis and compilation through the Land 
+Resources Evaluation and Suitability Assessment of Strategic Production Areas for Major
+Commodities Project implemented by BSWM (2017).
+Map produced by the Geomatics and Soil Information Technology Division, Bureau of Soils and 
+Water Management (BSWM).
+Users noting errors or omissions in this publication are requested to inform the  Bureau of Soils 
+and Water Management.
+D EPAR T M E N T O F AG R I C ULT U R E
+D EPAR T M E N T O F AG R I C ULT U R E
+BUREAU OF SOILS AND WATER MANAGEMENT
+SRDC Bldg., Elliptical Road Cor. Visayas Avenue, Diliman, Quezon City 1101
+R E P U B L I C O F T H E P H I L I P P I N E S
+Tel/Fax No. : (+632) 332-9534     E-mail : bswmclientcenter@yahoo.com
+This publication is licensed under a Creative Commons Attribution 4.0 
+International License. Unless otherwise noted, copyright and any other 
+intellectual property rights, in this publication is owned by the
+Philippine Government. This publication should be attributed as :
+BSWM, 2019. Land Suitability Map Series for Rubber of the PROVINCE OF DAVAO DEL SUR
+(50,000 Scale) . CC BY NC SA 4.0.
+Funding Agency                 :    Department of Agriculture - Bureau of Agricultural Research (DA-BAR) 
+Collaborating Agencies   :    Philippine Council on Agriculture and Fisheries (PCAF)
+                                                 :    Department of Agriculture and Fisheries - ARMM, Department of 
+                                                      Agriculture Regional Field Office of Region IX, X, XI, XII and XIII (Caraga)
+                                                 :    Local Government Unit (LGU) of covered provinces and municipalities
+Project Leader                    :  BERNARDO B. PASCUA
+GIS and Cartography        :  IRVIN K. SAMALCA
+
+!
+Tamban
+Datu Danwata
+Banahaw
+Ampon
+Lutay
+Nagpan
+Lower Mainit
+Panamin
+Upper Mainit
+Kilalag
+Demoloc
+Upper Lumabat
+San Juan
+Malalag Cogon
+Poblacion
+San Roque
+San Juan
+San Pedro
+San Miguel
+Talus
+Kawayan
+Pinalpalan
+Upper Biangan
+Datu
+Daligasao
+Bunot
+Kinilidan
+Datu Intan
+San Isidro
+Kinabalan
+San Antonio
+Buca
+Bonifacio
+Bagong Negros
+Rizal
+(Parame)
+Banate
+Parame
+J.P. Laurel
+Kidadan
+Pongpong
+Pocaleel
+MALUNGON
+D
+A
+V
+A
+O
+ 
+O
+C
+C
+I
+D
+E
+N
+T
+A
+L
+S
+A
+R
+A
+N
+G
+A
+N
+I
+112
+116
+116
+116
+116
+116
+126
+126
+134
+134
+134
+134
+2
+2
+2
+2
+2
+4
+4
+4
+4
+4
+4
+4
+4
+85
+85
+85
+85
+91
+91
+91
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+10
+125°30'
+125°30'
+125°25'
+125°25'
+125°20'
+125°20'
+125°15'
+125°15'
+6°30'
+6°30'
+6°25'
+6°25'
+6°20'
+6°20'
+6°15'
+6°15'
+4013-I
+Kabayawa 
+PROVINCE OF DAVAO DEL SUR
+0
+1
+2
+3
+4
+5
+0.5
+Kilometers
+0
+1
+2
+3
+0.5
+Miles
+LAND RESOURCES EVALUATION AND SUITABILITY 
+ASSESSMENT OF STRATEGIC PRODUCTION AREAS 
+LAND SUITABILITY MAP
+RUBBER
+:
+SCALE  1 : 50 000
+DISCLAIMER : All political boundaries are not authoritative.
+Universal Transverse Mercator Zone 51 N. PRS 1992 Datum
+Sheet No. 4013-I
+Sheet 7  of  7
+PROVINCE OF DAVAO DEL SUR
+4013-I
+4013-IV
+4014-II
+4014-III
+4013-I
+ADJOINING SHEETS
+INDEX MAP
+LAND USE
+Built-up
+Fishpond
+Mangrove
+CONVENTIONAL SIGNS
+HYDROLOGY
+Lakes / Rivers
+ROADS
+Expressway
+Trunk line
+Primary
+Secondary
+Tertiary
+Capital City / City
+Capital Town / Town
+PLACES
+Sea / Shoreline
+P
+!
+\ ^
+BOUNDARY
+Region
+District
+Barangay
+Municipality
+Province
+!
+LEGEND
+SUITABILITY CLASSES
+OTHER SIGNS
+NGP Areas
+Cacao
+Highly Suitable - Land having no significant limitations to sustained 
+application of a given use, or only minor limitations that will not signifi-
+cantly reduce productivity or benefits and will not raise inputs above
+an acceptable level.
+Moderately Suitable - Land having limitations which in aggregate are 
+moderately severe for sustained application of a given use; the limitations 
+will reduce productivity or benefits and increase required inputs to the 
+extent that the overall advantage to be gained from the use, although still 
+attractive, will be appreciably inferior to that expected on class S1 land.
+Marginally Suitable - Land having limitations which in aggregate are 
+severe for sustained application of a given use and will so reduce produc-
+tivity or benefits, or increase required inputs, that this expenditure will be 
+only marginally justified.
+Not Suitable/ Not Relevant
+S1
+S2
+S3
+Land limitation
+Land use
+116
+1
+MISCELLANEOUS INFORMATION
+SOURCES OF INFORMATION : Topographic information taken from NAMRIA Topographic Map 
+at 1:50,000 scale. Land resources information from the Agricultural Land Management and 
+Evaluation Division (ALMED), Soils Survey Division (SSD) and Laboratory Services Division (LSD) 
+of BSWM. Rice areas obtained from the Land Use System (FAO, 2015) and Philippine Rice 
+Information System (PRISM) (IRRI, 2015). Data analysis and compilation through the Land 
+Resources Evaluation and Suitability Assessment of Strategic Production Areas for Major
+Commodities Project implemented by BSWM (2017).
+Map produced by the Geomatics and Soil Information Technology Division, Bureau of Soils and 
+Water Management (BSWM).
+Users noting errors or omissions in this publication are requested to inform the  Bureau of Soils 
+and Water Management.
+D EPAR T M E N T O F AG R I C ULT U R E
+D EPAR T M E N T O F AG R I C ULT U R E
+BUREAU OF SOILS AND WATER MANAGEMENT
+SRDC Bldg., Elliptical Road Cor. Visayas Avenue, Diliman, Quezon City 1101
+R E P U B L I C O F T H E P H I L I P P I N E S
+Tel/Fax No. : (+632) 332-9534     E-mail : bswmclientcenter@yahoo.com
+This publication is licensed under a Creative Commons Attribution 4.0 
+International License. Unless otherwise noted, copyright and any other 
+intellectual property rights, in this publication is owned by the
+Philippine Government. This publication should be attributed as :
+BSWM, 2019. Land Suitability Map Series for Rubber of the PROVINCE OF DAVAO DEL SUR
+(50,000 Scale) . CC BY NC SA 4.0.
+Funding Agency                 :    Department of Agriculture - Bureau of Agricultural Research (DA-BAR) 
+Collaborating Agencies   :    Philippine Council on Agriculture and Fisheries (PCAF)
+                                                 :    Department of Agriculture and Fisheries - ARMM, Department of 
+                                                      Agriculture Regional Field Office of Region IX, X, XI, XII and XIII (Caraga)
+                                                 :    Local Government Unit (LGU) of covered provinces and municipalities
+Project Leader                    :  BERNARDO B. PASCUA
+GIS and Cartography        :  IRVIN K. SAMALCA

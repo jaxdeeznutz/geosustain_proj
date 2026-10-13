@@ -104,7 +104,7 @@ class AnalysisHistoryRow extends StatelessWidget {
         padding: const EdgeInsets.all(14),
         child: Row(
           children: [
-            const _FieldIcon(Icons.assignment_outlined),
+            BoundaryThumbnail(record, size: 88),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -460,121 +460,7 @@ class MobileAnalysisResult extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final xai = analysisMapValue(record['xai_explanation']);
-    final crops = assessedCrops(record);
-    final summary =
-        '${record['analysis_summary'] ?? xai['plain_summary'] ?? xai['summary'] ?? ''}'
-            .trim();
-    final recommendation = '${record['recommendation'] ?? ''}'.trim();
-    final cropName = '${record['predicted_crop'] ?? ''}'.trim();
-    final actions = <String>{
-      for (final value in [
-        xai['planning_advice'],
-        if (recommendation.toLowerCase() != cropName.toLowerCase())
-          recommendation,
-        if (record['recommended_planting_window'] != null)
-          'Planting window: ${record['recommended_planting_window']}',
-        record['season_advice'],
-      ])
-        if (value != null && '$value'.trim().isNotEmpty) '$value'.trim(),
-      ...analysisListValue(
-        record['land_use_recommendations'],
-      ).map((e) => 'Land-use option: $e'),
-    }.toList();
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: AnalysisIdentity(record: record),
-        ),
-        Align(
-          alignment: Alignment.centerLeft,
-          child: VerificationStatusBadge(
-            status: '${record['verification_status'] ?? 'draft'}',
-          ),
-        ),
-        if (crops.isNotEmpty) ...[
-          _CropAssessmentCard(crop: crops.first, record: record, rank: 1),
-          ModelExplanationCard(record: record),
-          if (crops.length > 1) ...[
-            const Padding(
-              padding: EdgeInsets.fromLTRB(4, 20, 4, 4),
-              child: Text(
-                'Other crops assessed',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w800,
-                  color: darkGreen,
-                ),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              child: Text(
-                'Assessed crops are not all recommendations for planting.',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
-            for (var i = 1; i < crops.length; i++)
-              _CropAssessmentCard(
-                key: ValueKey('crop-${crops[i]['crop']}'),
-                crop: crops[i],
-                record: record,
-                rank: i + 1,
-              ),
-          ],
-        ] else
-          _AnalysisSection(
-            title: 'Land assessment',
-            icon: Icons.landscape_outlined,
-            children: [
-              const Text('No crop recommended for this analysis.'),
-              if (summary.isNotEmpty) AnalysisReadableText(summary),
-            ],
-          ),
-        AnalysisIndicatorsCard(record: record),
-        _AnalysisSection(
-          title: 'Next steps',
-          children: [
-            if (actions.isEmpty)
-              const Text(
-                'No practical recommendations were returned for this analysis.',
-              ),
-            for (var i = 0; i < actions.length && i < 3; i++)
-              _AnalysisParagraph('${i + 1}. ${actions[i]}'),
-            if (actions.length > 3)
-              ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                title: const Text('More recommendations'),
-                children: [
-                  for (final action in actions.skip(3))
-                    _AnalysisParagraph(action),
-                ],
-              ),
-          ],
-        ),
-        AnalysisBoundaryPreview(record: record),
-        AnalysisReviewCard(state: state, record: record),
-        OutlinedButton.icon(
-          onPressed: () async {
-            try {
-              await generateAnalysisPdf(record, state: state);
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(friendlyErrorMessage(e))),
-                );
-              }
-            }
-          },
-          icon: const Icon(Icons.download_outlined),
-          label: const Text('Export analysis report'),
-        ),
-      ],
-    );
-  }
+  Widget build(BuildContext context) => ReferenceAnalysisContent(state:state,record:record);
 }
 
 class _AnalysisParagraph extends StatelessWidget {

@@ -9,6 +9,7 @@ import hashlib
 import io
 import pandas as pd
 import time
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from google.oauth2 import service_account
@@ -56,6 +57,8 @@ def initialize_earth_engine():
         ) from exc
 
 
+_EE_LOCK = threading.Lock()
+_EE_RETRY_AFTER = 0.0
 _EE_INITIALIZED = False
 _EE_INITIALIZATION_ERROR = None
 
@@ -66,25 +69,34 @@ def ensure_earth_engine_initialized():
     Keeping this out of module import lets Uvicorn bind Render's $PORT
     immediately, even when Earth Engine credentials or the network are slow.
     """
-    global _EE_INITIALIZED, _EE_INITIALIZATION_ERROR
-    if _EE_INITIALIZED:
-        return True
-    try:
-        initialize_earth_engine()
-        _EE_INITIALIZED = True
-        _EE_INITIALIZATION_ERROR = None
-        return True
-    except Exception as exc:
-        _EE_INITIALIZATION_ERROR = exc
-        print(f'Earth Engine initialization warning: {exc}')
-        raise
+    global _EE_INITIALIZED, _EE_INITIALIZATION_ERROR, _EE_RETRY_AFTER
+    with _EE_LOCK:
+        if _EE_INITIALIZED:
+            return True
+        if time.monotonic() < _EE_RETRY_AFTER:
+            raise RuntimeError('Earth Engine initialization temporarily unavailable')
+        try:
+            ee.data.setDeadline(30000)
+            ee.data.setMaxRetries(1)
+            initialize_earth_engine()
+            _EE_INITIALIZED = True
+            _EE_INITIALIZATION_ERROR = None
+            return True
+        except Exception as exc:
+            _EE_INITIALIZATION_ERROR = exc
+            _EE_RETRY_AFTER = time.monotonic() + 60
+            print(f'Earth Engine initialization unavailable: {type(exc).__name__}')
+            raise
 
 
-with open(_asset_path('crop_model.pkl'), 'rb') as model_file:
-    _model_bytes = model_file.read()
-MODEL_VERSION = hashlib.sha256(_model_bytes).hexdigest()
-MODEL = joblib.load(io.BytesIO(_model_bytes))
-del _model_bytes
+try:
+    with open(_asset_path('crop_model.pkl'), 'rb') as model_file:
+        _model_bytes = model_file.read()
+    MODEL_VERSION = hashlib.sha256(_model_bytes).hexdigest()
+    MODEL = joblib.load(io.BytesIO(_model_bytes))
+    del _model_bytes
+except Exception:
+    MODEL, MODEL_VERSION = None, None
 ANALYSIS_CACHE     = {}
 CACHE_TTL_SECONDS  = 300
 CROP_COMPAT_MIN    = 70.0
@@ -392,7 +404,7 @@ def get_temperature(lat, lon):
                     .filterBounds(point).filterDate(start, end)
                     .mean().sample(point, 30).first().get('temperature_2m'))
         val = ee.Number(kelvin).subtract(273.15).getInfo()
-        if val:
+        if val is not None:
             return float(val), 'measured', 'ERA5-Land Daily Aggregate (Google Earth Engine), 12-month mean'
         return PANABO_CONFIG['temperature_c'], 'fallback_default', 'Regional typical value — live temperature source unavailable'
     except Exception:
@@ -406,7 +418,7 @@ def get_elevation(lat, lon):
         point = ee.Geometry.Point([lon, lat])
         val   = (ee.Image('USGS/SRTMGL1_003')
                    .sample(point, 30).first().get('elevation').getInfo())
-        if val:
+        if val is not None:
             return float(val), 'measured', 'SRTM 30m DEM (Google Earth Engine)'
         return PANABO_CONFIG['elevation_m'], 'fallback_default', 'Regional typical value — elevation source unavailable'
     except Exception:
@@ -428,7 +440,7 @@ def get_ndvi(lat, lon):
             return 0.45, 'fallback_default', 'Regional typical value — no cloud-free Sentinel-2 scene in window'
         val = (image.normalizedDifference(['B8', 'B4'])
                     .rename('NDVI').sample(point, 10).first().get('NDVI').getInfo())
-        if val:
+        if val is not None:
             return float(val), 'measured', 'Sentinel-2 SR Harmonized (Google Earth Engine), most recent low-cloud scene'
         return 0.45, 'fallback_default', 'Regional typical value — NDVI source unavailable'
     except Exception:
@@ -444,7 +456,7 @@ def get_soil_ph(lat, lon):
                     .sample(point, 250).first())
         ph_band = sample.get('b0') if sample else None
         val     = ee.Number(ph_band).divide(10).getInfo() if ph_band else None
-        if val:
+        if val is not None:
             return float(val), 'measured', 'OpenLandMap Soil pH (Google Earth Engine)'
         return PANABO_CONFIG['soil_ph'], 'fallback_default', 'Regional typical value — soil pH source unavailable'
     except Exception:

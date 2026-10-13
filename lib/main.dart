@@ -20,6 +20,8 @@ import 'api_service.dart';
 import 'farm_geometry.dart';
 
 part 'screens/mobile_visuals.dart';
+part 'screens/reference_visuals.dart';
+part 'screens/reference_analysis.dart';
 part 'screens/home_screen.dart';
 part 'screens/map_screen.dart';
 part 'screens/my_farms_screen.dart';
@@ -45,8 +47,12 @@ part 'web/screens/web_planner_queue_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  appThemeMode.value = (prefs.getBool('settings_dark_mode') ?? false) ? ThemeMode.dark : ThemeMode.light;
   runApp(const GeoSustainApp());
 }
+
+final appThemeMode = ValueNotifier<ThemeMode>(ThemeMode.light);
 
 const green = Color(0xFF08733F);
 const darkGreen = Color(0xFF055C34);
@@ -134,7 +140,9 @@ class GeoSustainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
+    return ValueListenableBuilder<ThemeMode>(valueListenable: appThemeMode, builder: (context, mode, _) => MaterialApp(
+      themeMode: mode,
+      darkTheme: ThemeData.dark(useMaterial3: true).copyWith(colorScheme: ColorScheme.fromSeed(seedColor: green, brightness: Brightness.dark)),
       debugShowCheckedModeBanner: false,
       title: 'GeoSustain Mobile',
       theme: ThemeData(
@@ -218,7 +226,7 @@ class GeoSustainApp extends StatelessWidget {
         ),
       ),
       home: home ?? const SessionGate(),
-    );
+    ));
   }
 }
 
@@ -2130,7 +2138,7 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
             ),
           ],
         ),
-        bottomNavigationBar: NavigationBar(
+        bottomNavigationBar: Padding(padding: const EdgeInsets.fromLTRB(9,4,9,8), child: ClipRRect(borderRadius: BorderRadius.circular(26), child: NavigationBar(
           selectedIndex: index,
           height: 76,
           labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
@@ -2163,7 +2171,7 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
               label: 'Profile',
             ),
           ],
-        ),
+        ))),
       ),
     );
   }
@@ -2666,34 +2674,18 @@ class MobileHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(14, 8, 14, 6),
-      child: Row(
-        children: [
-          back != null
-              ? IconButton(onPressed: back, icon: const Icon(Icons.arrow_back))
-              : const _FieldIcon(Icons.eco_outlined),
-          Expanded(
-            child: Text(
-              title,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w900,
-                color: green,
-              ),
-            ),
-          ),
-          trailing ??
-              IconButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
-                ),
-                icon: const Icon(Icons.notifications_none_rounded),
-              ),
-        ],
-      ),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+      decoration: const BoxDecoration(image: DecorationImage(image: AssetImage('assets/images/dashboard/field_header.png'),fit: BoxFit.cover)),
+      child: Row(children: [
+        if(back!=null) IconButton(onPressed:back,icon:const Icon(Icons.arrow_back)),
+        const Icon(Icons.eco, color:green,size:37), const SizedBox(width:9),
+        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          const Text('GeoSustain',style:TextStyle(fontSize:23,fontWeight:FontWeight.w800,color:darkGreen)),
+          if(title!='GeoSustain') Text(title,style:const TextStyle(fontSize:13,color:Color(0xFF526B63))),
+        ])),
+        trailing ?? IconButton.filledTonal(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const NotificationsPage())),icon:const Icon(Icons.notifications_none_rounded)),
+      ]),
     );
   }
 }

@@ -60,6 +60,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     onChanged: (v) {
                       setState(() => darkMode = v);
                       saveBool('settings_dark_mode', v);
+                      appThemeMode.value = v ? ThemeMode.dark : ThemeMode.light;
                     },
                     title: const Text('Dark mode'),
                     subtitle: const Text(

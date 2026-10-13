@@ -17,6 +17,8 @@ class HistoryPage extends StatefulWidget {
 }
 
 class _HistoryPageState extends State<HistoryPage> {
+  String _search = '', _status = 'All status';
+
   bool loading = false;
   bool opening = false;
   bool _allFarms = false;
@@ -81,6 +83,7 @@ class _HistoryPageState extends State<HistoryPage> {
       final rows = newestAnalysisRecords(
         widget.state.historyRecords
             .where(analysisIsCompleted)
+            .where((r) => '${r['farm_name']} ${r['place_name']}'.toLowerCase().contains(_search) && (_status == 'All status' || _farmReviewLabel(r['verification_status']) == _status))
             .where(
               (row) =>
                   _allFarms ||
@@ -110,6 +113,9 @@ class _HistoryPageState extends State<HistoryPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   children: [
+                    const FarmBanner('Analysis History','View your past land analyses, check statuses, and revisit your results.'),
+                    Row(children:[Expanded(child:TextField(decoration:const InputDecoration(hintText:'Search history',prefixIcon:Icon(Icons.search)),onChanged:(v)=>setState(()=>_search=v.toLowerCase()))),const SizedBox(width:8),DropdownButton<String>(value:_status,items:[for(final value in ['All status','Not Submitted','Pending Review','Approved','Rejected'])DropdownMenuItem(value:value,child:Text(value,style:const TextStyle(fontSize:12)))],onChanged:(v)=>setState(()=>_status=v!))]),
+                    const SizedBox(height:12),
                     if (farmId != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),

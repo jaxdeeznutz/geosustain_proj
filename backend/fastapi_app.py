@@ -55,7 +55,7 @@ from database import (
 )
 
 try:
-    from rainfallDatasets import analyze_location
+    from environmental_pipeline import analyze_location
     ANALYSIS_IMPORT_ERROR = None
 except Exception as exc:
     analyze_location = None
@@ -399,6 +399,12 @@ def fetch_open_meteo_weather(lat: float, lon: float) -> Dict[str, Any]:
 @app.get("/health")
 def health():
     return {"status": "ok", "service": "GeoSustain API"}
+
+@app.get('/api/mobile/crops')
+def mobile_crop_catalog():
+    from crop_requirements import catalog
+    return catalog()
+
 
 @app.get("/api/health")
 def api_health():
@@ -920,7 +926,13 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         if not sample_results:
             raise RuntimeError("All polygon sample analyses failed.")
         logging.getLogger('uvicorn.error').info('Polygon samples completed successful=%s requested=%s', len(sample_results), len(sample_points))
-        result = merge_area_results(sample_results)
+        if any(item.get('scoring_version') for item in sample_results):
+            from environmental_pipeline import merge_results
+            if len(sample_results) != len(sample_points):
+                raise RuntimeError('Some parcel samples failed; retry when datasets are available.')
+            result = merge_results(sample_results, active_crops)
+        else:
+            result = merge_area_results(sample_results)
         result["polygon_area_sample_count"] = len(sample_points)
         result["polygon_area_samples"] = [{"lat": p[0], "lng": p[1]} for p in sample_points]
         # Persist parcel-level grid values so the planner can inspect real
@@ -944,7 +956,8 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         result = analyze_location(lat, lon, active_crops)
 
     planting_month = int((body or {}).get("intended_planting_month") or datetime.now().month)
-    result = apply_local_seasonality(result, planting_month)
+    if not result.get('scoring_version'):
+        result = apply_local_seasonality(result, planting_month)
 
     result["selected_polygon"] = polygon
     result["analysis_source"] = analysis_source
@@ -960,6 +973,9 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         result["place_name"] = str(body["place_name"]).strip()
     else:
         result["place_name"] = reverse_geocode_place(float(lat), float(lon))
+    if result.get('scoring_version'):
+        result['intended_planting_month'] = planting_month
+        return result, analysis_source
     baseline = fetch_multi_year_monthly_baseline(float(lat), float(lon), planting_month)
     result["historical_climate_baseline"] = baseline
     historical_temp = _safe_number(baseline.get("mean_temperature_c"))
@@ -1640,7 +1656,7 @@ def _perform_mobile_analysis(body, user, idempotency_key):
         raise HTTPException(status_code=400,detail=str(exc))
     except RuntimeError as exc:
         logging.getLogger('uvicorn.error').warning('Analysis engine unavailable user=%s farm=%s type=%s', user['id'], body.farm_id, type(exc).__name__)
-        raise HTTPException(status_code=503,detail='Land analysis is unavailable. Please retry shortly.')
+        raise HTTPException(status_code=503,detail='Environmental datasets are unavailable. The project team should check Earth Engine access and server configuration.')
     except Exception as exc:
         print(f'Analysis failed: {type(exc).__name__}')
         raise HTTPException(status_code=502,detail='An analysis data service failed. Please retry.')

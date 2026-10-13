@@ -3,244 +3,38 @@ part of '../main.dart';
 class ProfilePage extends StatelessWidget {
   final AnalysisState state;
   final VoidCallback logout;
-  const ProfilePage({super.key, required this.state, required this.logout});
-
-  @override
-  Widget build(BuildContext context) {
-    final analysisCount =
-        state.profileCounts['analysis_count'] ?? state.historyRecords.length;
-    final savedCount =
-        state.profileCounts['saved_count'] ?? state.savedAnalyses.length;
-    final reportCount =
-        state.profileCounts['report_count'] ?? state.generatedReports.length;
-    return SafeArea(
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
-        children: [
-          const MobileHeader(title: 'Profile'),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFF08733F), Color(0xFF055C34)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: green.withValues(alpha: 0.18),
-                  blurRadius: 22,
-                  offset: const Offset(0, 12),
-                ),
-              ],
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 86,
-                  height: 86,
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.18),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.45),
-                      width: 2,
-                    ),
-                  ),
-                  child: state.profilePhotoBytes != null
-                      ? ClipOval(
-                          child: Image.memory(
-                            state.profilePhotoBytes!,
-                            width: 86,
-                            height: 86,
-                            fit: BoxFit.cover,
-                          ),
-                        )
-                      : const Icon(
-                          Icons.person_rounded,
-                          size: 52,
-                          color: Colors.white,
-                        ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  state.userName(),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 26,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '${state.currentUser?['email'] ?? ''}\n${state.userRole()}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.16),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(
-                        Icons.location_on_outlined,
-                        color: Colors.white,
-                        size: 16,
-                      ),
-                      const SizedBox(width: 5),
-                      Flexible(
-                        child: Text(
-                          state.userLocation(),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: ProfileStatCard(
-                  value: '$analysisCount',
-                  label: 'Analysis',
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ProfileStatCard(value: '$savedCount', label: 'Saved'),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: ProfileStatCard(value: '$reportCount', label: 'Reports'),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ProfileSection(
-            title: state.isAnalystRole
-                ? 'Planning Library'
-                : 'Analysis Library',
-            children: [
-              ProfileActionTile(
-                icon: Icons.bookmark_border_rounded,
-                title: 'Saved Analysis',
-                subtitle: 'View saved land and crop analysis records',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => SavedAnalysesPage(state: state),
-                  ),
-                ),
-              ),
-              ProfileActionTile(
-                icon: Icons.description_outlined,
-                title: 'Reports',
-                subtitle: 'Open generated land suitability reports',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ReportsListPage(state: state),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          ProfileSection(
-            title: 'Account',
-            children: [
-              ProfileActionTile(
-                icon: Icons.settings_outlined,
-                title: 'Edit Profile',
-                subtitle: 'Update your name, location, and profile photo',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) =>
-                        EditProfilePage(state: state, logout: logout),
-                  ),
-                ),
-              ),
-              ProfileActionTile(
-                icon: Icons.notifications_none_rounded,
-                title: 'Notifications',
-                subtitle: 'Weather, analysis, and alert updates',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => NotificationsPage(state: state),
-                  ),
-                ),
-              ),
-              ProfileActionTile(
-                icon: Icons.my_location_outlined,
-                title: 'Location Permission',
-                subtitle: 'GPS and field location access',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => const LocationGuidancePage(),
-                  ),
-                ),
-              ),
-              ProfileActionTile(
-                icon: Icons.lock_outline,
-                title: 'Change Password',
-                subtitle: 'Use your current password to set a new one',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => ChangePasswordPage(api: state.api),
-                  ),
-                ),
-              ),
-              ProfileActionTile(
-                icon: Icons.info_outline,
-                title: 'About GeoSustain',
-                subtitle: 'Version 1.0.0+1',
-                onTap: () => showAboutDialog(
-                  context: context,
-                  applicationName: 'GeoSustain',
-                  applicationVersion: '1.0.0+1',
-                  children: const [
-                    Text(
-                      'GeoSustain helps farmers map their land, explore automated crop suitability, and request analyst review. Automated results support planning and do not replace field assessment.',
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          FilledButton.icon(
-            onPressed: logout,
-            icon: const Icon(Icons.logout),
-            label: const Text('Sign Out'),
-          ),
-        ],
-      ),
-    );
+  const ProfilePage({super.key,required this.state,required this.logout});
+  void _open(BuildContext c,Widget page)=>Navigator.push(c,MaterialPageRoute(builder:(_)=>page));
+  @override Widget build(BuildContext context){
+    void edit()=>_open(context,EditProfilePage(state:state,logout:logout));
+    Widget tile(IconData icon,String title,String subtitle,VoidCallback tap)=>ProfileActionTile(icon:icon,title:title,subtitle:subtitle,onTap:tap);
+    return SafeArea(child:ListView(padding:const EdgeInsets.fromLTRB(12,0,12,24),children:[
+      MobileHeader(title:'Profile',trailing:IconButton(tooltip:'Notifications',onPressed:()=>_open(context,NotificationsPage(state:state)),icon:const Icon(Icons.notifications_none))),
+      Container(padding:const EdgeInsets.all(18),decoration:BoxDecoration(borderRadius:BorderRadius.circular(22),color:green,
+        image:const DecorationImage(image:AssetImage('assets/images/dashboard/field_header.png'),fit:BoxFit.cover,colorFilter:ColorFilter.mode(Color(0xCC00603E),BlendMode.srcATop))),
+        child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+          Align(alignment:Alignment.centerRight,child:OutlinedButton.icon(style:OutlinedButton.styleFrom(foregroundColor:Colors.white,side:const BorderSide(color:Colors.white54)),onPressed:edit,icon:const Icon(Icons.edit_outlined,size:17),label:const Text('Edit Profile'))),
+          Row(crossAxisAlignment:CrossAxisAlignment.start,children:[InkWell(onTap:edit,child:Stack(children:[CircleAvatar(radius:36,backgroundColor:Colors.white24,backgroundImage:state.profilePhotoBytes==null?null:MemoryImage(state.profilePhotoBytes!),child:state.profilePhotoBytes==null?const Icon(Icons.person,size:48,color:Colors.white):null),const Positioned(right:0,bottom:0,child:CircleAvatar(radius:13,backgroundColor:Colors.white,child:Icon(Icons.photo_camera_outlined,size:18,color:green)))])),const SizedBox(width:14),Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
+            Text(state.userName(),style:const TextStyle(fontSize:26,fontWeight:FontWeight.w800,color:Colors.white)),const SizedBox(height:5),
+            Text('${state.currentUser?['email']??''}',style:const TextStyle(color:Colors.white)),const SizedBox(height:8),Text('${state.userRole()} Account',style:const TextStyle(color:Colors.white,fontWeight:FontWeight.w600)),
+            TextButton.icon(style:TextButton.styleFrom(foregroundColor:Colors.white),onPressed:edit,icon:const Icon(Icons.location_on_outlined,size:17),label:Text(state.userLocation())),
+          ]))]),const SizedBox(height:8),
+        ])),
+      const SizedBox(height:12),Row(children:[Expanded(child:ReferenceStat('${state.profileCounts['analysis_count']??state.historyRecords.length}','Analysis',Icons.map_outlined,()=>_open(context,SavedAnalysesPage(state:state)))),const SizedBox(width:8),Expanded(child:ReferenceStat('${state.farms.length}','Saved Farms',Icons.bookmark_outline,()=>_open(context,MyFarmsPage(state:state)),tint:const Color(0xFFFFF3CE))),const SizedBox(width:8),Expanded(child:ReferenceStat('${state.profileCounts['report_count']??state.generatedReports.length}','Reports',Icons.description_outlined,()=>_open(context,ReportsListPage(state:state)),tint:const Color(0xFFDDF3FC)))]),
+      const SizedBox(height:17),ProfileSection(title:'Account Management',children:[
+        tile(Icons.person_outline,'Personal Information','View and update your account details',edit),
+        tile(Icons.lock_outline,'Security','Change your password',()=>_open(context,ChangePasswordPage(api:state.api))),
+        tile(Icons.location_on_outlined,'Location','Set your default location',edit),
+        tile(Icons.notifications_none,'Notifications','Manage your notification preferences',()=>_open(context,const SettingsPage())),
+        tile(Icons.dark_mode_outlined,'Appearance','Light or dark mode',()=>_open(context,const SettingsPage())),
+      ]),const SizedBox(height:16),ProfileSection(title:'Analysis Library',children:[
+        tile(Icons.bookmark_outline,'Saved Analysis','View saved land and crop analysis records',()=>_open(context,SavedAnalysesPage(state:state))),
+        tile(Icons.description_outlined,'Reports','Open generated land suitability reports',()=>_open(context,ReportsListPage(state:state))),
+      ]),const SizedBox(height:16),ProfileSection(title:'Support & About',children:[
+        tile(Icons.help_outline,'Help & Guide','Learn how to use GeoSustain',()=>showDialog(context:context,builder:(c)=>AlertDialog(title:const Text('Help & Guide'),content:const SingleChildScrollView(child:Text('Create a boundary by walking with GPS or drawing on the map. Saving a farm does not analyze it. Open a saved farm and choose Analyze This Farm. Review every crop?s evidence and limitations in its detail tabs. Submit a completed result for analyst review. Historical results retain the boundary and criteria used at the time.')),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Close'))]))),
+        tile(Icons.info_outline,'About','App version and data use',()=>showAboutDialog(context:context,applicationName:'GeoSustain',applicationVersion:'1.0.0+1',children:const[Text('Your account owns its farm boundaries and analysis history. Environmental screening supports planning and requires field verification. Contact your project administrator for the deployed service?s privacy policy and support.')])),
+      ]),const SizedBox(height:16),TextButton.icon(onPressed:logout,icon:const Icon(Icons.logout),label:const Text('Sign Out')),
+    ]));
   }
 }
 
