@@ -449,240 +449,224 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
         }
       },
       child: Scaffold(
-        appBar: AppBar(title: const Text('Create a Farm Boundary')),
+        appBar: _mappingHeader(context, gps: true),
         body: SafeArea(
-          child: ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              const Padding(
-                padding: EdgeInsets.only(bottom: 12),
-                child: Row(
+          child: Theme(
+            data: _mappingTheme(context),
+            child: ListView(
+              cacheExtent: 2000,
+              padding: const EdgeInsets.all(16),
+              children: [
+                const _BoundaryBanner(gps: true),
+                const SizedBox(height: 12),
+                _BoundaryMap(
+                  controller: _controller,
+                  points: _points,
+                  current: _current,
+                  currentActive: _recording && _fresh,
+                  onGesture: () => _followPosition = false,
+                  onRecenter: _current == null
+                      ? null
+                      : () {
+                          _followPosition = true;
+                          _controller.move(_current!, 20);
+                        },
+                  closed: _review || _saved != null,
+                ),
+                const SizedBox(height: 12),
+                _BoundarySummary(points: _points),
+                const SizedBox(height: 10),
+                Wrap(
+                  spacing: 6,
+                  runSpacing: 6,
                   children: [
-                    Expanded(
-                      child: Text(
-                        'Walk the perimeter and return to your starting point.',
-                        style: TextStyle(
-                          color: darkGreen,
-                          fontWeight: FontWeight.w600,
+                    Chip(
+                      avatar: _RecordingDot(
+                        key: const ValueKey('recording-indicator'),
+                        active: _recording && _fresh,
+                      ),
+                      label: Text(
+                        _saved != null
+                            ? 'Saved'
+                            : _review
+                            ? 'Boundary preview'
+                            : _recording
+                            ? (_fresh ? 'Recording' : 'Waiting for GPS')
+                            : (_hasStarted ? 'Paused' : 'Ready'),
+                      ),
+                    ),
+                    Chip(
+                      label: AnimatedSwitcher(
+                        duration: MediaQuery.disableAnimationsOf(context)
+                            ? Duration.zero
+                            : const Duration(milliseconds: 220),
+                        child: Text(
+                          '${_points.length} points',
+                          key: ValueKey(_points.length),
                         ),
                       ),
                     ),
-                    SizedBox(width: 12),
-                    SizedBox(
-                      width: 80,
-                      height: 48,
-                      child: ExcludeSemantics(
-                        child: CustomPaint(painter: _FieldPainter()),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              _BoundaryMap(
-                controller: _controller,
-                points: _points,
-                current: _current,
-                currentActive: _recording && _fresh,
-                onGesture: () => _followPosition = false,
-                onRecenter: _current == null
-                    ? null
-                    : () {
-                        _followPosition = true;
-                        _controller.move(_current!, 20);
-                      },
-                closed: _review || _saved != null,
-              ),
-              const SizedBox(height: 10),
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: [
-                  Chip(
-                    avatar: _RecordingDot(
-                      key: const ValueKey('recording-indicator'),
-                      active: _recording && _fresh,
-                    ),
-                    label: Text(
-                      _saved != null
-                          ? 'Saved'
-                          : _review
-                          ? 'Boundary preview'
-                          : _recording
-                          ? (_fresh ? 'Recording' : 'Waiting for GPS')
-                          : (_hasStarted ? 'Paused' : 'Ready'),
-                    ),
-                  ),
-                  Chip(
-                    label: AnimatedSwitcher(
-                      duration: MediaQuery.disableAnimationsOf(context)
-                          ? Duration.zero
-                          : const Duration(milliseconds: 220),
-                      child: Text(
-                        '${_points.length} points',
-                        key: ValueKey(_points.length),
-                      ),
-                    ),
-                  ),
-                  Chip(
-                    label: Text(
-                      _accuracy == null
-                          ? 'Accuracy unknown'
-                          : 'GPS ±${_accuracy!.toStringAsFixed(0)} m',
-                    ),
-                  ),
-                  if (_points.length >= 3 && area > 0)
                     Chip(
                       label: Text(
-                        '${analysisAreaText({'area_hectares': area})} (estimate)',
+                        _accuracy == null
+                            ? 'Accuracy unknown'
+                            : 'GPS ±${_accuracy!.toStringAsFixed(0)} m',
                       ),
                     ),
-                ],
-              ),
-              if (_notice != null) _MappingNotice(_notice!),
-              if (_showAppSettings && !kIsWeb)
-                TextButton.icon(
-                  onPressed: () async {
-                    final opened = await Geolocator.openAppSettings();
-                    if (!opened) {
-                      _message(
-                        'Open device Settings → Apps → GeoSustain → Permissions → Location. On the web, use the site permission controls.',
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.settings),
-                  label: const Text('Open permission settings'),
+                    if (_points.length >= 3 && area > 0)
+                      Chip(
+                        label: Text(
+                          '${analysisAreaText({'area_hectares': area})} (estimate)',
+                        ),
+                      ),
+                  ],
                 ),
-              if (_showLocationSettings && !kIsWeb)
-                TextButton.icon(
-                  onPressed: () async {
-                    final opened = await Geolocator.openLocationSettings();
-                    if (!opened) {
-                      _message(
-                        'Enable Location/GPS from device settings, then return and start recording.',
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.location_on_outlined),
-                  label: const Text('Open location settings'),
-                ),
-              if (_saved == null && !_review) ...[
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    FilledButton.icon(
-                      onPressed: _starting || _busy
-                          ? null
-                          : _recording
-                          ? () => _pause()
-                          : _start,
-                      icon: Icon(_recording ? Icons.pause : Icons.play_arrow),
-                      label: Text(
-                        _starting
-                            ? 'Finding GPS…'
+                if (_notice != null) _MappingNotice(_notice!),
+                if (_showAppSettings && !kIsWeb)
+                  TextButton.icon(
+                    onPressed: () async {
+                      final opened = await Geolocator.openAppSettings();
+                      if (!opened) {
+                        _message(
+                          'Open device Settings → Apps → GeoSustain → Permissions → Location. On the web, use the site permission controls.',
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.settings),
+                    label: const Text('Open permission settings'),
+                  ),
+                if (_showLocationSettings && !kIsWeb)
+                  TextButton.icon(
+                    onPressed: () async {
+                      final opened = await Geolocator.openLocationSettings();
+                      if (!opened) {
+                        _message(
+                          'Enable Location/GPS from device settings, then return and start recording.',
+                        );
+                      }
+                    },
+                    icon: const Icon(Icons.location_on_outlined),
+                    label: const Text('Open location settings'),
+                  ),
+                if (_saved == null && !_review) ...[
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      FilledButton.icon(
+                        onPressed: _starting || _busy
+                            ? null
                             : _recording
-                            ? 'Pause'
-                            : !_hasStarted
-                            ? 'Start'
-                            : 'Resume',
+                            ? () => _pause()
+                            : _start,
+                        icon: Icon(_recording ? Icons.pause : Icons.play_arrow),
+                        label: Text(
+                          _starting
+                              ? 'Finding GPS…'
+                              : _recording
+                              ? 'Pause'
+                              : !_hasStarted
+                              ? 'Start'
+                              : 'Resume',
+                        ),
                       ),
+                      OutlinedButton.icon(
+                        onPressed: _points.isEmpty || _busy || _starting
+                            ? null
+                            : _finish,
+                        icon: const Icon(Icons.stop),
+                        label: const Text('Finish'),
+                      ),
+                      OutlinedButton.icon(
+                        onPressed: _recording || _points.isEmpty || _busy
+                            ? null
+                            : () {
+                                setState(() {
+                                  _points.removeLast();
+                                  _times.removeLast();
+                                  _accuracies.removeLast();
+                                  _notice =
+                                      'Last point removed. Resume from the new last point.';
+                                });
+                              },
+                        icon: const Icon(Icons.undo),
+                        label: const Text('Undo last point'),
+                      ),
+                    ],
+                  ),
+                ],
+                if (_review && _saved == null) ...[
+                  Text(
+                    'Review the closed boundary. The final edge connects your last point back to the start (${gap.toStringAsFixed(0)} m).',
+                  ),
+                  if (gap > 40)
+                    const _MappingNotice(
+                      'The closing gap is more than 40 m. Check that the closing edge follows your actual farm perimeter; Resume to record the missing edge if needed.',
                     ),
-                    OutlinedButton.icon(
-                      onPressed: _points.isEmpty || _busy || _starting
-                          ? null
-                          : _finish,
-                      icon: const Icon(Icons.stop),
-                      label: const Text('Finish'),
+                  TextButton.icon(
+                    onPressed: _busy
+                        ? null
+                        : () => setState(() => _review = false),
+                    icon: const Icon(Icons.edit_outlined),
+                    label: const Text('Resume or undo points'),
+                  ),
+                  TextField(
+                    controller: _name,
+                    enabled: !_busy,
+                    maxLength: 120,
+                    textCapitalization: TextCapitalization.words,
+                    decoration: const InputDecoration(
+                      labelText: 'Farm name',
+                      hintText: 'e.g. Riverside farm',
                     ),
-                    OutlinedButton.icon(
-                      onPressed: _recording || _points.isEmpty || _busy
-                          ? null
-                          : () {
-                              setState(() {
-                                _points.removeLast();
-                                _times.removeLast();
-                                _accuracies.removeLast();
-                                _notice =
-                                    'Last point removed. Resume from the new last point.';
-                              });
-                            },
-                      icon: const Icon(Icons.undo),
-                      label: const Text('Undo last point'),
+                  ),
+                  TextField(
+                    controller: _location,
+                    enabled: !_busy,
+                    maxLength: 240,
+                    decoration: const InputDecoration(
+                      labelText: 'Location description (optional)',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  FilledButton.icon(
+                    onPressed: _busy ? null : _save,
+                    icon: const Icon(Icons.save_outlined),
+                    label: Text(_busy ? 'Saving…' : 'Confirm and Save Farm'),
+                  ),
+                ],
+                if (_saved != null) ...[
+                  FilledButton.icon(
+                    onPressed: _busy ? null : _analyze,
+                    icon: const Icon(Icons.analytics_outlined),
+                    label: Text(_busy ? 'Analyzing…' : 'Analyze This Farm'),
+                  ),
+                  TextButton(
+                    onPressed: _busy ? null : () => Navigator.pop(context),
+                    child: const Text('Done'),
+                  ),
+                ],
+                if (_busy) const LinearProgressIndicator(),
+                const SizedBox(height: 12),
+                const ExpansionTile(
+                  tilePadding: EdgeInsets.zero,
+                  title: Text('Recording help', style: TextStyle(fontSize: 14)),
+                  children: [
+                    Text(
+                      'Keep the phone outdoors with a clear view of the sky. Recording pauses when the app leaves the foreground. Resume near your last accepted point.',
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'Boundary points require reported accuracy within ±20 m, a fresh reading, and at least 4 m of movement. Large or unusually fast jumps are rejected. The live marker can move while a boundary point is rejected.',
+                    ),
+                    SizedBox(height: 8),
+                    Text(
+                      'GPS boundaries and area are agricultural estimates, not legal land surveys.',
                     ),
                   ],
                 ),
               ],
-              if (_review && _saved == null) ...[
-                Text(
-                  'Review the closed boundary. The final edge connects your last point back to the start (${gap.toStringAsFixed(0)} m).',
-                ),
-                if (gap > 40)
-                  const _MappingNotice(
-                    'The closing gap is more than 40 m. Check that the closing edge follows your actual farm perimeter; Resume to record the missing edge if needed.',
-                  ),
-                TextButton.icon(
-                  onPressed: _busy
-                      ? null
-                      : () => setState(() => _review = false),
-                  icon: const Icon(Icons.edit_outlined),
-                  label: const Text('Resume or undo points'),
-                ),
-                TextField(
-                  controller: _name,
-                  enabled: !_busy,
-                  maxLength: 120,
-                  textCapitalization: TextCapitalization.words,
-                  decoration: const InputDecoration(
-                    labelText: 'Farm name',
-                    hintText: 'e.g. Riverside farm',
-                  ),
-                ),
-                TextField(
-                  controller: _location,
-                  enabled: !_busy,
-                  maxLength: 240,
-                  decoration: const InputDecoration(
-                    labelText: 'Location description (optional)',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                FilledButton.icon(
-                  onPressed: _busy ? null : _save,
-                  icon: const Icon(Icons.save_outlined),
-                  label: Text(_busy ? 'Saving…' : 'Confirm and Save Farm'),
-                ),
-              ],
-              if (_saved != null) ...[
-                FilledButton.icon(
-                  onPressed: _busy ? null : _analyze,
-                  icon: const Icon(Icons.analytics_outlined),
-                  label: Text(_busy ? 'Analyzing…' : 'Analyze This Farm'),
-                ),
-                TextButton(
-                  onPressed: _busy ? null : () => Navigator.pop(context),
-                  child: const Text('Done'),
-                ),
-              ],
-              if (_busy) const LinearProgressIndicator(),
-              const SizedBox(height: 12),
-              const ExpansionTile(
-                tilePadding: EdgeInsets.zero,
-                title: Text('Recording help', style: TextStyle(fontSize: 14)),
-                children: [
-                  Text(
-                    'Keep the phone outdoors with a clear view of the sky. Recording pauses when the app leaves the foreground. Resume near your last accepted point.',
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Boundary points require reported accuracy within ±20 m, a fresh reading, and at least 4 m of movement. Large or unusually fast jumps are rejected. The live marker can move while a boundary point is rejected.',
-                  ),
-                  SizedBox(height: 8),
-                  Text(
-                    'GPS boundaries and area are agricultural estimates, not legal land surveys.',
-                  ),
-                ],
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -802,7 +786,12 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
         }
       } else if (mounted) {
         setState(() => _busy = false);
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (_) => FarmDetailsPage(state: widget.state, farm: _saved!)));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => FarmDetailsPage(state: widget.state, farm: _saved!),
+          ),
+        );
       }
     } catch (error) {
       if (mounted) setState(() => _notice = friendlyErrorMessage(error));
@@ -815,128 +804,358 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   Widget build(BuildContext context) => PopScope<bool>(
     canPop: !_busy,
     child: Scaffold(
-      appBar: AppBar(backgroundColor:const Color(0xFF176B5C),foregroundColor:Colors.white,centerTitle:false,
-        title:const Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text('Land Analysis',style:TextStyle(color:Colors.white,fontWeight:FontWeight.w800,fontSize:21)),Text('Draw and analyze your farm area',style:TextStyle(color:Colors.white70,fontSize:12))]),
-        actions:[TextButton.icon(onPressed:()=>showDialog(context:context,builder:(c)=>AlertDialog(title:const Text('Boundary guide'),content:const Text('Draw: tap at each corner. Edit: select a numbered vertex, then its new position. Move Map: pan without adding points. Undo reverses the last edit. Saving stores only the boundary; Analyze Area starts an assessment.'),actions:[TextButton(onPressed:()=>Navigator.pop(c),child:const Text('Close'))])),icon:const Icon(Icons.map_outlined,color:Colors.white),label:const Text('Guide',style:TextStyle(color:Colors.white)))],),
+      appBar: _mappingHeader(context),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            const FarmBanner('Draw Your Farm Boundary','Tap around your farm to draw its boundary. You can edit or move the points anytime. Device location access is not required.'),
-            const SizedBox(height: 12),
-            _BoundaryMap(
-              controller: _controller,
-              points: _points,
-              onTap: _tap,
-              selectedVertex: _selectedVertex,
-              onVertex: _mode != 'edit' || _busy || _saved != null
-                  ? null
-                  : (index) => setState(() {
-                      _selectedVertex = index;
-                      _notice = 'Tap the new position for point ${index + 1}.';
-                    }),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              '${_points.length} vertices · ${(FarmGeometry.areaSquareMetres(_points) / 10000).toStringAsFixed(3)} ha (estimate)',
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 22, color: darkGreen),
-            ),
-            if (_saved == null) ...[
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  for (final entry in {
-                    'draw': 'Draw',
-                    'edit': 'Edit',
-                    'pan': 'Move map',
-                  }.entries)
-                    ChoiceChip(
-                      label: Text(entry.value),
-                      selected: _mode == entry.key,
-                      onSelected: _busy
-                          ? null
-                          : (_) => setState(() {
-                              _mode = entry.key;
-                              _selectedVertex = null;
-                            }),
-                    ),
-                  OutlinedButton.icon(
-                    onPressed: _busy || _undo.isEmpty
-                        ? null
-                        : () => setState(() {
-                            _points
-                              ..clear()
-                              ..addAll(_undo.removeLast());
-                            _selectedVertex = null;
-                            _notice = null;
-                          }),
-                    icon: const Icon(Icons.undo),
-                    label: const Text('Undo'),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: _busy || _points.isEmpty
-                        ? null
-                        : () => setState(() {
-                            _undo.add(List.of(_points));
-                            _points.clear();
-                            _selectedVertex = null;
-                            _notice = null;
-                          }),
-                    icon: const Icon(Icons.clear),
-                    label: const Text('Clear'),
-                  ),
-                ],
-              ),
-              CheckboxListTile(
-                contentPadding: EdgeInsets.zero,
-                value: _saveAsFarm,
-                onChanged: _busy
+        child: Theme(
+          data: _mappingTheme(context),
+          child: ListView(
+            cacheExtent: 2000,
+            padding: const EdgeInsets.all(16),
+            children: [
+              const _BoundaryBanner(),
+              const SizedBox(height: 12),
+              _BoundaryMap(
+                controller: _controller,
+                points: _points,
+                onTap: _tap,
+                selectedVertex: _selectedVertex,
+                onVertex: _mode != 'edit' || _busy || _saved != null
                     ? null
-                    : (value) => setState(() => _saveAsFarm = value ?? true),
-                title: const Text('Save this area as a farm'),
-                subtitle: const Text('Reuse its boundary for later analyses.'),
+                    : (index) => setState(() {
+                        _selectedVertex = index;
+                        _notice =
+                            'Tap the new position for point ${index + 1}.';
+                      }),
               ),
-              if (_saveAsFarm) ...[
-                TextField(
-                  controller: _name,
-                  enabled: !_busy,
-                  maxLength: 120,
-                  decoration: const InputDecoration(labelText: 'Farm name'),
+              const SizedBox(height: 8),
+              _BoundarySummary(points: _points),
+              if (_saved == null) ...[
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    for (final entry in {
+                      'draw': 'Draw',
+                      'edit': 'Edit',
+                      'pan': 'Move map',
+                    }.entries)
+                      _BoundaryModeButton(
+                        label: entry.value,
+                        icon: entry.key == 'draw'
+                            ? Icons.polyline_outlined
+                            : entry.key == 'edit'
+                            ? Icons.edit_outlined
+                            : Icons.open_with,
+                        selected: _mode == entry.key,
+                        onPressed: _busy
+                            ? null
+                            : () => setState(() {
+                                _mode = entry.key;
+                                _selectedVertex = null;
+                              }),
+                      ),
+                    OutlinedButton.icon(
+                      onPressed: _busy || _undo.isEmpty
+                          ? null
+                          : () => setState(() {
+                              _points
+                                ..clear()
+                                ..addAll(_undo.removeLast());
+                              _selectedVertex = null;
+                              _notice = null;
+                            }),
+                      icon: const Icon(Icons.undo),
+                      label: const Text('Undo'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _busy || _points.isEmpty
+                          ? null
+                          : () => setState(() {
+                              _undo.add(List.of(_points));
+                              _points.clear();
+                              _selectedVertex = null;
+                              _notice = null;
+                            }),
+                      icon: const Icon(Icons.clear),
+                      label: const Text('Clear'),
+                    ),
+                  ],
                 ),
-                TextField(
-                  controller: _location,
-                  enabled: !_busy,
-                  maxLength: 240,
-                  decoration: const InputDecoration(
-                    labelText: 'Location description (optional)',
+                Card(
+                  margin: const EdgeInsets.only(top: 12),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: [
+                        CheckboxListTile(
+                          controlAffinity: ListTileControlAffinity.leading,
+                          contentPadding: EdgeInsets.zero,
+                          value: _saveAsFarm,
+                          onChanged: _busy
+                              ? null
+                              : (value) =>
+                                    setState(() => _saveAsFarm = value ?? true),
+                          title: const Text('Save this area as a farm'),
+                          subtitle: const Text(
+                            'Reuse its boundary for later analyses.',
+                          ),
+                        ),
+                        if (_saveAsFarm) ...[
+                          TextField(
+                            controller: _name,
+                            enabled: !_busy,
+                            maxLength: 120,
+                            decoration: const InputDecoration(
+                              labelText: 'Farm name',
+                            ),
+                          ),
+                          TextField(
+                            controller: _location,
+                            enabled: !_busy,
+                            maxLength: 240,
+                            decoration: const InputDecoration(
+                              labelText: 'Location description (optional)',
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
                 ),
               ],
-            ],
-            const SizedBox(height: 12),
-            if (_notice != null) _MappingNotice(_notice!),
-            if (_saved != null)
-              Text(
-                'Saved as ${_saved!['farm_name']}. Future analyses use this saved farm; no duplicate farm will be created.',
+              const SizedBox(height: 12),
+              if (_notice != null) _MappingNotice(_notice!),
+              if (_saved != null)
+                Text(
+                  'Saved as ${_saved!['farm_name']}. Future analyses use this saved farm; no duplicate farm will be created.',
+                ),
+              if (_busy) const LinearProgressIndicator(),
+              FilledButton.icon(
+                onPressed: _busy ? null : () => _run(analyze: true),
+                icon: const Icon(Icons.analytics_outlined),
+                label: Text(_busy ? 'Please wait…' : 'Analyze Area'),
               ),
-            if (_busy) const LinearProgressIndicator(),
-            FilledButton.icon(
-              onPressed: _busy ? null : () => _run(analyze: true),
-              icon: const Icon(Icons.analytics_outlined),
-              label: Text(_busy ? 'Please wait…' : 'Analyze Area'),
-            ),
-            const SizedBox(height: 12),
-            const Text(
-              'Analysis is automated. You can request analyst review from the result after it completes.',
-              style: TextStyle(color: Colors.black54),
-            ),
-          ],
+              const SizedBox(height: 12),
+              const Text(
+                'Analysis is automated. You can request analyst review from the result after it completes.',
+                style: TextStyle(color: Colors.black54),
+              ),
+            ],
+          ),
         ),
       ),
     ),
   );
+}
+
+AppBar _mappingHeader(BuildContext context, {bool gps = false}) => AppBar(
+  backgroundColor: green,
+  foregroundColor: Colors.white,
+  centerTitle: false,
+  toolbarHeight: 76,
+  title: Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text(
+        gps ? 'Farm Boundary' : 'Land Analysis',
+        style: const TextStyle(
+          fontSize: 19,
+          fontWeight: FontWeight.w800,
+          color: Colors.white,
+        ),
+      ),
+      Text(
+        gps ? 'Walk and map your farm area' : 'Draw and analyze your farm area',
+        style: const TextStyle(fontSize: 11, color: Colors.white70),
+      ),
+    ],
+  ),
+  actions: [
+    TextButton.icon(
+      onPressed: () => showDialog(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('Boundary guide'),
+          content: Text(
+            gps
+                ? 'Start recording, then walk the perimeter. Pause to stop collecting points. Finish to review the closing edge and save your farm. GPS permission is required for recording.'
+                : 'Draw: tap each corner. Edit: select a numbered vertex, then its new position. Move map: pan without adding points. Undo reverses the last edit. Device location is optional.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(c),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      ),
+      icon: const Icon(Icons.map_outlined, color: Colors.white, size: 20),
+      label: const Text('Guide', style: TextStyle(color: Colors.white)),
+    ),
+  ],
+);
+
+ThemeData _mappingTheme(BuildContext context) => Theme.of(context).copyWith(
+  outlinedButtonTheme: OutlinedButtonThemeData(
+    style: OutlinedButton.styleFrom(
+      foregroundColor: green,
+      backgroundColor: const Color(0xFFF0F8F4),
+      minimumSize: const Size(104, 48),
+      side: const BorderSide(color: Color(0xFFB9DDCE)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(13)),
+    ),
+  ),
+  filledButtonTheme: FilledButtonThemeData(
+    style: FilledButton.styleFrom(
+      backgroundColor: green,
+      foregroundColor: Colors.white,
+      minimumSize: const Size(104, 50),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    ),
+  ),
+);
+
+class _BoundaryBanner extends StatelessWidget {
+  final bool gps;
+  const _BoundaryBanner({this.gps = false});
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFFEAF5EF),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: const Color(0xFFBCE4C8),
+            borderRadius: BorderRadius.circular(18),
+          ),
+          child: Icon(
+            gps ? Icons.directions_walk : Icons.eco,
+            color: green,
+            size: 28,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                gps ? 'Walk Your Farm Boundary' : 'Draw Your Farm Boundary',
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                gps
+                    ? 'Walk the perimeter and return to your starting point. Pause anytime, then review your boundary before saving.'
+                    : 'Tap around your farm to draw its boundary. You can edit or move the points anytime. Device location access is not required.',
+                style: const TextStyle(
+                  fontSize: 13,
+                  height: 1.4,
+                  color: Color(0xFF58656B),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _BoundarySummary extends StatelessWidget {
+  final List<LatLng> points;
+  const _BoundarySummary({required this.points});
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      color: const Color(0xFFEAF5EF),
+      borderRadius: BorderRadius.circular(20),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.eco, size: 32, color: green),
+        const SizedBox(width: 14),
+        Expanded(
+          flex: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Area (Estimated)',
+                style: TextStyle(color: Color(0xFF58656B), fontSize: 12),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                '${(FarmGeometry.areaSquareMetres(points) / 10000).toStringAsFixed(3)} ha',
+                style: const TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(height: 44, width: 1, color: const Color(0xFFB9DDCE)),
+        const SizedBox(width: 20),
+        Expanded(
+          flex: 2,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Vertices',
+                style: TextStyle(color: Color(0xFF58656B), fontSize: 12),
+              ),
+              const SizedBox(height: 5),
+              Text(
+                '${points.length}',
+                style: const TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _BoundaryModeButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final VoidCallback? onPressed;
+  const _BoundaryModeButton({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    this.onPressed,
+  });
+  @override
+  Widget build(BuildContext context) => selected
+      ? FilledButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 20),
+          label: Text(label),
+        )
+      : OutlinedButton.icon(
+          onPressed: onPressed,
+          icon: Icon(icon, size: 20),
+          label: Text(label),
+        );
 }
 
 class _MappingNotice extends StatelessWidget {
@@ -981,19 +1200,38 @@ class _BoundaryMap extends StatefulWidget {
 }
 
 class _BoundaryMapState extends State<_BoundaryMap> {
-  bool _satellite=true, _fullscreen=false;
-  final MapController _ownController=MapController();
-  MapController get _map=>widget.controller??_ownController;
-  @override void dispose(){_ownController.dispose();super.dispose();}
+  bool _satellite = true, _fullscreen = false;
+  final MapController _ownController = MapController();
+  MapController get _map => widget.controller ?? _ownController;
+  @override
+  void dispose() {
+    _ownController.dispose();
+    super.dispose();
+  }
+
   Future<void> _locate() async {
     try {
-      var permission=await Geolocator.checkPermission();
-      if(permission==LocationPermission.denied)permission=await Geolocator.requestPermission();
-      if(permission==LocationPermission.denied||permission==LocationPermission.deniedForever)throw Exception('Location permission is needed only to locate you. Drawing remains available.');
-      final p=await Geolocator.getCurrentPosition();
-      if(mounted)_map.move(LatLng(p.latitude,p.longitude),17);
-    }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(friendlyErrorMessage(e))));}
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied ||
+          permission == LocationPermission.deniedForever) {
+        throw Exception(
+          'Location permission is needed only to locate you. Drawing remains available.',
+        );
+      }
+      final p = await Geolocator.getCurrentPosition();
+      if (mounted) _map.move(LatLng(p.latitude, p.longitude), 17);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(friendlyErrorMessage(e))));
+      }
+    }
   }
+
   bool _tileFailed = false;
   int _tileAttempt = 0;
   void _tileError() {
@@ -1011,7 +1249,9 @@ class _BoundaryMapState extends State<_BoundaryMap> {
         ClipRRect(
           borderRadius: BorderRadius.circular(16),
           child: SizedBox(
-            height: _fullscreen ? MediaQuery.sizeOf(context).height * .8 : math.min(420, MediaQuery.sizeOf(context).width * .88),
+            height: _fullscreen
+                ? MediaQuery.sizeOf(context).height * .8
+                : math.min(420, MediaQuery.sizeOf(context).width * .88),
             child: Stack(
               children: [
                 FlutterMap(
@@ -1039,8 +1279,9 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                   children: [
                     TileLayer(
                       key: ValueKey(_tileAttempt),
-                      urlTemplate:
-                          _satellite ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}' : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate: _satellite
+                          ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
+                          : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.geosustain.mobile',
                       maxNativeZoom: 19,
                       maxZoom: 22,
@@ -1072,22 +1313,31 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                         for (final entry in points.asMap().entries)
                           Marker(
                             point: entry.value,
-                            width: 26,
-                            height: 26,
+                            width: 32,
+                            height: 32,
                             child: GestureDetector(
                               onTap: widget.onVertex == null
                                   ? null
                                   : () => widget.onVertex!(entry.key),
-                              child: CircleAvatar(
-                                backgroundColor:
-                                    widget.selectedVertex == entry.key
-                                    ? Colors.orange.shade800
-                                    : green,
-                                child: Text(
-                                  '${entry.key + 1}',
-                                  style: const TextStyle(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
                                     color: Colors.white,
-                                    fontSize: 10,
+                                    width: 2.5,
+                                  ),
+                                ),
+                                child: CircleAvatar(
+                                  backgroundColor:
+                                      widget.selectedVertex == entry.key
+                                      ? Colors.orange.shade800
+                                      : green,
+                                  child: Text(
+                                    '${entry.key + 1}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -1116,24 +1366,123 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                     ),
                   ],
                 ),
-                Positioned(left:8,top:8,child:SegmentedButton<bool>(segments:const [ButtonSegment(value:true,label:Text('Satellite'),icon:Icon(Icons.layers)),ButtonSegment(value:false,label:Text('Map'),icon:Icon(Icons.map_outlined))],selected:{_satellite},onSelectionChanged:(v)=>setState(()=>_satellite=v.first),style:const ButtonStyle(backgroundColor:WidgetStatePropertyAll(Colors.white)))),
-                Positioned(right:8,top:65,child:Column(children:[
-                  IconButton.filledTonal(tooltip:'My location',onPressed:widget.onRecenter??_locate,icon:const Icon(Icons.my_location)),
-                  IconButton.filledTonal(tooltip:'Zoom in',onPressed:()=>_map.move(_map.camera.center,_map.camera.zoom+1),icon:const Icon(Icons.add)),
-                  IconButton.filledTonal(tooltip:'Zoom out',onPressed:()=>_map.move(_map.camera.center,_map.camera.zoom-1),icon:const Icon(Icons.remove)),
-                  IconButton.filledTonal(tooltip:'Fullscreen map',onPressed:()=>setState(()=>_fullscreen=!_fullscreen),icon:Icon(_fullscreen?Icons.fullscreen_exit:Icons.fullscreen)),
-                ])),
-                Positioned(bottom:4,left:5,child:ColoredBox(color:Colors.white70,child:Text(_satellite?'Imagery ? Esri, Maxar, Earthstar Geographics':'? OpenStreetMap contributors',style:const TextStyle(fontSize:9)))),
-                if (widget.onRecenter != null)
-                  Positioned(
-                    right: 10,
-                    bottom: 10,
-                    child: IconButton.filledTonal(
-                      tooltip: 'Recenter on my position',
-                      onPressed: widget.onRecenter,
-                      icon: const Icon(Icons.my_location),
+                Positioned(
+                  left: 8,
+                  top: 8,
+                  child: SegmentedButton<bool>(
+                    segments: const [
+                      ButtonSegment(
+                        value: true,
+                        label: Text('Satellite'),
+                        icon: Icon(Icons.layers),
+                      ),
+                      ButtonSegment(
+                        value: false,
+                        label: Text('Map'),
+                        icon: Icon(Icons.map_outlined),
+                      ),
+                    ],
+                    selected: {_satellite},
+                    onSelectionChanged: (v) =>
+                        setState(() => _satellite = v.first),
+                    showSelectedIcon: false,
+                    style: ButtonStyle(
+                      backgroundColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.selected)
+                            ? green
+                            : Colors.white,
+                      ),
+                      foregroundColor: WidgetStateProperty.resolveWith(
+                        (states) => states.contains(WidgetState.selected)
+                            ? Colors.white
+                            : const Color(0xFF58656B),
+                      ),
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
                   ),
+                ),
+                Positioned(
+                  right: 8,
+                  top: 65,
+                  child: Column(
+                    children: [
+                      IconButton.filledTonal(
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF354449),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        tooltip: widget.onRecenter == null
+                            ? 'My location'
+                            : 'Recenter on my position',
+                        onPressed: widget.onRecenter ?? _locate,
+                        icon: const Icon(Icons.my_location),
+                      ),
+                      IconButton.filledTonal(
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF354449),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        tooltip: 'Zoom in',
+                        onPressed: () =>
+                            _map.move(_map.camera.center, _map.camera.zoom + 1),
+                        icon: const Icon(Icons.add),
+                      ),
+                      IconButton.filledTonal(
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF354449),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        tooltip: 'Zoom out',
+                        onPressed: () =>
+                            _map.move(_map.camera.center, _map.camera.zoom - 1),
+                        icon: const Icon(Icons.remove),
+                      ),
+                      IconButton.filledTonal(
+                        style: IconButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFF354449),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        tooltip: 'Fullscreen map',
+                        onPressed: () =>
+                            setState(() => _fullscreen = !_fullscreen),
+                        icon: Icon(
+                          _fullscreen
+                              ? Icons.fullscreen_exit
+                              : Icons.fullscreen,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  bottom: 4,
+                  left: 5,
+                  child: ColoredBox(
+                    color: Colors.white70,
+                    child: Text(
+                      _satellite
+                          ? 'Imagery: Esri, Maxar, Earthstar Geographics'
+                          : '© OpenStreetMap contributors',
+                      style: const TextStyle(fontSize: 9),
+                    ),
+                  ),
+                ),
                 if (_tileFailed)
                   Positioned(
                     left: 8,
@@ -1166,13 +1515,6 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                   ),
               ],
             ),
-          ),
-        ),
-        const Align(
-          alignment: Alignment.centerRight,
-          child: Text(
-            '© OpenStreetMap contributors',
-            style: TextStyle(fontSize: 10, color: Colors.black54),
           ),
         ),
       ],

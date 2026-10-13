@@ -107,10 +107,7 @@ void main() {
         'History',
         'Profile',
       ]);
-      expect(
-        find.text('Understand your land. Plan your farm.'),
-        findsOneWidget,
-      );
+      expect(find.text('Understand\nyour land.'), findsOneWidget);
       await capture('home-360');
       await tester.tap(find.text('Get Started'));
       await tester.pumpAndSettle();

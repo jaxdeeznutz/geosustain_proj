@@ -26,10 +26,10 @@ class HomePage extends StatelessWidget {
           image:const DecorationImage(image:AssetImage('assets/images/dashboard/farm_hero.png'),fit:BoxFit.cover),color:darkGreen),
           child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
             Text('Welcome, ${state.userName()}!',style:const TextStyle(color:Colors.white,fontSize:15)),const SizedBox(height:8),
-            const Text('Understand\nyour land.',style:TextStyle(fontSize:30,height:1.1,fontWeight:FontWeight.w800,color:Colors.white)),
-            const Text('Plan your farm.',style:TextStyle(fontSize:30,height:1.1,fontWeight:FontWeight.w800,color:Color(0xFF79F1BE))),
-            const SizedBox(height:9),const SizedBox(width:230,child:Text('Map your boundary, discover suitable crops, and plan with confidence.',style:TextStyle(fontSize:14,height:1.4,color:Colors.white))),
-            const SizedBox(height:18),SizedBox(width:230,child:FilledButton.icon(onPressed:()=>showLandMethodPicker(context,state,()=>go(2)),icon:const Icon(Icons.eco),label:const Text('Get Started'))),
+            const Text('Understand\nyour land.',style:TextStyle(fontSize:25,height:1.1,fontWeight:FontWeight.w800,color:Colors.white)),
+            const Text('Plan your farm.',style:TextStyle(fontSize:25,height:1.1,fontWeight:FontWeight.w800,color:Color(0xFF79F1BE))),
+            const SizedBox(height:9),const SizedBox(width:230,child:Text('Map your boundary, discover suitable crops, and plan with confidence.',style:TextStyle(fontSize:12,height:1.4,color:Colors.white))),
+            const SizedBox(height:12),SizedBox(width:230,child:FilledButton.icon(onPressed:()=>showLandMethodPicker(context,state,()=>go(2)),icon:const Icon(Icons.eco),label:const Text('Get Started'))),
             const SizedBox(height:12),
           ])),
         const SizedBox(height:12),Row(children:[
@@ -45,7 +45,7 @@ class HomePage extends StatelessWidget {
             ('Analyze Land Using a Polygon','Explore crop suitability.',Icons.bar_chart,()=>openLandMethod(context,state,false,()=>go(2))),
             ('View My Farms','Manage your saved areas.',Icons.search,()=>go(1)),
             ('Analysis History','Check your previous results.',Icons.history,()=>go(3)),
-          ].indexed) SizedBox(width:c.maxWidth>=600?(c.maxWidth-24)/4:(c.maxWidth-8)/2,child:ReferenceAction(item.$2.$1,item.$2.$2,item.$2.$3,item.$2.$4,blue:item.$1.isOdd)),
+          ].indexed) SizedBox(width:c.maxWidth>=350 && MediaQuery.textScalerOf(context).scale(1) <= 1.2?(c.maxWidth-24)/4:(c.maxWidth-8)/2,child:ReferenceAction(item.$2.$1,item.$2.$2,item.$2.$3,item.$2.$4,blue:item.$1.isOdd,compact:c.maxWidth>=350 && c.maxWidth<600 && MediaQuery.textScalerOf(context).scale(1) <= 1.2)),
         ])),
         _heading('Recent Activity',()=>go(3)),
         if(state.historyRecords.isEmpty) const Card(child:Padding(padding:EdgeInsets.all(20),child:Text('Your completed analyses will appear here.'))),

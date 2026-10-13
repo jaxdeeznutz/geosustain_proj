@@ -388,6 +388,7 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
                 style: const TextStyle(fontSize: 13, color: Colors.black54),
               ),
               const SizedBox(height: 16),
+              if (_notice != null) _MappingNotice(_notice!),
               if (points.isNotEmpty)
                 _BoundaryMap(
                   key: ValueKey('${_farm['id']}-${_farm['boundary_version']}'),
@@ -405,7 +406,6 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
                     style: TextStyle(color: Colors.black54),
                   ),
                 ),
-              if (_notice != null) _MappingNotice(_notice!),
               if (_busy && widget.state.loading)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),

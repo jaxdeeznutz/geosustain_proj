@@ -1,6 +1,14 @@
 part of '../main.dart';
 
-const supportedCropNames = ['Banana', 'Coconut', 'Rice', 'Durian', 'Mango', 'Rubber', 'Cacao'];
+const supportedCropNames = [
+  'Banana',
+  'Coconut',
+  'Rice',
+  'Durian',
+  'Mango',
+  'Rubber',
+  'Cacao',
+];
 
 class FarmBanner extends StatelessWidget {
   final String title, description;
@@ -9,99 +17,364 @@ class FarmBanner extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.symmetric(vertical: 12),
     padding: const EdgeInsets.all(18),
-    decoration: BoxDecoration(borderRadius: BorderRadius.circular(20),
-      image: const DecorationImage(image: AssetImage('assets/images/dashboard/field_header.png'), fit: BoxFit.cover),
-      color: softGreen),
-    child: Row(children: [Expanded(flex: 3, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: const TextStyle(fontSize: 23, fontWeight: FontWeight.w800, color: darkGreen)),
-      const SizedBox(height: 8), Text(description, style: const TextStyle(fontSize: 14, height: 1.45, color: Color(0xFF435A53))),
-    ])), const Spacer()]),
+    decoration: BoxDecoration(
+      borderRadius: BorderRadius.circular(20),
+      image: const DecorationImage(
+        image: AssetImage('assets/images/dashboard/field_header.png'),
+        fit: BoxFit.cover,
+        opacity: 0.18,
+      ),
+      color: softGreen,
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          flex: 3,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 23,
+                  fontWeight: FontWeight.w800,
+                  color: darkGreen,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                description,
+                style: const TextStyle(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: Color(0xFF435A53),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const Spacer(),
+      ],
+    ),
   );
 }
 
 class BoundaryThumbnail extends StatelessWidget {
-  final Map<String,dynamic> record;
+  final Map<String, dynamic> record;
   final double size;
-  const BoundaryThumbnail(this.record, {super.key, this.size=88});
+  const BoundaryThumbnail(this.record, {super.key, this.size = 88});
   @override
   Widget build(BuildContext context) {
-    final points = FarmGeometry.fromPayload(record['selected_polygon'] ?? record['polygon']);
-    return ClipRRect(borderRadius: BorderRadius.circular(14), child: SizedBox(width:size, height:size,
-      child: points.length < 3 ? Container(color:softGreen, child: const Center(child: Icon(Icons.map_outlined,color:green))) :
-      FlutterMap(options: MapOptions(initialCameraFit: CameraFit.coordinates(coordinates:points,padding:const EdgeInsets.all(13)),
-        interactionOptions:const InteractionOptions(flags:InteractiveFlag.none)), children:[
-        TileLayer(urlTemplate:'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',userAgentPackageName:'com.geosustain.mobile'),
-        PolygonLayer(polygons:[Polygon(points:points,color:green.withValues(alpha:.35),borderColor:const Color(0xFF70FFD0),borderStrokeWidth:2)]),
-        MarkerLayer(markers:[for(final p in points) Marker(point:p,width:5,height:5,child:const DecoratedBox(decoration:BoxDecoration(color:Colors.white,shape:BoxShape.circle)))]),
-        const Align(alignment:Alignment.bottomRight,child:ColoredBox(color:Colors.white70,child:Text('Esri',style:TextStyle(fontSize:8)))),
-      ])));
+    final points = FarmGeometry.fromPayload(
+      record['selected_polygon'] ?? record['polygon'],
+    );
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(14),
+      child: SizedBox(
+        width: size,
+        height: size,
+        child: points.length < 3
+            ? Container(
+                color: softGreen,
+                child: const Center(
+                  child: Icon(Icons.map_outlined, color: green),
+                ),
+              )
+            : FlutterMap(
+                options: MapOptions(
+                  initialCameraFit: CameraFit.coordinates(
+                    coordinates: points,
+                    padding: const EdgeInsets.all(13),
+                  ),
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.none,
+                  ),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+                    userAgentPackageName: 'com.geosustain.mobile',
+                  ),
+                  PolygonLayer(
+                    polygons: [
+                      Polygon(
+                        points: points,
+                        color: green.withValues(alpha: .35),
+                        borderColor: const Color(0xFF70FFD0),
+                        borderStrokeWidth: 2,
+                      ),
+                    ],
+                  ),
+                  MarkerLayer(
+                    markers: [
+                      for (final p in points)
+                        Marker(
+                          point: p,
+                          width: 5,
+                          height: 5,
+                          child: const DecoratedBox(
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const Align(
+                    alignment: Alignment.bottomRight,
+                    child: ColoredBox(
+                      color: Colors.white70,
+                      child: Text('Esri', style: TextStyle(fontSize: 8)),
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
   }
 }
 
 class ReferenceStat extends StatelessWidget {
-  final String value,label;
+  final String value, label;
   final IconData icon;
   final VoidCallback onTap;
   final Color tint;
-  const ReferenceStat(this.value,this.label,this.icon,this.onTap,{super.key,this.tint=softGreen});
+  const ReferenceStat(
+    this.value,
+    this.label,
+    this.icon,
+    this.onTap, {
+    super.key,
+    this.tint = softGreen,
+  });
   @override
-  Widget build(BuildContext context) => Card(margin:EdgeInsets.zero, child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(18),
-    child:Padding(padding:const EdgeInsets.symmetric(horizontal:9,vertical:13),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-      Row(children:[CircleAvatar(radius:15,backgroundColor:tint,child:Icon(icon,size:19,color:green)),const SizedBox(width:7),Flexible(child:Text(value,style:const TextStyle(fontSize:23,fontWeight:FontWeight.w800,color:darkGreen)))]),
-      const SizedBox(height:5),Text(label,style:const TextStyle(fontSize:11,color:Color(0xFF45555B))),
-    ]))));
+  Widget build(BuildContext context) => Card(
+    margin: EdgeInsets.zero,
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                CircleAvatar(
+                  radius: 15,
+                  backgroundColor: tint,
+                  child: Icon(icon, size: 19, color: green),
+                ),
+                const SizedBox(width: 7),
+                Flexible(
+                  child: Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w800,
+                      color: darkGreen,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 5),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 11, color: Color(0xFF45555B)),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class ReferenceAction extends StatelessWidget {
-  final String title,subtitle;
+  final String title, subtitle;
   final IconData icon;
   final VoidCallback onTap;
-  final bool blue;
-  const ReferenceAction(this.title,this.subtitle,this.icon,this.onTap,{super.key,this.blue=false});
+  final bool blue, compact;
+  const ReferenceAction(
+    this.title,
+    this.subtitle,
+    this.icon,
+    this.onTap, {
+    super.key,
+    this.blue = false,
+    this.compact = false,
+  });
   @override
-  Widget build(BuildContext context) => Card(margin:EdgeInsets.zero,color:blue?const Color(0xFFEEF9FD):const Color(0xFFEAF7F0),
-    child:InkWell(onTap:onTap,borderRadius:BorderRadius.circular(18),child:Padding(padding:const EdgeInsets.all(13),
-      child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-        CircleAvatar(radius:22,backgroundColor:blue?const Color(0xFFD9F1FB):const Color(0xFFD1F2E1),child:Icon(icon,color:blue?const Color(0xFF12638A):green)),
-        const SizedBox(height:13),Text(title,style:const TextStyle(fontSize:16,fontWeight:FontWeight.w800,color:Color(0xFF092A37))),
-        const SizedBox(height:7),Text(subtitle,style:const TextStyle(fontSize:13,color:Color(0xFF53636B))),
-        const SizedBox(height:12),const CircleAvatar(radius:15,backgroundColor:green,child:Icon(Icons.arrow_forward,color:Colors.white,size:19)),
-      ]))));
+  Widget build(BuildContext context) => Card(
+    margin: EdgeInsets.zero,
+    color: blue ? const Color(0xFFEEF9FD) : const Color(0xFFEAF7F0),
+    child: InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(18),
+      child: Padding(
+        padding: EdgeInsets.all(compact ? 8 : 13),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: compact ? 17 : 22,
+              backgroundColor: blue
+                  ? const Color(0xFFD9F1FB)
+                  : const Color(0xFFD1F2E1),
+              child: Icon(icon, color: blue ? const Color(0xFF12638A) : green),
+            ),
+            SizedBox(height: compact ? 8 : 13),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: compact ? 11 : 16,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF092A37),
+              ),
+            ),
+            const SizedBox(height: 7),
+            Text(
+              subtitle,
+              style: TextStyle(
+                fontSize: compact ? 10 : 13,
+                color: const Color(0xFF53636B),
+              ),
+            ),
+            const SizedBox(height: 12),
+            const CircleAvatar(
+              radius: 15,
+              backgroundColor: green,
+              child: Icon(Icons.arrow_forward, color: Colors.white, size: 19),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
 }
 
 class CropArtwork extends StatelessWidget {
   final String crop;
   final double size;
-  const CropArtwork(this.crop,{super.key,this.size=48});
+  const CropArtwork(this.crop, {super.key, this.size = 48});
   @override
-  Widget build(BuildContext context)=>Container(width:size,height:size,padding:const EdgeInsets.all(6),
-    decoration:BoxDecoration(color:const Color(0xFFEDF4D9),borderRadius:BorderRadius.circular(13)),
-    child:CustomPaint(painter:_CropPainter(crop.toLowerCase())));
+  Widget build(BuildContext context) => Container(
+    width: size,
+    height: size,
+    padding: const EdgeInsets.all(6),
+    decoration: BoxDecoration(
+      color: const Color(0xFFEDF4D9),
+      borderRadius: BorderRadius.circular(13),
+    ),
+    child: CustomPaint(painter: _CropPainter(crop.toLowerCase())),
+  );
 }
+
 class _CropPainter extends CustomPainter {
   final String crop;
   const _CropPainter(this.crop);
   @override
-  void paint(Canvas c,Size s){
-    c.save();c.scale(s.width/48,s.height/48);
-    final stem=Paint()..color=const Color(0xFF31753C)..strokeWidth=3..strokeCap=StrokeCap.round;
-    c.drawLine(const Offset(25,8),const Offset(24,42),stem);
-    if(crop.contains('banana')){
-      for(var i=0;i<3;i++){c.drawPath(Path()..moveTo(12+i*7,8)..quadraticBezierTo(3+i*7,44,38,32+i*3),Paint()..color=Color(0xFFFFC92B+i*0x00000500)..style=PaintingStyle.stroke..strokeWidth=7..strokeCap=StrokeCap.round);}
-    }else if(crop.contains('rice')){
-      for(var i=0;i<5;i++){c.drawOval(Rect.fromLTWH(10+i*2,8+i*5,10,5),Paint()..color=const Color(0xFFE0B947));c.drawOval(Rect.fromLTWH(26,6+i*5,10,5),Paint()..color=const Color(0xFFF0D376));}
-    }else if(crop.contains('rubber')){
-      c.drawCircle(const Offset(24,18),17,Paint()..color=green);c.drawCircle(const Offset(13,25),11,Paint()..color=const Color(0xFF65A751));
-    }else if(crop.contains('coconut')){
-      c.drawCircle(const Offset(21,27),16,Paint()..color=const Color(0xFF836036));c.drawCircle(const Offset(29,28),13,Paint()..color=const Color(0xFFFFFAE2));c.drawCircle(const Offset(29,28),7,Paint()..color=const Color(0xFFBB8C55));
-    }else{
-      final durian=crop.contains('durian');final cacao=crop.contains('cacao');
-      c.drawOval(const Rect.fromLTWH(10,10,29,33),Paint()..color=durian?const Color(0xFF91A53A):cacao?const Color(0xFFB56B34):const Color(0xFFFFBD36));
-      if(durian){for(var i=0;i<4;i++){for(var j=0;j<4;j++){c.drawPath(Path()..moveTo(12+i*6,16+j*6)..lineTo(15+i*6,11+j*6)..lineTo(17+i*6,16+j*6),Paint()..color=const Color(0xFF526C25));}}}
-      if(cacao){for(var i=0;i<3;i++){c.drawArc(Rect.fromLTWH(13+i*5,12,12,28),-1.5,3,false,Paint()..color=const Color(0xFF713E27)..style=PaintingStyle.stroke..strokeWidth=1.5);}}
-      c.drawOval(const Rect.fromLTWH(23,3,19,8),Paint()..color=green);
+  void paint(Canvas c, Size s) {
+    c.save();
+    c.scale(s.width / 48, s.height / 48);
+    final stem = Paint()
+      ..color = const Color(0xFF31753C)
+      ..strokeWidth = 3
+      ..strokeCap = StrokeCap.round;
+    c.drawLine(const Offset(25, 8), const Offset(24, 42), stem);
+    if (crop.contains('banana')) {
+      for (var i = 0; i < 3; i++) {
+        c.drawPath(
+          Path()
+            ..moveTo(12 + i * 7, 8)
+            ..quadraticBezierTo(3 + i * 7, 44, 38, 32 + i * 3),
+          Paint()
+            ..color = Color(0xFFFFC92B + i * 0x00000500)
+            ..style = PaintingStyle.stroke
+            ..strokeWidth = 7
+            ..strokeCap = StrokeCap.round,
+        );
+      }
+    } else if (crop.contains('rice')) {
+      for (var i = 0; i < 5; i++) {
+        c.drawOval(
+          Rect.fromLTWH(10 + i * 2, 8 + i * 5, 10, 5),
+          Paint()..color = const Color(0xFFE0B947),
+        );
+        c.drawOval(
+          Rect.fromLTWH(26, 6 + i * 5, 10, 5),
+          Paint()..color = const Color(0xFFF0D376),
+        );
+      }
+    } else if (crop.contains('rubber')) {
+      c.drawCircle(const Offset(24, 18), 17, Paint()..color = green);
+      c.drawCircle(
+        const Offset(13, 25),
+        11,
+        Paint()..color = const Color(0xFF65A751),
+      );
+    } else if (crop.contains('coconut')) {
+      c.drawCircle(
+        const Offset(21, 27),
+        16,
+        Paint()..color = const Color(0xFF836036),
+      );
+      c.drawCircle(
+        const Offset(29, 28),
+        13,
+        Paint()..color = const Color(0xFFFFFAE2),
+      );
+      c.drawCircle(
+        const Offset(29, 28),
+        7,
+        Paint()..color = const Color(0xFFBB8C55),
+      );
+    } else {
+      final durian = crop.contains('durian');
+      final cacao = crop.contains('cacao');
+      c.drawOval(
+        const Rect.fromLTWH(10, 10, 29, 33),
+        Paint()
+          ..color = durian
+              ? const Color(0xFF91A53A)
+              : cacao
+              ? const Color(0xFFB56B34)
+              : const Color(0xFFFFBD36),
+      );
+      if (durian) {
+        for (var i = 0; i < 4; i++) {
+          for (var j = 0; j < 4; j++) {
+            c.drawPath(
+              Path()
+                ..moveTo(12 + i * 6, 16 + j * 6)
+                ..lineTo(15 + i * 6, 11 + j * 6)
+                ..lineTo(17 + i * 6, 16 + j * 6),
+              Paint()..color = const Color(0xFF526C25),
+            );
+          }
+        }
+      }
+      if (cacao) {
+        for (var i = 0; i < 3; i++) {
+          c.drawArc(
+            Rect.fromLTWH(13 + i * 5, 12, 12, 28),
+            -1.5,
+            3,
+            false,
+            Paint()
+              ..color = const Color(0xFF713E27)
+              ..style = PaintingStyle.stroke
+              ..strokeWidth = 1.5,
+          );
+        }
+      }
+      c.drawOval(const Rect.fromLTWH(23, 3, 19, 8), Paint()..color = green);
     }
     c.restore();
   }
-  @override bool shouldRepaint(_CropPainter old)=>old.crop!=crop;
+
+  @override
+  bool shouldRepaint(_CropPainter old) => old.crop != crop;
 }

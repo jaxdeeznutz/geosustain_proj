@@ -78,6 +78,8 @@ void main() {
       gps.permission = LocationPermission.deniedForever;
       await mount(tester, FarmBoundaryPage(state: state));
       await revealControls(tester);
+      await revealControls(tester);
+      await tester.ensureVisible(find.text('Start'));
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
       expect(find.textContaining('Allow location access'), findsOneWidget);
@@ -92,6 +94,8 @@ void main() {
     (tester) async {
       await mount(tester, FarmBoundaryPage(state: state));
       await revealControls(tester);
+      await revealControls(tester);
+      await tester.ensureVisible(find.text('Start'));
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
       expect(gps.subscriptions, 1);
@@ -154,6 +158,8 @@ void main() {
       state = AnalysisState(api: ApiService(client: client));
       await mount(tester, FarmBoundaryPage(state: state));
       await revealControls(tester);
+      await revealControls(tester);
+      await tester.ensureVisible(find.text('Start'));
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
       final time = DateTime.now().subtract(const Duration(seconds: 12));
@@ -181,6 +187,7 @@ void main() {
         await tester.pumpAndSettle();
       }
       await revealControls(tester);
+      await tester.ensureVisible(find.text('Finish'));
       await tester.tap(find.text('Finish'));
       await tester.pumpAndSettle();
       expect(gps.fixes.hasListener, isFalse);
@@ -218,6 +225,8 @@ void main() {
     'fresh GPS marker, boundary filter, camera and pause remain independent',
     (tester) async {
       await mount(tester, FarmBoundaryPage(state: state));
+      await revealControls(tester);
+      await tester.ensureVisible(find.text('Start'));
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
       final start = DateTime.now().subtract(const Duration(seconds: 12));
@@ -273,6 +282,7 @@ void main() {
         closeTo(7.3001, .000001),
       );
       await revealControls(tester);
+      await tester.ensureVisible(find.text('Pause'));
       await tester.tap(find.text('Pause'));
       await tester.pumpAndSettle();
       expect(gps.fixes.hasListener, isFalse);
@@ -286,6 +296,7 @@ void main() {
       gps.fixes.add(fix(7.30015, 5, 12));
       await tester.pumpAndSettle();
       expect(find.text('2 points'), findsOneWidget);
+      await tester.ensureVisible(find.text('Resume'));
       await tester.tap(find.text('Resume'));
       await tester.pumpAndSettle();
       expect(gps.subscriptions, 2);
@@ -301,13 +312,17 @@ void main() {
     'pause before first fix stays paused and Resume restarts exactly once',
     (tester) async {
       await mount(tester, FarmBoundaryPage(state: state));
+      await revealControls(tester);
+      await tester.ensureVisible(find.text('Start'));
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('Pause'));
       await tester.tap(find.text('Pause'));
       await tester.pumpAndSettle();
       expect(find.text('Paused'), findsOneWidget);
       expect(find.text('Resume'), findsOneWidget);
       expect(gps.fixes.hasListener, isFalse);
+      await tester.ensureVisible(find.text('Resume'));
       await tester.tap(find.text('Resume'));
       await tester.pumpAndSettle();
       expect(gps.subscriptions, 2);
@@ -327,6 +342,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('1 points'), findsOneWidget);
+      await tester.ensureVisible(find.text('Pause'));
       await tester.tap(find.text('Pause'));
       await tester.pumpAndSettle();
       await revealControls(tester);
@@ -345,6 +361,8 @@ void main() {
     tester.platformDispatcher.accessibilityFeaturesTestValue =
         FakeAccessibilityFeatures(disableAnimations: false);
     await tester.pump();
+    await revealControls(tester);
+    await tester.ensureVisible(find.text('Start'));
     await tester.tap(find.text('Start'));
     await tester.pumpAndSettle();
     gps.fixes.add(
@@ -375,6 +393,7 @@ void main() {
         FakeAccessibilityFeatures(disableAnimations: true);
     await tester.pumpAndSettle();
     expect(pulse.value, 1);
+    await tester.ensureVisible(find.text('Pause'));
     await tester.tap(find.text('Pause'));
     await tester.pumpAndSettle();
     expect(pulse.value, 1);

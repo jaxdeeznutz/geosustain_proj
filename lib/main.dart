@@ -48,7 +48,9 @@ part 'web/screens/web_planner_queue_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
-  appThemeMode.value = (prefs.getBool('settings_dark_mode') ?? false) ? ThemeMode.dark : ThemeMode.light;
+  appThemeMode.value = (prefs.getBool('settings_dark_mode') ?? false)
+      ? ThemeMode.dark
+      : ThemeMode.light;
   runApp(const GeoSustainApp());
 }
 
@@ -140,93 +142,101 @@ class GeoSustainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ValueListenableBuilder<ThemeMode>(valueListenable: appThemeMode, builder: (context, mode, _) => MaterialApp(
-      themeMode: mode,
-      darkTheme: ThemeData.dark(useMaterial3: true).copyWith(colorScheme: ColorScheme.fromSeed(seedColor: green, brightness: Brightness.dark)),
-      debugShowCheckedModeBanner: false,
-      title: 'GeoSustain Mobile',
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: green).copyWith(
-          primary: green,
-          secondary: darkGreen,
-          surface: const Color(0xFFF8FAF4),
-        ),
-        chipTheme: ChipThemeData(
-          backgroundColor: softGreen,
-          side: const BorderSide(color: Color(0xFFD6E6DA)),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          labelStyle: const TextStyle(
-            fontFamily: 'Roboto',
-            color: darkGreen,
-            fontWeight: FontWeight.w600,
+    return ValueListenableBuilder<ThemeMode>(
+      valueListenable: appThemeMode,
+      builder: (context, mode, _) => MaterialApp(
+        themeMode: mode,
+        darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: green,
+            brightness: Brightness.dark,
           ),
         ),
-        navigationBarTheme: const NavigationBarThemeData(
-          backgroundColor: Colors.white,
-          indicatorColor: Color(0xFFD5EDDD),
-        ),
-        scaffoldBackgroundColor: bg,
-        useMaterial3: true,
-        fontFamily: 'Roboto',
-        appBarTheme: const AppBarTheme(
-          backgroundColor: bg,
-          foregroundColor: Color(0xFF102018),
-          centerTitle: true,
-          elevation: 0,
-          titleTextStyle: TextStyle(
-            fontFamily: 'Roboto',
-            fontSize: 18,
-            fontWeight: FontWeight.w800,
-            color: green,
+        debugShowCheckedModeBanner: false,
+        title: 'GeoSustain Mobile',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: green).copyWith(
+            primary: green,
+            secondary: darkGreen,
+            surface: const Color(0xFFF8FAF4),
           ),
-        ),
-        inputDecorationTheme: InputDecorationTheme(
-          filled: true,
-          fillColor: Colors.white,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 14,
-            vertical: 14,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFFE1E8E2)),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: Color(0xFFE1E8E2)),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(14),
-            borderSide: const BorderSide(color: green, width: 1.5),
-          ),
-        ),
-        filledButtonTheme: FilledButtonThemeData(
-          style: FilledButton.styleFrom(
-            backgroundColor: green,
-            foregroundColor: Colors.white,
-            minimumSize: const Size.fromHeight(52),
+          chipTheme: ChipThemeData(
+            backgroundColor: softGreen,
+            side: const BorderSide(color: Color(0xFFD6E6DA)),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(12),
             ),
-            textStyle: const TextStyle(
+            labelStyle: const TextStyle(
               fontFamily: 'Roboto',
+              color: darkGreen,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          navigationBarTheme: const NavigationBarThemeData(
+            backgroundColor: Colors.white,
+            indicatorColor: Color(0xFFD5EDDD),
+          ),
+          scaffoldBackgroundColor: bg,
+          useMaterial3: true,
+          fontFamily: 'Roboto',
+          appBarTheme: const AppBarTheme(
+            backgroundColor: bg,
+            foregroundColor: Color(0xFF102018),
+            centerTitle: true,
+            elevation: 0,
+            titleTextStyle: TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 18,
               fontWeight: FontWeight.w800,
+              color: green,
+            ),
+          ),
+          inputDecorationTheme: InputDecorationTheme(
+            filled: true,
+            fillColor: Colors.white,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 14,
+              vertical: 14,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFFE1E8E2)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: Color(0xFFE1E8E2)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(14),
+              borderSide: const BorderSide(color: green, width: 1.5),
+            ),
+          ),
+          filledButtonTheme: FilledButtonThemeData(
+            style: FilledButton.styleFrom(
+              backgroundColor: green,
+              foregroundColor: Colors.white,
+              minimumSize: const Size.fromHeight(52),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              textStyle: const TextStyle(
+                fontFamily: 'Roboto',
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ),
+          cardTheme: CardThemeData(
+            color: Colors.white,
+            elevation: 0,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(18),
+              side: const BorderSide(color: Color(0xFFE7EEE8)),
             ),
           ),
         ),
-        cardTheme: CardThemeData(
-          color: Colors.white,
-          elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(18),
-            side: const BorderSide(color: Color(0xFFE7EEE8)),
-          ),
-        ),
+        home: home ?? const SessionGate(),
       ),
-      home: home ?? const SessionGate(),
-    ));
+    );
   }
 }
 
@@ -2138,40 +2148,46 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
             ),
           ],
         ),
-        bottomNavigationBar: Padding(padding: const EdgeInsets.fromLTRB(9,4,9,8), child: ClipRRect(borderRadius: BorderRadius.circular(26), child: NavigationBar(
-          selectedIndex: index,
-          height: 76,
-          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-          indicatorColor: softGreen,
-          onDestinationSelected: selectTab,
-          destinations: const [
-            NavigationDestination(
-              icon: Icon(Icons.home_outlined),
-              selectedIcon: Icon(Icons.home, color: green),
-              label: 'Home',
+        bottomNavigationBar: Padding(
+          padding: const EdgeInsets.fromLTRB(9, 4, 9, 8),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(26),
+            child: NavigationBar(
+              selectedIndex: index,
+              height: 76,
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+              indicatorColor: softGreen,
+              onDestinationSelected: selectTab,
+              destinations: const [
+                NavigationDestination(
+                  icon: Icon(Icons.home_outlined),
+                  selectedIcon: Icon(Icons.home, color: green),
+                  label: 'Home',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.map_outlined),
+                  selectedIcon: Icon(Icons.map, color: green),
+                  label: 'My Farms',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.center_focus_strong_outlined),
+                  selectedIcon: Icon(Icons.center_focus_strong, color: green),
+                  label: 'Analysis',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.history_outlined),
+                  selectedIcon: Icon(Icons.history, color: green),
+                  label: 'History',
+                ),
+                NavigationDestination(
+                  icon: Icon(Icons.person_outline),
+                  selectedIcon: Icon(Icons.person, color: green),
+                  label: 'Profile',
+                ),
+              ],
             ),
-            NavigationDestination(
-              icon: Icon(Icons.map_outlined),
-              selectedIcon: Icon(Icons.map, color: green),
-              label: 'My Farms',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.center_focus_strong_outlined),
-              selectedIcon: Icon(Icons.center_focus_strong, color: green),
-              label: 'Analysis',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.history_outlined),
-              selectedIcon: Icon(Icons.history, color: green),
-              label: 'History',
-            ),
-            NavigationDestination(
-              icon: Icon(Icons.person_outline),
-              selectedIcon: Icon(Icons.person, color: green),
-              label: 'Profile',
-            ),
-          ],
-        ))),
+          ),
+        ),
       ),
     );
   }
@@ -2675,17 +2691,56 @@ class MobileHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-      decoration: const BoxDecoration(image: DecorationImage(image: AssetImage('assets/images/dashboard/field_header.png'),fit: BoxFit.cover)),
-      child: Row(children: [
-        if(back!=null) IconButton(onPressed:back,icon:const Icon(Icons.arrow_back)),
-        const Icon(Icons.eco, color:green,size:37), const SizedBox(width:9),
-        Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-          const Text('GeoSustain',style:TextStyle(fontSize:23,fontWeight:FontWeight.w800,color:darkGreen)),
-          if(title!='GeoSustain') Text(title,style:const TextStyle(fontSize:13,color:Color(0xFF526B63))),
-        ])),
-        trailing ?? IconButton.filledTonal(onPressed:()=>Navigator.push(context,MaterialPageRoute(builder:(_)=>const NotificationsPage())),icon:const Icon(Icons.notifications_none_rounded)),
-      ]),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: const BoxDecoration(color: green),
+      child: IconTheme(
+        data: const IconThemeData(color: Colors.white),
+        child: Row(
+          children: [
+            if (back != null)
+              IconButton(
+                onPressed: back,
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+              ),
+            const Icon(Icons.eco, color: Colors.white, size: 37),
+            const SizedBox(width: 9),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'GeoSustain',
+                    style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.w800,
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (title != 'GeoSustain')
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        color: Colors.white70,
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            trailing ??
+                IconButton.filledTonal(
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const NotificationsPage(),
+                    ),
+                  ),
+                  icon: const Icon(Icons.notifications_none_rounded),
+                ),
+          ],
+        ),
+      ),
     );
   }
 }

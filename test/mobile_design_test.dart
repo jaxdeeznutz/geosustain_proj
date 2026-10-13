@@ -80,6 +80,14 @@ void main() {
             child: GeoSustainApp(home: screen),
           ),
         );
+        await tester.runAsync(() async {
+          for (final asset in ['farm_hero.png', 'field_header.png']) {
+            await precacheImage(
+              AssetImage('assets/images/dashboard/$asset'),
+              tester.element(find.byType(MaterialApp)),
+            );
+          }
+        });
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
       }
@@ -155,8 +163,8 @@ void main() {
       await tester.ensureVisible(find.text('See less').first);
       await tester.tap(find.text('See less').first);
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('View details').first);
-      await tester.tap(find.text('View details').first);
+      await tester.ensureVisible(find.textContaining('1. Rice').first);
+      await tester.tap(find.textContaining('1. Rice').first);
       await tester.pumpAndSettle();
       await capture('crop-details');
       await tester.tap(find.text('Close'));
@@ -182,10 +190,16 @@ void main() {
       await capture('analysis-details');
       await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Other crops assessed'));
+      await tester.ensureVisible(find.text('Recommended'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Recommended'));
+      await tester.pumpAndSettle();
       await tester.pumpAndSettle();
       await capture('other-crops');
-      await tester.ensureVisible(find.text('Land conditions'));
+      await tester.ensureVisible(find.text('Key Factors'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Key Factors'));
+      await tester.pumpAndSettle();
       await tester.pumpAndSettle();
       await capture('land-conditions');
       expect(state.result?['session_id'], record['session_id']);
@@ -201,6 +215,7 @@ void main() {
       addTearDown(gpsState.dispose);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await mount(FarmBoundaryPage(state: gpsState));
+      await tester.ensureVisible(find.text('Start'));
       await tester.tap(find.text('Start'));
       await tester.pumpAndSettle();
       final start = DateTime.now().subtract(const Duration(seconds: 12));
@@ -222,10 +237,18 @@ void main() {
         await tester.pumpAndSettle();
       }
       expect(find.text('3 points'), findsOneWidget);
+      tester
+          .state<ScrollableState>(find.byType(Scrollable).first)
+          .position
+          .jumpTo(0);
+      await tester.pumpAndSettle();
       await capture('gps-recording');
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       await gps.fixes.close();
+      await mount(PolygonDrawingPage(state: gpsState));
+      await capture('polygon');
+      await tester.pumpWidget(const SizedBox());
     });
   }
 }
