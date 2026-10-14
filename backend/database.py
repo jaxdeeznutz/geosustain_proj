@@ -4,6 +4,7 @@ import config  # noqa: F401 -- load local environment before reading settings
 import psycopg2
 from psycopg2.extras import RealDictCursor, Json
 from geometry import normalize_polygon, polygon_area_m2
+from json_safe import json_safe
 
 DATABASE_URL = os.getenv(
     "DATABASE_URL",
@@ -647,6 +648,9 @@ def save_analysis_session(user_id, result: dict, analysis_source: str, request_k
     Persist a full analysis result across the four related tables.
     Returns the new session_id.
     """
+    # Cached climate rows include datetime fetched_at; scientific providers may
+    # include NumPy scalars. Normalize every JSONB field and SQL scalar together.
+    result = json_safe(result)
     conn = get_conn()
     try:
         with conn.cursor() as cur:

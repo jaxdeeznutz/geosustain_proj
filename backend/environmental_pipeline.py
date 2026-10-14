@@ -46,6 +46,7 @@ def terrain_slope(lat, lon):
 
 def analyze_location(lat, lon, active_crops=None):
     import rainfallDatasets as env
+    logger.info('Environmental retrieval started')
     measurements, raw, quality = {}, {}, {}
     tasks = {'soil_ph': env.get_soil_ph, 'elevation': env.get_elevation,
              'ndvi': env.get_ndvi, 'rainfall_recent': env.get_rainfall,
@@ -56,6 +57,7 @@ def analyze_location(lat, lon, active_crops=None):
             try: raw[key] = future.result()
             except Exception as exc:
                 logger.warning('Environmental source unavailable factor=%s type=%s', key,type(exc).__name__)
+    logger.info('Environmental retrieval completed available_sources=%s requested_sources=%s', len(raw), len(tasks))
     measurements.update(raw.get('climate') or {})
     for key, unit, period in [('soil_ph','pH','soil_surface'),('elevation','m','terrain'),
                               ('ndvi','index','latest_scene'),('rainfall_recent','mm','rolling_30_days')]:
@@ -85,6 +87,7 @@ def analyze_location(lat, lon, active_crops=None):
     # Synthetic training augmentation and nutrient proxies exclude it from ranking.
     try:
         if env.MODEL is not None:
+            logger.info('Legacy model loaded version=%s', env.MODEL_VERSION)
             n,p,k,nq = env.get_soil_nutrients(lat,lon)
             values = [n,p,k,result['temperature_c'],result['live_humidity'],result['soil_ph'],
                       result['rainfall_mm'],result['ndvi'],result['elevation_m'],result['slope_pct']]
@@ -92,6 +95,7 @@ def analyze_location(lat, lon, active_crops=None):
                 frame = env.pd.DataFrame([values],columns=list(env.MODEL.feature_names_in_))
                 probabilities = env.MODEL.predict_proba(frame)[0]
                 prediction = env.MODEL.predict(frame)[0]
+                logger.info('Legacy model prediction completed')
                 snapshot = forest_snapshot(env.MODEL, env.MODEL_VERSION, dict(zip(frame.columns,values)),
                     prediction, {str(c):float(p) for c,p in zip(env.MODEL.classes_,probabilities)})
                 snapshot['role'] = 'legacy_research_only'
@@ -100,7 +104,9 @@ def analyze_location(lat, lon, active_crops=None):
                 result['legacy_model_explanation'] = snapshot
     except Exception as exc:
         logger.warning('Legacy model explanation unavailable type=%s',type(exc).__name__)
-    return attach_assessment(result,measurements,active_crops)
+    assessed = attach_assessment(result,measurements,active_crops)
+    logger.info('Suitability scoring completed')
+    return assessed
 
 def merge_results(samples, active_crops=None):
     """Assess parcel mean inputs; preserve samples and expose spatial limitations."""

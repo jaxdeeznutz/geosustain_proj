@@ -17,6 +17,10 @@ void main() {
   });
   test('HTTP status wins over misleading body text', () {
     expect(
+      friendlyErrorMessage(const ApiException(500, 'private traceback')),
+      'The analysis service encountered an error. Please try again.',
+    );
+    expect(
       friendlyErrorMessage(const ApiException(503, 'connection refused 401')),
       contains('service is unavailable'),
     );

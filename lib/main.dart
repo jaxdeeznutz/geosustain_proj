@@ -783,6 +783,9 @@ String friendlyErrorMessage(Object error) {
     if (error.statusCode == 401) {
       return 'Your session has expired. Please log in again.';
     }
+    if (error.statusCode == 500) {
+      return 'The analysis service encountered an error. Please try again.';
+    }
     if (error.statusCode >= 500) {
       return 'The analysis service is unavailable. Try again shortly.';
     }

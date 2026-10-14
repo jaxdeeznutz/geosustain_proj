@@ -12,8 +12,9 @@ from typing import Any, Dict, List, Optional, Tuple
 import bcrypt
 from password_auth import verify_password
 import requests
-from fastapi import FastAPI, Request, Depends, HTTPException, status, Header, Query
-from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Request, Depends, HTTPException, status, Header, Query
+from http_config import CorsFastAPI
+from json_safe import json_safe
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -271,7 +272,7 @@ def apply_local_seasonality(result: Dict[str, Any], planting_month: int) -> Dict
     return result
 
 
-app = FastAPI(title="GeoSustain API", version="2.0.0")
+app = CorsFastAPI(title="GeoSustain API", version="2.0.0")
 
 
 @app.exception_handler(DatabaseError)
@@ -280,13 +281,14 @@ async def database_unavailable(request: Request, exc: DatabaseError):
     print(f'Database operation failed: {type(exc).__name__}')
     return JSONResponse({'error':'The account/data service is unavailable. Please try again shortly.'}, status_code=503)
 app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],  # change this in production
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+
+@app.exception_handler(Exception)
+async def unexpected_failure(request: Request, exc: Exception):
+    logging.getLogger('uvicorn.error').exception(
+        'Unhandled request failure method=%s path=%s', request.method, request.url.path,
+        exc_info=(type(exc), exc, exc.__traceback__),
+    )
+    return JSONResponse({'detail': 'The service encountered an error. Please try again.'}, status_code=500)
 
 app.mount("/static", StaticFiles(directory=os.path.join(BASE_DIR, "static")), name="static")
 templates = Jinja2Templates(directory=os.path.join(BASE_DIR, "templates"))
@@ -398,7 +400,7 @@ def fetch_open_meteo_weather(lat: float, lon: float) -> Dict[str, Any]:
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "GeoSustain API"}
+    return {"status": "ok", "service": "GeoSustain API", "revision": os.getenv('RENDER_GIT_COMMIT')}
 
 @app.get('/api/mobile/crops')
 def mobile_crop_catalog():
@@ -408,7 +410,7 @@ def mobile_crop_catalog():
 
 @app.get("/api/health")
 def api_health():
-    return {"status": "ok", "service": "GeoSustain API"}
+    return health()
 
 
 @app.on_event("startup")
@@ -897,6 +899,8 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
 
     if not in_study_area(lat, lon):
         raise ValueError('Selected location is outside the supported Panabo study area.')
+
+    logging.getLogger('uvicorn.error').info('Analysis geometry validated source=%s vertices=%s', analysis_source, len(polygon))
 
     # Fetched once per analysis request (not once per sampled point) — a
     # Super Administrator's crop reference table can temporarily narrow the
@@ -1626,9 +1630,12 @@ def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user), idempotency_
                 return JSONResponse({'status': 'processing', 'request_id': key}, status_code=202)
             result = _perform_mobile_analysis(body, user, key)
             logger.info('Analysis completed user=%s farm=%s session=%s seconds=%.1f', user['id'], body.farm_id, result.get('session_id'), time.monotonic()-started)
-            return result
+            return json_safe(result)
     except Exception as exc:
-        logger.warning('Analysis failed user=%s farm=%s type=%s seconds=%.1f', user['id'], body.farm_id, type(exc).__name__, time.monotonic()-started)
+        if isinstance(exc, HTTPException):
+            logger.warning('Analysis rejected user=%s farm=%s status=%s seconds=%.1f', user['id'], body.farm_id, exc.status_code, time.monotonic()-started)
+        else:
+            logger.exception('Analysis failed user=%s farm=%s type=%s seconds=%.1f', user['id'], body.farm_id, type(exc).__name__, time.monotonic()-started)
         raise
 
 
@@ -1655,10 +1662,10 @@ def _perform_mobile_analysis(body, user, idempotency_key):
     except ValueError as exc:
         raise HTTPException(status_code=400,detail=str(exc))
     except RuntimeError as exc:
-        logging.getLogger('uvicorn.error').warning('Analysis engine unavailable user=%s farm=%s type=%s', user['id'], body.farm_id, type(exc).__name__)
+        logging.getLogger('uvicorn.error').exception('Analysis engine unavailable user=%s farm=%s type=%s', user['id'], body.farm_id, type(exc).__name__)
         raise HTTPException(status_code=503,detail='Environmental datasets are unavailable. The project team should check Earth Engine access and server configuration.')
     except Exception as exc:
-        print(f'Analysis failed: {type(exc).__name__}')
+        logging.getLogger('uvicorn.error').exception('Analysis inference failed user=%s farm=%s type=%s', user['id'], body.farm_id, type(exc).__name__)
         raise HTTPException(status_code=502,detail='An analysis data service failed. Please retry.')
     if farm:
         result.update(farm_id=farm['id'], farm_name=farm['farm_name'], boundary_version=farm['boundary_version'])
@@ -1670,7 +1677,14 @@ def _perform_mobile_analysis(body, user, idempotency_key):
     except ValueError as exc:
         raise HTTPException(status_code=409,detail=str(exc))
     # A database failure is a failed request, never a false successful result.
-    return get_user_analysis(user['id'],session_id)
+    saved = get_user_analysis(user['id'],session_id)
+    if saved is None:
+        raise RuntimeError('Saved analysis could not be read back')
+    response = json_safe(saved)
+    # Strict encoding catches unsupported values before sending a response.
+    json.dumps(response, allow_nan=False)
+    logging.getLogger('uvicorn.error').info('Analysis response serialized user=%s farm=%s session=%s', user['id'], body.farm_id, session_id)
+    return response
 
 
 if __name__ == "__main__":
