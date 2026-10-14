@@ -282,7 +282,12 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
   ) {
     final score = analysisNumber(crop['compatibility_pct']);
     return InkWell(
-      onTap: () => _showCropDetails(context, crop, r),
+      onTap: () => _showCropDetails(
+        context,
+        crop,
+        r,
+        rank: analysisNumber(crop['rank'])?.round() ?? order,
+      ),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(

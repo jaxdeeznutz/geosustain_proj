@@ -263,7 +263,7 @@ class _CropAssessmentCard extends StatelessWidget {
           ),
         ],
         TextButton.icon(
-          onPressed: () => _showCropDetails(context, crop, record),
+          onPressed: () => _showCropDetails(context, crop, record, rank: rank),
           icon: const Icon(Icons.open_in_new, size: 18),
           label: const Text('View details'),
         ),
@@ -324,101 +324,14 @@ void _analysisDetails(
   );
 }
 
+/// "See details" / "View details": rank 1 opens the recommended-crop sheet with
+/// environmental factors; every other rank opens the secondary sheet.
 void _showCropDetails(
   BuildContext context,
   Map<String, dynamic> crop,
-  Map<String, dynamic> record,
-) {
-  if (record['scoring_version'] != null) {
-    showModalBottomSheet(context: context, isScrollControlled: true, showDragHandle: true,
-      backgroundColor: const Color(0xFFF5FBF5),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(28))),
-      builder: (_) => _ReferenceCropDetails(crop:crop,record:record));
-    return;
-  }
-  final condition = cropConditions(crop);
-  final scoring = analysisMapValue(crop['score_breakdown']);
-  final rain = analysisMapValue(condition['rainfall_context']);
-  _analysisDetails(context, '${crop['crop']} details', [
-    const _AnalysisParagraph(
-      'Crop growing requirements — condition comparisons, not model contributions.',
-    ),
-    _AnalysisParagraph(cropReason(crop, record)),
-    if (condition['scope'] == 'ranking_sample')
-      const _AnalysisParagraph(
-        'These values belong to the recorded sample used for the crop ranking. Land conditions below the crop list are farm averages.',
-      ),
-    for (final factor in analysisListValue(
-      condition['factors'],
-    ).whereType<Map>())
-      _AnalysisParagraph(
-        '${factor['label']}: ${analysisNumber(factor['value'])?.toStringAsFixed(2) ?? 'unavailable'} ${factor['unit'] ?? ''}. '
-        'Preferred range: ${factor['preferred_min']}–${factor['preferred_max']} ${factor['unit'] ?? ''}.',
-      ),
-    if (rain.isNotEmpty)
-      _AnalysisParagraph(
-        'Recent 30-day rainfall: ${rain['recent_30d_mm']} mm. Rainfall used in crop scoring: ${rain['scoring_mm']} mm. ${rain['method']}.',
-      ),
-    if (condition['note'] != null) _AnalysisParagraph('${condition['note']}'),
-    if (crop['season_note'] != null)
-      _AnalysisParagraph('${crop['season_note']}'),
-    const Divider(),
-    const _AnalysisParagraph('Why the model recommended this crop'),
-    const _AnalysisParagraph(
-      'This model provides overall feature importance only. It does not provide crop-specific contributions or show which inputs increased or decreased this prediction.',
-    ),
-    if (crop['model_probability_pct'] != null)
-      _AnalysisParagraph(
-        'Recorded model class score: ${crop['model_probability_pct']}%. This is separate from the final crop suitability score and is not a harvest probability.',
-      ),
-    if (analysisListValue(crop['model_labels']).isNotEmpty)
-      _AnalysisParagraph(
-        'Model class labels mapped to this crop: ${analysisListValue(crop['model_labels']).join(', ')}.',
-      ),
-    if (scoring['model_class_available'] == false)
-      const _AnalysisParagraph(
-        'The trained model has no mapped class for this crop. The existing scoring rule used a neutral model component.',
-      ),
-    if (scoring.isNotEmpty) ...[
-      _AnalysisParagraph(
-        'Before display calibration: model component ${scoring['model_component']} × ${scoring['ml_weight']}; '
-        'environment component ${scoring['environment_component']} × ${scoring['environment_weight']}; rule penalty ${scoring['rule_penalty']}. '
-        'Raw score after limits: ${scoring['raw_score']}.',
-      ),
-      _AnalysisParagraph(
-        '${scoring['display_method']}. These are scoring rules, not learned feature contributions.',
-      ),
-    ],
-    const _AnalysisParagraph(
-      'The score compares crop fit; it is not a harvest probability. Good match: 75–100; possible match: 50–<75; limited match: 25–<50; poor match: below 25. The existing thresholds are unchanged.',
-    ),
-    if ('${crop['crop']}'.toLowerCase() ==
-        '${record['predicted_crop']}'.toLowerCase()) ...[
-      if (record['analysis_summary'] != null) ...[
-        const Divider(),
-        const _AnalysisParagraph('Original saved analysis summary'),
-        _AnalysisParagraph('${record['analysis_summary']}'),
-      ],
-      if (condition.isEmpty &&
-          analysisMapValue(record['xai_explanation']).isNotEmpty) ...[
-        const _AnalysisParagraph(
-          'Original saved condition notes. Older records may not identify which crop these notes describe; they are not model feature contributions.',
-        ),
-        for (final text in [
-          analysisMapValue(record['xai_explanation'])['plain_summary'],
-          analysisMapValue(record['xai_explanation'])['summary'],
-          ...analysisListValue(
-            analysisMapValue(record['xai_explanation'])['supporting_factors'],
-          ),
-          ...analysisListValue(
-            analysisMapValue(record['xai_explanation'])['limiting_factors'],
-          ),
-        ].where((text) => text != null && '$text'.trim().isNotEmpty).toSet())
-          _AnalysisParagraph('$text'),
-      ],
-    ],
-  ]);
-}
+  Map<String, dynamic> record, {
+  int? rank,
+}) => showCropDetailsSheet(context, crop, record, rank: rank);
 
 /// Refuse unbound or mismatched explanations instead of borrowing the current model.
 Map<String, dynamic> verifiedModelExplanation(Map<String, dynamic> record) {

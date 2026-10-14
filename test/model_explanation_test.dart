@@ -272,8 +272,9 @@ void main() {
     await tester.ensureVisible(find.text('View details').first);
     await tester.tap(find.text('View details').first);
     await tester.pumpAndSettle();
-    expect(find.text('Rice details'), findsOneWidget);
-    await tester.tap(find.text('Close'));
+    expect(find.text('Recommended'), findsOneWidget);
+    expect(find.text('Environmental Factors'), findsOneWidget);
+    await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
     expect(record['top_crop_recommendations']!.length, 2);
     expect(tester.takeException(), isNull);

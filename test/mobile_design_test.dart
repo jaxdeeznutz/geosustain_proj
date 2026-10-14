@@ -167,7 +167,7 @@ void main() {
       await tester.tap(find.textContaining('1. Rice').first);
       await tester.pumpAndSettle();
       await capture('crop-details');
-      await tester.tap(find.text('Close'));
+      await tester.tap(find.byTooltip('Close'));
       await tester.pumpAndSettle();
       await tester.dragUntilVisible(
         find.text('View detailed explanation').hitTestable(),
