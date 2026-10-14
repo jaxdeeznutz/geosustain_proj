@@ -459,7 +459,7 @@ class _MapAnalyzePageState extends State<MapAnalyzePage> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
+    return GeoSafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(14, 0, 14, 18),
         children: [

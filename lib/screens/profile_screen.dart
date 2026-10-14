@@ -21,7 +21,7 @@ class ProfilePage extends StatelessWidget {
       subtitle: subtitle,
       onTap: tap,
     );
-    return SafeArea(
+    return GeoSafeArea(
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
         children: [
@@ -425,7 +425,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final avatarBytes = pickedPhotoBytes ?? widget.state.profilePhotoBytes;
     return Scaffold(
       backgroundColor: bg,
-      body: SafeArea(
+      body: GeoSafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
@@ -595,7 +595,7 @@ class SavedAnalysesPage extends StatelessWidget {
     final rows = state.savedAnalyses;
     return Scaffold(
       backgroundColor: bg,
-      body: SafeArea(
+      body: GeoSafeArea(
         child: Column(
           children: [
             GeoSustainHeader(
@@ -659,7 +659,7 @@ class ReportsListPage extends StatelessWidget {
     final rows = state.generatedReports;
     return Scaffold(
       backgroundColor: bg,
-      body: SafeArea(
+      body: GeoSafeArea(
         child: Column(
           children: [
             GeoSustainHeader(
@@ -734,7 +734,7 @@ class SavedAnalysisDetailPage extends StatelessWidget {
     final lon = record['center_lon'] ?? record['lon'];
     return Scaffold(
       backgroundColor: bg,
-      body: SafeArea(
+      body: GeoSafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [

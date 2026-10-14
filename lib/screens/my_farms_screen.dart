@@ -98,7 +98,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
 
   @override
   Widget build(BuildContext context) => Scaffold(
-    body: SafeArea(
+    body: GeoSafeArea(
       child: RefreshIndicator(
         onRefresh: _load,
         child: ListView(
@@ -107,10 +107,28 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
             GeoSustainHeader(
               title: 'My Farms',
               state: widget.state,
-              trailing: GeoHeaderAction(
-                tooltip: 'Search farms',
-                onPressed: () => setState(() => _showSearch = !_showSearch),
-                icon: Icons.search,
+              showNotifications: false,
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  GeoHeaderAction(
+                    tooltip: 'Search farms',
+                    onPressed: () =>
+                        setState(() => _showSearch = !_showSearch),
+                    icon: Icons.search,
+                  ),
+                  const SizedBox(width: 8),
+                  GeoHeaderAction(
+                    tooltip: 'Create a farm',
+                    accent: true,
+                    onPressed: () => showLandMethodPicker(
+                      context,
+                      widget.state,
+                      _onAnalyzed,
+                    ),
+                    icon: Icons.add,
+                  ),
+                ],
               ),
             ),
             const FarmBanner(

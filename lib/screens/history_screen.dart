@@ -100,7 +100,7 @@ class _HistoryPageState extends State<HistoryPage> {
       );
       final busy = loading || opening || widget.state.historyLoading;
       final failure = error ?? widget.state.historyError;
-      return SafeArea(
+      return GeoSafeArea(
         child: Column(
           children: [
             GeoSustainHeader(

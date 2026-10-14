@@ -350,7 +350,7 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
       final busy =
           _refreshing || _selecting || state.loading || state.historyLoading;
       final error = _error ?? state.analysisError ?? state.historyError;
-      return SafeArea(
+      return GeoSafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,
           child: ListView(

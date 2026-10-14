@@ -245,7 +245,7 @@ class ReportPage extends StatelessWidget {
         : const [];
     return Scaffold(
       backgroundColor: bg,
-      body: SafeArea(
+      body: GeoSafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
@@ -425,7 +425,7 @@ class AdminDashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: bg,
-      body: SafeArea(
+      body: GeoSafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
@@ -517,7 +517,7 @@ class NotificationsPage extends StatelessWidget {
     if (st == null) {
       return Scaffold(
         backgroundColor: bg,
-        body: SafeArea(
+        body: GeoSafeArea(
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
@@ -554,7 +554,7 @@ class NotificationsPage extends StatelessWidget {
         );
         return Scaffold(
           backgroundColor: bg,
-          body: SafeArea(
+          body: GeoSafeArea(
             child: RefreshIndicator(
               onRefresh: () async {
                 await st.refreshLiveWeather();

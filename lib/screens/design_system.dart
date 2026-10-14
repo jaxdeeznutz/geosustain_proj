@@ -12,7 +12,9 @@ abstract final class GeoDesign {
   static const smallRadius = 16.0;
   static const buttonRadius = 17.0;
   static const buttonHeight = 54.0;
-  static const headerHeight = 80.0;
+  static const headerHeight = 84.0;
+  static const headerCurve = 22.0;
+  static const headerAction = Color(0xFF3FAA66);
   static const actionSize = 48.0;
   static const pagePadding = 16.0;
 }
@@ -74,13 +76,49 @@ class GeoEqualGrid extends StatelessWidget {
   }
 }
 
-/// Shared by both in-page headers and Scaffold.appBar. No screen-specific art.
+/// Paints the dark-green status-bar strip and then lays the page out below it,
+/// so the header (see [GeoSustainHeader]) reads as one green block that runs
+/// from the top edge of the screen. Drop-in replacement for [SafeArea] on any
+/// page that starts with an embedded header.
+class GeoSafeArea extends StatelessWidget {
+  final Widget child;
+  final bool bottom;
+  const GeoSafeArea({super.key, required this.child, this.bottom = true});
+  @override
+  Widget build(BuildContext context) {
+    final top = MediaQuery.paddingOf(context).top;
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: const SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        statusBarBrightness: Brightness.dark,
+      ),
+      child: Column(
+        children: [
+          Container(height: top, color: GeoDesign.darkGreen),
+          Expanded(
+            child: MediaQuery.removePadding(
+              context: context,
+              removeTop: true,
+              child: SafeArea(top: false, bottom: bottom, child: child),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Main header used by every mobile page: solid green bar with the leaf logo,
+/// app name, page subtitle and round action buttons. The page below it has
+/// rounded top corners that overlap the bar. Shared by in-page headers and
+/// Scaffold.appBar. No screen-specific art.
 class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final Widget? trailing;
   final VoidCallback? back;
   final AnalysisState? state;
-  final bool embedded, nested, showMenu;
+  final bool embedded, nested, showMenu, showNotifications;
   const GeoSustainHeader({
     super.key,
     required this.title,
@@ -90,9 +128,11 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
     this.embedded = true,
     this.nested = false,
     this.showMenu = true,
+    this.showNotifications = true,
   });
   @override
-  Size get preferredSize => const Size.fromHeight(GeoDesign.headerHeight);
+  Size get preferredSize =>
+      const Size.fromHeight(GeoDesign.headerHeight + GeoDesign.headerCurve);
   @override
   Widget build(BuildContext context) {
     final effectiveState =
@@ -102,16 +142,12 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
         (nested && Navigator.canPop(context)
             ? () => Navigator.maybePop(context)
             : null);
-    final header = Container(
+    final pageColor = Theme.of(context).scaffoldBackgroundColor;
+    final bar = Container(
       height: GeoDesign.headerHeight,
       width: MediaQuery.sizeOf(context).width,
+      color: green,
       padding: const EdgeInsets.symmetric(horizontal: GeoDesign.pagePadding),
-      decoration: const BoxDecoration(
-        color: green,
-        borderRadius: BorderRadius.vertical(
-          bottom: Radius.circular(GeoDesign.cardRadius),
-        ),
-      ),
       child: Theme(
         data: Theme.of(context).copyWith(
           iconButtonTheme: IconButtonThemeData(
@@ -121,7 +157,7 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
               maximumSize: const Size.square(GeoDesign.actionSize),
               padding: EdgeInsets.zero,
               foregroundColor: Colors.white,
-              backgroundColor: Colors.white.withValues(alpha: .13),
+              backgroundColor: Colors.black.withValues(alpha: .2),
               shape: const CircleBorder(),
             ),
           ),
@@ -138,8 +174,8 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              const Icon(Icons.eco, color: Colors.white, size: 30),
-              const SizedBox(width: 8),
+              const Icon(Icons.eco, color: Colors.white, size: 34),
+              const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -160,18 +196,19 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
                     Text(
                       title,
                       maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 11,
-                        height: 1.2,
+                        fontSize: 12,
+                        height: 1.15,
                       ),
                     ),
                   ],
                 ),
               ),
               if (trailing != null) ...[const SizedBox(width: 4), trailing!],
-              if (title != 'Notifications') ...[
-                const SizedBox(width: 4),
+              if (showNotifications && title != 'Notifications') ...[
+                const SizedBox(width: 6),
                 GeoHeaderAction(
                   icon: Icons.notifications_none_rounded,
                   tooltip: 'Notifications',
@@ -188,26 +225,49 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
     );
+    // The page's own background, with rounded top corners, overlaps the bar.
+    final curve = Container(
+      height: GeoDesign.headerCurve,
+      width: MediaQuery.sizeOf(context).width,
+      color: green,
+      alignment: Alignment.bottomCenter,
+      child: Container(
+        height: GeoDesign.headerCurve,
+        decoration: BoxDecoration(
+          color: pageColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
+        ),
+      ),
+    );
+    final block = Column(mainAxisSize: MainAxisSize.min, children: [bar, curve]);
     if (!embedded) {
-      return ClipRRect(
-        borderRadius: const BorderRadius.vertical(
-          bottom: Radius.circular(GeoDesign.cardRadius),
+      return AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          statusBarBrightness: Brightness.dark,
         ),
         child: ColoredBox(
           color: green,
-          child: SafeArea(bottom: false, child: header),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: MediaQuery.paddingOf(context).top,
+                color: GeoDesign.darkGreen,
+              ),
+              block,
+            ],
+          ),
         ),
       );
     }
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: SizedBox(
-        height: GeoDesign.headerHeight,
-        child: OverflowBox(
-          minWidth: MediaQuery.sizeOf(context).width,
-          maxWidth: MediaQuery.sizeOf(context).width,
-          child: header,
-        ),
+    return SizedBox(
+      height: GeoDesign.headerHeight + GeoDesign.headerCurve,
+      child: OverflowBox(
+        minWidth: MediaQuery.sizeOf(context).width,
+        maxWidth: MediaQuery.sizeOf(context).width,
+        child: block,
       ),
     );
   }
@@ -217,16 +277,22 @@ class GeoHeaderAction extends StatelessWidget {
   final IconData icon;
   final String tooltip;
   final VoidCallback? onPressed;
+  /// Lighter green circle (used for the "+" create action).
+  final bool accent;
   const GeoHeaderAction({
     super.key,
     required this.icon,
     required this.tooltip,
     this.onPressed,
+    this.accent = false,
   });
   @override
   Widget build(BuildContext context) => IconButton(
     tooltip: tooltip,
     onPressed: onPressed,
+    style: accent
+        ? IconButton.styleFrom(backgroundColor: GeoDesign.headerAction)
+        : null,
     icon: Icon(icon, size: 22),
   );
 }

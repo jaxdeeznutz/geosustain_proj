@@ -53,7 +53,7 @@ class HomePage extends StatelessWidget {
         .where((r) => r['verification_status'] == 'pending')
         .length;
     final weather = state.liveWeather;
-    return SafeArea(
+    return GeoSafeArea(
       child: RefreshIndicator(
         onRefresh: () async {
           await Future.wait([
