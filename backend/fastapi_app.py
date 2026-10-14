@@ -916,6 +916,7 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         # overwhelming Earth Engine/external sources while reducing the old
         # multi-minute sequential wait substantially.
         ordered_results = [None] * len(sample_points)
+        model_failures = []
         with ThreadPoolExecutor(max_workers=min(4, len(sample_points))) as executor:
             future_to_index = {
                 executor.submit(analyze_location, sample_lat, sample_lon, active_crops): index
@@ -927,6 +928,10 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
                     ordered_results[index] = future.result()
                 except Exception as exc:
                     logging.getLogger('uvicorn.error').warning('Polygon sample failed sample=%s type=%s', index + 1, type(exc).__name__)
+                    if isinstance(exc, ModelRankingUnavailable):
+                        model_failures.append(str(exc))
+        if model_failures:
+            raise ModelRankingUnavailable(' '.join(sorted(set(model_failures))))
         sample_results = [item for item in ordered_results if item is not None]
         if not sample_results:
             raise RuntimeError("All polygon sample analyses failed.")

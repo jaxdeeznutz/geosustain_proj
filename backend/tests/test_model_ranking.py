@@ -44,13 +44,19 @@ def test_missing_or_invalid_model_output_never_falls_back_to_rule_ranking(snapsh
         attach_model_ranking({'crop_compatibility_pct': 100}, snapshots)
 
 
-def test_real_model_drives_pipeline_and_polygon_aggregation(monkeypatch):
+@pytest.mark.parametrize('weather_available', [True, False])
+def test_real_model_drives_pipeline_and_polygon_aggregation(monkeypatch, weather_available):
     import rainfallDatasets as env
     import environmental_pipeline as pipeline
     assert env.MODEL is not None
     for function, value in [('get_soil_ph', 6), ('get_elevation', 100), ('get_ndvi', .65), ('get_rainfall', 110)]:
         monkeypatch.setattr(env, function, lambda *args, value=value: (value, 'measured', 'test provider'))
-    monkeypatch.setattr(env, 'get_live_weather', lambda *args: (80, 'Cloudy', 1, 30, 'measured'))
+    monkeypatch.setattr(env, 'get_live_weather', lambda *args: (80, 'Cloudy', 1, 30, 'measured' if weather_available else 'fallback_default'))
+    if not weather_available:
+        from unittest.mock import Mock
+        response = Mock()
+        response.json.return_value = {'current': {'relative_humidity_2m': 73}}
+        monkeypatch.setattr(env.requests, 'get', Mock(return_value=response))
     monkeypatch.setattr(env, 'get_soil_nutrients', lambda *args: (50, 35, 40, {'phosphorus': 'estimated_proxy', 'potassium': 'estimated_proxy'}))
     monkeypatch.setattr(pipeline, 'terrain_slope', lambda *args: 3)
     monkeypatch.setattr(pipeline, 'climate_normals', lambda *args: {

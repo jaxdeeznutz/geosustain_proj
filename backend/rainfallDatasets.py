@@ -6,6 +6,7 @@ import requests
 import os
 import json
 import hashlib
+import math
 import io
 import pandas as pd
 import time
@@ -331,19 +332,14 @@ def _open_meteo_recent_monthly_rainfall(lat, lon):
             daily = data.get("daily", {}) or {}
             vals = daily.get("precipitation_sum", []) or []
 
-            numeric_vals = []
-            for value in vals:
-                if value is None:
-                    continue
-                try:
-                    numeric_vals.append(float(value))
-                except (TypeError, ValueError):
-                    pass
-
-            if numeric_vals:
-                total = round(sum(numeric_vals[-30:]), 2)
-                # 0 mm is a valid rainfall total, so do not treat it as failure.
-                return max(0.0, total)
+            # Require the exact 30 completed dates. Do not sum forecast days or
+            # silently turn a partial series into a full-month total.
+            dates = daily.get("time", []) or []
+            by_date = dict(zip(dates, vals))
+            expected = [(start_date + timedelta(days=i)).isoformat() for i in range(30)]
+            numeric_vals = [float(by_date[day]) for day in expected]
+            if all(math.isfinite(value) and value >= 0 for value in numeric_vals):
+                return round(sum(numeric_vals), 2)
         except Exception as exc:
             print(f"Open-Meteo rainfall failed for {url.split('?')[0]}: {exc}")
 
@@ -375,13 +371,16 @@ def get_rainfall(lat, lon):
         ensure_earth_engine_initialized()
         chirps = ee.ImageCollection('UCSB-CHG/CHIRPS/DAILY')
         point  = ee.Geometry.Point([lon, lat])
-        val    = (chirps.filterBounds(point).filterDate(start, end)
+        window = chirps.filterBounds(point).filterDate(start, end)
+        if window.size().getInfo() != 30:
+            raise ValueError('CHIRPS does not yet cover all 30 requested days')
+        val    = (window
                         .sum().reduceRegion(
                             reducer=ee.Reducer.mean(),
                             geometry=point.buffer(750),
                             scale=5000,
                             bestEffort=True
-                        ).get('precipitation').getInfo())
+                        ).get('precipitation', None).getInfo())
         if val is not None:
             total = round(float(val), 2)
             if total >= 0:

@@ -10,6 +10,27 @@ from model_ranking import attach_model_ranking, ModelRankingUnavailable
 
 logger = logging.getLogger('uvicorn.error')
 
+
+def current_humidity(weather, lat, lon):
+    """Use provider humidity, then a coordinate-specific weather model; never a constant."""
+    value = number(weather[0]) if weather[4] == 'measured' else None
+    source = 'OpenWeather current'
+    if value is None or not 0 <= value <= 100:
+        import requests
+        value = None
+        source = 'Open-Meteo current relative humidity (weather model)'
+        try:
+            response = requests.get('https://api.open-meteo.com/v1/forecast', params={
+                'latitude': lat, 'longitude': lon, 'current': 'relative_humidity_2m'}, timeout=10)
+            response.raise_for_status()
+            value = number(response.json().get('current', {}).get('relative_humidity_2m'))
+            if value is not None and not 0 <= value <= 100:
+                value = None
+        except Exception as exc:
+            logger.warning('Humidity backup unavailable type=%s', type(exc).__name__)
+    return {'value': value, 'unit': '%', 'period': 'current',
+            'quality': 'modelled' if value is not None else 'unavailable', 'source': source}
+
 def climate_normals(lat, lon):
     """Five complete calendar years, explicitly a short baseline, not a 30-year normal."""
     import rainfallDatasets as env
@@ -68,8 +89,7 @@ def analyze_location(lat, lon, active_crops=None):
     measurements['slope'] = {'value':number(raw.get('slope')),'unit':'%','period':'terrain',
         'quality':'modelled','source':'SRTM 30m / ee.Terrain.slope; tan(degrees*pi/180)*100'}
     weather = raw.get('weather') or (None,None,None,None,'unavailable')
-    measurements['humidity_current'] = {'value':number(weather[0]) if weather[4]=='measured' else None,
-        'unit':'%','period':'current','quality':weather[4],'source':'OpenWeather current; not used as climate humidity'}
+    measurements['humidity_current'] = current_humidity(weather, lat, lon)
     if not any(m.get('value') is not None for k,m in measurements.items() if k in ('soil_ph','elevation','ndvi','temperature','rainfall')):
         raise RuntimeError('environmental_datasets_unavailable')
     for key, m in measurements.items():
@@ -97,6 +117,10 @@ def analyze_location(lat, lon, active_crops=None):
             names = list(env.MODEL.feature_names_in_)
             if set(names) != set(inputs):
                 raise ModelRankingUnavailable('The saved model feature contract does not match the environmental inputs.')
+            missing = [name for name, value in inputs.items() if number(value) is None]
+            if missing:
+                logger.warning('Model inputs unavailable features=%s', ', '.join(missing))
+                raise ModelRankingUnavailable('Required model inputs unavailable: ' + ', '.join(missing) + '. Please retry when environmental services recover.')
             if all(number(v) is not None for v in inputs.values()):
                 inputs = {name: float(inputs[name]) for name in names}
                 frame = env.pd.DataFrame([inputs], columns=names)
@@ -108,6 +132,8 @@ def analyze_location(lat, lon, active_crops=None):
                 snapshot['role'] = 'crop_ranking'
                 snapshot['training_provenance'] = 'Kaggle crop data plus synthetic GIS features and local rows; no Panabo field validation established.'
                 snapshot['samples'][0].update(location={'lat':lat,'lon':lon},data_quality=deepcopy(quality),nutrient_quality=nq)
+    except ModelRankingUnavailable:
+        raise
     except Exception as exc:
         logger.exception('Model prediction failed type=%s',type(exc).__name__)
         raise ModelRankingUnavailable('The trained crop model could not complete this analysis. Please retry.') from exc

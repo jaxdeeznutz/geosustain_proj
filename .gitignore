@@ -20,3 +20,5 @@ venv/
 
 .tools/
 docs/research/*.pdf
+# Unverified user-provided soil records: local reference only.
+data/cagro_pending/
