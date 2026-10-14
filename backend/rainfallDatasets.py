@@ -10,6 +10,7 @@ import io
 import pandas as pd
 import time
 import threading
+import logging
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from google.oauth2 import service_account
@@ -76,16 +77,20 @@ def ensure_earth_engine_initialized():
         if time.monotonic() < _EE_RETRY_AFTER:
             raise RuntimeError('Earth Engine initialization temporarily unavailable')
         try:
-            ee.data.setDeadline(30000)
             ee.data.setMaxRetries(1)
             initialize_earth_engine()
+            # setDeadline rebuilds the Cloud API resource and requires the
+            # requests session created by ee.Initialize. Calling it on a cold
+            # process raises AssertionError before authentication can run.
+            ee.data.setDeadline(30000)
             _EE_INITIALIZED = True
             _EE_INITIALIZATION_ERROR = None
             return True
         except Exception as exc:
             _EE_INITIALIZATION_ERROR = exc
             _EE_RETRY_AFTER = time.monotonic() + 60
-            print(f'Earth Engine initialization unavailable: {type(exc).__name__}')
+            logging.getLogger('uvicorn.error').exception(
+                'Earth Engine initialization failed type=%s', type(exc).__name__)
             raise
 
 

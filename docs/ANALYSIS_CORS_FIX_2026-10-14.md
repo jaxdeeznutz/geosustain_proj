@@ -115,3 +115,25 @@ key if the response is lost, to avoid duplicate records.
 CHIRPS missing-precipitation warnings preceded the crash but were handled by the
 existing fallback. They are not the JSONB exception. No rainfall values or provider
 fallback rules were changed in this fix. Missing measurements remain unavailable.
+
+## Follow-up: cold-start Earth Engine failure
+
+Production revision 9731c46 passed live health/CORS checks, but the user's next
+analysis failed earlier with HTTP 503: all nine samples failed after
+`Earth Engine initialization unavailable: AssertionError`. This is a separate
+startup bug, not a recurrence of the datetime serialization error.
+
+The installed earthengine-api 1.7.47 reproduces that assertion when
+`ee.data.setDeadline(30000)` runs before `ee.Initialize`: setting the deadline
+rebuilds the Cloud API resource, which requires an initialized requests session.
+`backend/rainfallDatasets.py` now sets the retry limit, initializes Earth Engine,
+then sets the deadline. The existing lock, one-minute failure cooldown and
+30-second provider deadline are retained. Initialization failures now log their
+traceback rather than only the exception type.
+
+`backend/tests/test_earth_engine_startup.py` reproduces the assertion using the
+real installed deadline implementation with network discovery mocked, then checks
+the corrected cold start, concurrent workers and failed-authentication cooldown.
+No credential changes or fabricated environmental values are part of this fix.
+Open-Meteo's reported overload is an independent upstream outage; it does not
+explain the Earth Engine assertion.
