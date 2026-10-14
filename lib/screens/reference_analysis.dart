@@ -17,9 +17,11 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
   int tab = 0;
   @override
   Widget build(BuildContext context) {
-    final r = widget.record, crops = assessedCrops(widget.record);
-    final score = analysisNumber(r['crop_compatibility_pct']);
+    final r = widget.record, crops = rankedCropRecommendations(widget.record);
+    final best = crops.isEmpty ? <String, dynamic>{} : crops.first;
+    final score = analysisNumber(best['compatibility_pct']);
     final modern = r['scoring_version'] != null;
+    final modelRanked = isModelRanked(r);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -99,11 +101,15 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
         ),
         if (tab == 0)
           _AnalysisSection(
-            title: 'Land suitability',
+            title: modelRanked
+                ? 'Top model recommendation'
+                : 'Land suitability',
             icon: Icons.spa_outlined,
             children: [
               Text(
-                modern
+                modelRanked
+                    ? 'RANDOM FOREST MODEL SCORE'
+                    : modern
                     ? 'REFERENCE-BASED SCREENING'
                     : farmerLandType(r).toUpperCase(),
                 style: const TextStyle(
@@ -119,7 +125,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                   Text(
                     score == null
                         ? 'Insufficient data'
-                        : '${score.toStringAsFixed(1)}%',
+                        : '${score.toStringAsFixed(1)}${modern && !modelRanked ? '/100' : '%'}',
                     style: const TextStyle(
                       fontSize: 29,
                       fontWeight: FontWeight.w800,
@@ -127,7 +133,11 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                     ),
                   ),
                   Text(
-                    '${r['suitability_level'] ?? (score == null ? '' : farmerSuitability(score))}',
+                    modelRanked
+                        ? '${best['crop'] ?? ''}'
+                        : modern
+                        ? 'Assessed-condition index'
+                        : (score == null ? '' : farmerSuitability(score)),
                     style: const TextStyle(fontSize: 12, color: green),
                   ),
                 ],
@@ -145,8 +155,18 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                   ),
                 ),
               AnalysisReadableText(
-                '${r['analysis_summary'] ?? analysisMapValue(r['xai_explanation'])['summary'] ?? 'No summary was recorded.'}',
+                '${best['explanation'] ?? r['analysis_summary'] ?? analysisMapValue(r['xai_explanation'])['summary'] ?? 'No summary was recorded.'}',
               ),
+              if (modelRanked)
+                const Text(
+                  'Model class score, not a harvest probability. Nutrient inputs include estimates.',
+                  style: TextStyle(fontSize: 12),
+                )
+              else if (modern)
+                const Text(
+                  'Saved reference-based analysis. Run a new analysis to get model-ranked recommendations.',
+                  style: TextStyle(fontSize: 12),
+                ),
             ],
           ),
         if (tab == 0 || tab == 1)
@@ -155,17 +175,13 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             icon: Icons.spa_outlined,
             children: [
               if (crops.isEmpty) const Text('No crop assessment was saved.'),
-              for (final entry
-                  in (tab == 0 ? crops.take(3) : crops).toList().indexed)
+              for (final entry in crops.indexed)
                 _cropRow(entry.$2, entry.$1 + 1, r),
-              if (tab == 0 && crops.length > 3)
-                TextButton(
-                  onPressed: () => setState(() => tab = 1),
-                  child: Text('See all ${crops.length} crops'),
-                ),
-              if (modern)
-                const Text(
-                  'Ordered by evidence completeness, then limiting-factor index. Equal results share a rank.',
+              if (crops.isNotEmpty)
+                Text(
+                  modelRanked
+                      ? 'Top ${crops.length}, highest model score first.'
+                      : 'Top ${crops.length}, highest recorded score first.',
                   style: TextStyle(fontSize: 12, color: Color(0xFF5D6A61)),
                 ),
             ],
@@ -247,7 +263,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
               ),
             ],
           ),
-          if (!modern)
+          if (!modern || modelRanked)
             ModelExplanationCard(record: r)
           else
             _LegacyModelSummary(record: r),
@@ -282,12 +298,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
   ) {
     final score = analysisNumber(crop['compatibility_pct']);
     return InkWell(
-      onTap: () => _showCropDetails(
-        context,
-        crop,
-        r,
-        rank: analysisNumber(crop['rank'])?.round() ?? order,
-      ),
+      onTap: () => _showCropDetails(context, crop, r, rank: order),
       child: Padding(
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
@@ -299,7 +310,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '${crop['rank'] ?? order}. ${crop['crop']}',
+                    '$order. ${crop['crop']}',
                     style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w700,
@@ -309,6 +320,10 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                   Text(
                     score == null
                         ? 'Insufficient data'
+                        : isModelRanked(r)
+                        ? '${score.toStringAsFixed(1)}% · Model score'
+                        : r['scoring_version'] != null
+                        ? '${score.toStringAsFixed(1)}/100 · Assessed-condition index'
                         : '${score.toStringAsFixed(1)}% · ${crop['classification'] ?? farmerSuitability(score)}',
                     style: const TextStyle(
                       fontSize: 12,
@@ -429,12 +444,16 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                           Text(
                             score == null
                                 ? 'Insufficient data'
-                                : 'Screening index: ${score.toStringAsFixed(1)}%',
+                                : isModelRanked(widget.record)
+                                ? 'Model score: ${score.toStringAsFixed(1)}%'
+                                : 'Screening index: ${score.toStringAsFixed(1)}/100',
                             style: const TextStyle(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 8),
-                          const Text(
-                            'This index compares documented requirements with the available observations. It is not a harvest probability, yield forecast, or model prediction.',
+                          Text(
+                            isModelRanked(widget.record)
+                                ? 'The Random Forest class probability determines this ranking. The environmental comparisons do not adjust it. This is not a harvest probability.'
+                                : 'This index compares documented requirements with the available observations. It is not a harvest probability, yield forecast, or model prediction.',
                           ),
                         ],
                       ),
@@ -475,7 +494,9 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                         ),
                     if (tab == 2) ...[
                       _AnalysisSection(
-                        title: 'Suitability calculation',
+                        title: isModelRanked(widget.record)
+                            ? 'Model ranking method'
+                            : 'Suitability calculation',
                         children: [
                           Text('${crop['explanation']}'),
                           const SizedBox(height: 10),

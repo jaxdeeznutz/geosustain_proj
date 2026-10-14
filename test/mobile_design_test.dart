@@ -274,6 +274,45 @@ void main() {
         await capture(page.key);
         await tester.pumpWidget(const SizedBox());
       }
+      final modelCrops = [
+        for (final entry in {
+          'Durian': 10.0,
+          'Cacao': 20.0,
+          'Rice': 25.0,
+          'Rubber': 8.0,
+          'Coconut': 5.0,
+          'Mango': 12.0,
+          'Banana': 15.0,
+        }.entries)
+          {
+            'crop': entry.key,
+            'compatibility_pct': entry.value,
+            'classification': 'Model score',
+          },
+      ];
+      await mount(
+        Scaffold(
+          body: SingleChildScrollView(
+            child: ReferenceAnalysisContent(
+              state: nestedState,
+              record: {
+                ...record,
+                'recommendation_basis': 'model_probability',
+                'scoring_version': 'random-forest-probability-v1',
+                'crop_assessments': modelCrops,
+                'analysis_summary':
+                    'Model-ranked crops; environmental comparisons do not change this ranking.',
+              },
+            ),
+          ),
+        ),
+      );
+      expect(find.text('1. Rice'), findsOneWidget);
+      expect(find.text('5. Durian'), findsOneWidget);
+      expect(find.text('6. Rubber'), findsNothing);
+      expect(find.text('Top model recommendation'), findsOneWidget);
+      await capture('model-ranking');
+      expect(tester.takeException(), isNull);
     });
   }
 }

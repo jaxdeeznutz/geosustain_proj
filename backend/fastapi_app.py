@@ -15,6 +15,7 @@ import requests
 from fastapi import Request, Depends, HTTPException, status, Header, Query
 from http_config import CorsFastAPI
 from json_safe import json_safe
+from model_ranking import ModelRankingUnavailable
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -1661,6 +1662,9 @@ def _perform_mobile_analysis(body, user, idempotency_key):
         result, analysis_source = build_analysis_result(body=payload)
     except ValueError as exc:
         raise HTTPException(status_code=400,detail=str(exc))
+    except ModelRankingUnavailable as exc:
+        logging.getLogger('uvicorn.error').exception('Model ranking unavailable user=%s farm=%s', user['id'], body.farm_id)
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
     except RuntimeError as exc:
         logging.getLogger('uvicorn.error').exception('Analysis engine unavailable user=%s farm=%s type=%s', user['id'], body.farm_id, type(exc).__name__)
         raise HTTPException(status_code=503,detail='Environmental datasets are unavailable. The project team should check Earth Engine access and server configuration.')

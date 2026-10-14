@@ -637,7 +637,7 @@ class AnalysisCropsCard extends StatelessWidget {
   const AnalysisCropsCard({super.key, required this.record});
   @override
   Widget build(BuildContext context) {
-    final crops = assessedCrops(record);
+    final crops = rankedCropRecommendations(record);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [

@@ -485,7 +485,12 @@ class MatchStatusBadge extends StatelessWidget {
 class _ScoreDial extends StatelessWidget {
   final double? score;
   final double size;
-  const _ScoreDial({required this.score, required this.size});
+  final String label;
+  const _ScoreDial({
+    required this.score,
+    required this.size,
+    this.label = 'Suitability',
+  });
   @override
   Widget build(BuildContext context) {
     final value = ((score ?? 0).clamp(0, 100)) / 100;
@@ -499,7 +504,7 @@ class _ScoreDial extends StatelessWidget {
     return Semantics(
       label: score == null
           ? 'Suitability unavailable'
-          : 'Suitability ${_cropNum(score)} percent',
+          : '$label ${_cropNum(score)} percent',
       child: ExcludeSemantics(
         child: SizedBox(
           width: size,
@@ -531,9 +536,9 @@ class _ScoreDial extends StatelessWidget {
                           color: CropSheetStyle.ink,
                         ),
                       ),
-                      const Text(
-                        'Suitability',
-                        style: TextStyle(
+                      Text(
+                        label,
+                        style: const TextStyle(
                           fontSize: 11,
                           color: CropSheetStyle.muted,
                         ),
@@ -554,11 +559,13 @@ class _ScoreDial extends StatelessWidget {
 class SuitabilityScoreCard extends StatelessWidget {
   final double? score;
   final String title, description;
+  final String scoreLabel;
   const SuitabilityScoreCard({
     super.key,
     required this.score,
     required this.title,
     required this.description,
+    this.scoreLabel = 'Suitability',
   });
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -594,7 +601,11 @@ class SuitabilityScoreCard extends StatelessWidget {
           ),
         ],
       );
-      final dial = _ScoreDial(score: score, size: stacked ? 112 : 104);
+      final dial = _ScoreDial(
+        score: score,
+        size: stacked ? 112 : 104,
+        label: scoreLabel,
+      );
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -663,7 +674,11 @@ class _SheetHeading extends StatelessWidget {
     return (Icons.thermostat, CropSheetStyle.red, CropSheetStyle.redSoft);
   }
   if (k.contains('ph')) {
-    return (Icons.science_outlined, CropSheetStyle.amber, const Color(0xFFFFF0DC));
+    return (
+      Icons.science_outlined,
+      CropSheetStyle.amber,
+      const Color(0xFFFFF0DC),
+    );
   }
   if (k.contains('humid')) {
     return (Icons.water_drop, CropSheetStyle.blue, CropSheetStyle.blueSoft);
@@ -904,9 +919,11 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
       children: [
         SuitabilityScoreCard(
           score: score,
+          scoreLabel: isModelRanked(record) ? 'Model score' : 'Suitability',
           title: '$name was selected as the best match.',
-          description:
-              'The explanation below shows the measured conditions that contributed most to that result.',
+          description: isModelRanked(record)
+              ? 'Highest mean Random Forest class probability across the farm samples. Environmental comparisons below do not change this ranking.'
+              : 'The explanation below shows the measured conditions that contributed most to that result.',
         ),
         _gap(CropSheetStyle.sectionGap),
         _SheetHeading(
@@ -932,14 +949,16 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
             accent: CropSheetStyle.amber,
             children: [Text('$seasonNote')],
           ),
-        const InfoExplanationCard(
+        InfoExplanationCard(
           icon: Icons.info,
           title: 'Note',
           background: CropSheetStyle.blueSoft,
           accent: CropSheetStyle.blue,
           children: [
             Text(
-              'These values are based on the environmental conditions retrieved for your selected area. The suitability score considers all factors together.',
+              isModelRanked(record)
+                  ? 'Model class scores are not harvest probabilities. Training includes synthetic GIS features, and nutrient inputs include estimated proxies.'
+                  : 'These values are based on the environmental conditions retrieved for your selected area. The suitability score considers all factors together.',
             ),
           ],
         ),
@@ -973,7 +992,8 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
     final name = '${crop['crop'] ?? crop['name'] ?? 'Unnamed crop'}';
     final score = analysisNumber(crop['compatibility_pct'] ?? crop['score']);
     final factors = cropFactorViews(crop, record);
-    final scored = record['scoring_version'] != null;
+    final modelRanked = isModelRanked(record);
+    final scored = record['scoring_version'] != null && !modelRanked;
     final scoring = analysisMapValue(crop['score_breakdown']);
     final modelScore = analysisNumber(crop['model_probability_pct']);
     final rankValue = rank;
@@ -990,11 +1010,16 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
       children: [
         SuitabilityScoreCard(
           score: score,
+          scoreLabel: modelRanked ? 'Model score' : 'Suitability',
           title: score == null
               ? 'Suitability unavailable'
+              : modelRanked
+              ? 'Model-ranked recommendation'
               : farmerSuitability(score),
           description: score == null
               ? 'There was not enough recorded data to calculate a suitability score for this crop.'
+              : modelRanked
+              ? 'Ranked by mean Random Forest class probability across farm samples. This is not a probability of a successful harvest.'
               : cropMatchDescription(score),
         ),
         _gap(CropSheetStyle.cardGap),
@@ -1064,6 +1089,8 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
               Text(
                 modelScore == null
                     ? 'A model class score was not recorded for this crop in this analysis.'
+                    : modelRanked
+                    ? '${_cropNum(modelScore)}%. This raw model class score determines the ranking; it is not a harvest probability.'
                     : '${_cropNum(modelScore)}%. This is separate from the final crop suitability score and is not a harvest probability.',
               ),
               if (scoring['model_class_available'] == false) ...[
@@ -1075,22 +1102,25 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
             ],
           ),
         ],
-        const InfoExplanationCard(
-          icon: Icons.info,
-          title: 'How to interpret the score',
-          background: CropSheetStyle.lavenderSoft,
-          accent: CropSheetStyle.lavender,
-          children: [
-            Text('The score compares crop fit; it is not a harvest probability.'),
-            SizedBox(height: 6),
-            Text('Good match: 75–100'),
-            Text('Possible match: 50–<75'),
-            Text('Limited match: 25–<50'),
-            Text('Poor match: below 25'),
-            SizedBox(height: 6),
-            Text('The existing thresholds are unchanged.'),
-          ],
-        ),
+        if (!modelRanked)
+          const InfoExplanationCard(
+            icon: Icons.info,
+            title: 'How to interpret the score',
+            background: CropSheetStyle.lavenderSoft,
+            accent: CropSheetStyle.lavender,
+            children: [
+              Text(
+                'The score compares crop fit; it is not a harvest probability.',
+              ),
+              SizedBox(height: 6),
+              Text('Good match: 75–100'),
+              Text('Possible match: 50–<75'),
+              Text('Limited match: 25–<50'),
+              Text('Poor match: below 25'),
+              SizedBox(height: 6),
+              Text('The existing thresholds are unchanged.'),
+            ],
+          ),
         if (scored)
           Align(
             alignment: Alignment.centerLeft,

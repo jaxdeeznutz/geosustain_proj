@@ -24,8 +24,9 @@ String farmerLandType(Map<String, dynamic> record) {
 
 List<Map<String, dynamic>> assessedCrops(Map<String, dynamic> record) {
   if (record['scoring_version'] != null) {
-    return analysisListValue(record['crop_assessments']).whereType<Map>()
-        .map((e) => Map<String,dynamic>.from(e)).toList();
+    return analysisListValue(
+      record['crop_assessments'],
+    ).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList();
   }
   final flag = record['is_crop_recommended'];
   if (flag == false || '$flag' == 'false' || '$flag' == '0') return [];
@@ -63,6 +64,41 @@ Map<String, dynamic> cropConditions(Map<String, dynamic> crop) {
   return '${value['crop']}'.toLowerCase() == '${crop['crop']}'.toLowerCase()
       ? value
       : {};
+}
+
+bool isModelRanked(Map<String, dynamic> record) =>
+    record['recommendation_basis'] == 'model_probability';
+
+List<Map<String, dynamic>> rankedCropRecommendations(
+  Map<String, dynamic> record,
+) {
+  final seen = <String>{};
+  final crops = assessedCrops(record)
+      .where((crop) {
+        final score = analysisNumber(
+          crop['compatibility_pct'] ?? crop['score'],
+        );
+        return score != null &&
+            crop['classification'] != 'Disabled in crop settings' &&
+            seen.add('${crop['crop'] ?? crop['name']}'.toLowerCase());
+      })
+      .map((crop) => Map<String, dynamic>.from(crop))
+      .toList();
+  crops.sort((a, b) {
+    final scoreOrder = analysisNumber(
+      b['compatibility_pct'] ?? b['score'],
+    )!.compareTo(analysisNumber(a['compatibility_pct'] ?? a['score'])!);
+    return scoreOrder != 0
+        ? scoreOrder
+        : '${a['crop']}'.compareTo('${b['crop']}');
+  });
+  return crops
+      .take(5)
+      .toList()
+      .asMap()
+      .entries
+      .map((entry) => {...entry.value, 'rank': entry.key + 1})
+      .toList();
 }
 
 String cropReason(Map<String, dynamic> crop, Map<String, dynamic> record) {
@@ -210,12 +246,16 @@ class _CropAssessmentCard extends StatelessWidget {
         if (score != null) ...[
           const SizedBox(height: 8),
           Text(
-            'Suitability for $name: ${score.toStringAsFixed(1)}%',
+            isModelRanked(record)
+                ? 'Model score for $name: ${score.toStringAsFixed(1)}%'
+                : 'Suitability for $name: ${score.toStringAsFixed(1)}%',
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 4),
           Text(
-            farmerSuitability(score),
+            isModelRanked(record)
+                ? 'Model-ranked recommendation'
+                : farmerSuitability(score),
             style: const TextStyle(
               color: darkGreen,
               fontWeight: FontWeight.w700,

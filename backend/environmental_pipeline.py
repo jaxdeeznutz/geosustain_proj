@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from suitability import attach_assessment, number
 from model_explainability import forest_snapshot
+from model_ranking import attach_model_ranking, ModelRankingUnavailable
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -83,30 +84,38 @@ def analyze_location(lat, lon, active_crops=None):
         'live_humidity':measurements['humidity_current']['value'],
         'land_type':'Vegetation observation only', 'land_status':'Environmental screening',
         'model_explanation':None}
-    # Preserve actual inference as an explicitly separate legacy research output.
-    # Synthetic training augmentation and nutrient proxies exclude it from ranking.
+    # Rank with the existing model; retain input quality and training limitations.
+    snapshot = None
     try:
         if env.MODEL is not None:
-            logger.info('Legacy model loaded version=%s', env.MODEL_VERSION)
+            logger.info('Crop model loaded version=%s', env.MODEL_VERSION)
             n,p,k,nq = env.get_soil_nutrients(lat,lon)
-            values = [n,p,k,result['temperature_c'],result['live_humidity'],result['soil_ph'],
-                      result['rainfall_mm'],result['ndvi'],result['elevation_m'],result['slope_pct']]
-            if all(number(v) is not None for v in values):
-                frame = env.pd.DataFrame([values],columns=list(env.MODEL.feature_names_in_))
+            inputs = {'N': n, 'P': p, 'K': k, 'temperature': result['temperature_c'],
+                      'humidity': result['live_humidity'], 'ph': result['soil_ph'],
+                      'rainfall': result['rainfall_mm'], 'ndvi': result['ndvi'],
+                      'elevation': result['elevation_m'], 'slope': result['slope_pct']}
+            names = list(env.MODEL.feature_names_in_)
+            if set(names) != set(inputs):
+                raise ModelRankingUnavailable('The saved model feature contract does not match the environmental inputs.')
+            if all(number(v) is not None for v in inputs.values()):
+                inputs = {name: float(inputs[name]) for name in names}
+                frame = env.pd.DataFrame([inputs], columns=names)
                 probabilities = env.MODEL.predict_proba(frame)[0]
                 prediction = env.MODEL.predict(frame)[0]
-                logger.info('Legacy model prediction completed')
-                snapshot = forest_snapshot(env.MODEL, env.MODEL_VERSION, dict(zip(frame.columns,values)),
+                logger.info('Crop model prediction completed')
+                snapshot = forest_snapshot(env.MODEL, env.MODEL_VERSION, inputs,
                     prediction, {str(c):float(p) for c,p in zip(env.MODEL.classes_,probabilities)})
-                snapshot['role'] = 'legacy_research_only'
+                snapshot['role'] = 'crop_ranking'
                 snapshot['training_provenance'] = 'Kaggle crop data plus synthetic GIS features and local rows; no Panabo field validation established.'
                 snapshot['samples'][0].update(location={'lat':lat,'lon':lon},data_quality=deepcopy(quality),nutrient_quality=nq)
-                result['legacy_model_explanation'] = snapshot
     except Exception as exc:
-        logger.warning('Legacy model explanation unavailable type=%s',type(exc).__name__)
+        logger.exception('Model prediction failed type=%s',type(exc).__name__)
+        raise ModelRankingUnavailable('The trained crop model could not complete this analysis. Please retry.') from exc
+    if snapshot is None:
+        raise ModelRankingUnavailable('The trained model or one of its required inputs is unavailable. Please retry when environmental services are available.')
     assessed = attach_assessment(result,measurements,active_crops)
-    logger.info('Suitability scoring completed')
-    return assessed
+    logger.info('Model ranking completed')
+    return attach_model_ranking(assessed, [snapshot], active_crops)
 
 def merge_results(samples, active_crops=None):
     """Assess parcel mean inputs; preserve samples and expose spatial limitations."""
@@ -122,9 +131,8 @@ def merge_results(samples, active_crops=None):
         m['samples'] = entries
         measurements[key] = m
     result['environmental_samples'] = [s['environmental_measurements'] for s in samples]
-    result['legacy_model_samples'] = [s['legacy_model_explanation'] for s in samples if s.get('legacy_model_explanation')]
-    result.pop('legacy_model_explanation',None)
+    snapshots = [s.get('model_explanation') for s in samples]
     for field,key in [('soil_ph','soil_ph'),('temperature_c','temperature'),('annual_rainfall_mm','rainfall'),
                       ('rainfall_mm','rainfall_recent'),('elevation_m','elevation'),('slope_pct','slope'),('ndvi','ndvi')]:
         result[field] = measurements.get(key,{}).get('value')
-    return attach_assessment(result,measurements,active_crops)
+    return attach_model_ranking(attach_assessment(result,measurements,active_crops), snapshots, active_crops)
