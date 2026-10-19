@@ -2042,11 +2042,45 @@ class ShellPage extends StatefulWidget {
 class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
   late final AnalysisState state;
   int index = 0;
+  DialogRoute<void>? _analysisDialog;
+
+  void _syncAnalysisDialog() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      if (state.loading && _analysisDialog == null) {
+        final route = DialogRoute<void>(
+          context: context,
+          barrierDismissible: false,
+          barrierColor: Colors.transparent,
+          builder: (_) => PopScope(
+            canPop: false,
+            child: ListenableBuilder(
+              listenable: state,
+              builder: (_, _) => Stack(
+                children: [
+                  FullscreenAnalysisOverlay(message: state.loadingMessage),
+                ],
+              ),
+            ),
+          ),
+        );
+        _analysisDialog = route;
+        Navigator.of(context, rootNavigator: true).push(route);
+      } else if (!state.loading && _analysisDialog != null) {
+        final route = _analysisDialog!;
+        _analysisDialog = null;
+        route.navigator?.removeRoute(route);
+      }
+    });
+    WidgetsBinding.instance.ensureVisualUpdate();
+  }
 
   @override
   void initState() {
     super.initState();
     state = widget.analysisState ?? AnalysisState();
+    state.addListener(_syncAnalysisDialog);
+    _syncAnalysisDialog();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!state.userLoaded) {
@@ -2103,6 +2137,14 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    state.removeListener(_syncAnalysisDialog);
+    final dialog = _analysisDialog;
+    _analysisDialog = null;
+    if (dialog != null) {
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => dialog.navigator?.removeRoute(dialog),
+      );
+    }
     state.dispose();
     super.dispose();
   }
@@ -2151,12 +2193,6 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
         body: Stack(
           children: [
             WebAnalystDashboard(state: state, logout: logout, message: message),
-            ListenableBuilder(
-              listenable: state,
-              builder: (_, _) => state.loading
-                  ? FullscreenAnalysisOverlay(message: state.loadingMessage)
-                  : const SizedBox.shrink(),
-            ),
           ],
         ),
       );
@@ -2201,12 +2237,6 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
                 ),
                 tab(() => ProfilePage(state: state, logout: logout)),
               ],
-            ),
-            ListenableBuilder(
-              listenable: state,
-              builder: (_, _) => state.loading
-                  ? FullscreenAnalysisOverlay(message: state.loadingMessage)
-                  : const SizedBox.shrink(),
             ),
           ],
         ),
@@ -2367,120 +2397,55 @@ class FullscreenAnalysisOverlay extends StatelessWidget {
   const FullscreenAnalysisOverlay({super.key, required this.message});
 
   @override
-  Widget build(BuildContext context) {
-    final steps = const [
-      'Checking selected field',
-      'Fetching rainfall and weather',
-      'Reading elevation and slope',
-      'Generating recommendation',
-    ];
-    return Positioned.fill(
-      child: Material(
-        color: Colors.black.withValues(alpha: 0.42),
+  Widget build(BuildContext context) => Positioned.fill(
+    child: Material(
+      color: Colors.black54,
+      child: SafeArea(
         child: Center(
-          child: Container(
-            width: 310,
+          child: SingleChildScrollView(
             padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(28),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.18),
-                  blurRadius: 28,
-                  offset: const Offset(0, 18),
-                ),
-              ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TweenAnimationBuilder<double>(
-                  tween: Tween(begin: .75, end: 1.0),
-                  duration: const Duration(milliseconds: 700),
-                  curve: Curves.easeInOut,
-                  builder: (context, scale, child) =>
-                      Transform.scale(scale: scale, child: child),
-                  child: Container(
-                    width: 68,
-                    height: 68,
-                    decoration: const BoxDecoration(
-                      color: softGreen,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Center(
-                      child: SizedBox(
-                        width: 34,
-                        height: 34,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 3,
-                          color: green,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 18),
-                const Text(
-                  'Analyzing selected area',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w900,
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 360),
+              padding: const EdgeInsets.all(28),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const CircularProgressIndicator(
                     color: green,
+                    semanticsLabel: 'Farm analysis in progress',
                   ),
-                ),
-                const SizedBox(height: 8),
-                AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
-                  child: Text(
-                    message,
-                    key: ValueKey(message),
+                  const SizedBox(height: 24),
+                  const Text(
+                    'Analyzing your farm',
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      color: Color(0xFF29352E),
+                    style: TextStyle(
+                      fontSize: 23,
+                      fontWeight: FontWeight.bold,
+                      color: green,
                     ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                ...steps.map(
-                  (step) => Padding(
-                    padding: const EdgeInsets.only(bottom: 7),
-                    child: Row(
-                      children: [
-                        const Icon(
-                          Icons.check_circle_outline,
-                          size: 17,
-                          color: green,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            step,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 14),
+                  Semantics(
+                    liveRegion: true,
+                    child: Text(message, textAlign: TextAlign.center),
                   ),
-                ),
-                const SizedBox(height: 4),
-                const Text(
-                  'Please wait. This may take a few seconds on Render free tier.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 11, color: Colors.black45),
-                ),
-              ],
+                  const SizedBox(height: 18),
+                  const Text(
+                    'Please keep this screen open. Your results will appear automatically.',
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
             ),
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
 class RoleFeatureCard extends StatelessWidget {

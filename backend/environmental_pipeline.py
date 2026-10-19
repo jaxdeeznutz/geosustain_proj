@@ -1,6 +1,7 @@
 """New analysis path. Existing providers and forest retained; fallback values excluded."""
 import logging
 import math
+from provider_cache import retrieve
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
@@ -72,9 +73,12 @@ def analyze_location(lat, lon, active_crops=None):
     measurements, raw, quality = {}, {}, {}
     tasks = {'soil_ph': env.get_soil_ph, 'elevation': env.get_elevation,
              'ndvi': env.get_ndvi, 'rainfall_recent': env.get_rainfall,
-             'climate': climate_normals, 'slope': terrain_slope, 'weather': env.get_live_weather}
+             'climate': climate_normals, 'slope': terrain_slope, 'weather': env.get_live_weather, 'nitrogen': env.get_soil_nitrogen}
     with ThreadPoolExecutor(max_workers=4) as pool:
-        futures = {key:pool.submit(fn,lat,lon) for key,fn in tasks.items()}
+        ttls = {'soil_ph': 86400, 'elevation': 86400, 'slope': 86400,
+                'climate': 21600, 'ndvi': 3600, 'rainfall_recent': 900,
+                'weather': 300, 'nitrogen': 86400}
+        futures = {key:pool.submit(retrieve,key,fn,lat,lon,ttls[key]) for key,fn in tasks.items()}
         for key, future in futures.items():
             try: raw[key] = future.result()
             except Exception as exc:
@@ -109,7 +113,11 @@ def analyze_location(lat, lon, active_crops=None):
     try:
         if env.MODEL is not None:
             logger.info('Crop model loaded version=%s', env.MODEL_VERSION)
-            n,p,k,nq = env.get_soil_nutrients(lat,lon)
+            # Reuse the same observations already fetched for this sample.
+            n, nitrogen_quality, nitrogen_source = raw.get('nitrogen', (None, 'unavailable', 'Unavailable'))
+            p,k = env.estimate_phosphorus_potassium(result['ndvi'], result['soil_ph'], result['elevation_m'])
+            nq = {'nitrogen': nitrogen_quality, 'nitrogen_source': nitrogen_source,
+                  'phosphorus': 'estimated_proxy', 'potassium': 'estimated_proxy'}
             inputs = {'N': n, 'P': p, 'K': k, 'temperature': result['temperature_c'],
                       'humidity': result['live_humidity'], 'ph': result['soil_ph'],
                       'rainfall': result['rainfall_mm'], 'ndvi': result['ndvi'],

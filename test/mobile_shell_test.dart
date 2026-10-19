@@ -32,6 +32,31 @@ class _ShellApi extends ApiService {
 }
 
 void main() {
+  testWidgets('analysis overlay covers nested routes and closes on completion', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    final state = AnalysisState(api: _ShellApi());
+    state.currentUser = {'id': 1, 'username': 'Farmer', 'role': 'farmer'};
+    state.userLoaded = true;
+    await tester.pumpWidget(MaterialApp(home: ShellPage(analysisState: state)));
+    await tester.pumpAndSettle();
+    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+    nav.push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('Farm details'))));
+    await tester.pumpAndSettle();
+    state.loading = true;
+    state.notifyListeners();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.text('Analyzing your farm'), findsOneWidget);
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.text('Analyzing your farm'), findsOneWidget);
+    state.loading = false;
+    state.notifyListeners();
+    await tester.pumpAndSettle();
+    expect(find.text('Analyzing your farm'), findsNothing);
+    expect(find.text('Farm details'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
   setUpAll(() async {
     final config = File('.dart_tool/package_config.json').absolute;
     final packages =
