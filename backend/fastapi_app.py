@@ -1027,7 +1027,7 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
 class RegisterBody(BaseModel):
     username: str = Field(min_length=3, max_length=50)
     email: str = Field(max_length=100)
-    password: str = Field(min_length=8, max_length=8)
+    password: str = Field(min_length=8, max_length=72)
     role: str = "farmer"
 
     @field_validator('username', 'email', mode='before')
@@ -1090,7 +1090,7 @@ class ProfileUpdateBody(BaseModel):
 
 class ChangePasswordBody(BaseModel):
     current_password: str = Field(max_length=1024)
-    new_password: str = Field(min_length=8, max_length=8)
+    new_password: str = Field(min_length=8, max_length=72)
 
     @field_validator('new_password')
     @classmethod
@@ -1168,7 +1168,7 @@ async def register_submit(request: Request):
         validated = RegisterBody(username=username, email=email, password=password)
         email = validated.email
     except ValueError:
-        errors.append("Use a valid name/email and an exactly 8-character password with no spaces and at least one special character.")
+        errors.append("Use a valid name/email and a password of at least 8 characters with no spaces and at least one special character.")
     if password != confirm:
         errors.append("Passwords do not match.")
     role = "farmer"  # Privileged accounts are assigned by a Super Administrator.

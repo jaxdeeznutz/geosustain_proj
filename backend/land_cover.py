@@ -8,12 +8,15 @@ BANDS = ['water', 'trees', 'grass', 'flooded_vegetation', 'crops', 'shrub_and_sc
 
 def interpret_cover(stats):
     # Conservative application screening thresholds, not validated agronomic limits.
-    total = stats.get('total', 0)
-    coverage = stats.get('observed', 0) / total if total else 0
-    water = stats.get('water', 0) / total if total else 0
-    built = stats.get('built', 0) / total if total else 0
-    if not all(isinstance(v, (int, float)) and math.isfinite(v) for v in [total, coverage, water, built]):
+    areas = [stats.get(key, 0) or 0 for key in ('total', 'observed', 'water', 'built')]
+    if not all(isinstance(v, (int, float)) and math.isfinite(v) and v >= 0 for v in areas):
         raise ValueError('Invalid land-cover observations')
+    total, observed, water_area, built_area = areas
+    if observed > total + 1e-6 or water_area + built_area > observed + 1e-6:
+        raise ValueError('Inconsistent land-cover areas')
+    coverage = observed / total if total else 0
+    water = water_area / total if total else 0
+    built = built_area / total if total else 0
     status, message = 'eligible', 'No substantial mapped water or built-up area detected. This does not confirm agricultural suitability.'
     if water >= .5:
         status, message = 'water', 'This area is predominantly mapped water. No crop recommendation is provided. Select a land boundary.'
@@ -44,9 +47,9 @@ def screen_land_cover(lat, lon, polygon):
         label = image.select('label')
         return (label.eq(0).And(confidence.gte(.6)).rename('water')
                 .addBands(label.eq(6).And(confidence.gte(.6)).rename('built'))
-                .addBands(confidence.gte(.6).rename('observed')))
+                .addBands(confidence.gte(.6).rename('observed'))).toByte()
     # Empty collections produce a fully masked observation, never a safe-land default.
-    empty = ee.Image.constant([0, 0, 0]).rename(['water', 'built', 'observed']).updateMask(ee.Image.constant(0))
+    empty = ee.Image.constant([0, 0, 0]).rename(['water', 'built', 'observed']).toByte().updateMask(ee.Image.constant(0))
     composite = ee.ImageCollection.fromImages([empty]).merge(collection.sort('system:time_start').map(masks)).mosaic()
     areas = composite.unmask(0).multiply(ee.Image.pixelArea()).addBands(ee.Image.pixelArea().rename('total'))
     stats = areas.reduceRegion(reducer=ee.Reducer.sum(), geometry=region, scale=10, maxPixels=10000000, tileScale=4).getInfo()

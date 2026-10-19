@@ -19,6 +19,25 @@ class _ResultState extends AnalysisState {
 }
 
 void main() {
+  test('recorded model input uses all samples and never invents missing NPK', () {
+    final record = <String, dynamic>{'model_explanation': {'samples': [
+      {'inputs': {'N': 40, 'rainfall': 100}},
+      {'inputs': {'N': 60, 'rainfall': 200}},
+    ]}};
+    expect(recordedModelInput(record, 'N'), 50);
+    expect(recordedModelInput(record, 'rainfall'), 150);
+    expect(recordedModelInput(record, 'P'), isNull);
+    expect(recordedModelInput({}, 'N'), isNull);
+  });
+  test('password policy allows longer passwords but rejects whitespace and missing symbols', () {
+    expect(validNewPassword('Abcd!123'), isTrue);
+    expect(validNewPassword('Longer!password123'), isTrue);
+    expect(validNewPassword('Short!1'), isFalse);
+    expect(validNewPassword('Abcd1234'), isFalse);
+    expect(validNewPassword('Abcd! 123'), isFalse);
+    expect(validNewPassword('A!' + List.filled(71, 'b').join()), isFalse);
+  });
+
   testWidgets('blocked land shows advisory without crop ranking', (tester) async {
     final state = _ResultState();
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(

@@ -955,10 +955,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
               ],
               const SizedBox(height: 12),
               if (_notice != null) _MappingNotice(_notice!),
-              if (_saved != null)
-                Text(
-                  'Saved as ${_saved!['farm_name']}. Future analyses use this saved farm; no duplicate farm will be created.',
-                ),
+              if (_saved != null) Text('Saved: ${_saved!['farm_name']}'),
               if (_busy) const LinearProgressIndicator(),
               FilledButton.icon(
                 onPressed: _busy ? null : () => _run(analyze: true),
@@ -966,10 +963,6 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
                 label: Text(_busy ? 'Please wait…' : 'Analyze Area'),
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Analysis is automated. You can request analyst review from the result after it completes.',
-                style: TextStyle(color: Colors.black54),
-              ),
             ],
           ),
         ),

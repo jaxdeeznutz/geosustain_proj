@@ -4,8 +4,10 @@ import bcrypt
 
 
 def validate_new_password(value: str) -> str:
-    if len(value) != 8 or any(c.isspace() for c in value):
-        raise ValueError('Password must be exactly 8 characters with no spaces.')
+    if len(value) < 8 or any(c.isspace() for c in value):
+        raise ValueError('Password must be at least 8 characters with no spaces.')
+    if len(value.encode('utf-8')) > 72:
+        raise ValueError('Password must be at most 72 UTF-8 bytes.')
     if not any(c in string.punctuation for c in value):
         raise ValueError('Password must include at least one special character (for example !, @, #).')
     return value

@@ -969,7 +969,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
         password.text != confirm.text) {
       setState(
         () => error =
-            'Enter your current password and matching new passwords (exactly 8 characters, no spaces, and at least one special character).',
+            'Enter your current password and matching new passwords (at least 8 characters (maximum 72 UTF-8 bytes), no spaces, and at least one special character).',
       );
       return;
     }

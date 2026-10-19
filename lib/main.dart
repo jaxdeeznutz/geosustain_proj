@@ -349,7 +349,8 @@ class LoginPage extends StatefulWidget {
 }
 
 bool validNewPassword(String value) =>
-    value.runes.length == 8 &&
+    value.runes.length >= 8 &&
+    utf8.encode(value).length <= 72 &&
     !RegExp(r'\s', unicode: true).hasMatch(value) &&
     RegExp(r'[!-\/:-@\[-`{-~]').hasMatch(value);
 
@@ -607,7 +608,7 @@ class _RegisterPageState extends State<RegisterPage> {
     }
     if (!validNewPassword(password)) {
       return showMessage(
-        'Use exactly 8 characters, no spaces, and at least one special character (such as !, @, #).',
+        'Use at least 8 characters (maximum 72 UTF-8 bytes), no spaces, and at least one special character (such as !, @, #).',
       );
     }
     if (password != confirmPasswordController.text) {

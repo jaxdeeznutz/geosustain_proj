@@ -51,3 +51,17 @@ def test_provider_failure_does_not_silently_enable_crops(monkeypatch):
     with pytest.raises(ModelRankingUnavailable, match='Land-cover verification'):
         api.build_analysis_result({'lat': 7.29, 'lon': 125.62})
     infer.assert_not_called()
+
+
+@pytest.mark.parametrize('stats', [
+    {'total': -1}, {'total': float('nan')},
+    {'total': 100, 'observed': 101},
+    {'total': 100, 'observed': 10, 'built': 90},
+])
+def test_invalid_provider_areas_never_allow_crops(stats):
+    with pytest.raises(ValueError):
+        interpret_cover(stats)
+
+
+def test_null_reducer_values_are_unknown():
+    assert interpret_cover({'total': None, 'observed': None, 'water': None, 'built': None})['status'] == 'unknown'

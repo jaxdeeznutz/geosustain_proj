@@ -9,3 +9,5 @@ Blocked/unknown areas bypass crop inference and save an advisory with empty rank
 The mobile result view displays the advisory and mapped water/building fractions instead of crop-score cards. Previously saved analyses are unchanged: reanalyze old records. Deploy both backend and frontend. Live GEE results for the user's specific outline have not been verified.
 
 Source and attribution: https://developers.google.com/earth-engine/datasets/catalog/GOOGLE_DYNAMICWORLD_V1 . Dynamic World Project by Google in partnership with National Geographic Society and the World Resources Institute; modified Copernicus Sentinel data; CC-BY 4.0.
+
+Verification follow-up: 131 backend tests and 84 Flutter tests passed; Flutter analysis and focused backend lint passed. Corrected empty GEE fallback masks to byte type, matching classified masks; added rejection of negative, non-finite or inconsistent area totals and unknown handling for null reducer values. Repository-wide Ruff also reports five existing F811 fixture-import findings in test_analysis_scope.py and test_explainability.py. Live GEE execution and the specific user outline remain unverified.

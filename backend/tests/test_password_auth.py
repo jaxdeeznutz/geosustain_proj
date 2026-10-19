@@ -138,9 +138,9 @@ def test_short_existing_password_still_works(client, monkeypatch):
 def test_registration_rejects_weak_password_without_echo(client, monkeypatch):
     create = Mock()
     monkeypatch.setattr(api, 'create_user', create)
-    response = client.post('/api/mobile/register', json={'username':'Farmer','email':'farmer@example.com','password':'secret-short'})
+    response = client.post('/api/mobile/register', json={'username':'Farmer','email':'farmer@example.com','password':'Short!1'})
     assert response.status_code == 422
-    assert 'secret-short' not in response.text
+    assert 'Short!1' not in response.text
     create.assert_not_called()
 
 
@@ -173,7 +173,7 @@ def test_production_rejects_default_signing_key(monkeypatch):
         signing_key()
 
 
-@pytest.mark.parametrize('password', ['Abcd!12', 'Abcd!1234', 'Abcd1234', 'Abc !123', 'Abc\t!123'])
+@pytest.mark.parametrize('password', ['Abcd!12', 'A!' + 'b' * 71, 'Abcd1234', 'Abc !123', 'Abc\t!123'])
 def test_new_password_policy_rejects_invalid_values(password):
     from password_auth import validate_new_password
     with pytest.raises(ValueError):
@@ -183,3 +183,8 @@ def test_new_password_policy_rejects_invalid_values(password):
 def test_new_password_policy_accepts_eight_with_symbol():
     from password_auth import validate_new_password
     assert validate_new_password('Abcd!123') == 'Abcd!123'
+
+
+def test_new_password_accepts_more_than_eight_characters():
+    from password_auth import validate_new_password
+    assert validate_new_password('Longer!password123') == 'Longer!password123'

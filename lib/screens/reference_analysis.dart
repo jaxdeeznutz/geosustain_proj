@@ -1,5 +1,20 @@
 part of '../main.dart';
 
+// Display the actual recorded inference inputs, never fabricated lab values.
+double? recordedModelInput(Map<String, dynamic> record, String key) {
+  final explanation = analysisMapValue(record['model_explanation']);
+  final samples = analysisListValue(explanation['samples']);
+  if (samples.isEmpty) return null;
+  final values = <double>[];
+  for (final sample in samples) {
+    final inputs = analysisMapValue(analysisMapValue(sample)['inputs']);
+    final value = analysisNumber(inputs[key]);
+    if (value == null) return null;
+    values.add(value);
+  }
+  return values.reduce((a, b) => a + b) / values.length;
+}
+
 class ReferenceAnalysisContent extends StatefulWidget {
   final AnalysisState state;
   final Map<String, dynamic> record;
@@ -232,34 +247,75 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
           ),
         if (tab == 0 || tab == 2) ...[
           _AnalysisSection(
-            title: 'Key factors',
+            title: modelRanked
+                ? 'Model inputs (10 factors)'
+                : 'Reference conditions',
             icon: Icons.bar_chart,
             children: [
               GeoEqualGrid(
                 children: [
-                  for (final item in [
-                    ('ndvi', 'Vegetation (NDVI)', '', Icons.eco_outlined),
-                    (
-                      'temperature_c',
-                      'Climate temperature',
-                      'C',
-                      Icons.thermostat,
-                    ),
-                    (
-                      'annual_rainfall_mm',
-                      'Annual rainfall',
-                      'mm/year',
-                      Icons.water_drop_outlined,
-                    ),
-                    ('soil_ph', 'Soil pH', '', Icons.science_outlined),
-                    ('slope_pct', 'Slope', '%', Icons.terrain),
-                    (
-                      'live_humidity',
-                      'Current humidity',
-                      '%',
-                      Icons.water_drop,
-                    ),
-                  ].where((i) => modern || i.$1 != 'annual_rainfall_mm'))
+                  for (final item
+                      in (modelRanked
+                          ? [
+                              (
+                                'rainfall',
+                                'Rainfall (30 days)',
+                                'mm',
+                                Icons.water_drop_outlined,
+                              ),
+                              (
+                                'temperature',
+                                'Temperature',
+                                '?C',
+                                Icons.thermostat,
+                              ),
+                              ('humidity', 'Humidity', '%', Icons.water_drop),
+                              (
+                                'ndvi',
+                                'Vegetation (NDVI)',
+                                '',
+                                Icons.eco_outlined,
+                              ),
+                              ('ph', 'Soil pH', '', Icons.science_outlined),
+                              ('N', 'Nitrogen (N)', '', Icons.grass),
+                              ('P', 'Phosphorus (P)', '', Icons.grass),
+                              ('K', 'Potassium (K)', '', Icons.grass),
+                              ('elevation', 'Elevation', 'm', Icons.landscape),
+                              ('slope', 'Slope', '%', Icons.terrain),
+                            ]
+                          : [
+                              (
+                                'ndvi',
+                                'Vegetation (NDVI)',
+                                '',
+                                Icons.eco_outlined,
+                              ),
+                              (
+                                'temperature_c',
+                                'Climate temperature',
+                                '?C',
+                                Icons.thermostat,
+                              ),
+                              (
+                                'annual_rainfall_mm',
+                                'Annual rainfall',
+                                'mm/year',
+                                Icons.water_drop_outlined,
+                              ),
+                              (
+                                'soil_ph',
+                                'Soil pH',
+                                '',
+                                Icons.science_outlined,
+                              ),
+                              ('slope_pct', 'Slope', '%', Icons.terrain),
+                              (
+                                'live_humidity',
+                                'Current humidity',
+                                '%',
+                                Icons.water_drop,
+                              ),
+                            ]))
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
@@ -274,13 +330,18 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                           const SizedBox(height: 5),
                           Text(item.$2, style: const TextStyle(fontSize: 12)),
                           Text(
-                            '${analysisNumber(r[item.$1])?.toStringAsFixed(2) ?? 'Unassessed'} ${analysisNumber(r[item.$1]) == null ? '' : item.$3}',
+                            '${(modelRanked ? recordedModelInput(r, item.$1) : analysisNumber(r[item.$1]))?.toStringAsFixed(2) ?? 'Unassessed'} ${(modelRanked ? recordedModelInput(r, item.$1) : analysisNumber(r[item.$1])) == null ? '' : item.$3}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: green,
                             ),
                           ),
+                          if (['N', 'P', 'K'].contains(item.$1))
+                            const Text(
+                              'Existing model estimate; not a soil test',
+                              style: TextStyle(fontSize: 10),
+                            ),
                           if (item.$1 == 'ndvi')
                             const Text(
                               'Vegetation only; not crop suitability',
@@ -384,9 +445,9 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                         backgroundColor: softGreen,
                       ),
                     ),
-                  if (crop['assessed_count'] != null)
+                  if (!isModelRanked(r) && crop['assessed_count'] != null)
                     Text(
-                      '${crop['assessed_count']}/6 factors assessed',
+                      '${crop['assessed_count']}/${crop['total_factors'] ?? 6} reference conditions assessed',
                       style: const TextStyle(
                         fontSize: 11,
                         color: Color(0xFF64756C),
