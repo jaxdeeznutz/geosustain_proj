@@ -10,12 +10,14 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Any, Dict, List, Optional, Tuple
 
 import bcrypt
-from password_auth import verify_password
+from password_auth import verify_password, validate_new_password
+from auth_security import AuthSecurityMiddleware, signing_key, production_mode
 import requests
 from fastapi import Request, Depends, HTTPException, status, Header, Query
 from http_config import CorsFastAPI
 from json_safe import json_safe
 from model_ranking import ModelRankingUnavailable
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -66,8 +68,8 @@ except Exception as exc:
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-SECRET_KEY = os.getenv("SECRET_KEY", "geosustain-secret-change-in-production")
-MOBILE_TOKEN_MAX_AGE = 60 * 60 * 24 * 30  # 30 days
+SECRET_KEY = signing_key()
+MOBILE_TOKEN_MAX_AGE = 60 * 60 * 24  # 24 hours; password changes revoke existing tokens
 
 
 
@@ -276,12 +278,22 @@ def apply_local_seasonality(result: Dict[str, Any], planting_month: int) -> Dict
 app = CorsFastAPI(title="GeoSustain API", version="2.0.0")
 
 
+@app.exception_handler(RequestValidationError)
+async def invalid_request(request: Request, exc: RequestValidationError):
+    # Pydantic's default errors include the raw input (including passwords).
+    return JSONResponse({'detail': [
+        {'loc': list(e['loc']), 'msg': e['msg'], 'type': e['type']}
+        for e in exc.errors()
+    ]}, status_code=422)
+
+
 @app.exception_handler(DatabaseError)
 async def database_unavailable(request: Request, exc: DatabaseError):
     # Credentials/DSNs can appear in driver messages; never send those to clients.
     print(f'Database operation failed: {type(exc).__name__}')
     return JSONResponse({'error':'The account/data service is unavailable. Please try again shortly.'}, status_code=503)
-app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY)
+app.add_middleware(SessionMiddleware, secret_key=SECRET_KEY, https_only=production_mode(), same_site="lax", max_age=86400)
+app.add_middleware(AuthSecurityMiddleware)
 
 @app.exception_handler(Exception)
 async def unexpected_failure(request: Request, exc: Exception):
@@ -444,10 +456,11 @@ def render_template(request: Request, template: str, context: Optional[Dict[str,
 
 
 def hash_password(password: str) -> str:
-    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt(rounds=12)).decode("utf-8")
 
 
 def sign_in_user(request: Request, user) -> None:
+    request.session.clear()
     request.session["user_id"] = user["id"]
     request.session["username"] = user["username"]
     request.session["role"] = user["role"]
@@ -1004,7 +1017,7 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
 class RegisterBody(BaseModel):
     username: str = Field(min_length=3, max_length=50)
     email: str = Field(max_length=100)
-    password: str = Field(min_length=6)
+    password: str = Field(min_length=15, max_length=72)
     role: str = "farmer"
 
     @field_validator('username', 'email', mode='before')
@@ -1023,14 +1036,12 @@ class RegisterBody(BaseModel):
     @field_validator('password')
     @classmethod
     def password_size(cls,value):
-        if len(value.encode('utf-8')) > 72:
-            raise ValueError('Password must be at most 72 UTF-8 bytes.')
-        return value
+        return validate_new_password(value)
 
 
 class LoginBody(BaseModel):
-    email: str
-    password: str = ""
+    email: str = Field(max_length=100)
+    password: str = Field(default="", max_length=1024)
 
 
 class AnalysisBody(BaseModel):
@@ -1068,8 +1079,8 @@ class ProfileUpdateBody(BaseModel):
 
 
 class ChangePasswordBody(BaseModel):
-    current_password: str
-    new_password: str = Field(min_length=6)
+    current_password: str = Field(max_length=1024)
+    new_password: str = Field(min_length=15, max_length=72)
 
     @field_validator('new_password')
     @classmethod
@@ -1110,7 +1121,7 @@ async def login_submit(request: Request):
         return render_template(request, "login.html")
 
     user = get_user_by_email(email)
-    if not user or not verify_password(password, user["password_hash"]):
+    if not verify_password(password, user.get("password_hash") if user else None):
         flash(request, "Invalid email or password.", "error")
         return render_template(request, "login.html")
 
@@ -1143,10 +1154,11 @@ async def register_submit(request: Request):
         errors.append("Username must be at least 3 characters.")
     if not email or "@" not in email:
         errors.append("A valid email is required.")
-    if not password or len(password) < 6:
-        errors.append("Password must be at least 6 characters.")
-    if len(password.encode("utf-8")) > 72:
-        errors.append("Password must be at most 72 UTF-8 bytes.")
+    try:
+        validated = RegisterBody(username=username, email=email, password=password)
+        email = validated.email
+    except ValueError:
+        errors.append("Use a valid name/email and a unique password of at least 15 characters (maximum 72 UTF-8 bytes).")
     if password != confirm:
         errors.append("Passwords do not match.")
     role = "farmer"  # Privileged accounts are assigned by a Super Administrator.
@@ -1265,7 +1277,7 @@ def mobile_register(body: RegisterBody):
 @app.post("/api/mobile/login")
 def mobile_login(body: LoginBody):
     user = get_user_by_email(body.email.strip().lower())
-    if not user or not verify_password(body.password, user["password_hash"]):
+    if not verify_password(body.password, user.get("password_hash") if user else None):
         return JSONResponse({"error": "Invalid email or password."}, status_code=401)
     if user.get("is_active") is False:
         return JSONResponse({"error": "This account is deactivated."}, status_code=403)

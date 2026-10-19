@@ -17,21 +17,21 @@ from password_auth import verify_password
 
 def account(**changes):
     data = dict(id=3, username='Farmer', email='farmer@example.com', role='farmer', is_active=True,
-                email_verified=False, password_hash=api.hash_password('test-password'))
+                email_verified=False, password_hash=api.hash_password('test-password-long'))
     return dict(data, **changes)
 
 
 def test_login_unverified_email_and_normalization(client, monkeypatch):
     lookup = Mock(return_value=account())
     monkeypatch.setattr(api, 'get_user_by_email', lookup)
-    result = client.post('/api/mobile/login', json={'email':' Farmer@Example.com ', 'password':'test-password'})
+    result = client.post('/api/mobile/login', json={'email':' Farmer@Example.com ', 'password':'test-password-long'})
     assert result.status_code == 200
     assert result.json()['token']
     lookup.assert_called_once_with('farmer@example.com')
     assert 'password_hash' not in result.json()['user']
 
 
-@pytest.mark.parametrize('changes,password,status', [({},'wrong',401), ({'password_hash':'test-password'},'test-password',401), ({'is_active':False},'test-password',403)])
+@pytest.mark.parametrize('changes,password,status', [({},'wrong',401), ({'password_hash':'test-password-long'},'test-password-long',401), ({'is_active':False},'test-password-long',403)])
 def test_login_rejects_invalid_credentials_and_inactive_users(client, monkeypatch, changes,password,status):
     monkeypatch.setattr(api,'get_user_by_email',lambda email: account(**changes))
     assert client.post('/api/mobile/login',json={'email':'farmer@example.com','password':password}).status_code == status
@@ -41,25 +41,25 @@ def test_register_creates_user_directly(client, monkeypatch):
     monkeypatch.setattr(api,'get_user_by_email',lambda email: None)
     create = Mock(return_value=account())
     monkeypatch.setattr(api,'create_user',create)
-    result=client.post('/api/mobile/register',json={'username':' Farmer ','email':' Farmer@Example.com ','password':'test-password','role':'super_admin'})
+    result=client.post('/api/mobile/register',json={'username':' Farmer ','email':' Farmer@Example.com ','password':'test-password-long','role':'super_admin'})
     assert result.status_code == 201
     assert result.json()['requires_verification'] is False
     args=create.call_args.args
     assert args[0:2] == ('Farmer','farmer@example.com')
-    assert verify_password('test-password',args[2])
+    assert verify_password('test-password-long',args[2])
     assert args[3] == 'farmer'
 
 
 def test_register_existing_unverified_account_is_not_replaced(client,monkeypatch):
     monkeypatch.setattr(api,'get_user_by_email',lambda email:account())
-    assert client.post('/api/mobile/register',json={'username':'Farmer','email':'farmer@example.com','password':'different'}).status_code == 409
+    assert client.post('/api/mobile/register',json={'username':'Farmer','email':'farmer@example.com','password':'different-password-long'}).status_code == 409
 
 
 def test_non_email_database_conflict_is_not_reported_as_duplicate_email(client, monkeypatch):
     import psycopg2
     monkeypatch.setattr(api, 'get_user_by_email', lambda email: None)
     monkeypatch.setattr(api, 'create_user', Mock(side_effect=psycopg2.errors.UniqueViolation('private database details')))
-    response = client.post('/api/mobile/register', json={'username':'Farmer','email':'new@example.com','password':'test-password'})
+    response = client.post('/api/mobile/register', json={'username':'Farmer','email':'new@example.com','password':'test-password-long'})
     assert response.status_code == 503
     assert 'already registered' not in response.text
     assert 'private database' not in response.text
@@ -88,7 +88,7 @@ def test_html_verification_redirects_to_login(client):
 
 def test_html_login_does_not_require_email_verification(client, monkeypatch):
     monkeypatch.setattr(api,'get_user_by_email',lambda email:account())
-    result=client.post('/login',data={'email':'farmer@example.com','password':'test-password'},follow_redirects=False)
+    result=client.post('/login',data={'email':'farmer@example.com','password':'test-password-long'},follow_redirects=False)
     assert result.status_code==302
     assert result.headers['location']=='/dashboard'
 
@@ -128,3 +128,46 @@ def test_migration_stops_on_duplicate_normalized_emails():
     with pytest.raises(ValueError,match='Duplicate'):
         migrate(conn)
     assert not any(c.args[0].startswith('UPDATE') for c in cursor.execute.call_args_list)
+
+
+def test_short_existing_password_still_works(client, monkeypatch):
+    monkeypatch.setattr(api, 'get_user_by_email', lambda _: account(password_hash=api.hash_password('oldpass')))
+    assert client.post('/api/mobile/login', json={'email':'farmer@example.com','password':'oldpass'}).status_code == 200
+
+
+def test_registration_rejects_weak_password_without_echo(client, monkeypatch):
+    create = Mock()
+    monkeypatch.setattr(api, 'create_user', create)
+    response = client.post('/api/mobile/register', json={'username':'Farmer','email':'farmer@example.com','password':'secret-short'})
+    assert response.status_code == 422
+    assert 'secret-short' not in response.text
+    create.assert_not_called()
+
+
+def test_auth_throttling(client, monkeypatch):
+    monkeypatch.setattr(api, 'get_user_by_email', lambda _: None)
+    monkeypatch.setattr(api, 'verify_password', lambda *args: False)
+    for _ in range(20):
+        assert client.post('/api/mobile/login', json={'email':'x@example.com','password':'wrong'}).status_code == 401
+    result = client.post('/api/mobile/login', json={'email':'x@example.com','password':'wrong'})
+    assert result.status_code == 429
+    assert result.headers['retry-after'] == '300'
+
+
+def test_cross_site_html_login_rejected(client):
+    assert client.post('/login', data={'email':'x@example.com','password':'wrong'}, headers={'Origin':'https://evil.example'}).status_code == 403
+
+
+def test_password_salts_are_unique():
+    first = api.hash_password('long unique passphrase')
+    second = api.hash_password('long unique passphrase')
+    assert first != second
+    assert verify_password('long unique passphrase', first)
+
+
+def test_production_rejects_default_signing_key(monkeypatch):
+    from auth_security import signing_key
+    monkeypatch.setenv('APP_ENV', 'production')
+    monkeypatch.setenv('SECRET_KEY', 'geosustain-secret-change-in-production')
+    with pytest.raises(RuntimeError):
+        signing_key()

@@ -170,18 +170,18 @@ def test_change_password_requires_current_password(client, monkeypatch):
     assert (
         client.post(
             "/api/mobile/change-password",
-            json={"current_password": "wrong", "new_password": "new-password"},
+            json={"current_password": "wrong", "new_password": "new-password-long"},
         ).status_code
         == 400
     )
     change.assert_not_called()
     response = client.post(
         "/api/mobile/change-password",
-        json={"current_password": "old-password", "new_password": "new-password"},
+        json={"current_password": "old-password", "new_password": "new-password-long"},
     )
     assert response.status_code == 200
     assert response.json()["token"]
-    assert api.verify_password("new-password", change.call_args.args[2])
+    assert api.verify_password("new-password-long", change.call_args.args[2])
 
 
 def test_stale_token_and_disabled_account_are_rejected(monkeypatch):

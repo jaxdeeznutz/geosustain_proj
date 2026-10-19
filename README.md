@@ -1,6 +1,6 @@
 # GeoSustain
 
-See [MOBILE_UPDATE.md](MOBILE_UPDATE.md) for the October 2026 mobile changes, registration findings, validation results, and backend/frontend deployment steps.
+Implementation notes: [model ranking](docs/MODEL_RANKING_2026-10-14.md), [environmental recovery](docs/ENVIRONMENTAL_RECOVERY_2026-10-14.md), and [analysis/CORS fixes](docs/ANALYSIS_CORS_FIX_2026-10-14.md).
 
 AI-driven geospatial decision support for sustainable landscape management in Panabo City.
 
@@ -42,7 +42,7 @@ Use `backend/.env.example` as a guide and retain your existing values for:
 - `SECRET_KEY`: your existing strong deployment signing secret. Changing it invalidates existing sessions/tokens.
 - `OPENWEATHER_API_KEY`: existing weather key.
 - `GEE_PROJECT_ID` and `GEE_SERVICE_ACCOUNT_JSON`, or locally authenticated Earth Engine credentials.
-- Email/password authentication uses PostgreSQL and bcrypt. No Firebase or SMTP configuration is required. See `PASSWORD_AUTH_UPDATE.md` for the existing-account migration.
+- Email/password authentication uses PostgreSQL and bcrypt. No Firebase or SMTP configuration is required. The existing-account migration script is `backend/migrate_password_auth.py`.
 
 **Before deploying the cleaned backend to Render, ensure `OPENWEATHER_API_KEY` is configured in Render Environment.** The local `.env` is intentionally ignored by Git. The old public source-code fallback key has been removed. Consider rotating that previously embedded key separately.
 
@@ -74,4 +74,4 @@ For the optional older Flask application, install `backend/requirements-legacy.t
 - `backend/tests/` and `test/`: regression tests added during this cleanup.
 - `android/`, `web/`, `assets/`: platform configuration and application assets.
 
-Historical panel-update notes are preserved for context. See `CLEANUP_REPORT.md` for the changes and validation limits.
+Generated build intermediates, test logs, and caches can be regenerated. Release artifacts remain under `build/app/outputs/`. Local Python tools, environments, and soil reference data are excluded from Git and retained locally.

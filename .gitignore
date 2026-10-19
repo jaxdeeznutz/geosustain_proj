@@ -5,6 +5,7 @@ build/
 .vscode/
 *.iml
 android/.gradle/
+android/.kotlin/
 android/local.properties
 android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 __pycache__/

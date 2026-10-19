@@ -965,12 +965,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Future<void> save() async {
     if (saving) return;
     if (current.text.isEmpty ||
-        password.text.length < 6 ||
+        password.text.runes.length < 15 ||
         utf8.encode(password.text).length > 72 ||
         password.text != confirm.text) {
       setState(
         () => error =
-            'Enter your current password and matching new passwords (6 characters minimum, 72 UTF-8 bytes maximum).',
+            'Enter your current password and matching new passwords (15 characters minimum, 72 UTF-8 bytes maximum).',
       );
       return;
     }
@@ -981,10 +981,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     try {
       await widget.api.changePassword(current.text, password.text);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Password changed. Other sessions must sign in again.'),
-        ),
+      showAuthFeedback(
+        context,
+        'Password changed. Other sessions must sign in again.',
+        success: true,
       );
       Navigator.pop(context);
     } catch (e) {

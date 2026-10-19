@@ -347,6 +347,34 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
+void showAuthFeedback(
+  BuildContext context,
+  String message, {
+  bool success = false,
+}) {
+  final messenger = ScaffoldMessenger.of(context);
+  messenger.hideCurrentSnackBar();
+  messenger.showSnackBar(
+    SnackBar(
+      backgroundColor: success
+          ? const Color(0xFF16723C)
+          : const Color(0xFFB3261E),
+      content: Row(
+        children: [
+          Icon(
+            success ? Icons.check_circle_outline : Icons.error_outline,
+            color: Colors.white,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(message, style: const TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
 class _LoginPageState extends State<LoginPage> {
   final api = ApiService();
   final emailController = TextEditingController();
@@ -380,6 +408,7 @@ class _LoginPageState extends State<LoginPage> {
       // The authenticated role selects the appropriate shell.
 
       if (!mounted) return;
+      showAuthFeedback(context, 'Signed in successfully.', success: true);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const ShellPage()),
@@ -393,9 +422,7 @@ class _LoginPageState extends State<LoginPage> {
 
   void showMessage(Object e) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(friendlyErrorMessage(e))));
+    showAuthFeedback(context, friendlyErrorMessage(e));
   }
 
   @override
@@ -575,8 +602,8 @@ class _RegisterPageState extends State<RegisterPage> {
     if (utf8.encode(password).length > 72) {
       return showMessage('Password is too long (maximum 72 UTF-8 bytes).');
     }
-    if (password.length < 6) {
-      return showMessage('Password must be at least 6 characters.');
+    if (password.runes.length < 15) {
+      return showMessage('Password must be at least 15 characters.');
     }
     if (password != confirmPasswordController.text) {
       return showMessage('Passwords do not match.');
@@ -591,7 +618,10 @@ class _RegisterPageState extends State<RegisterPage> {
         role: assignedRole,
       );
       if (!mounted) return;
-      showMessage('Account created. Sign in with your email and password.');
+      showMessage(
+        'Account created. Sign in with your email and password.',
+        success: true,
+      );
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const LoginPage()),
@@ -613,11 +643,9 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  void showMessage(String message) {
+  void showMessage(String message, {bool success = false}) {
     if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+    showAuthFeedback(context, message, success: success);
   }
 
   @override
