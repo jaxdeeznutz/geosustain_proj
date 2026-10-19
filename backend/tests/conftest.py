@@ -25,3 +25,10 @@ def reset_auth_throttle():
         if isinstance(stack, AuthSecurityMiddleware):
             stack.attempts.clear()
         stack = getattr(stack, 'app', None)
+
+
+@pytest.fixture(autouse=True)
+def offline_land_cover(monkeypatch):
+    import fastapi_app
+    monkeypatch.setattr(fastapi_app, 'screen_land_cover', lambda *args: {
+        'allow_crops': True, 'status': 'eligible', 'source': 'offline test fixture'})

@@ -19,6 +19,24 @@ class _ResultState extends AnalysisState {
 }
 
 void main() {
+  testWidgets('blocked land shows advisory without crop ranking', (tester) async {
+    final state = _ResultState();
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
+      child: ReferenceAnalysisContent(state: state, record: {
+        'session_id': 1, 'is_crop_recommended': false, 'land_status': 'BUILT UP',
+        'land_cover': {'message': 'Select agricultural land.', 'built_fraction': .8, 'water_fraction': 0},
+        'top_crop_recommendations': [],
+      }),
+    ))));
+    await tester.pumpAndSettle();
+    expect(find.text('BUILT UP'), findsOneWidget);
+    expect(find.text('Select agricultural land.'), findsOneWidget);
+    expect(find.text('Mapped buildings/roads: 80.0%'), findsOneWidget);
+    expect(find.text('Top model recommendation'), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+    state.dispose();
+  });
+
   test(
     'history is newest first without merging repeated analyses of one farm',
     () {

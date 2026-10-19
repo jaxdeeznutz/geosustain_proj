@@ -17,6 +17,7 @@ from fastapi import Request, Depends, HTTPException, status, Header, Query
 from http_config import CorsFastAPI
 from json_safe import json_safe
 from model_ranking import ModelRankingUnavailable
+from land_cover import screen_land_cover, advisory_result
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -923,7 +924,15 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
     # Fails open (None = no restriction) on any DB error.
     active_crops = get_active_crop_keys()
 
-    if polygon and len(polygon) >= 3:
+    try:
+        cover = screen_land_cover(lat, lon, polygon)
+    except Exception as exc:
+        logging.getLogger('uvicorn.error').warning('Land-cover screening unavailable type=%s', type(exc).__name__)
+        raise ModelRankingUnavailable('Land-cover verification is unavailable. Please retry; crop recommendations are withheld until water and built-up areas can be checked.') from exc
+
+    if not cover['allow_crops']:
+        result = advisory_result(cover)
+    elif polygon and len(polygon) >= 3:
         sample_points = polygon_area_sample_points(polygon, max_points=9)
         # Analyze independent parcel samples concurrently. Four workers avoids
         # overwhelming Earth Engine/external sources while reducing the old
@@ -978,6 +987,7 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
     else:
         result = analyze_location(lat, lon, active_crops)
 
+    result["land_cover"] = cover
     planting_month = int((body or {}).get("intended_planting_month") or datetime.now().month)
     if not result.get('scoring_version'):
         result = apply_local_seasonality(result, planting_month)

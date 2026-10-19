@@ -18,6 +18,50 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
   @override
   Widget build(BuildContext context) {
     final r = widget.record, crops = rankedCropRecommendations(widget.record);
+    if (r['is_crop_recommended'] == false && r['land_cover'] is Map) {
+      final cover = Map<String, dynamic>.from(r['land_cover']);
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AnalysisIdentity(record: r, compact: true),
+              const SizedBox(height: 20),
+              const Icon(Icons.info_outline, color: Colors.orange, size: 36),
+              const SizedBox(height: 12),
+              Text(
+                '${r['land_status'] ?? 'Land use advisory'}',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text('${cover['message'] ?? r['analysis_summary'] ?? ''}'),
+              const SizedBox(height: 16),
+              Text(
+                'Mapped water: ${((analysisNumber(cover['water_fraction']) ?? 0) * 100).toStringAsFixed(1)}%',
+              ),
+              Text(
+                'Mapped buildings/roads: ${((analysisNumber(cover['built_fraction']) ?? 0) * 100).toStringAsFixed(1)}%',
+              ),
+              const SizedBox(height: 12),
+              Text('${cover['limitation'] ?? ''}'),
+              const SizedBox(height: 12),
+              Text(
+                '${cover['source'] ?? ''}',
+                style: const TextStyle(fontSize: 12),
+              ),
+              Text(
+                '${cover['attribution'] ?? ''}',
+                style: const TextStyle(fontSize: 11),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     final best = crops.isEmpty ? <String, dynamic>{} : crops.first;
     final score = analysisNumber(best['compatibility_pct']);
     final modern = r['scoring_version'] != null;
