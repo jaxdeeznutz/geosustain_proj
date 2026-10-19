@@ -965,12 +965,11 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
   Future<void> save() async {
     if (saving) return;
     if (current.text.isEmpty ||
-        password.text.runes.length < 15 ||
-        utf8.encode(password.text).length > 72 ||
+        !validNewPassword(password.text) ||
         password.text != confirm.text) {
       setState(
         () => error =
-            'Enter your current password and matching new passwords (15 characters minimum, 72 UTF-8 bytes maximum).',
+            'Enter your current password and matching new passwords (exactly 8 characters, no spaces, and at least one special character).',
       );
       return;
     }
@@ -1016,6 +1015,13 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
           ]) ...[
             TextField(
               controller: field.$1,
+              inputFormatters: field.$1 == current
+                  ? null
+                  : [
+                      FilteringTextInputFormatter.deny(
+                        RegExp(r'\s', unicode: true),
+                      ),
+                    ],
               obscureText: obscure,
               enabled: !saving,
               autocorrect: false,

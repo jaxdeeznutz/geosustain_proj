@@ -1,6 +1,6 @@
 # Authentication hardening ? 2026-10-19
 
-Passwords were already stored as salted bcrypt hashes. This update retains existing hashes and explicitly uses cost 12. New registrations and password changes require 15 characters, at most 72 UTF-8 bytes (bcrypt limit), and reject a small set of predictable passwords. Existing shorter passwords can still log in. Public signup always creates farmers; administrators assign privileged roles.
+Passwords were already stored as salted bcrypt hashes. This update retains existing hashes and explicitly uses cost 12. New registrations and password changes require exactly 8 characters, no whitespace, and at least one ASCII punctuation character, as requested by the user. Existing shorter passwords can still log in. Public signup always creates farmers; administrators assign privileged roles.
 
 Changes:
 - Shared password policy in API registration, HTML registration and password changes; matching Flutter length guidance.

@@ -17,21 +17,21 @@ from password_auth import verify_password
 
 def account(**changes):
     data = dict(id=3, username='Farmer', email='farmer@example.com', role='farmer', is_active=True,
-                email_verified=False, password_hash=api.hash_password('test-password-long'))
+                email_verified=False, password_hash=api.hash_password('Test!234'))
     return dict(data, **changes)
 
 
 def test_login_unverified_email_and_normalization(client, monkeypatch):
     lookup = Mock(return_value=account())
     monkeypatch.setattr(api, 'get_user_by_email', lookup)
-    result = client.post('/api/mobile/login', json={'email':' Farmer@Example.com ', 'password':'test-password-long'})
+    result = client.post('/api/mobile/login', json={'email':' Farmer@Example.com ', 'password':'Test!234'})
     assert result.status_code == 200
     assert result.json()['token']
     lookup.assert_called_once_with('farmer@example.com')
     assert 'password_hash' not in result.json()['user']
 
 
-@pytest.mark.parametrize('changes,password,status', [({},'wrong',401), ({'password_hash':'test-password-long'},'test-password-long',401), ({'is_active':False},'test-password-long',403)])
+@pytest.mark.parametrize('changes,password,status', [({},'wrong',401), ({'password_hash':'Test!234'},'Test!234',401), ({'is_active':False},'Test!234',403)])
 def test_login_rejects_invalid_credentials_and_inactive_users(client, monkeypatch, changes,password,status):
     monkeypatch.setattr(api,'get_user_by_email',lambda email: account(**changes))
     assert client.post('/api/mobile/login',json={'email':'farmer@example.com','password':password}).status_code == status
@@ -41,25 +41,25 @@ def test_register_creates_user_directly(client, monkeypatch):
     monkeypatch.setattr(api,'get_user_by_email',lambda email: None)
     create = Mock(return_value=account())
     monkeypatch.setattr(api,'create_user',create)
-    result=client.post('/api/mobile/register',json={'username':' Farmer ','email':' Farmer@Example.com ','password':'test-password-long','role':'super_admin'})
+    result=client.post('/api/mobile/register',json={'username':' Farmer ','email':' Farmer@Example.com ','password':'Test!234','role':'super_admin'})
     assert result.status_code == 201
     assert result.json()['requires_verification'] is False
     args=create.call_args.args
     assert args[0:2] == ('Farmer','farmer@example.com')
-    assert verify_password('test-password-long',args[2])
+    assert verify_password('Test!234',args[2])
     assert args[3] == 'farmer'
 
 
 def test_register_existing_unverified_account_is_not_replaced(client,monkeypatch):
     monkeypatch.setattr(api,'get_user_by_email',lambda email:account())
-    assert client.post('/api/mobile/register',json={'username':'Farmer','email':'farmer@example.com','password':'different-password-long'}).status_code == 409
+    assert client.post('/api/mobile/register',json={'username':'Farmer','email':'farmer@example.com','password':'Diff!234'}).status_code == 409
 
 
 def test_non_email_database_conflict_is_not_reported_as_duplicate_email(client, monkeypatch):
     import psycopg2
     monkeypatch.setattr(api, 'get_user_by_email', lambda email: None)
     monkeypatch.setattr(api, 'create_user', Mock(side_effect=psycopg2.errors.UniqueViolation('private database details')))
-    response = client.post('/api/mobile/register', json={'username':'Farmer','email':'new@example.com','password':'test-password-long'})
+    response = client.post('/api/mobile/register', json={'username':'Farmer','email':'new@example.com','password':'Test!234'})
     assert response.status_code == 503
     assert 'already registered' not in response.text
     assert 'private database' not in response.text
@@ -88,7 +88,7 @@ def test_html_verification_redirects_to_login(client):
 
 def test_html_login_does_not_require_email_verification(client, monkeypatch):
     monkeypatch.setattr(api,'get_user_by_email',lambda email:account())
-    result=client.post('/login',data={'email':'farmer@example.com','password':'test-password-long'},follow_redirects=False)
+    result=client.post('/login',data={'email':'farmer@example.com','password':'Test!234'},follow_redirects=False)
     assert result.status_code==302
     assert result.headers['location']=='/dashboard'
 
@@ -171,3 +171,15 @@ def test_production_rejects_default_signing_key(monkeypatch):
     monkeypatch.setenv('SECRET_KEY', 'geosustain-secret-change-in-production')
     with pytest.raises(RuntimeError):
         signing_key()
+
+
+@pytest.mark.parametrize('password', ['Abcd!12', 'Abcd!1234', 'Abcd1234', 'Abc !123', 'Abc\t!123'])
+def test_new_password_policy_rejects_invalid_values(password):
+    from password_auth import validate_new_password
+    with pytest.raises(ValueError):
+        validate_new_password(password)
+
+
+def test_new_password_policy_accepts_eight_with_symbol():
+    from password_auth import validate_new_password
+    assert validate_new_password('Abcd!123') == 'Abcd!123'

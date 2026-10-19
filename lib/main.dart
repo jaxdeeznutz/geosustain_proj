@@ -7,7 +7,8 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart' show SystemUiOverlayStyle;
+import 'package:flutter/services.dart'
+    show SystemUiOverlayStyle, FilteringTextInputFormatter;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:geolocator/geolocator.dart';
@@ -347,6 +348,11 @@ class LoginPage extends StatefulWidget {
   State<LoginPage> createState() => _LoginPageState();
 }
 
+bool validNewPassword(String value) =>
+    value.runes.length == 8 &&
+    !RegExp(r'\s', unicode: true).hasMatch(value) &&
+    RegExp(r'[!-\/:-@\[-`{-~]').hasMatch(value);
+
 void showAuthFeedback(
   BuildContext context,
   String message, {
@@ -599,11 +605,10 @@ class _RegisterPageState extends State<RegisterPage> {
     if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
       return showMessage('Enter a valid email address.');
     }
-    if (utf8.encode(password).length > 72) {
-      return showMessage('Password is too long (maximum 72 UTF-8 bytes).');
-    }
-    if (password.runes.length < 15) {
-      return showMessage('Password must be at least 15 characters.');
+    if (!validNewPassword(password)) {
+      return showMessage(
+        'Use exactly 8 characters, no spaces, and at least one special character (such as !, @, #).',
+      );
     }
     if (password != confirmPasswordController.text) {
       return showMessage('Passwords do not match.');
@@ -723,6 +728,9 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: 6),
           TextField(
             controller: passwordController,
+            inputFormatters: [
+              FilteringTextInputFormatter.deny(RegExp(r'\s', unicode: true)),
+            ],
             obscureText: obscurePassword,
             decoration: _fieldDecoration().copyWith(
               suffixIcon: IconButton(
@@ -745,6 +753,9 @@ class _RegisterPageState extends State<RegisterPage> {
           const SizedBox(height: 6),
           TextField(
             controller: confirmPasswordController,
+            inputFormatters: [
+              FilteringTextInputFormatter.deny(RegExp(r'\s', unicode: true)),
+            ],
             obscureText: obscureConfirm,
             decoration: _fieldDecoration().copyWith(
               suffixIcon: IconButton(
