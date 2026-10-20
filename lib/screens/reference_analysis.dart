@@ -35,6 +35,10 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
     final r = widget.record, crops = rankedCropRecommendations(widget.record);
     if (r['is_crop_recommended'] == false && r['land_cover'] is Map) {
       final cover = Map<String, dynamic>.from(r['land_cover']);
+      final unverified =
+          cover['status'] == 'unknown' ||
+          '${r['land_status']}'.toUpperCase() == 'UNKNOWN';
+      final coverage = analysisNumber(cover['observed_fraction']);
       return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -46,14 +50,23 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
               children: [
                 Row(
                   children: [
-                    const CircleAvatar(
-                      backgroundColor: Color(0xFFFFE2A8),
-                      child: Icon(Icons.location_city, color: GeoDesign.orange),
+                    CircleAvatar(
+                      backgroundColor: const Color(0xFFFFE2A8),
+                      child: Icon(
+                        unverified
+                            ? Icons.satellite_alt
+                            : cover['status'] == 'water'
+                            ? Icons.water_drop
+                            : Icons.location_city,
+                        color: GeoDesign.orange,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        '${r['land_status'] ?? 'Land use advisory'}',
+                        unverified
+                            ? 'Land cover not verified'
+                            : '${r['land_status'] ?? 'Land use advisory'}',
                         style: const TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w900,
@@ -87,15 +100,31 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                     color: GeoDesign.green900,
                   ),
                 ),
+                if (unverified) ...[
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Incomplete satellite coverage. Mapped percentages do not establish that the remaining area is free of buildings or water.',
+                  ),
+                  GeoCoverBar(
+                    label: 'Confident satellite coverage',
+                    fraction: coverage,
+                    color: Colors.blueGrey,
+                    icon: Icons.satellite_alt,
+                  ),
+                ],
                 GeoCoverBar(
                   label: 'Mapped buildings/roads',
-                  fraction: analysisNumber(cover['built_fraction']),
+                  fraction: unverified && (coverage == null || coverage == 0)
+                      ? null
+                      : analysisNumber(cover['built_fraction']),
                   color: GeoDesign.statusRed,
                   icon: Icons.home_rounded,
                 ),
                 GeoCoverBar(
                   label: 'Mapped water',
-                  fraction: analysisNumber(cover['water_fraction']),
+                  fraction: unverified && (coverage == null || coverage == 0)
+                      ? null
+                      : analysisNumber(cover['water_fraction']),
                   color: Colors.blue,
                   icon: Icons.water_drop,
                 ),

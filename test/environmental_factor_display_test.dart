@@ -1,7 +1,31 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter/material.dart';
 import 'package:geosustain_clean_arranged/main.dart';
 
 void main() {
+  testWidgets(
+    'recorded model input does not show the old unassessed range panel',
+    (tester) async {
+      final factor = environmentalFactorViews({}, {
+        'model_explanation': {
+          'samples': [
+            {
+              'inputs': {'K': 51.78},
+            },
+          ],
+        },
+      }).firstWhere((f) => f.key == 'K');
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: EnvironmentalFactorCard(factor: factor)),
+        ),
+      );
+      expect(find.text('Used in crop prediction'), findsOneWidget);
+      expect(find.text('Not assessed'), findsNothing);
+      expect(find.text('No crop-specific range saved'), findsNothing);
+    },
+  );
+
   test('shows ten inputs and uses recorded 30-day rain, never annual rain', () {
     final record = <String, dynamic>{
       'scoring_version': 'reference',
