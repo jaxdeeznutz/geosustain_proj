@@ -19,34 +19,65 @@ class _ResultState extends AnalysisState {
 }
 
 void main() {
-  test('recorded model input uses all samples and never invents missing NPK', () {
-    final record = <String, dynamic>{'model_explanation': {'samples': [
-      {'inputs': {'N': 40, 'rainfall': 100}},
-      {'inputs': {'N': 60, 'rainfall': 200}},
-    ]}};
-    expect(recordedModelInput(record, 'N'), 50);
-    expect(recordedModelInput(record, 'rainfall'), 150);
-    expect(recordedModelInput(record, 'P'), isNull);
-    expect(recordedModelInput({}, 'N'), isNull);
-  });
-  test('password policy allows longer passwords but rejects whitespace and missing symbols', () {
-    expect(validNewPassword('Abcd!123'), isTrue);
-    expect(validNewPassword('Longer!password123'), isTrue);
-    expect(validNewPassword('Short!1'), isFalse);
-    expect(validNewPassword('Abcd1234'), isFalse);
-    expect(validNewPassword('Abcd! 123'), isFalse);
-    expect(validNewPassword('A!' + List.filled(71, 'b').join()), isFalse);
-  });
+  test(
+    'recorded model input uses all samples and never invents missing NPK',
+    () {
+      final record = <String, dynamic>{
+        'model_explanation': {
+          'samples': [
+            {
+              'inputs': {'N': 40, 'rainfall': 100},
+            },
+            {
+              'inputs': {'N': 60, 'rainfall': 200},
+            },
+          ],
+        },
+      };
+      expect(recordedModelInput(record, 'N'), 50);
+      expect(recordedModelInput(record, 'rainfall'), 150);
+      expect(recordedModelInput(record, 'P'), isNull);
+      expect(recordedModelInput({}, 'N'), isNull);
+    },
+  );
+  test(
+    'password policy allows longer passwords but rejects whitespace and missing symbols',
+    () {
+      expect(validNewPassword('Abcd!123'), isTrue);
+      expect(validNewPassword('Longer!password123'), isTrue);
+      expect(validNewPassword('Short!1'), isFalse);
+      expect(validNewPassword('Abcd1234'), isFalse);
+      expect(validNewPassword('Abcd! 123'), isFalse);
+      expect(validNewPassword("A!${List.filled(71, 'b').join()}"), isFalse);
+    },
+  );
 
-  testWidgets('blocked land shows advisory without crop ranking', (tester) async {
+  testWidgets('blocked land shows advisory without crop ranking', (
+    tester,
+  ) async {
     final state = _ResultState();
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
-      child: ReferenceAnalysisContent(state: state, record: {
-        'session_id': 1, 'is_crop_recommended': false, 'land_status': 'BUILT UP',
-        'land_cover': {'message': 'Select agricultural land.', 'built_fraction': .8, 'water_fraction': 0},
-        'top_crop_recommendations': [],
-      }),
-    ))));
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ReferenceAnalysisContent(
+              state: state,
+              record: {
+                'session_id': 1,
+                'is_crop_recommended': false,
+                'land_status': 'BUILT UP',
+                'land_cover': {
+                  'message': 'Select agricultural land.',
+                  'built_fraction': .8,
+                  'water_fraction': 0,
+                },
+                'top_crop_recommendations': [],
+              },
+            ),
+          ),
+        ),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(find.text('BUILT UP'), findsOneWidget);
     expect(find.text('Select agricultural land.'), findsOneWidget);
@@ -201,8 +232,20 @@ void main() {
       lessThan(tester.getTopLeft(find.text('Older analysis')).dy),
     );
     expect(find.text('Owner: Fixture Farmer'), findsNWidgets(2));
-    expect(find.text('Rejected'), findsOneWidget);
-    expect(find.text('Approved'), findsOneWidget);
+    expect(
+      find.descendant(
+        of: find.byType(AnalysisHistoryRow),
+        matching: find.text('Rejected'),
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(
+        of: find.byType(AnalysisHistoryRow),
+        matching: find.text('Approved'),
+      ),
+      findsOneWidget,
+    );
     await tester.tap(find.text('Latest analysis'));
     await tester.pumpAndSettle();
     expect(selected?['session_id'], 2);

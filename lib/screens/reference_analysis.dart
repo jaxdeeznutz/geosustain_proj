@@ -35,48 +35,122 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
     final r = widget.record, crops = rankedCropRecommendations(widget.record);
     if (r['is_crop_recommended'] == false && r['land_cover'] is Map) {
       final cover = Map<String, dynamic>.from(r['land_cover']);
-      return Card(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              AnalysisIdentity(record: r, compact: true),
-              const SizedBox(height: 20),
-              const Icon(Icons.info_outline, color: Colors.orange, size: 36),
-              const SizedBox(height: 12),
-              Text(
-                '${r['land_status'] ?? 'Land use advisory'}',
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          GeoResultCard(child: GeoRecordSummary(r)),
+          GeoResultCard(
+            color: const Color(0xFFFFF6E5),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Color(0xFFFFE2A8),
+                      child: Icon(Icons.location_city, color: GeoDesign.orange),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        '${r['land_status'] ?? 'Land use advisory'}',
+                        style: const TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          color: GeoDesign.ink,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              const SizedBox(height: 12),
-              Text('${cover['message'] ?? r['analysis_summary'] ?? ''}'),
-              const SizedBox(height: 16),
-              Text(
-                'Mapped water: ${((analysisNumber(cover['water_fraction']) ?? 0) * 100).toStringAsFixed(1)}%',
-              ),
-              Text(
-                'Mapped buildings/roads: ${((analysisNumber(cover['built_fraction']) ?? 0) * 100).toStringAsFixed(1)}%',
-              ),
-              const SizedBox(height: 12),
-              Text('${cover['limitation'] ?? ''}'),
-              const SizedBox(height: 12),
-              Text(
-                '${cover['source'] ?? ''}',
-                style: const TextStyle(fontSize: 12),
-              ),
-              Text(
-                '${cover['attribution'] ?? ''}',
-                style: const TextStyle(fontSize: 11),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Text(
+                  '${cover['message'] ?? r['analysis_summary'] ?? ''}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    height: 1.4,
+                    color: GeoDesign.ink,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          GeoResultCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Land cover composition',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w800,
+                    color: GeoDesign.green900,
+                  ),
+                ),
+                GeoCoverBar(
+                  label: 'Mapped buildings/roads',
+                  fraction: analysisNumber(cover['built_fraction']),
+                  color: GeoDesign.statusRed,
+                  icon: Icons.home_rounded,
+                ),
+                GeoCoverBar(
+                  label: 'Mapped water',
+                  fraction: analysisNumber(cover['water_fraction']),
+                  color: Colors.blue,
+                  icon: Icons.water_drop,
+                ),
+              ],
+            ),
+          ),
+          if ('${cover['limitation'] ?? ''}'.isNotEmpty)
+            GeoResultCard(
+              color: const Color(0xFFE9F3FD),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Notes',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '${cover['limitation']}',
+                    style: const TextStyle(height: 1.4, color: GeoDesign.muted),
+                  ),
+                ],
+              ),
+            ),
+          if ('${cover['source'] ?? ''}${cover['attribution'] ?? ''}'
+              .isNotEmpty)
+            GeoResultCard(
+              color: const Color(0xFFEEF4EF),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Data source',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 8),
+                  Text('${cover['source'] ?? ''}'),
+                  if ('${cover['attribution'] ?? ''}'.isNotEmpty) ...[
+                    const Divider(height: 24),
+                    Text(
+                      '${cover['attribution']}',
+                      style: const TextStyle(
+                        fontSize: 13,
+                        height: 1.4,
+                        color: GeoDesign.muted,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+        ],
       );
     }
+
     final best = crops.isEmpty ? <String, dynamic>{} : crops.first;
     final score = analysisNumber(best['compatibility_pct']);
     final modern = r['scoring_version'] != null;

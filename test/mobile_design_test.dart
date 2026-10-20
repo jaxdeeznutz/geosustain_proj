@@ -204,6 +204,16 @@ void main() {
       await capture('land-conditions');
       expect(state.result?['session_id'], record['session_id']);
       await tab('History');
+      await tester.scrollUntilVisible(
+        find.text('Unnamed area'),
+        180,
+        scrollable: find
+            .descendant(
+              of: find.byKey(const PageStorageKey('mobile-history-scroll')),
+              matching: find.byType(Scrollable),
+            )
+            .first,
+      );
       expect(find.text('Unnamed area'), findsOneWidget);
       await capture('history');
       await tester.pumpWidget(const SizedBox());

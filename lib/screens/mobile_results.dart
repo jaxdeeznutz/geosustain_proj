@@ -72,17 +72,15 @@ class AnalysisIdentity extends StatelessWidget {
           ),
         ),
         if (owner.isNotEmpty)
-          Text('Owner: $owner', style: const TextStyle(fontSize: 16)),
+          GeoInfoLine(Icons.person_outline, 'Owner: $owner'),
         if (location.isNotEmpty)
-          Text(
-            location,
-            style: const TextStyle(fontSize: 16, color: Color(0xFF536258)),
-          ),
-        const SizedBox(height: 6),
-        Text(
-          '${analysisAreaText(record)} · ${analysisDateText(analysisRecordDate(record))}',
-          style: const TextStyle(fontSize: 14, color: Color(0xFF536258)),
+          GeoInfoLine(Icons.location_on_outlined, location),
+        GeoInfoLine(
+          Icons.calendar_today_outlined,
+          analysisDateText(analysisRecordDate(record)),
         ),
+        const SizedBox(height: 6),
+        GeoStatusPill(label: analysisAreaText(record), icon: Icons.crop_free),
       ],
     );
   }
@@ -96,15 +94,19 @@ class AnalysisHistoryRow extends StatelessWidget {
   Widget build(BuildContext context) => Card(
     color: Colors.white,
     elevation: 0,
-    margin: const EdgeInsets.only(bottom: 10),
+    margin: const EdgeInsets.only(bottom: 12),
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(24),
+      side: const BorderSide(color: GeoDesign.border),
+    ),
     child: InkWell(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(24),
       onTap: onTap,
       child: Padding(
         padding: const EdgeInsets.all(14),
         child: Row(
           children: [
-            BoundaryThumbnail(record, size: 88),
+            ParcelThumbnail(record),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -358,14 +360,46 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              GeoSustainHeader(
-                title: 'Analysis',
-                state: state,
-                trailing: IconButton(
-                  tooltip: 'Refresh',
-                  onPressed: busy ? null : _refresh,
-                  icon: const Icon(Icons.refresh),
+              GeoHeader(
+                subtitle: 'Analysis',
+                leading: Navigator.canPop(context)
+                    ? _HeaderCircleButton(
+                        icon: Icons.arrow_back,
+                        onTap: () => Navigator.maybePop(context),
+                      )
+                    : null,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    _HeaderCircleButton(
+                      icon: Icons.refresh,
+                      onTap: busy ? null : _refresh,
+                    ),
+                    const SizedBox(width: 6),
+                    _HeaderCircleButton(
+                      icon: Icons.notifications_none_rounded,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => NotificationsPage(state: state),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                action: result != null && completed.length > 1
+                    ? OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.white,
+                          side: const BorderSide(color: Colors.white54),
+                          backgroundColor: Colors.white.withValues(alpha: .1),
+                          shape: const StadiumBorder(),
+                        ),
+                        onPressed: busy ? null : _chooseAnalysis,
+                        icon: const Icon(Icons.swap_horiz),
+                        label: const Text('Switch analysis'),
+                      )
+                    : null,
               ),
               if (busy) const LinearProgressIndicator(),
               if (state.loading)
@@ -384,15 +418,6 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
                   ),
                 ),
               if (result != null) ...[
-                if (completed.length > 1)
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: TextButton.icon(
-                      onPressed: busy ? null : _chooseAnalysis,
-                      icon: const Icon(Icons.swap_horiz),
-                      label: const Text('Switch analysis'),
-                    ),
-                  ),
                 MobileAnalysisResult(
                   key: ValueKey('analysis-${result['session_id']}'),
                   state: state,

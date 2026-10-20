@@ -1,6 +1,18 @@
 part of '../main.dart';
 
 abstract final class GeoDesign {
+  static const green900 = Color(0xFF0A5C30);
+  static const green800 = Color(0xFF0B6B3A);
+  static const green700 = Color(0xFF12793F);
+  static const green600 = Color(0xFF1B8A4B);
+  static const mint = Color(0xFFE3F4E8);
+  static const mintBorder = Color(0xFFD3E8DA);
+  static const bg = Color(0xFFF4F9F5);
+  static const ink = Color(0xFF0E2A1D);
+  static const muted = Color(0xFF55636B);
+  static const border = Color(0xFFE3EAE5);
+  static const orange = Color(0xFFE8590C);
+  static const statusRed = Color(0xFFD62828);
   static const green = Color(0xFF08783F);
   static const darkGreen = Color(0xFF075F36);
   static const lightGreen = Color(0xFFE7F5EA);
@@ -239,7 +251,10 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
         ),
       ),
     );
-    final block = Column(mainAxisSize: MainAxisSize.min, children: [bar, curve]);
+    final block = Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [bar, curve],
+    );
     if (!embedded) {
       return AnnotatedRegion<SystemUiOverlayStyle>(
         value: const SystemUiOverlayStyle(
@@ -277,6 +292,7 @@ class GeoHeaderAction extends StatelessWidget {
   final IconData icon;
   final String tooltip;
   final VoidCallback? onPressed;
+
   /// Lighter green circle (used for the "+" create action).
   final bool accent;
   const GeoHeaderAction({

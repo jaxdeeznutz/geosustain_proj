@@ -24,6 +24,9 @@ import 'farm_geometry.dart';
 part 'screens/mobile_visuals.dart';
 part 'screens/reference_visuals.dart';
 part 'screens/design_system.dart';
+part 'widgets/geo_header.dart';
+part 'widgets/geo_bottom_nav.dart';
+part 'widgets/geo_result_widgets.dart';
 part 'screens/reference_analysis.dart';
 part 'screens/home_screen.dart';
 part 'screens/map_screen.dart';
@@ -2241,46 +2244,7 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
             ),
           ],
         ),
-        bottomNavigationBar: Padding(
-          padding: const EdgeInsets.fromLTRB(9, 4, 9, 8),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(26),
-            child: NavigationBar(
-              selectedIndex: index,
-              height: 76,
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              indicatorColor: softGreen,
-              onDestinationSelected: selectTab,
-              destinations: const [
-                NavigationDestination(
-                  icon: Icon(Icons.home_outlined),
-                  selectedIcon: Icon(Icons.home, color: green),
-                  label: 'Home',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.map_outlined),
-                  selectedIcon: Icon(Icons.map, color: green),
-                  label: 'My Farms',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.center_focus_strong_outlined),
-                  selectedIcon: Icon(Icons.center_focus_strong, color: green),
-                  label: 'Analysis',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.history_outlined),
-                  selectedIcon: Icon(Icons.history, color: green),
-                  label: 'History',
-                ),
-                NavigationDestination(
-                  icon: Icon(Icons.person_outline),
-                  selectedIcon: Icon(Icons.person, color: green),
-                  label: 'Profile',
-                ),
-              ],
-            ),
-          ),
-        ),
+        bottomNavigationBar: GeoBottomNav(index: index, onTap: selectTab),
       ),
     );
   }

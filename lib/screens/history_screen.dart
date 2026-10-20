@@ -103,13 +103,26 @@ class _HistoryPageState extends State<HistoryPage> {
       return GeoSafeArea(
         child: Column(
           children: [
-            GeoSustainHeader(
-              title: 'History',
-              state: widget.state,
-              trailing: IconButton(
-                tooltip: 'Refresh',
-                onPressed: busy ? null : refresh,
-                icon: const Icon(Icons.refresh),
+            GeoHeader(
+              subtitle: 'History',
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  _HeaderCircleButton(
+                    icon: Icons.refresh,
+                    onTap: busy ? null : refresh,
+                  ),
+                  const SizedBox(width: 6),
+                  _HeaderCircleButton(
+                    icon: Icons.notifications_none_rounded,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => NotificationsPage(state: widget.state),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             if (busy) const LinearProgressIndicator(),
@@ -121,10 +134,8 @@ class _HistoryPageState extends State<HistoryPage> {
                   physics: const AlwaysScrollableScrollPhysics(),
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
                   children: [
-                    const FarmBanner(
-                      'Analysis History',
-                      'View your past land analyses, check statuses, and revisit your results.',
-                    ),
+                    const GeoHistoryBanner(),
+                    const SizedBox(height: 16),
                     Row(
                       children: [
                         Expanded(
@@ -138,52 +149,70 @@ class _HistoryPageState extends State<HistoryPage> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        DropdownButton<String>(
-                          value: _status,
-                          items: [
-                            for (final value in [
-                              'All status',
-                              'Not Submitted',
-                              'Pending Review',
-                              'Approved',
-                              'Rejected',
-                            ])
-                              DropdownMenuItem(
-                                value: value,
-                                child: Text(
-                                  value,
-                                  style: const TextStyle(fontSize: 12),
-                                ),
+                        SizedBox(
+                          width: 124,
+                          child: DropdownButtonFormField<bool>(
+                            key: ValueKey((farmId, _allFarms)),
+                            initialValue: farmId == null || _allFarms,
+                            isExpanded: true,
+                            decoration: const InputDecoration(
+                              contentPadding: EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 12,
                               ),
-                          ],
-                          onChanged: (v) => setState(() => _status = v!),
+                            ),
+                            items: [
+                              const DropdownMenuItem(
+                                value: true,
+                                child: Text('All farms'),
+                              ),
+                              if (farmId != null)
+                                DropdownMenuItem(
+                                  value: false,
+                                  child: Text(
+                                    '${widget.state.selectedFarm?['farm_name'] ?? 'Selected farm'}',
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                            ],
+                            onChanged: farmId == null
+                                ? null
+                                : (value) => setState(() => _allFarms = value!),
+                          ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    if (farmId != null)
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 12),
-                        child: Wrap(
-                          spacing: 8,
-                          children: [
-                            ChoiceChip(
-                              label: Text(
-                                '${widget.state.selectedFarm?['farm_name'] ?? 'Selected farm'}',
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Row(
+                        children: [
+                          for (final value in [
+                            'All status',
+                            'Not Submitted',
+                            'Pending Review',
+                            'Approved',
+                            'Rejected',
+                          ])
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: ChoiceChip(
+                                label: Text(value),
+                                selected: _status == value,
+                                selectedColor: GeoDesign.green700,
+                                labelStyle: TextStyle(
+                                  color: _status == value
+                                      ? Colors.white
+                                      : GeoDesign.green900,
+                                ),
+                                onSelected: (_) =>
+                                    setState(() => _status = value),
                               ),
-                              selected: !_allFarms,
-                              onSelected: (_) =>
-                                  setState(() => _allFarms = false),
                             ),
-                            ChoiceChip(
-                              label: const Text('All farms'),
-                              selected: _allFarms,
-                              onSelected: (_) =>
-                                  setState(() => _allFarms = true),
-                            ),
-                          ],
-                        ),
+                        ],
                       ),
+                    ),
+                    const SizedBox(height: 16),
                     if (failure != null)
                       Padding(
                         padding: const EdgeInsets.only(bottom: 12),
@@ -333,30 +362,7 @@ class VerificationStatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: _color.withValues(alpha: .12),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(_icon, size: 12, color: _color),
-          const SizedBox(width: 4),
-          Flexible(
-            child: Text(
-              _label,
-              style: TextStyle(
-                color: _color,
-                fontWeight: FontWeight.w800,
-                fontSize: 12,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+    return GeoStatusPill(label: _label, icon: _icon, foreground: _color);
   }
 }
 
