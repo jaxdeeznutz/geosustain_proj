@@ -116,6 +116,7 @@ class CropFactorView {
   final String key, label, unit, interpretation;
   final double? value, min, max;
   final CropFactorState state;
+  final bool usedByModel;
   const CropFactorView({
     required this.key,
     required this.label,
@@ -125,6 +126,7 @@ class CropFactorView {
     required this.min,
     required this.max,
     required this.state,
+    this.usedByModel = false,
   });
 }
 
@@ -270,12 +272,15 @@ List<CropFactorView> environmentalFactorViews(
       min: comparison?.min,
       max: comparison?.max,
       state: comparison?.state ?? CropFactorState.unassessed,
+      usedByModel: modelValue != null,
       interpretation: value == null
           ? 'Not recorded for this analysis.'
           : nutrient
           ? 'Existing model estimate; not a soil test.'
           : comparison?.interpretation ??
-                'Recorded value; no matching crop range saved.',
+                (modelValue != null
+                    ? 'Used with the other inputs to predict crop rankings.'
+                    : 'Recorded observation; no comparable crop range recorded.'),
     );
   }).toList();
 }
@@ -787,6 +792,7 @@ class EnvironmentalFactorCard extends StatelessWidget {
     final current = factor.value == null
         ? 'Unavailable'
         : _withUnit(_cropNum(factor.value), factor.unit);
+    final hasRange = factor.min != null || factor.max != null;
     final rangeBox = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
@@ -797,13 +803,17 @@ class EnvironmentalFactorCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Preferred range',
+          Text(
+            hasRange ? 'Preferred range comparison' : 'Model assessment',
             style: TextStyle(fontSize: 10.5, color: CropSheetStyle.muted),
           ),
           const SizedBox(height: 2),
           Text(
-            _rangeText(factor.min, factor.max, factor.unit),
+            hasRange
+                ? _rangeText(factor.min, factor.max, factor.unit)
+                : factor.usedByModel
+                ? 'Used in crop prediction'
+                : 'Model input not recorded',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
@@ -813,7 +823,15 @@ class EnvironmentalFactorCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          MatchStatusBadge(state: factor.state),
+          if (hasRange)
+            MatchStatusBadge(state: factor.state)
+          else
+            Text(
+              factor.usedByModel
+                  ? 'The model evaluates factors together; it does not assign a separate suitability grade to each input.'
+                  : 'This saved result cannot confirm whether the model used this factor.',
+              style: const TextStyle(fontSize: 12, color: CropSheetStyle.muted),
+            ),
         ],
       ),
     );
@@ -1009,7 +1027,7 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
         _SheetHeading(
           'Environmental Factors',
           subtitle:
-              'Ten environmental factors. Crop ranges are shown where compatible saved comparisons are available.',
+              'Ten environmental factors used together by the model. Recorded crop-range comparisons are separate from the prediction.',
         ),
         if (factors.isEmpty)
           const InfoExplanationCard(
@@ -1119,7 +1137,7 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
           _SheetHeading(
             'Environmental Factors',
             subtitle:
-                'Ten environmental factors. Missing readings and crop ranges are marked separately.',
+                'Ten environmental factors. Model input availability and recorded range comparisons are shown separately.',
           ),
           for (final factor in factors) EnvironmentalFactorCard(factor: factor),
         ],

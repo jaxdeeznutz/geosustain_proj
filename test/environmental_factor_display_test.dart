@@ -28,6 +28,7 @@ void main() {
     expect(views.first.min, isNull);
     expect(views.first.state, CropFactorState.unassessed);
     expect(views.firstWhere((v) => v.key == 'N').value, isNull);
+    expect(views.firstWhere((v) => v.key == 'N').usedByModel, isFalse);
     expect(
       environmentalFactorViews(crop, {
         'annual_rainfall_mm': 2742.48,
@@ -53,8 +54,10 @@ void main() {
         },
       });
       expect(views.first.value, 0);
+      expect(views.first.usedByModel, isTrue);
       expect(views[1].value, 28);
       expect(views.firstWhere((v) => v.key == 'N').value, isNull);
+      expect(views.firstWhere((v) => v.key == 'N').usedByModel, isFalse);
     },
   );
   test('compatible saved comparison retains its original status', () {
