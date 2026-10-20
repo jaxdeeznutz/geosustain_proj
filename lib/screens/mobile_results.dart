@@ -360,47 +360,27 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-              GeoHeader(
-                subtitle: 'Analysis',
-                leading: Navigator.canPop(context)
-                    ? _HeaderCircleButton(
-                        icon: Icons.arrow_back,
-                        onTap: () => Navigator.maybePop(context),
-                      )
-                    : null,
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    _HeaderCircleButton(
-                      icon: Icons.refresh,
-                      onTap: busy ? null : _refresh,
-                    ),
-                    const SizedBox(width: 6),
-                    _HeaderCircleButton(
-                      icon: Icons.notifications_none_rounded,
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => NotificationsPage(state: state),
-                        ),
-                      ),
-                    ),
-                  ],
+              GeoSustainHeader(
+                title: 'Analysis',
+                state: state,
+                trailing: IconButton(
+                  tooltip: 'Refresh',
+                  onPressed: busy ? null : _refresh,
+                  icon: const Icon(Icons.refresh),
                 ),
-                action: result != null && completed.length > 1
-                    ? OutlinedButton.icon(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white54),
-                          backgroundColor: Colors.white.withValues(alpha: .1),
-                          shape: const StadiumBorder(),
-                        ),
-                        onPressed: busy ? null : _chooseAnalysis,
-                        icon: const Icon(Icons.swap_horiz),
-                        label: const Text('Switch analysis'),
-                      )
-                    : null,
               ),
+              if (result != null && completed.length > 1)
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: OutlinedButton.icon(
+                    style: OutlinedButton.styleFrom(
+                      shape: const StadiumBorder(),
+                    ),
+                    onPressed: busy ? null : _chooseAnalysis,
+                    icon: const Icon(Icons.swap_horiz),
+                    label: const Text('Switch analysis'),
+                  ),
+                ),
               if (busy) const LinearProgressIndicator(),
               if (state.loading)
                 Padding(

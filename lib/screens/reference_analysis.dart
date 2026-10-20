@@ -323,73 +323,12 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
           _AnalysisSection(
             title: modelRanked
                 ? 'Model inputs (10 factors)'
-                : 'Reference conditions',
+                : 'Environmental factors (10)',
             icon: Icons.bar_chart,
             children: [
               GeoEqualGrid(
                 children: [
-                  for (final item
-                      in (modelRanked
-                          ? [
-                              (
-                                'rainfall',
-                                'Rainfall (30 days)',
-                                'mm',
-                                Icons.water_drop_outlined,
-                              ),
-                              (
-                                'temperature',
-                                'Temperature',
-                                '?C',
-                                Icons.thermostat,
-                              ),
-                              ('humidity', 'Humidity', '%', Icons.water_drop),
-                              (
-                                'ndvi',
-                                'Vegetation (NDVI)',
-                                '',
-                                Icons.eco_outlined,
-                              ),
-                              ('ph', 'Soil pH', '', Icons.science_outlined),
-                              ('N', 'Nitrogen (N)', '', Icons.grass),
-                              ('P', 'Phosphorus (P)', '', Icons.grass),
-                              ('K', 'Potassium (K)', '', Icons.grass),
-                              ('elevation', 'Elevation', 'm', Icons.landscape),
-                              ('slope', 'Slope', '%', Icons.terrain),
-                            ]
-                          : [
-                              (
-                                'ndvi',
-                                'Vegetation (NDVI)',
-                                '',
-                                Icons.eco_outlined,
-                              ),
-                              (
-                                'temperature_c',
-                                'Climate temperature',
-                                '?C',
-                                Icons.thermostat,
-                              ),
-                              (
-                                'annual_rainfall_mm',
-                                'Annual rainfall',
-                                'mm/year',
-                                Icons.water_drop_outlined,
-                              ),
-                              (
-                                'soil_ph',
-                                'Soil pH',
-                                '',
-                                Icons.science_outlined,
-                              ),
-                              ('slope_pct', 'Slope', '%', Icons.terrain),
-                              (
-                                'live_humidity',
-                                'Current humidity',
-                                '%',
-                                Icons.water_drop,
-                              ),
-                            ]))
+                  for (final factor in environmentalFactorViews(best, r))
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
@@ -400,28 +339,40 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Icon(item.$4, color: green, size: 21),
+                          Icon(
+                            _factorIcon(factor.key).$1,
+                            color: green,
+                            size: 21,
+                          ),
                           const SizedBox(height: 5),
-                          Text(item.$2, style: const TextStyle(fontSize: 12)),
                           Text(
-                            '${(modelRanked ? recordedModelInput(r, item.$1) : analysisNumber(r[item.$1]))?.toStringAsFixed(2) ?? 'Unassessed'} ${(modelRanked ? recordedModelInput(r, item.$1) : analysisNumber(r[item.$1])) == null ? '' : item.$3}',
+                            factor.label,
+                            style: const TextStyle(fontSize: 12),
+                          ),
+                          Text(
+                            factor.value == null
+                                ? 'Unavailable'
+                                : _withUnit(
+                                    _cropNum(factor.value),
+                                    factor.unit,
+                                  ),
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: green,
                             ),
                           ),
-                          if (['N', 'P', 'K'].contains(item.$1))
+                          if (['N', 'P', 'K'].contains(factor.key))
                             const Text(
                               'Existing model estimate; not a soil test',
                               style: TextStyle(fontSize: 10),
                             ),
-                          if (item.$1 == 'ndvi')
+                          if (factor.key == 'ndvi')
                             const Text(
                               'Vegetation only; not crop suitability',
                               style: TextStyle(fontSize: 10),
                             ),
-                          if (item.$1 == 'live_humidity')
+                          if (factor.key == 'humidity')
                             const Text(
                               'Not a climate average',
                               style: TextStyle(fontSize: 10),

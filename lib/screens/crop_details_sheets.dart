@@ -67,7 +67,7 @@ String _withUnit(String number, String unit) {
 }
 
 String _rangeText(double? low, double? high, String unit) {
-  if (low == null && high == null) return 'Not configured';
+  if (low == null && high == null) return 'No crop-specific range saved';
   if (low != null && high != null) {
     final suffix = unit.isEmpty
         ? ''
@@ -198,6 +198,86 @@ List<CropFactorView> cropFactorViews(
     );
   }
   return views;
+}
+
+/// The ten recorded environmental inputs, separate from reference scoring.
+const environmentalFactorDefinitions = [
+  (
+    'rainfall',
+    'Rainfall (30 days)',
+    'mm',
+    ['rainfall_30d_mm', 'rainfall_monthly_mm', 'monthly_rainfall_mm', 'rain'],
+  ),
+  (
+    'temperature',
+    'Temperature',
+    '°C',
+    ['temperature_c', 'surface_temp_c', 'temp'],
+  ),
+  ('humidity', 'Humidity', '%', ['humidity', 'live_humidity']),
+  ('ndvi', 'Vegetation (NDVI)', '', ['ndvi']),
+  ('ph', 'Soil pH', '', ['soil_ph']),
+  ('N', 'Nitrogen (N)', '', ['nitrogen']),
+  ('P', 'Phosphorus (P)', '', ['phosphorus']),
+  ('K', 'Potassium (K)', '', ['potassium']),
+  ('elevation', 'Elevation', 'm', ['elevation_m']),
+  ('slope', 'Slope', '%', ['slope_pct']),
+];
+
+List<CropFactorView> environmentalFactorViews(
+  Map<String, dynamic> crop,
+  Map<String, dynamic> record,
+) {
+  final saved = cropFactorViews(crop, record);
+  return environmentalFactorDefinitions.map((definition) {
+    final key = definition.$1;
+    final modelValue = recordedModelInput(record, key);
+    double? value = modelValue;
+    // A model snapshot with missing inputs must not be silently filled with
+    // readings from another source or date.
+    if (analysisListValue(
+      analysisMapValue(record['model_explanation'])['samples'],
+    ).isEmpty) {
+      for (final alias in definition.$4) {
+        value ??= analysisNumber(record[alias]);
+      }
+      for (final candidate in saved) {
+        if ((candidate.key == key || definition.$4.contains(candidate.key)) &&
+            candidate.unit == definition.$3) {
+          value ??= candidate.value;
+        }
+      }
+    }
+    CropFactorView? comparison;
+    for (final candidate in saved) {
+      final matches =
+          candidate.key == key || definition.$4.contains(candidate.key);
+      if (matches &&
+          candidate.unit == definition.$3 &&
+          candidate.value == value &&
+          value != null &&
+          (candidate.min != null || candidate.max != null)) {
+        comparison = candidate;
+        break;
+      }
+    }
+    final nutrient = ['N', 'P', 'K'].contains(key);
+    return CropFactorView(
+      key: key,
+      label: definition.$2,
+      unit: definition.$3,
+      value: value,
+      min: comparison?.min,
+      max: comparison?.max,
+      state: comparison?.state ?? CropFactorState.unassessed,
+      interpretation: value == null
+          ? 'Not recorded for this analysis.'
+          : nutrient
+          ? 'Existing model estimate; not a soil test.'
+          : comparison?.interpretation ??
+                'Recorded value; no matching crop range saved.',
+    );
+  }).toList();
 }
 
 /// Rank of the tapped crop: explicit argument, stored rank, else list position.
@@ -902,7 +982,7 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = '${crop['crop'] ?? crop['name'] ?? 'Unnamed crop'}';
     final score = analysisNumber(crop['compatibility_pct'] ?? crop['score']);
-    final factors = cropFactorViews(crop, record);
+    final factors = environmentalFactorViews(crop, record);
     final seasonNote = crop['season_note'];
     return CropSheetFrame(
       header: CropDetailsHeader(
@@ -929,7 +1009,7 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
         _SheetHeading(
           'Environmental Factors',
           subtitle:
-              'Measured conditions and how they compare to the preferred range for $name.',
+              'Ten environmental factors. Crop ranges are shown where compatible saved comparisons are available.',
         ),
         if (factors.isEmpty)
           const InfoExplanationCard(
@@ -991,7 +1071,7 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = '${crop['crop'] ?? crop['name'] ?? 'Unnamed crop'}';
     final score = analysisNumber(crop['compatibility_pct'] ?? crop['score']);
-    final factors = cropFactorViews(crop, record);
+    final factors = environmentalFactorViews(crop, record);
     final modelRanked = isModelRanked(record);
     final scored = record['scoring_version'] != null && !modelRanked;
     final scoring = analysisMapValue(crop['score_breakdown']);
@@ -1039,7 +1119,7 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
           _SheetHeading(
             'Environmental Factors',
             subtitle:
-                'Recorded conditions and how they compare to the preferred range for $name.',
+                'Ten environmental factors. Missing readings and crop ranges are marked separately.',
           ),
           for (final factor in factors) EnvironmentalFactorCard(factor: factor),
         ],

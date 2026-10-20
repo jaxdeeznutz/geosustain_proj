@@ -129,7 +129,8 @@ void main() {
       find.textContaining('Crop-specific conditions were not saved'),
       findsOneWidget,
     );
-    expect(find.text('Environmental Factors'), findsNothing);
+    expect(find.text('Environmental Factors'), findsOneWidget);
+    expect(find.byType(EnvironmentalFactorCard), findsNWidgets(10));
     expect(find.text('Model explanation'), findsOneWidget);
     expect(find.textContaining('36.49%. This is separate'), findsOneWidget);
     expect(find.text('How to interpret the score'), findsOneWidget);
