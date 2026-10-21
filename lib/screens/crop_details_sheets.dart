@@ -214,9 +214,9 @@ const environmentalFactorDefinitions = [
     'temperature',
     'Temperature',
     '°C',
-    ['temperature_c', 'surface_temp_c', 'temp'],
+    ['temperature_mean_5y_c', 'temperature_c', 'surface_temp_c', 'temp'],
   ),
-  ('humidity', 'Humidity', '%', ['humidity', 'live_humidity']),
+  ('humidity', 'Humidity', '%', ['humidity_current_pct', 'humidity', 'live_humidity']),
   ('ndvi', 'Vegetation (NDVI)', '', ['ndvi']),
   ('ph', 'Soil pH', '', ['soil_ph']),
   ('N', 'Nitrogen (N)', '', ['nitrogen']),
@@ -252,6 +252,19 @@ List<CropFactorView> environmentalFactorViews(
     }
     CropFactorView? comparison;
     for (final candidate in saved) {
+      // Recent rain/current humidity cannot inherit annual reference ranges,
+      // even when the numbers happen to match. Old temperature periods are unknown.
+      if (key == 'rainfall' || key == 'humidity') continue;
+      if (key == 'temperature') {
+        final factors = analysisListValue(crop['factors']);
+        final hasClimatePeriod = factors.any((entry) {
+          final factor = analysisMapValue(entry);
+          return factor['factor'] == candidate.key &&
+              factor['period'] == 'annual_mean';
+        });
+        if (record['climate_contract_version'] != 'climate-periods-v1' ||
+            !hasClimatePeriod) continue;
+      }
       final matches =
           candidate.key == key || definition.$4.contains(candidate.key);
       if (matches &&
@@ -267,7 +280,13 @@ List<CropFactorView> environmentalFactorViews(
     final nutrient = ['N', 'P', 'K'].contains(key);
     return CropFactorView(
       key: key,
-      label: definition.$2,
+      label: record['climate_contract_version'] == 'climate-periods-v1'
+          ? (key == 'temperature'
+                ? 'Air temperature (5-year mean)'
+                : key == 'humidity'
+                ? 'Humidity (current)'
+                : definition.$2)
+          : definition.$2,
       unit: definition.$3,
       value: value,
       min: comparison?.min,

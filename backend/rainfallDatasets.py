@@ -410,7 +410,7 @@ def get_temperature(lat, lon):
                     .mean().sample(point, 30).first().get('temperature_2m'))
         val = ee.Number(kelvin).subtract(273.15).getInfo()
         if val is not None:
-            return float(val), 'measured', 'ERA5-Land Daily Aggregate (Google Earth Engine), 12-month mean'
+            return float(val), 'measured', 'ERA5-Land Daily Aggregate (Google Earth Engine), rolling 360-day mean'
         return PANABO_CONFIG['temperature_c'], 'fallback_default', 'Regional typical value — live temperature source unavailable'
     except Exception:
         return PANABO_CONFIG['temperature_c'], 'fallback_default', 'Regional typical value — live temperature source unavailable'

@@ -9,6 +9,7 @@ from suitability import attach_assessment, number
 from model_explainability import forest_snapshot
 from model_ranking import attach_model_ranking, ModelRankingUnavailable
 from nutrient_contract import legacy_inputs, model_values
+from climate_contract import attach_climate_fields, model_climate_inputs, same_period
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -33,7 +34,7 @@ def current_humidity(weather, lat, lon):
     return {'value': value, 'unit': '%', 'period': 'current',
             'quality': 'modelled' if value is not None else 'unavailable', 'source': source}
 
-def climate_normals(lat, lon):
+def climate_baseline_5y(lat, lon):
     """Five complete calendar years, explicitly a short baseline, not a 30-year normal."""
     import rainfallDatasets as env
     env.ensure_earth_engine_initialized()
@@ -59,6 +60,10 @@ def climate_normals(lat, lon):
             'source':source, 'start':start, 'end_exclusive':end,
             'limitation':'Five-year screening baseline; not a 30-year climatological normal. Coarse grid does not resolve individual fields.'}
     return output
+
+
+# Backward-compatible provider name; this is not a 30-year climate normal.
+climate_normals = climate_baseline_5y
 
 def terrain_slope(lat, lon):
     import rainfallDatasets as env
@@ -109,6 +114,7 @@ def analyze_location(lat, lon, active_crops=None):
         'live_humidity':measurements['humidity_current']['value'],
         'land_type':'Vegetation observation only', 'land_status':'Environmental screening',
         'model_explanation':None}
+    attach_climate_fields(result, measurements)
     # Rank with the existing model; retain input quality and training limitations.
     snapshot = None
     try:
@@ -121,9 +127,9 @@ def analyze_location(lat, lon, active_crops=None):
             nutrient_values = model_values(nutrients)
             nq = {'nitrogen': nutrients['N']['quality'], 'nitrogen_source': nitrogen_source,
                   'phosphorus': 'estimated_proxy', 'potassium': 'estimated_proxy'}
-            inputs = {**nutrient_values, 'temperature': result['temperature_c'],
-                      'humidity': result['live_humidity'], 'ph': result['soil_ph'],
-                      'rainfall': result['rainfall_mm'], 'ndvi': result['ndvi'],
+            climate_values, climate_records = model_climate_inputs(measurements)
+            inputs = {**nutrient_values, **climate_values, 'ph': result['soil_ph'],
+                      'ndvi': result['ndvi'],
                       'elevation': result['elevation_m'], 'slope': result['slope_pct']}
             names = list(env.MODEL.feature_names_in_)
             if set(names) != set(inputs):
@@ -144,6 +150,7 @@ def analyze_location(lat, lon, active_crops=None):
                 snapshot['training_provenance'] = 'Kaggle crop data plus synthetic GIS features and local rows; no Panabo field validation established.'
                 snapshot['samples'][0].update(location={'lat':lat,'lon':lon},data_quality=deepcopy(quality),nutrient_quality=nq)
                 snapshot['samples'][0]['model_nutrient_inputs'] = nutrients
+                snapshot['samples'][0]['model_climate_inputs'] = climate_records
     except ModelRankingUnavailable:
         raise
     except Exception as exc:
@@ -164,8 +171,8 @@ def merge_results(samples, active_crops=None):
         valid = [e for e in entries if number(e.get('value')) is not None]
         m = deepcopy(valid[0] if valid else entries[0])
         # Full coverage required; a sample failure cannot masquerade as complete data.
-        m['value'] = sum(e['value'] for e in valid)/len(valid) if len(valid)==len(samples) else None
-        m['spatial_method'] = 'Arithmetic mean of all interior samples; missing sample makes factor unavailable'
+        m['value'] = sum(e['value'] for e in valid)/len(valid) if len(valid)==len(samples) and same_period(entries) else None
+        m['spatial_method'] = 'Arithmetic mean of all interior samples; missing or incompatible unit/period/window makes factor unavailable'
         m['samples'] = entries
         measurements[key] = m
     result['environmental_samples'] = [s['environmental_measurements'] for s in samples]
@@ -173,4 +180,5 @@ def merge_results(samples, active_crops=None):
     for field,key in [('soil_ph','soil_ph'),('temperature_c','temperature'),('annual_rainfall_mm','rainfall'),
                       ('rainfall_mm','rainfall_recent'),('elevation_m','elevation'),('slope_pct','slope'),('ndvi','ndvi')]:
         result[field] = measurements.get(key,{}).get('value')
+    attach_climate_fields(result, measurements)
     return attach_model_ranking(attach_assessment(result,measurements,active_crops), snapshots, active_crops)

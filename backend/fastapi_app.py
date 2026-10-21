@@ -384,6 +384,14 @@ def fetch_open_meteo_weather(lat: float, lon: float) -> Dict[str, Any]:
         "latitude": lat,
         "longitude": lon,
         "temperature_c": current.get("temperature_2m"),
+        "temperature_current_c": current.get("temperature_2m"),
+        "humidity_current_pct": current.get("relative_humidity_2m"),
+        "climate_field_metadata": {
+            "temperature_current_c": {"unit": "C", "period": "current", "source": "Open-Meteo", "quality": "modelled"},
+            "humidity_current_pct": {"unit": "%", "period": "current", "source": "Open-Meteo", "quality": "modelled"},
+            "rainfall_30d_mm": {"unit": "mm", "period": "rolling_30_days", "source": "Open-Meteo", "quality": "modelled",
+                                "start": (today - timedelta(days=30)).isoformat(), "end_exclusive": today.isoformat()},
+        },
         "live_humidity": current.get("relative_humidity_2m"),
         "rainfall_mm": monthly_rain,
         "rainfall_monthly_mm": monthly_rain,
@@ -1014,11 +1022,9 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         return result, analysis_source
     baseline = fetch_multi_year_monthly_baseline(float(lat), float(lon), planting_month)
     result["historical_climate_baseline"] = baseline
-    historical_temp = _safe_number(baseline.get("mean_temperature_c"))
-    recent_temp = _safe_number(result.get("temperature_c"))
-    if historical_temp is not None and recent_temp is not None:
-        result["temperature_c_combined"] = historical_temp * 0.70 + recent_temp * 0.30
-        result["temperature_method"] = "70% multi-year monthly baseline + 30% recent condition"
+    # A selected-month baseline and rolling air-temperature mean are different
+    # temporal variables. Keep evidence separate; do not synthesize a blend.
+    result["temperature_method"] = "Historical monthly baseline and analysis temperature retained separately; no cross-period blend"
     result = build_analysis_summary(result)
     result = finalize_explanation(result)
     return result, analysis_source

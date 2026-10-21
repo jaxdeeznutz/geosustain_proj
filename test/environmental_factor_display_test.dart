@@ -3,6 +3,22 @@ import 'package:flutter/material.dart';
 import 'package:geosustain_clean_arranged/main.dart';
 
 void main() {
+  test('new climate labels distinguish periods and exclude annual humidity ranges', () {
+    final views = environmentalFactorViews({
+      'factors': [
+        {'factor': 'humidity', 'value': 80, 'unit': '%', 'period': 'annual_mean',
+         'score': 100, 'requirement': {'optimal': [75, 90]}},
+      ],
+    }, {
+      'climate_contract_version': 'climate-periods-v1',
+      'temperature_mean_5y_c': 27,
+      'humidity_current_pct': 80,
+    });
+    expect(views[1].label, 'Air temperature (5-year mean)');
+    expect(views[1].value, 27);
+    expect(views[2].label, 'Humidity (current)');
+    expect(views[2].min, isNull);
+  });
   test(
     'saved soil range compares parcel input even when reference reading differs',
     () {

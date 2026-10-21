@@ -56,7 +56,12 @@ def comparison(monkeypatch):
 
 
 def assert_equivalent(old, new):
-    assert old['environmental_measurements'] == new['environmental_measurements']
+    # The period guard adds a more precise aggregation description; observations
+    # and numeric model behavior must still match for compatible inputs.
+    def observations(result):
+        return {k: {field: value for field, value in m.items() if field != 'spatial_method'}
+                for k, m in result['environmental_measurements'].items()}
+    assert observations(old) == observations(new)
     old_samples = old['model_explanation']['samples']
     new_samples = new['model_explanation']['samples']
     assert len(old_samples) == len(new_samples)

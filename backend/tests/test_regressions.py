@@ -44,6 +44,10 @@ def test_weather_uses_upcoming_hours_and_correct_days(monkeypatch, weather_paylo
     assert data['rain_probability_next_6h'] == 55
     assert data['rainfall_today_mm'] == 7
     assert data['rainfall_30d_mm'] == 30
+    assert data['temperature_current_c'] == data['temperature_c'] == 28
+    assert data['humidity_current_pct'] == data['live_humidity'] == 80
+    assert data['climate_field_metadata']['temperature_current_c']['period'] == 'current'
+    assert data['climate_field_metadata']['rainfall_30d_mm']['period'] == 'rolling_30_days'
     assert data['wind_speed_ms'] == 10
     assert data['wind_speed_kmh'] == 36
     assert data['weather_codes_next_6h'] == [61] * 6

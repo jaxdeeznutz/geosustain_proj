@@ -22,6 +22,11 @@ DATASET_PATH = 'Crop_recommendation.csv'
 MODEL_PATH = 'crop_model.pkl'
 FEATURES_PATH = 'crop_model_features.pkl'
 
+# The current CSV and synthetic profiles do not establish compatible periods.
+# Fail before reading/augmenting data or overwriting any deployed artifact.
+from climate_training_contract import validate_training_periods
+validate_training_periods()
+
 print('Loading dataset...')
 df = pd.read_csv(DATASET_PATH)
 
