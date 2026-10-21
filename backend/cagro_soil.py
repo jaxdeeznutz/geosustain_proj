@@ -143,13 +143,25 @@ def lookup_soil_observations(polygon, *, boundaries=None):
         if evidence is None:
             result["message"] = "Conflicting locality boundaries; CAGRO observations cannot be assigned reliably."
             return result
+        reviewed_localities = {
+            feature.get('properties', {}).get('locality_id') for feature in boundaries
+            if feature.get('properties', {}).get('verified') is True
+            and feature.get('properties', {}).get('source')
+        }
         found = {}
         for location in locations:
             if (not all(isinstance(location[k], (int, float)) and math.isfinite(location[k]) for k in ("latitude", "longitude"))
                     or not -90 <= location["latitude"] <= 90 or not -180 <= location["longitude"] <= 180):
                 raise ValueError("Invalid locality coordinate")
             mapped = location["coordinate_precision"] in MAPPED_PRECISIONS
-            if mapped:
+            if location['locality_id'] in evidence:
+                match = {"method": "verified_locality_boundary",
+                         "boundary": evidence[location['locality_id']]}
+            elif mapped:
+                # Once a locality has a reviewed boundary, proximity must not
+                # admit a parcel that crosses or lies outside that boundary.
+                if location['locality_id'] in reviewed_localities:
+                    continue
                 distance = max(_distance((p["lat"], p["lng"]),
                                         (location["latitude"], location["longitude"])) for p in ring)
                 if distance > MAPPED_RADIUS_M:

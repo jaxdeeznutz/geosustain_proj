@@ -6,6 +6,25 @@ EARTH_RADIUS_M = 6378137.0
 MAX_BOUNDARY_POINTS = 2000
 
 
+def polygon_centroid(polygon):
+    """Area-weighted centroid in the local planar lon/lat projection, not sample GPS."""
+    points = [(float(p['lng']), float(p['lat'])) for p in polygon]
+    if points and points[0] == points[-1]:
+        points.pop()
+    if len(points) < 3:
+        return None, None
+    x0, y0 = points[0]
+    points = [(x-x0, y-y0) for x, y in points]
+    edges = list(zip(points, points[1:] + points[:1]))
+    cross = [x*y2-x2*y for (x, y), (x2, y2) in edges]
+    area2 = sum(cross)
+    if abs(area2) < 1e-20:
+        return None, None
+    x = sum((a[0]+b[0])*c for (a, b), c in zip(edges, cross))/(3*area2)
+    y = sum((a[1]+b[1])*c for (a, b), c in zip(edges, cross))/(3*area2)
+    return y+y0, x+x0
+
+
 def in_study_area(lat, lng):
     # Existing app coverage rectangle, not an official administrative boundary.
     return 7.20 <= lat <= 7.41 and 125.50 <= lng <= 125.72

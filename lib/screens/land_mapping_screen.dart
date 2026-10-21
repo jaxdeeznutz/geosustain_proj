@@ -458,6 +458,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
               padding: const EdgeInsets.all(16),
               children: [
                 const _BoundaryBanner(gps: true),
+                CoverageExplorer(api: widget.state.api, points: _points),
                 const SizedBox(height: 12),
                 _BoundaryMap(
                   controller: _controller,
@@ -663,8 +664,16 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                   ),
                 ],
                 if (_saved != null) ...[
+                  AnalysisCoverageCard(record: _saved!),
                   FilledButton.icon(
-                    onPressed: _busy ? null : _analyze,
+                    onPressed:
+                        _busy ||
+                            analysisMapValue(
+                                  _saved!['analysis_coverage'],
+                                )['supported'] ==
+                                false
+                        ? null
+                        : _analyze,
                     icon: const Icon(Icons.analytics_outlined),
                     label: Text(_busy ? 'Analyzing…' : 'Analyze This Farm'),
                   ),
@@ -842,6 +851,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
             padding: const EdgeInsets.all(16),
             children: [
               const _BoundaryBanner(),
+              CoverageExplorer(api: widget.state.api, points: _points),
               const SizedBox(height: 12),
               _BoundaryMap(
                 controller: _controller,

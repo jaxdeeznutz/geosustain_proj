@@ -412,6 +412,16 @@ Future<void> generateAnalysisPdf(
   Map<String, dynamic> raw, {
   AnalysisState? state,
 }) async {
+  await Printing.sharePdf(
+    bytes: await buildAnalysisPdf(raw, state: state),
+    filename: 'geosustain_analysis_report.pdf',
+  );
+}
+
+Future<Uint8List> buildAnalysisPdf(
+  Map<String, dynamic> raw, {
+  AnalysisState? state,
+}) async {
   final data = Map<String, dynamic>.from(raw);
   final location = state != null
       ? await state.resolvePlaceForRecord(data)
@@ -530,18 +540,23 @@ Future<void> generateAnalysisPdf(
         pw.SizedBox(height: 6),
         pw.Text('Recommendation: $recommendation'),
         pw.Text('Crop Recommendation: $crop'),
-        pw.Text('Suitability Score: $compatibility%'),
-        pw.Text('Suitability: ${suitabilityLabel(compatibility)}'),
+        pw.Text(
+          '${isModelRanked(data) ? 'Model score' : 'Recorded score'}: $compatibility%',
+        ),
         if (alternatives.isNotEmpty) ...[
           pw.SizedBox(height: 10),
           pw.Text(
-            'Other Suitable Crops:',
+            'Other ranked crops:',
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
           pw.SizedBox(height: 4),
           pw.TableHelper.fromTextArray(
-            headers: ['Rank', 'Crop', 'Suitability'],
-            data: alternatives.take(5).toList().asMap().entries.map((entry) {
+            headers: [
+              'Rank',
+              'Crop',
+              isModelRanked(data) ? 'Model score' : 'Recorded score',
+            ],
+            data: alternatives.take(4).toList().asMap().entries.map((entry) {
               final item = entry.value;
               final altCrop = item is Map
                   ? (item['crop'] ?? item['name'] ?? '--')
@@ -572,17 +587,30 @@ Future<void> generateAnalysisPdf(
         pw.Text('Slope: ${data['slope_pct'] ?? data['slope'] ?? '--'}%'),
         pw.Divider(),
         pw.Text('NDVI: ${data['ndvi'] ?? '--'}'),
-        pw.Text('Rainfall: ${data['rainfall_mm'] ?? '--'} mm'),
-        pw.Text('Temperature: ${data['temperature_c'] ?? '--'} °C'),
+        pw.Text(
+          'Annual rainfall: ${data['annual_rainfall_mm'] ?? '--'} mm/year',
+        ),
+        pw.Text(
+          data['analysis_schema_version'] != null
+              ? 'Air temperature (5-year mean): ${data['temperature_mean_5y_c'] ?? '--'} C'
+              : 'Recorded temperature: ${data['temperature_c'] ?? '--'} C',
+        ),
         pw.Text('Elevation: ${data['elevation_m'] ?? '--'} m'),
         pw.Text('Soil pH: ${data['soil_ph'] ?? '--'}'),
-        pw.Text('Nitrogen: ${data['nitrogen'] ?? '--'}'),
-        pw.Text(
-          'Phosphorus: ${data['phosphorus'] ?? '--'} (estimated from proxies, not a direct soil test)',
-        ),
-        pw.Text(
-          'Potassium: ${data['potassium'] ?? '--'} (estimated from proxies, not a direct soil test)',
-        ),
+        if (data['analysis_schema_version'] != null)
+          for (final line in cagroAnalysisReportLines(data))
+            pw.Text(line, style: const pw.TextStyle(fontSize: 10)),
+        if (data['analysis_schema_version'] == null) ...[
+          pw.Text(
+            'Legacy model nitrogen input: ${data['nitrogen'] ?? '--'}; not a soil test',
+          ),
+          pw.Text(
+            'Phosphorus: ${data['phosphorus'] ?? '--'} (estimated from proxies, not a direct soil test)',
+          ),
+          pw.Text(
+            'Potassium: ${data['potassium'] ?? '--'} (estimated from proxies, not a direct soil test)',
+          ),
+        ],
         if (qualityWarnings.isNotEmpty) ...[
           pw.SizedBox(height: 10),
           pw.Container(
@@ -667,10 +695,7 @@ Future<void> generateAnalysisPdf(
       ],
     ),
   );
-  await Printing.sharePdf(
-    bytes: await doc.save(),
-    filename: 'geosustain_analysis_report.pdf',
-  );
+  return doc.save();
 }
 
 class DetailLine extends StatelessWidget {

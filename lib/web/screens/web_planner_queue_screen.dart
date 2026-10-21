@@ -790,6 +790,32 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
               child: Column(
                 children: [
                   // Compact two-column hero: square map on the left, summary on the right.
+                  AnalysisCoverageCard(record: r),
+                  CagroSoilObservationsCard(record: r),
+                  ModelExplanationCard(record: r),
+                  if (r['analysis_schema_version'] != null) ...[
+                    const Text('AI Crop Ranking — Model scores'),
+                    for (final raw in analysisListValue(
+                      r['top_crop_recommendations'],
+                    ).take(5))
+                      Text(
+                        '${analysisMapValue(raw)['crop']}: ${analysisMapValue(raw)['compatibility_pct']}% Model score',
+                      ),
+                    const Text('Environmental & Soil Reference Assessment'),
+                    for (final factor in environmentalFactorViews(
+                      analysisMapValue(
+                        analysisListValue(
+                          r['top_crop_recommendations'],
+                        ).firstOrNull,
+                      ),
+                      r,
+                    ))
+                      EnvironmentalFactorCard(factor: factor),
+                    for (final warning in analysisListValue(
+                      r['data_quality_warnings'],
+                    ))
+                      Text('$warning'),
+                  ],
                   SizedBox(
                     height: 320,
                     child: Row(
@@ -843,7 +869,9 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                                           icon:
                                               Icons.workspace_premium_outlined,
                                           label: isCrop
-                                              ? 'Suitability'
+                                              ? (isModelRanked(r)
+                                                    ? 'Model score'
+                                                    : 'Recorded score')
                                               : 'Agricultural Use',
                                           value: isCrop
                                               ? (score == null
@@ -851,7 +879,9 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                                                     : '${score.toStringAsFixed(1)}%')
                                               : 'Not recommended',
                                           caption: isCrop
-                                              ? '${r['suitability_level'] ?? ''}'
+                                              ? (isModelRanked(r)
+                                                    ? 'AI Crop Ranking'
+                                                    : '${r['suitability_level'] ?? ''}')
                                               : '${r['recommendation_title'] ?? ''}',
                                         ),
                                       ),
@@ -895,112 +925,113 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  _ReviewSection(
-                    title: 'Environmental & Soil Data',
-                    icon: Icons.eco_outlined,
-                    child: LayoutBuilder(
-                      builder: (context, c) {
-                        const gap = 10.0;
-                        final itemWidth = (c.maxWidth - gap * 4) / 5;
-                        bool isEst(String key) {
-                          final dq = r['data_quality'];
-                          if (dq is! Map) return false;
-                          final entry = dq[key];
-                          if (entry is! Map) return false;
-                          final q =
-                              '${entry['overall_quality'] ?? entry['quality'] ?? ''}';
-                          return q != 'measured' && q.isNotEmpty;
-                        }
+                  if (r['analysis_schema_version'] == null)
+                    _ReviewSection(
+                      title: 'Environmental & Soil Data',
+                      icon: Icons.eco_outlined,
+                      child: LayoutBuilder(
+                        builder: (context, c) {
+                          const gap = 10.0;
+                          final itemWidth = (c.maxWidth - gap * 4) / 5;
+                          bool isEst(String key) {
+                            final dq = r['data_quality'];
+                            if (dq is! Map) return false;
+                            final entry = dq[key];
+                            if (entry is! Map) return false;
+                            final q =
+                                '${entry['overall_quality'] ?? entry['quality'] ?? ''}';
+                            return q != 'measured' && q.isNotEmpty;
+                          }
 
-                        final items = <Widget>[
-                          _MetricBox(
-                            'NDVI',
-                            r['ndvi'],
-                            Icons.insights_rounded,
-                            decimals: 3,
-                            estimated: isEst('ndvi'),
-                          ),
-                          _MetricBox(
-                            'Rainfall',
-                            r['rainfall_mm'],
-                            Icons.water_drop_outlined,
-                            suffix: ' mm',
-                            decimals: 1,
-                            estimated: isEst('rainfall'),
-                          ),
-                          _MetricBox(
-                            'Temperature',
-                            r['temperature_c'],
-                            Icons.thermostat_rounded,
-                            suffix: ' °C',
-                            decimals: 1,
-                            estimated: isEst('temperature'),
-                          ),
-                          _MetricBox(
-                            'Elevation',
-                            r['elevation_m'],
-                            Icons.terrain_rounded,
-                            suffix: ' m',
-                            decimals: 1,
-                            estimated: isEst('elevation'),
-                          ),
-                          _MetricBox(
-                            'Soil pH',
-                            r['soil_ph'],
-                            Icons.science_outlined,
-                            decimals: 2,
-                            estimated: isEst('soil_ph'),
-                          ),
-                          _MetricBox(
-                            'Humidity',
-                            r['live_humidity'],
-                            Icons.opacity_rounded,
-                            suffix: '%',
-                            decimals: 1,
-                            estimated: isEst('humidity'),
-                          ),
-                          _MetricBox(
-                            'Nitrogen',
-                            r['nitrogen'],
-                            Icons.grass_rounded,
-                            decimals: 0,
-                            estimated: isEst('nitrogen'),
-                          ),
-                          _MetricBox(
-                            'Phosphorus',
-                            r['phosphorus'],
-                            Icons.grain_rounded,
-                            decimals: 0,
-                            estimated: true,
-                          ),
-                          _MetricBox(
-                            'Potassium',
-                            r['potassium'],
-                            Icons.spa_outlined,
-                            decimals: 0,
-                            estimated: true,
-                          ),
-                          _MetricBox(
-                            'Slope',
-                            r['slope_pct'],
-                            Icons.show_chart_rounded,
-                            suffix: '%',
-                            decimals: 1,
-                          ),
-                        ];
-                        return Wrap(
-                          spacing: gap,
-                          runSpacing: gap,
-                          children: items
-                              .map(
-                                (item) =>
-                                    SizedBox(width: itemWidth, child: item),
-                              )
-                              .toList(),
-                        );
-                      },
+                          final items = <Widget>[
+                            _MetricBox(
+                              'NDVI',
+                              r['ndvi'],
+                              Icons.insights_rounded,
+                              decimals: 3,
+                              estimated: isEst('ndvi'),
+                            ),
+                            _MetricBox(
+                              'Rainfall',
+                              r['rainfall_mm'],
+                              Icons.water_drop_outlined,
+                              suffix: ' mm',
+                              decimals: 1,
+                              estimated: isEst('rainfall'),
+                            ),
+                            _MetricBox(
+                              'Temperature',
+                              r['temperature_c'],
+                              Icons.thermostat_rounded,
+                              suffix: ' °C',
+                              decimals: 1,
+                              estimated: isEst('temperature'),
+                            ),
+                            _MetricBox(
+                              'Elevation',
+                              r['elevation_m'],
+                              Icons.terrain_rounded,
+                              suffix: ' m',
+                              decimals: 1,
+                              estimated: isEst('elevation'),
+                            ),
+                            _MetricBox(
+                              'Soil pH',
+                              r['soil_ph'],
+                              Icons.science_outlined,
+                              decimals: 2,
+                              estimated: isEst('soil_ph'),
+                            ),
+                            _MetricBox(
+                              'Humidity',
+                              r['live_humidity'],
+                              Icons.opacity_rounded,
+                              suffix: '%',
+                              decimals: 1,
+                              estimated: isEst('humidity'),
+                            ),
+                            _MetricBox(
+                              'Nitrogen',
+                              r['nitrogen'],
+                              Icons.grass_rounded,
+                              decimals: 0,
+                              estimated: isEst('nitrogen'),
+                            ),
+                            _MetricBox(
+                              'Phosphorus',
+                              r['phosphorus'],
+                              Icons.grain_rounded,
+                              decimals: 0,
+                              estimated: true,
+                            ),
+                            _MetricBox(
+                              'Potassium',
+                              r['potassium'],
+                              Icons.spa_outlined,
+                              decimals: 0,
+                              estimated: true,
+                            ),
+                            _MetricBox(
+                              'Slope',
+                              r['slope_pct'],
+                              Icons.show_chart_rounded,
+                              suffix: '%',
+                              decimals: 1,
+                            ),
+                          ];
+                          return Wrap(
+                            spacing: gap,
+                            runSpacing: gap,
+                            children: items
+                                .map(
+                                  (item) =>
+                                      SizedBox(width: itemWidth, child: item),
+                                )
+                                .toList(),
+                          );
+                        },
+                      ),
                     ),
-                  ),
                   const SizedBox(height: 14),
                   SizedBox(
                     height: 270,

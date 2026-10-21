@@ -76,6 +76,9 @@ class ApiService {
 
   String _errorMessage(Map<String, dynamic> data, String fallback) {
     final detail = data['detail'];
+    if (detail is Map && detail['message'] != null) {
+      return '${detail['message']}';
+    }
     if (detail is List) {
       return detail.map((e) => e is Map ? e['msg'] ?? fallback : e).join('\n');
     }
@@ -501,6 +504,48 @@ class ApiService {
     }
     await _completeRequest('farm', key, token);
     return Map<String, dynamic>.from(data['farm'] as Map);
+  }
+
+  Future<Map<String, dynamic>> analysisCoverage(
+    List<Map<String, double>> polygon,
+  ) async {
+    final token = await getToken();
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/analysis-coverage'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'polygon': polygon}),
+        )
+        .timeout(const Duration(seconds: 60));
+    final data = _decodeJson(response);
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Coverage check unavailable.'),
+      );
+    }
+    return data;
+  }
+
+  Future<Map<String, dynamic>> analysisCoverageCatalog() async {
+    final token = await getToken();
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/mobile/analysis-coverage/catalog'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 60));
+    final data = _decodeJson(response);
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Coverage map unavailable.'),
+      );
+    }
+    return data;
   }
 
   Future<Map<String, dynamic>> updateFarm(

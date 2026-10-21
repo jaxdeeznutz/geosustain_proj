@@ -113,8 +113,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
                 children: [
                   GeoHeaderAction(
                     tooltip: 'Search farms',
-                    onPressed: () =>
-                        setState(() => _showSearch = !_showSearch),
+                    onPressed: () => setState(() => _showSearch = !_showSearch),
                     icon: Icons.search,
                   ),
                   const SizedBox(width: 8),
@@ -532,6 +531,13 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
               ),
               const SizedBox(height: 16),
               if (_notice != null) _MappingNotice(_notice!),
+              if (!_loading && _recordsLoaded && analyses.isEmpty)
+                const Text(
+                  'Not analyzed yet',
+                  style: TextStyle(color: Colors.black54),
+                ),
+              AnalysisCoverageCard(record: _farm),
+              CoverageExplorer(api: widget.state.api, points: points),
               if (points.isNotEmpty)
                 _BoundaryMap(
                   key: ValueKey('${_farm['id']}-${_farm['boundary_version']}'),
@@ -541,21 +547,20 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
                 const _MappingNotice('This farm has no readable boundary.'),
               const SizedBox(height: 12),
               if (_loading || _busy) const LinearProgressIndicator(),
-              if (!_loading && _recordsLoaded && analyses.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 10),
-                  child: Text(
-                    'Not analyzed yet',
-                    style: TextStyle(color: Colors.black54),
-                  ),
-                ),
               if (_busy && widget.state.loading)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),
                   child: Text(widget.state.loadingMessage),
                 ),
               FilledButton.icon(
-                onPressed: _busy || _loading || points.isEmpty
+                onPressed:
+                    _busy ||
+                        _loading ||
+                        points.isEmpty ||
+                        analysisMapValue(
+                              _farm['analysis_coverage'],
+                            )['supported'] ==
+                            false
                     ? null
                     : _analyze,
                 icon: const Icon(Icons.analytics_outlined),

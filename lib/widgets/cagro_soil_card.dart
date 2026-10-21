@@ -60,6 +60,8 @@ class CagroSoilObservationsCard extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text('${soil['message'] ?? 'Locality-linked historical records.'}'),
+          if (record['analysis_schema_version'] != null)
+            const Text(cagroHistoricalNotice),
           const SizedBox(height: 8),
           const Text(
             'Current production model nutrient inputs were trained using a different NPK representation. CAGRO soil NPK observations are shown separately and are not yet used directly by the production model.',

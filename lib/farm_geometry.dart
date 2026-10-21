@@ -5,6 +5,30 @@ import 'package:latlong2/latlong.dart';
 /// Shared map/GPS coordinate contract: latitude/longitude objects, closed ring.
 class FarmGeometry {
   static const earthRadius = 6378137.0;
+
+  static LatLng? centroid(Iterable<LatLng> input) {
+    final points = vertices(input);
+    if (points.length < 3) return null;
+    final origin = points.first;
+    double area2 = 0, x = 0, y = 0;
+    for (var i = 0; i < points.length; i++) {
+      final a = points[i], b = points[(i + 1) % points.length];
+      final ax = a.longitude - origin.longitude,
+          ay = a.latitude - origin.latitude;
+      final bx = b.longitude - origin.longitude,
+          by = b.latitude - origin.latitude;
+      final cross = ax * by - bx * ay;
+      area2 += cross;
+      x += (ax + bx) * cross;
+      y += (ay + by) * cross;
+    }
+    if (area2.abs() < 1e-20) return null;
+    return LatLng(
+      origin.latitude + y / (3 * area2),
+      origin.longitude + x / (3 * area2),
+    );
+  }
+
   static bool insideCoverage(LatLng point) =>
       point.latitude.isFinite &&
       point.longitude.isFinite &&

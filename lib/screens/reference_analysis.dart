@@ -350,10 +350,11 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             ],
           ),
         if (tab == 0 || tab == 2) ...[
+          AnalysisCoverageCard(record: r),
           CagroSoilObservationsCard(record: r),
           _AnalysisSection(
             title: modelRanked
-                ? 'Model inputs (10 factors)'
+                ? 'Environmental & Soil Reference Assessment'
                 : 'Environmental factors (10)',
             icon: Icons.bar_chart,
             children: [

@@ -465,6 +465,7 @@ class _MapAnalyzePageState extends State<MapAnalyzePage> {
         children: [
           const GeoSustainHeader(title: 'Map & Area Selection'),
           HeroMapCard(state: state, message: message, compact: true),
+          CoverageExplorer(api: state.api, points: state.polygonPoints),
           const SizedBox(height: 10),
           if (state.result?['heatmap_grid'] is List &&
               (state.result?['heatmap_grid'] as List).isNotEmpty)

@@ -18,7 +18,10 @@ from http_config import CorsFastAPI
 from json_safe import json_safe
 from model_ranking import ModelRankingUnavailable
 from land_cover import screen_land_cover, advisory_result
-from cagro_soil import lookup_soil_observations, nutrient_layers
+from cagro_soil import nutrient_layers
+from analysis_coverage import (require_coverage, coverage_catalog,
+                               farm_coverage, CoverageUnavailable, VERSION as COVERAGE_VERSION,
+                               HISTORICAL_NOTE)
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -613,12 +616,8 @@ def reverse_geocode_place(lat: float, lon: float) -> str:
 
 
 def polygon_centroid(latlngs: List[Dict[str, float]]) -> Tuple[Optional[float], Optional[float]]:
-    if not latlngs or len(latlngs) < 3:
-        return None, None
-    lat_total = sum(float(p["lat"]) for p in latlngs)
-    lon_total = sum(float(p["lng"]) for p in latlngs)
-    count = len(latlngs)
-    return lat_total / count, lon_total / count
+    from geometry import polygon_centroid as area_centroid
+    return area_centroid(latlngs)
 
 
 def point_in_polygon(lat: float, lon: float, polygon: List[Dict[str, float]]) -> bool:
@@ -641,7 +640,7 @@ def point_in_polygon(lat: float, lon: float, polygon: List[Dict[str, float]]) ->
 def polygon_area_sample_points(polygon: List[Dict[str, float]], max_points: int = 7) -> List[Tuple[float, float]]:
     center = polygon_centroid(polygon)
     samples: List[Tuple[float, float]] = []
-    if center[0] is not None and center[1] is not None:
+    if center[0] is not None and center[1] is not None and point_in_polygon(*center, polygon):
         samples.append((float(center[0]), float(center[1])))
 
     lats = [float(p["lat"]) for p in polygon]
@@ -925,6 +924,8 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         raise ValueError('Selected location is outside the supported Panabo study area.')
 
     logging.getLogger('uvicorn.error').info('Analysis geometry validated source=%s vertices=%s', analysis_source, len(polygon))
+    # Enforced on both formal API routes, before provider calls or ranking.
+    coverage, matched_soil = require_coverage(polygon)
 
     # Fetched once per analysis request (not once per sampled point) — a
     # Super Administrator's crop reference table can temporarily narrow the
@@ -997,7 +998,11 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         result = analyze_location(lat, lon, active_crops)
 
     result["land_cover"] = cover
-    result["cagro_soil"] = lookup_soil_observations(polygon)
+    result["cagro_soil"] = matched_soil
+    result.update(analysis_schema_version=COVERAGE_VERSION, analysis_coverage=coverage,
+                  nutrient_basis='CAGRO historical local evidence; legacy Random Forest nutrient proxies remain separate',
+                  historical_soil_notice=HISTORICAL_NOTE,
+                  centroid_method='Area-weighted polygon centroid; not a soil sample coordinate')
     result.update(nutrient_layers(result["cagro_soil"], result))
     planting_month = int((body or {}).get("intended_planting_month") or datetime.now().month)
     if not result.get('scoring_version'):
@@ -1243,15 +1248,28 @@ async def analysis(request: Request):
     except Exception:
         body = {}
 
+    farm = None
+    if isinstance(body, dict) and body.get('farm_id'):
+        farm = get_farm_parcel(user['id'], body['farm_id'])
+        if not farm or farm.get('is_archived'):
+            return JSONResponse({'error': 'Farm not found or unavailable.'}, status_code=404)
+        body = dict(body, polygon=farm['polygon'])
+
     try:
         result, analysis_source = build_analysis_result(
             body=body if request.method == "POST" else None,
             query_args=dict(request.query_params),
         )
+    except CoverageUnavailable as e:
+        return JSONResponse({'error': str(e), 'code': 'cagro_coverage_unsupported',
+                             'analysis_coverage': e.coverage}, status_code=422)
     except ValueError as e:
         return JSONResponse({"error": str(e)}, status_code=400)
 
     try:
+        if farm:
+            result.update(farm_id=farm['id'], farm_name=farm['farm_name'],
+                          boundary_version=farm['boundary_version'])
         session_id = save_analysis_session(user["id"], result, analysis_source)
         result["session_id"] = session_id
     except Exception as e:
@@ -1553,7 +1571,7 @@ def request_identity(key, payload):
 
 @app.get('/api/mobile/farms')
 def mobile_farms(include_archived: bool=False, user=Depends(get_api_user)):
-    return {'farms': list_farm_parcels(user['id'], include_archived)}
+    return {'farms': [farm_coverage(row) for row in list_farm_parcels(user['id'], include_archived)]}
 
 @app.post('/api/mobile/farms', status_code=201)
 def mobile_create_farm(body: FarmCreateBody, user=Depends(get_api_user), idempotency_key: Optional[str]=Header(default=None)):
@@ -1564,8 +1582,8 @@ def mobile_create_farm(body: FarmCreateBody, user=Depends(get_api_user), idempot
         raise HTTPException(status_code=400, detail=err)
     key,digest=request_identity(idempotency_key,body.model_dump())
     try:
-        return {'farm': create_farm_parcel(user['id'], body.farm_name, body.polygon,
-                    body.location_name, body.mapping_method, body.gps_accuracy_m,request_key=key,request_hash=digest)}
+        return {'farm': farm_coverage(create_farm_parcel(user['id'], body.farm_name, body.polygon,
+                    body.location_name, body.mapping_method, body.gps_accuracy_m,request_key=key,request_hash=digest))}
     except ValueError as exc:
         raise HTTPException(status_code=409,detail=str(exc))
 
@@ -1579,13 +1597,28 @@ def mobile_update_farm(farm_id: int, body: FarmUpdateBody, user=Depends(get_api_
             raise HTTPException(status_code=400, detail=err)
     row=update_farm_parcel(user['id'],farm_id,**body.model_dump(exclude_none=True))
     if not row: raise HTTPException(status_code=404, detail='Farm parcel not found.')
-    return {'farm':row}
+    return {'farm':farm_coverage(row)}
 
 @app.get('/api/mobile/farms/{farm_id}')
 def mobile_farm(farm_id: int, user=Depends(get_api_user)):
     row=get_farm_parcel(user['id'],farm_id)
     if not row: raise HTTPException(status_code=404, detail='Farm parcel not found.')
-    return {'farm':row}
+    return {'farm':farm_coverage(row)}
+
+
+@app.get('/api/mobile/analysis-coverage/catalog')
+def mobile_coverage_catalog(user=Depends(get_api_user)):
+    return coverage_catalog()
+
+
+class CoverageBody(BaseModel):
+    polygon: List[Dict[str, float]] = Field(default_factory=list)
+
+
+@app.post('/api/mobile/analysis-coverage')
+def mobile_coverage(body: CoverageBody, user=Depends(get_api_user)):
+    # Preflight is informational; formal analysis always checks again.
+    return farm_coverage({'polygon': body.polygon})
 
 
 # ---------------------------------------------------------------------------
@@ -1696,6 +1729,9 @@ def _perform_mobile_analysis(body, user, idempotency_key):
     try:
         logging.getLogger('uvicorn.error').info('Analysis inference user=%s farm=%s', user['id'], body.farm_id)
         result, analysis_source = build_analysis_result(body=payload)
+    except CoverageUnavailable as exc:
+        raise HTTPException(status_code=422, detail={'code': 'cagro_coverage_unsupported',
+                            'message': str(exc), 'analysis_coverage': exc.coverage}) from exc
     except ValueError as exc:
         raise HTTPException(status_code=400,detail=str(exc))
     except ModelRankingUnavailable as exc:

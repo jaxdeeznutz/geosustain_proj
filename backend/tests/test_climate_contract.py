@@ -89,7 +89,8 @@ def test_legacy_api_retains_historical_temperature_without_cross_period_blend(mo
     monkeypatch.setattr(api, 'fetch_multi_year_monthly_baseline', lambda *_: {'mean_temperature_c': 25})
     monkeypatch.setattr(api, 'build_analysis_summary', lambda result: result)
     monkeypatch.setattr(api, 'finalize_explanation', lambda result: result)
-    result, _ = api.build_analysis_result(body={'lat': 7.29, 'lon': 125.62, 'place_name': 'Test fixture'})
+    monkeypatch.setattr(api, 'merge_area_results', lambda rows: rows[0])
+    result, _ = api.build_analysis_result(body={'polygon': __import__('test_cagro_soil').square(7.39242,125.62293), 'place_name': 'Test fixture'})
     assert result['temperature_c'] == 27
     assert result['historical_climate_baseline']['mean_temperature_c'] == 25
     assert 'temperature_c_combined' not in result

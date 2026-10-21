@@ -281,6 +281,11 @@ void main() {
       expect(find.text('Previous analyses'), findsNothing);
       expect(find.text('Latest results'), findsNothing);
       expect(find.text('Farm 2'), findsNothing);
+      await tester.scrollUntilVisible(
+        find.text('Analyze This Farm'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(find.text('Analyze This Farm').hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());

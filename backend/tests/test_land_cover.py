@@ -26,7 +26,8 @@ def test_no_coverage_is_not_treated_as_farmland():
 @pytest.mark.parametrize('status', ['water', 'built_up', 'mixed', 'unknown'])
 def test_api_preflight_prevents_model_calls_and_keeps_boundary(monkeypatch, status):
     import fastapi_app as api
-    from test_mobile_workflow import RING
+    from test_cagro_soil import square
+    RING = square(7.39242,125.62293)
     screen = {'allow_crops': False, 'status': status, 'message': 'Refine the boundary', 'limitation': 'Satellite screening'}
     check = Mock(return_value=screen)
     infer = Mock(side_effect=AssertionError('Model must not run on blocked land'))
@@ -49,7 +50,7 @@ def test_provider_failure_does_not_silently_enable_crops(monkeypatch):
     infer = Mock()
     monkeypatch.setattr(api, 'analyze_location', infer)
     with pytest.raises(ModelRankingUnavailable, match='Land-cover verification'):
-        api.build_analysis_result({'lat': 7.29, 'lon': 125.62})
+        api.build_analysis_result({'polygon': __import__('test_cagro_soil').square(7.39242,125.62293)})
     infer.assert_not_called()
 
 

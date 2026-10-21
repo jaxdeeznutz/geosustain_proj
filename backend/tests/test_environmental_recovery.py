@@ -56,7 +56,8 @@ def test_partial_rainfall_is_not_full_month(monkeypatch):
 
 def test_polygon_preserves_missing_input_reason(monkeypatch):
     from test_regressions import api
-    from test_mobile_workflow import RING
+    from test_cagro_soil import square
+    RING = square(7.39242,125.62293)
     from model_ranking import ModelRankingUnavailable
     monkeypatch.setattr(api, 'get_active_crop_keys', lambda: None)
     monkeypatch.setattr(api, 'analyze_location', Mock(side_effect=ModelRankingUnavailable('Required model inputs unavailable: humidity.')))

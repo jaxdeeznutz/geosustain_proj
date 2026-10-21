@@ -1,0 +1,314 @@
+part of '../main.dart';
+
+const cagroHistoricalNotice =
+    'CAGRO nutrient records provide locally available historical soil information for supported Panabo City locations. They may not represent the current exact soil condition of every point within the farm and should be supplemented by field or laboratory assessment when necessary.';
+const cagroCoverageNotice =
+    'GeoSustain currently provides formal crop analysis only for locations where available CAGRO soil information can support the assessment. Additional areas can be supported when more validated CAGRO soil records become available.';
+
+/// Shared Farmer, Analyst and report provenance; never reconstruct an old match.
+List<String> analysisCoverageLines(Map<String, dynamic> record) {
+  final coverage = analysisMapValue(record['analysis_coverage']);
+  final lines = <String>[
+    'Analyzed Farm Location',
+    'Farm center latitude: ${record['center_lat'] ?? record['lat'] ?? 'Not recorded'}',
+    'Farm center longitude: ${record['center_lon'] ?? record['lon'] ?? 'Not recorded'}',
+    'Approximate area: ${analysisAreaText(record)}',
+    'Farm center is not a soil sample coordinate.',
+    'CAGRO coverage: ${coverage.isEmpty
+        ? 'Not recorded under the current coverage policy (older analysis).'
+        : coverage['supported'] == true
+        ? 'Supported'
+        : 'Location not supported for formal analysis'}',
+  ];
+  if (coverage['supported'] == true) {
+    lines.add('Nutrient Source: Panabo City CAGRO historical soil record');
+    final seen = <String>{};
+    for (final item in analysisListValue(coverage['matches'])) {
+      final match = analysisMapValue(item);
+      final rule = analysisMapValue(match['match']);
+      final boundary = analysisMapValue(rule['boundary']);
+      final text =
+          'Locality: ${match['locality_id']} / ${match['location_name']}; match: ${analysisMapValue(match['match'])['method']}; confidence: ${match['confidence']}; precision: ${match['coordinate_precision']}; source: ${match['source']}; original sample GPS: ${match['original_cagro_gps'] == true ? 'available' : 'unavailable'}';
+      if (seen.add(text)) lines.add(text);
+      final evidence = rule['method'] == 'mapped_locality_proximity'
+          ? 'Admission rule: all farm vertices within ${rule['radius_m'] ?? 'not recorded'} m; maximum vertex distance ${rule['maximum_vertex_distance_m'] ?? 'not recorded'} m from the reconstructed reference location.'
+          : 'Admission rule: farm fully contained in reviewed boundary ${boundary['boundary_id'] ?? 'not recorded'}; boundary source: ${boundary['source'] ?? 'not recorded'}; reviewed: ${boundary['verified_on'] ?? 'date not supplied'}.';
+      if (seen.add(evidence)) lines.add(evidence);
+    }
+    lines.add(cagroHistoricalNotice);
+    lines.add(
+      'Prediction path: existing Random Forest with legacy nutrient proxies. CAGRO values are local historical evidence, not model inputs.',
+    );
+  } else if (coverage.isNotEmpty) {
+    lines.add('CAGRO soil data unavailable for this location.');
+    lines.add(cagroCoverageNotice);
+  }
+  return lines;
+}
+
+/// Report text comes from saved evidence, never from a fresh spatial lookup.
+List<String> cagroAnalysisReportLines(Map<String, dynamic> record) {
+  final lines = analysisCoverageLines(record);
+  final soil = analysisMapValue(record['soil_nutrients_observed']);
+  final originals = analysisListValue(
+    analysisMapValue(record['cagro_soil'])['observations'],
+  );
+  for (final raw in analysisListValue(soil['records'])) {
+    final row = analysisMapValue(raw);
+    final original = analysisMapValue(
+      originals
+          .where((r) => analysisMapValue(r)['id'] == row['record_id'])
+          .firstOrNull,
+    );
+    lines.add(
+      'Historical CAGRO record ${row['record_id']}: ${original['location_name'] ?? 'Address not recorded'}; file ${row['source_file']}; row ${row['source_row']}; date/year ${row['sample_date'] ?? row['sample_year'] ?? 'Not supplied'}',
+    );
+    for (final nutrient in ['nitrogen', 'phosphorus', 'potassium']) {
+      final n = analysisMapValue(row[nutrient]);
+      lines.add(
+        '$nutrient: ${n['value'] ?? 'Unavailable'} ${n['unit'] ?? ''}; source: ${n['source']}; quality: ${n['quality']}; method: ${n['method'] ?? 'Not documented'}. Not used for model prediction.',
+      );
+    }
+  }
+  for (final raw in analysisListValue(
+    record['top_crop_recommendations'],
+  ).take(5)) {
+    final crop = analysisMapValue(raw);
+    lines.add('Environmental & Soil Reference Assessment: ${crop['crop']}');
+    for (final factor in environmentalFactorViews(crop, record)) {
+      final status = switch (factor.state) {
+        CropFactorState.suitable => 'Suitable',
+        CropFactorState.near => 'Limited',
+        CropFactorState.outside => 'Outside documented range',
+        CropFactorState.unassessed => 'Not assessed',
+      };
+      lines.add(
+        '${factor.label}: ${factor.valueText ?? factor.value ?? 'Unavailable'} ${factor.unit}; preferred: ${factor.min ?? 'Not documented'} - ${factor.max ?? 'Not documented'} ${factor.unit}; $status. ${factor.interpretation}',
+      );
+    }
+  }
+  final xai = verifiedModelExplanation(record);
+  if (xai.isNotEmpty) {
+    lines.add(
+      'Model explanation: ${xai['method_label']}; model version: ${xai['model_version']}; selected crop: ${record['predicted_crop']}; model score: ${record['crop_compatibility_pct']}%; prediction context: ${xai['prediction_context_id'] ?? 'Not recorded'}; input snapshot hash: ${xai['input_snapshot_hash'] ?? 'Not recorded'}.',
+    );
+    lines.add(
+      'Global feature importance describes the trained model, not per-farm causal contributions.',
+    );
+    for (final raw in analysisListValue(xai['features'])) {
+      final f = analysisMapValue(raw);
+      lines.add('${f['label']}: global importance ${f['importance']}');
+    }
+  }
+  return lines;
+}
+
+class AnalysisCoverageCard extends StatelessWidget {
+  final Map<String, dynamic> record;
+  const AnalysisCoverageCard({super.key, required this.record});
+  @override
+  Widget build(BuildContext context) => Card(
+    child: Padding(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (final line in analysisCoverageLines(record))
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(line),
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+/// Optional catalogue map plus server preflight; map browsing remains unrestricted.
+class CoverageExplorer extends StatefulWidget {
+  final ApiService api;
+  final List<LatLng> points;
+  const CoverageExplorer({super.key, required this.api, required this.points});
+  @override
+  State<CoverageExplorer> createState() => _CoverageExplorerState();
+}
+
+class _CoverageExplorerState extends State<CoverageExplorer> {
+  Map<String, dynamic>? _catalog, _checked;
+  String? _error;
+  bool _busy = false;
+  String get _fingerprint => jsonEncode(FarmGeometry.payload(widget.points));
+  String? _checkedFingerprint;
+  Future<void> _load() async {
+    try {
+      final data = await widget.api.analysisCoverageCatalog();
+      if (mounted) setState(() => _catalog = data);
+    } catch (_) {
+      if (mounted) {
+        setState(
+          () => _error =
+              'Coverage map unavailable. Formal analysis still requires a server coverage check.',
+        );
+      }
+    }
+  }
+
+  Future<void> _check() async {
+    final fingerprint = _fingerprint;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      final data = await widget.api.analysisCoverage(
+        FarmGeometry.payload(widget.points),
+      );
+      if (mounted && fingerprint == _fingerprint) {
+        setState(() {
+          _checked = data;
+          _checkedFingerprint = fingerprint;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => _error = friendlyErrorMessage(e));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final center = FarmGeometry.centroid(widget.points);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        const Text(cagroCoverageNotice),
+        if (center != null)
+          Text(
+            'Farm center: ${center.latitude.toStringAsFixed(6)}, ${center.longitude.toStringAsFixed(6)}\nApproximate area: ${(FarmGeometry.areaSquareMetres(widget.points) / 10000).toStringAsFixed(4)} ha\nNot a soil sample coordinate.',
+          ),
+        OutlinedButton(
+          onPressed: _busy || center == null ? null : _check,
+          child: Text(
+            _busy ? 'Checking CAGRO coverage…' : 'Check CAGRO coverage',
+          ),
+        ),
+        if (_checked != null && _checkedFingerprint == _fingerprint)
+          AnalysisCoverageCard(record: _checked!),
+        if (_error != null) Text(_error!),
+        ExpansionTile(
+          title: const Text('GeoSustain Supported Analysis Areas'),
+          subtitle: const Text('Reviewed areas and CAGRO reference locations'),
+          onExpansionChanged: (open) {
+            if (open && _catalog == null) _load();
+          },
+          children: [
+            if (_catalog == null)
+              const Text('Open to load the supported-location catalogue.')
+            else ...[
+              Text('${_catalog!['note'] ?? ''}'),
+              if (_catalog!['error'] != null) Text('${_catalog!['error']}'),
+              SizedBox(
+                height: 270,
+                child: FlutterMap(
+                  options: MapOptions(
+                    initialCenter: panaboCenter,
+                    initialZoom: 11,
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.geosustain.mobile',
+                    ),
+                    PolygonLayer(polygons: coverageBoundaryPolygons(_catalog!)),
+                    MarkerLayer(
+                      markers: [
+                        for (final raw in analysisListValue(
+                          _catalog!['reference_locations'],
+                        ))
+                          if (analysisNumber(
+                                    analysisMapValue(raw)['latitude'],
+                                  ) !=
+                                  null &&
+                              analysisNumber(
+                                    analysisMapValue(raw)['longitude'],
+                                  ) !=
+                                  null)
+                            Marker(
+                              point: LatLng(
+                                analysisNumber(
+                                  analysisMapValue(raw)['latitude'],
+                                )!,
+                                analysisNumber(
+                                  analysisMapValue(raw)['longitude'],
+                                )!,
+                              ),
+                              width: 40,
+                              height: 40,
+                              child: Tooltip(
+                                message:
+                                    'CAGRO reference location: ${analysisMapValue(raw)['location_name']}',
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.deepPurple,
+                                  size: 34,
+                                ),
+                              ),
+                            ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Text(
+                'Green shading: supported analysis area (reviewed boundary). Purple marker: CAGRO reference location, not a barangay boundary. Full farm boundary must pass server matching.',
+              ),
+              for (final raw in analysisListValue(
+                _catalog!['reference_locations'],
+              ))
+                Text(
+                  'CAGRO reference location: ${analysisMapValue(raw)['location_name']}',
+                ),
+            ],
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+List<Polygon> coverageBoundaryPolygons(Map<String, dynamic> catalog) {
+  final result = <Polygon>[];
+  for (final raw in analysisListValue(catalog['boundaries'])) {
+    final geometry = analysisMapValue(analysisMapValue(raw)['geometry']);
+    final polygons = geometry['type'] == 'Polygon'
+        ? [geometry['coordinates']]
+        : analysisListValue(geometry['coordinates']);
+    for (final polygon in polygons) {
+      final rings = analysisListValue(polygon)
+          .map(
+            (ring) => analysisListValue(ring).map((p) {
+              final point = analysisListValue(p);
+              return LatLng(
+                (point[1] as num).toDouble(),
+                (point[0] as num).toDouble(),
+              );
+            }).toList(),
+          )
+          .toList();
+      if (rings.isNotEmpty) {
+        result.add(
+          Polygon(
+            points: rings.first,
+            holePointsList: rings.skip(1).toList(),
+            color: Colors.green.withValues(alpha: .25),
+            borderColor: Colors.green,
+            borderStrokeWidth: 2,
+          ),
+        );
+      }
+    }
+  }
+  return result;
+}
