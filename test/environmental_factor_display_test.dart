@@ -3,6 +3,42 @@ import 'package:flutter/material.dart';
 import 'package:geosustain_clean_arranged/main.dart';
 
 void main() {
+  test(
+    'saved soil range compares parcel input even when reference reading differs',
+    () {
+      final crop = <String, dynamic>{
+        'factors': [
+          {
+            'factor': 'soil_ph',
+            'value': 6.2,
+            'unit': 'pH',
+            'score': 100,
+            'requirement': {
+              'optimal': [5.5, 7],
+            },
+          },
+        ],
+      };
+      final record = <String, dynamic>{
+        'scoring_version': 'model',
+        'model_explanation': {
+          'samples': [
+            {
+              'inputs': {'ph': 8},
+            },
+          ],
+        },
+      };
+      final factor = environmentalFactorViews(
+        crop,
+        record,
+      ).firstWhere((f) => f.key == 'ph');
+      expect(factor.value, 8);
+      expect(factor.min, 5.5);
+      expect(factor.state, CropFactorState.outside);
+    },
+  );
+
   testWidgets(
     'recorded model input does not show the old unassessed range panel',
     (tester) async {

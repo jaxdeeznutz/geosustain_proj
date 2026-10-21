@@ -43,6 +43,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           GeoResultCard(child: GeoRecordSummary(r)),
+          CagroSoilObservationsCard(record: r),
           GeoResultCard(
             color: const Color(0xFFFFF6E5),
             child: Column(
@@ -349,6 +350,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             ],
           ),
         if (tab == 0 || tab == 2) ...[
+          CagroSoilObservationsCard(record: r),
           _AnalysisSection(
             title: modelRanked
                 ? 'Model inputs (10 factors)'

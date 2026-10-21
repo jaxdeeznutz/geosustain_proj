@@ -27,6 +27,7 @@ part 'screens/design_system.dart';
 part 'widgets/geo_header.dart';
 part 'widgets/geo_bottom_nav.dart';
 part 'widgets/geo_result_widgets.dart';
+part 'widgets/cagro_soil_card.dart';
 part 'screens/reference_analysis.dart';
 part 'screens/home_screen.dart';
 part 'screens/map_screen.dart';

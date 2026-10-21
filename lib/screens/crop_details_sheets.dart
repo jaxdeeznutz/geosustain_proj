@@ -256,7 +256,8 @@ List<CropFactorView> environmentalFactorViews(
           candidate.key == key || definition.$4.contains(candidate.key);
       if (matches &&
           candidate.unit == definition.$3 &&
-          candidate.value == value &&
+          (candidate.value == value ||
+              ['ph', 'elevation', 'slope'].contains(key)) &&
           value != null &&
           (candidate.min != null || candidate.max != null)) {
         comparison = candidate;
@@ -271,12 +272,24 @@ List<CropFactorView> environmentalFactorViews(
       value: value,
       min: comparison?.min,
       max: comparison?.max,
-      state: comparison?.state ?? CropFactorState.unassessed,
+      state: comparison == null
+          ? CropFactorState.unassessed
+          : comparison.value == value
+          ? comparison.state
+          : (comparison.min == null || value! >= comparison.min!) &&
+                (comparison.max == null || value! <= comparison.max!)
+          ? CropFactorState.suitable
+          : CropFactorState.outside,
       usedByModel: modelValue != null,
       interpretation: value == null
           ? 'Not recorded for this analysis.'
           : nutrient
           ? 'Existing model estimate; not a soil test.'
+          : comparison != null && comparison.value != value
+          ? ((comparison.min == null || value >= comparison.min!) &&
+                    (comparison.max == null || value <= comparison.max!)
+                ? 'Within the recorded preferred range.'
+                : 'Outside the recorded preferred range.')
           : comparison?.interpretation ??
                 (modelValue != null
                     ? 'Used with the other inputs to predict crop rankings.'

@@ -18,6 +18,7 @@ from http_config import CorsFastAPI
 from json_safe import json_safe
 from model_ranking import ModelRankingUnavailable
 from land_cover import screen_land_cover, advisory_result
+from cagro_soil import lookup_soil_observations, nutrient_layers
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
@@ -988,6 +989,8 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         result = analyze_location(lat, lon, active_crops)
 
     result["land_cover"] = cover
+    result["cagro_soil"] = lookup_soil_observations(polygon)
+    result.update(nutrient_layers(result["cagro_soil"], result))
     planting_month = int((body or {}).get("intended_planting_month") or datetime.now().month)
     if not result.get('scoring_version'):
         result = apply_local_seasonality(result, planting_month)

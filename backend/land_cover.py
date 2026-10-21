@@ -33,6 +33,16 @@ def interpret_cover(stats):
             'attribution': 'Dynamic World Project by Google in partnership with National Geographic Society and the World Resources Institute. Contains modified Copernicus Sentinel data.'}
 
 
+def confident_observation(image, ee):
+    """Keep only confident pixels so recent uncertain data cannot erase evidence."""
+    confidence = image.select(BANDS).reduce(ee.Reducer.max()).gte(.6)
+    label = image.select('label')
+    return (label.eq(0).rename('water')
+            .addBands(label.eq(6).rename('built'))
+            .addBands(confidence.rename('observed'))
+            .toByte().updateMask(confidence))
+
+
 def screen_land_cover(lat, lon, polygon):
     import rainfallDatasets as env
     env.ensure_earth_engine_initialized()
@@ -42,15 +52,9 @@ def screen_land_cover(lat, lon, polygon):
     end = datetime.now(timezone.utc)
     start = end - timedelta(days=90)
     collection = ee.ImageCollection('GOOGLE/DYNAMICWORLD/V1').filterBounds(region).filterDate(start.isoformat(), end.isoformat())
-    def masks(image):
-        confidence = image.select(BANDS).reduce(ee.Reducer.max())
-        label = image.select('label')
-        return (label.eq(0).And(confidence.gte(.6)).rename('water')
-                .addBands(label.eq(6).And(confidence.gte(.6)).rename('built'))
-                .addBands(confidence.gte(.6).rename('observed'))).toByte()
     # Empty collections produce a fully masked observation, never a safe-land default.
     empty = ee.Image.constant([0, 0, 0]).rename(['water', 'built', 'observed']).toByte().updateMask(ee.Image.constant(0))
-    composite = ee.ImageCollection.fromImages([empty]).merge(collection.sort('system:time_start').map(masks)).mosaic()
+    composite = ee.ImageCollection.fromImages([empty]).merge(collection.sort('system:time_start').map(lambda image: confident_observation(image, ee))).mosaic()
     areas = composite.unmask(0).multiply(ee.Image.pixelArea()).addBands(ee.Image.pixelArea().rename('total'))
     stats = areas.reduceRegion(reducer=ee.Reducer.sum(), geometry=region, scale=10, maxPixels=10000000, tileScale=4).getInfo()
     result = interpret_cover(stats)
