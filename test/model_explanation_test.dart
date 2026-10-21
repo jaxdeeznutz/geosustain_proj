@@ -273,7 +273,7 @@ void main() {
     await tester.tap(find.text('View details').first);
     await tester.pumpAndSettle();
     expect(find.text('Recommended'), findsOneWidget);
-    expect(find.text('Environmental Factors'), findsOneWidget);
+    expect(find.text('Environmental & Soil Reference Assessment'), findsOneWidget);
     await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
     expect(record['top_crop_recommendations']!.length, 2);

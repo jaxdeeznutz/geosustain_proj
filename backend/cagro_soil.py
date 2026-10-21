@@ -10,6 +10,7 @@ import json
 import math
 import os
 from nutrient_contract import WARNING, recorded_inputs
+from soil_nutrient_screening import screen_soil_nutrients
 
 from geometry import normalize_polygon
 
@@ -229,6 +230,7 @@ def nutrient_layers(soil, analysis):
     explanation = explanation if isinstance(explanation, dict) else {}
     samples = explanation.get("samples", [])
     return {
+        "soil_nutrient_reference": screen_soil_nutrients(soil),
         "soil_nutrients_observed": {"schema_version": 1, "status": soil.get("status", "unavailable"),
                                     "records": records, "used_for_prediction": False},
         "soil_location_match": {"status": soil.get("status", "unavailable"), "records": matches},

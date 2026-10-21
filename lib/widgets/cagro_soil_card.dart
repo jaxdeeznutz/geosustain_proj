@@ -3,7 +3,8 @@ part of '../main.dart';
 /// Historical locality records are separate from the prediction model's inputs.
 class CagroSoilObservationsCard extends StatelessWidget {
   final Map<String, dynamic> record;
-  const CagroSoilObservationsCard({super.key, required this.record});
+  final Map<String, dynamic>? crop;
+  const CagroSoilObservationsCard({super.key, required this.record, this.crop});
 
   String _precision(dynamic value) => switch ('$value') {
     'mapped_farm' => 'Mapped farm locality',
@@ -19,7 +20,7 @@ class CagroSoilObservationsCard extends StatelessWidget {
     final soil = analysisMapValue(record['cagro_soil']);
     if (soil.isEmpty) return const SizedBox.shrink();
     final rows = analysisListValue(
-      soil['observations'],
+      soil['status'] == 'matched' ? soil['observations'] : [],
     ).whereType<Map>().map((r) => Map<String, dynamic>.from(r)).toList();
     if (rows.isEmpty) {
       return GeoResultCard(
@@ -29,7 +30,7 @@ class CagroSoilObservationsCard extends StatelessWidget {
             'Local soil data',
             style: TextStyle(fontWeight: FontWeight.w700),
           ),
-          subtitle: const Text('No matching CAGRO soil record for this area.'),
+          subtitle: const Text('CAGRO soil data unavailable for this farm.'),
           children: [
             const Text('CAGRO soil NPK: Unavailable'),
             Text('${soil['message'] ?? 'No reliable locality match.'}'),
@@ -93,6 +94,33 @@ class CagroSoilObservationsCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('Source: ${row['source']}'),
+                      Text(
+                        'Match type: ${analysisMapValue(row['match'])['method'] ?? 'Not recorded'}',
+                      ),
+                      if (crop != null)
+                        for (final assessment in cagroReferenceRecords(
+                          crop!,
+                          record,
+                        ))
+                          if (assessment['record_id'] == row['id'])
+                            for (final raw in analysisListValue(
+                              assessment['factors'],
+                            ))
+                              Builder(
+                                builder: (context) {
+                                  final factor = analysisMapValue(raw);
+                                  final name = '${factor['factor']}';
+                                  return EnvironmentalFactorCard(
+                                    factor: cagroNutrientView(
+                                      name,
+                                      name.isEmpty
+                                          ? 'Nutrient'
+                                          : '${name[0].toUpperCase()}${name.substring(1)}',
+                                      factor,
+                                    ),
+                                  );
+                                },
+                              ),
                       Text(
                         'Location precision: ${_precision(row['coordinate_precision'])}',
                       ),

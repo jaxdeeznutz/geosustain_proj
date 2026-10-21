@@ -100,6 +100,11 @@ The existing model's soil pH and other environmental inputs also remain unchange
 
 ## Integration and persistence
 
+The Farmer nutrient-reference display and its new additive schema are documented
+in [CAGRO_NUTRIENT_REFERENCE.md](CAGRO_NUTRIENT_REFERENCE.md). No compatible
+production crop N/P/K criterion has been established; historical values are
+visible but remain **Not assessed**. Model nutrient inputs remain separate.
+
 `fastapi_app.build_analysis_result` calls `lookup_soil_observations` once per
 analysis after existing inference/land-cover screening. Its `cagro_soil` result
 is preserved by the existing `analysis_sessions.result_snapshot` JSON field.

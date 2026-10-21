@@ -117,6 +117,8 @@ class CropFactorView {
   final double? value, min, max;
   final CropFactorState state;
   final bool usedByModel;
+  final bool referenceBased;
+  final String? valueText;
   const CropFactorView({
     required this.key,
     required this.label,
@@ -127,6 +129,8 @@ class CropFactorView {
     required this.max,
     required this.state,
     this.usedByModel = false,
+    this.referenceBased = false,
+    this.valueText,
   });
 }
 
@@ -277,6 +281,99 @@ CropFactorView annualRainfallFactorView(
   );
 }
 
+/// Saved per-row CAGRO assessments; old snapshots show evidence without grading.
+List<Map<String, dynamic>> cagroReferenceRecords(
+  Map<String, dynamic> crop,
+  Map<String, dynamic> record,
+) {
+  final reference = analysisMapValue(record['soil_nutrient_reference']);
+  final name = '${crop['crop'] ?? crop['name'] ?? ''}';
+  if (reference.isNotEmpty) {
+    if (reference['status'] != 'matched') return [];
+    final crops = analysisMapValue(reference['crops']);
+    return analysisListValue(
+      analysisMapValue(crops[name])['records'],
+    ).map(analysisMapValue).toList();
+  }
+  final soil = analysisMapValue(record['cagro_soil']);
+  if (soil['status'] != 'matched') return [];
+  return analysisListValue(soil['observations'])
+      .map(analysisMapValue)
+      .where(
+        (row) => [
+          'mapped_locality_proximity',
+          'verified_locality_boundary',
+        ].contains(analysisMapValue(row['match'])['method']),
+      )
+      .map(
+        (row) => <String, dynamic>{
+          'record_id': row['id'],
+          'provenance': row,
+          'factors': [
+            for (final n in ['nitrogen', 'phosphorus', 'potassium'])
+              {
+                'factor': n,
+                'value':
+                    row[n == 'nitrogen'
+                        ? (row['estimated_nitrogen_pct'] != null
+                              ? 'estimated_nitrogen_pct'
+                              : 'nitrogen_pct')
+                        : '${n}_ppm'],
+                'unit':
+                    analysisMapValue(row['units'])[n == 'nitrogen'
+                        ? (row['estimated_nitrogen_pct'] != null
+                              ? 'estimated_nitrogen_pct'
+                              : 'nitrogen_pct')
+                        : '${n}_ppm'],
+                'status': 'Not assessed',
+                'reason':
+                    'No compatible documented crop nutrient range available in this saved analysis.',
+              },
+          ],
+        },
+      )
+      .toList();
+}
+
+CropFactorView cagroNutrientView(
+  String key,
+  String name,
+  Map<String, dynamic>? factor, {
+  bool multiple = false,
+}) {
+  final data = factor ?? <String, dynamic>{};
+  final requirement = analysisMapValue(data['requirement']);
+  final optimal = analysisListValue(requirement['optimal']);
+  final value = analysisNumber(data['value']);
+  final unit = '${data['unit'] ?? ''}';
+  final comparable =
+      !multiple &&
+      value != null &&
+      optimal.length == 2 &&
+      requirement['unit'] == unit;
+  final status = comparable ? data['status'] : 'Not assessed';
+  return CropFactorView(
+    key: key,
+    label: '$name (CAGRO)',
+    unit: unit,
+    value: value,
+    min: comparable ? analysisNumber(optimal[0]) : null,
+    max: comparable ? analysisNumber(optimal[1]) : null,
+    referenceBased: true,
+    valueText: multiple ? 'Multiple historical observations' : null,
+    state: switch (status) {
+      'Suitable' => CropFactorState.suitable,
+      'Limited' => CropFactorState.near,
+      'Outside documented range' => CropFactorState.outside,
+      _ => CropFactorState.unassessed,
+    },
+    interpretation:
+        'CAGRO historical soil observation. '
+        '${multiple ? 'Multiple historical CAGRO observations are available for this locality. No value selected or averaged.' : data['reason'] ?? 'Not assessed — no compatible documented crop nutrient range available.'} '
+        'Historical locality evidence; current field conditions may differ. Field or laboratory verification is recommended.',
+  );
+}
+
 /// Environmental display: annual rainfall screening plus other recorded factors.
 const environmentalFactorDefinitions = [
   (
@@ -311,8 +408,30 @@ List<CropFactorView> environmentalFactorViews(
   Map<String, dynamic> record,
 ) {
   final saved = cropFactorViews(crop, record);
+  final soilRecords = cagroReferenceRecords(crop, record);
   return environmentalFactorDefinitions.map((definition) {
     final key = definition.$1;
+    if (['N', 'P', 'K'].contains(key) && soilRecords.isNotEmpty) {
+      final nutrient = {
+        'N': 'nitrogen',
+        'P': 'phosphorus',
+        'K': 'potassium',
+      }[key]!;
+      final name = {'N': 'Nitrogen', 'P': 'Phosphorus', 'K': 'Potassium'}[key]!;
+      Map<String, dynamic>? factor;
+      if (soilRecords.length == 1) {
+        for (final raw in analysisListValue(soilRecords.single['factors'])) {
+          final entry = analysisMapValue(raw);
+          if (entry['factor'] == nutrient) factor = entry;
+        }
+      }
+      return cagroNutrientView(
+        key,
+        name,
+        factor,
+        multiple: soilRecords.length > 1,
+      );
+    }
     if (key == 'annual_rainfall_mm')
       return annualRainfallFactorView(crop, record);
     final modelValue = recordedModelInput(record, key);
@@ -904,9 +1023,13 @@ class EnvironmentalFactorCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (icon, tint, tintBg) = _factorIcon(factor.key);
     final statusColor = MatchStatusBadge.colorFor(factor.state);
-    final current = factor.value == null
-        ? 'Unavailable'
-        : _withUnit(_cropNum(factor.value), factor.unit);
+    final reference =
+        factor.referenceBased || factor.key == 'annual_rainfall_mm';
+    final current =
+        factor.valueText ??
+        (factor.value == null
+            ? 'Unavailable'
+            : _withUnit(_cropNum(factor.value), factor.unit));
     final hasRange = factor.min != null || factor.max != null;
     final rangeBox = Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -921,8 +1044,8 @@ class EnvironmentalFactorCard extends StatelessWidget {
           Text(
             hasRange
                 ? 'Preferred range comparison'
-                : factor.key == 'annual_rainfall_mm'
-                ? 'Annual rainfall comparison'
+                : reference
+                ? 'Reference comparison'
                 : 'Model assessment',
             style: TextStyle(fontSize: 10.5, color: CropSheetStyle.muted),
           ),
@@ -930,8 +1053,8 @@ class EnvironmentalFactorCard extends StatelessWidget {
           Text(
             hasRange
                 ? _rangeText(factor.min, factor.max, factor.unit)
-                : factor.key == 'annual_rainfall_mm'
-                ? 'No documented annual range saved'
+                : reference
+                ? 'No compatible documented range saved'
                 : factor.usedByModel
                 ? 'Used in crop prediction'
                 : 'Model input not recorded',
@@ -944,7 +1067,7 @@ class EnvironmentalFactorCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          if (hasRange && factor.key == 'annual_rainfall_mm')
+          if (reference)
             Text(switch (factor.state) {
               CropFactorState.suitable => 'Suitable',
               CropFactorState.near => 'Limited',
@@ -1145,6 +1268,7 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
         ),
       ),
       children: [
+        if (isModelRanked(record)) _SheetHeading('AI Crop Ranking'),
         SuitabilityScoreCard(
           score: score,
           scoreLabel: isModelRanked(record) ? 'Model score' : 'Suitability',
@@ -1155,7 +1279,7 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
         ),
         _gap(CropSheetStyle.sectionGap),
         _SheetHeading(
-          'Environmental Factors',
+          'Environmental & Soil Reference Assessment',
           subtitle:
               'Annual rainfall is compared with the crop’s documented annual requirements. Other recorded factors and reference comparisons are separate from the model ranking.',
         ),
@@ -1169,6 +1293,7 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
           )
         else
           for (final factor in factors) EnvironmentalFactorCard(factor: factor),
+        CagroSoilObservationsCard(record: record, crop: crop),
         if (seasonNote != null && '$seasonNote'.trim().isNotEmpty)
           InfoExplanationCard(
             icon: Icons.event_note_outlined,
@@ -1236,6 +1361,7 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
         ),
       ),
       children: [
+        if (modelRanked) _SheetHeading('AI Crop Ranking'),
         SuitabilityScoreCard(
           score: score,
           scoreLabel: modelRanked ? 'Model score' : 'Suitability',
@@ -1265,11 +1391,12 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
         if (factors.isNotEmpty) ...[
           _gap(CropSheetStyle.cardGap),
           _SheetHeading(
-            'Environmental Factors',
+            'Environmental & Soil Reference Assessment',
             subtitle:
                 'Annual rainfall reference screening and other recorded environmental factors. These comparisons are separate from the model ranking.',
           ),
           for (final factor in factors) EnvironmentalFactorCard(factor: factor),
+          CagroSoilObservationsCard(record: record, crop: crop),
         ],
         _gap(CropSheetStyle.cardGap),
         _SheetHeading(

@@ -32,6 +32,7 @@ void main() {
           {
             ...location,
             ...row,
+            'match': {'method': 'verified_locality_boundary'},
             'data_note':
                 'Not an exact soil measurement for the selected polygon.',
           },
@@ -48,7 +49,7 @@ void main() {
         ),
         home: Scaffold(
           body: SingleChildScrollView(
-            child: CagroSoilObservationsCard(record: record),
+            child: CagroSoilObservationsCard(record: record, crop: const {'crop': 'Rice'}),
           ),
         ),
       ),
@@ -74,6 +75,9 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('Suitable'), findsNothing);
+    expect(find.text('Not assessed'), findsNWidgets(3));
+    expect(find.text('Nitrogen (CAGRO)'), findsOneWidget);
+    expect(find.text('Match type: verified_locality_boundary'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -96,7 +100,7 @@ void main() {
       ),
     );
     expect(
-      find.text('No matching CAGRO soil record for this area.'),
+      find.text('CAGRO soil data unavailable for this farm.'),
       findsOneWidget,
     );
     expect(find.text('CAGRO soil NPK: Unavailable'), findsNothing);

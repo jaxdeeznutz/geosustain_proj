@@ -71,3 +71,11 @@ def catalog():
     return {'version': VERSION, 'crops': [{'key': name.lower(), 'name': name,
         'local_relevance': {'verified': True, 'source': LOCAL_SOURCE, 'date': '2023-02-03'},
         'requirements': rules} for name, rules in REQUIREMENTS.items()]}
+
+
+# Reference-only soil chemistry criteria. No compatible N/P/K criteria have
+# been established for the stored CAGRO definitions/methods. Never populate this
+# from model training ranges or fertilizer application/removal rates.
+# Future entries require source {title, url/citation, section}, unit,
+# nutrient_definition, method, limitations, optimal and optional absolute.
+NUTRIENT_REQUIREMENTS = {crop: {} for crop in REQUIREMENTS}
