@@ -21,6 +21,30 @@ class CagroSoilObservationsCard extends StatelessWidget {
     final rows = analysisListValue(
       soil['observations'],
     ).whereType<Map>().map((r) => Map<String, dynamic>.from(r)).toList();
+    if (rows.isEmpty) {
+      return GeoResultCard(
+        child: ExpansionTile(
+          tilePadding: EdgeInsets.zero,
+          title: const Text(
+            'Local soil data',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          subtitle: const Text('No matching CAGRO soil record for this area.'),
+          children: [
+            const Text('CAGRO soil NPK: Unavailable'),
+            Text('${soil['message'] ?? 'No reliable locality match.'}'),
+            const SizedBox(height: 8),
+            const Text(
+              'Missing local soil records do not determine the satellite land-cover result.',
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Current production model nutrient inputs were trained using a different NPK representation. CAGRO soil NPK observations are shown separately and are not yet used directly by the production model.',
+            ),
+          ],
+        ),
+      );
+    }
     return GeoResultCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

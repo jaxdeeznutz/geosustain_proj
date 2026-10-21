@@ -2,6 +2,7 @@ from copy import deepcopy
 import config  # noqa: F401 -- load local environment before reading settings
 import ee
 import joblib
+from nutrient_contract import legacy_inputs, model_values
 import requests
 import os
 import json
@@ -484,7 +485,7 @@ def get_soil_nitrogen(lat, lon):
         if val is not None:
             n_gkg    = float(val) / 100.0
             nitrogen = max(20, min(120, round(n_gkg * 6)))
-            return nitrogen, 'measured', 'SoilGrids 2.0 nitrogen (Google Earth Engine), 0-5cm'
+            return nitrogen, 'estimated_proxy', 'SoilGrids 2.0 nitrogen (Google Earth Engine), 0-5cm'
     except Exception:
         pass
 
@@ -493,7 +494,7 @@ def get_soil_nitrogen(lat, lon):
                    .sample(point, 250).first().get('b0'))
         val = float(ee.Number(n_raw).getInfo()) if n_raw else None
         if val is not None:
-            return max(20, min(120, round(float(val) * 0.7))), 'measured', 'OpenLandMap Soil Nitrogen (Google Earth Engine, backup)'
+            return max(20, min(120, round(float(val) * 0.7))), 'estimated_proxy', 'OpenLandMap Soil Nitrogen (Google Earth Engine, backup)'
     except Exception:
         pass
 
@@ -556,7 +557,7 @@ def estimate_phosphorus_potassium(ndvi_val, ph_val, elev_val):
 
 def get_soil_nutrients(lat, lon):
     """Returns (nitrogen, phosphorus, potassium, quality_info).
-    quality_info = {'nitrogen': 'measured'|'fallback_default',
+    quality_info = {'nitrogen': 'estimated_proxy'|'fallback_default',
                      'phosphorus': 'estimated_proxy', 'potassium': 'estimated_proxy'}
     Phosphorus/potassium are ALWAYS a formula-based estimate from NDVI/pH/
     elevation proxies — GeoSustain has no direct soil P/K test integration —
@@ -743,7 +744,7 @@ def _crop_adjustment(crop_name, rain, humidity, ndvi, slope, ph):
     return max(-20.0, min(0.0, adj))
 
 
-def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope, active_crops=None, inference_context=None):
+def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope, active_crops=None, inference_context=None, nutrient_inputs=None):
     # Fair blend: trained model (soil + weather + GIS features) and satellite/weather
     # field fit are weighted equally. No manual bonus for any single crop.
     # `active_crops`, if given, is a set of crop_key strings (from the Super
@@ -755,8 +756,13 @@ def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope,
     ML_WEIGHT = 0.50
     ENV_WEIGHT = 0.50
 
+    if nutrient_inputs is None:
+        nutrient_inputs = legacy_inputs(n, p, k, 'estimated_proxy', 'Legacy numeric caller; provenance undocumented')
+    values = model_values(nutrient_inputs)
+    if values != {'N': n, 'P': p, 'K': k}:
+        raise ValueError('Nutrient contract does not match supplied model inputs')
     input_df = pd.DataFrame([{
-        'N': n, 'P': p, 'K': k,
+        **values,
         'temperature': temp, 'humidity': humidity, 'ph': ph, 'rainfall': rain,
         'ndvi': ndvi, 'elevation': elevation, 'slope': slope,
     }])
@@ -793,6 +799,7 @@ def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope,
         {key: float(value) for key, value in input_df.iloc[0].items()},
         raw_prediction, probabilities,
     )
+    snapshot['samples'][0]['model_nutrient_inputs'] = deepcopy(nutrient_inputs)
     if inference_context is not None:
         inference_context.update(snapshot)
 
@@ -1194,7 +1201,9 @@ def analyze_location(lat, lon, active_crops=None):
         raw_crop, top3_crops = get_ai_prediction(
             n_val, p_val, k_val, temp_val, live_hum, ph_val, rain_val,
             ndvi_val, elev_val, slope_pct, active_crops=active_crops,
-            inference_context=model_explanation)
+            inference_context=model_explanation,
+            nutrient_inputs=legacy_inputs(
+                n_val, p_val, k_val, npk_quality['nitrogen'], npk_quality['nitrogen_source']))
         if top3_crops:
             primary_crop    = top3_crops[0]['crop']
             primary_compat  = top3_crops[0]['compatibility_pct']

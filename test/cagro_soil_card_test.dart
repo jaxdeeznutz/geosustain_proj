@@ -95,6 +95,13 @@ void main() {
         ),
       ),
     );
+    expect(
+      find.text('No matching CAGRO soil record for this area.'),
+      findsOneWidget,
+    );
+    expect(find.text('CAGRO soil NPK: Unavailable'), findsNothing);
+    await tester.tap(find.text('Local soil data'));
+    await tester.pumpAndSettle();
     expect(find.text('CAGRO soil NPK: Unavailable'), findsOneWidget);
     expect(find.textContaining('0 ppm'), findsNothing);
     expect(tester.takeException(), isNull);

@@ -57,12 +57,15 @@ def test_real_model_drives_pipeline_and_polygon_aggregation(monkeypatch, weather
         response = Mock()
         response.json.return_value = {'current': {'relative_humidity_2m': 73}}
         monkeypatch.setattr(env.requests, 'get', Mock(return_value=response))
-    monkeypatch.setattr(env, 'get_soil_nutrients', lambda *args: (50, 35, 40, {'phosphorus': 'estimated_proxy', 'potassium': 'estimated_proxy'}))
+    monkeypatch.setattr(env, 'get_soil_nitrogen', lambda *args: (50, 'estimated_proxy', 'SoilGrids test fixture'))
     monkeypatch.setattr(pipeline, 'terrain_slope', lambda *args: 3)
     monkeypatch.setattr(pipeline, 'climate_normals', lambda *args: {
         'temperature': {'value': 27, 'unit': 'C', 'period': 'annual_mean', 'quality': 'modelled'},
         'rainfall': {'value': 2100, 'unit': 'mm/year', 'period': 'annual_mean_total', 'quality': 'modelled'}})
     point = pipeline.analyze_location(7.29, 125.62)
+    sample = point['model_explanation']['samples'][0]
+    from nutrient_contract import model_values
+    assert model_values(sample['model_nutrient_inputs']) == {k: sample['inputs'][k] for k in ('N', 'P', 'K')}
     assert len(point['top_crop_recommendations']) == 5
     raw = point['model_explanation']['samples'][0]['class_probabilities']
     for crop in point['top_crop_recommendations']:

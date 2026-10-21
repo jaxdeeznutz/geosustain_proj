@@ -9,6 +9,7 @@ from pathlib import Path
 import json
 import math
 import os
+from nutrient_contract import WARNING, recorded_inputs
 
 from geometry import normalize_polygon
 
@@ -190,10 +191,7 @@ def lookup_soil_observations(polygon, *, boundaries=None):
     return result
 
 
-MODEL_WARNING = (
-    "Current production model nutrient inputs were trained using a different NPK representation. "
-    "CAGRO soil NPK observations are shown separately and are not yet used directly by the production model."
-)
+MODEL_WARNING = WARNING
 
 
 def nutrient_layers(soil, analysis):
@@ -218,6 +216,8 @@ def nutrient_layers(soil, analysis):
                             "estimated_from_organic_matter" if name == "nitrogen" and estimated else
                             "local_soil_observation"),
                 "method": "OM / 20" if name == "nitrogen" and estimated else None,
+                "date": row.get("sample_date"), "sample_year": row.get("sample_year"),
+                "compatible": False, "used_for_prediction": False,
             }
         records.append({"record_id": row["id"], **nutrients,
                         "source_file": row.get("source_file"), "source_row": row.get("source_row"),
@@ -225,12 +225,14 @@ def nutrient_layers(soil, analysis):
         matches.append({"record_id": row["id"], **{key: row.get(key) for key in (
             "location_name", "latitude", "longitude", "coordinate_precision", "confidence", "original_cagro_gps")},
             "match_type": row.get("match", {}).get("method"), "note": row.get("data_note")})
-    samples = analysis.get("model_explanation") or {}
-    samples = samples.get("samples", []) if isinstance(samples, dict) else []
+    explanation = analysis.get("model_explanation") or {}
+    explanation = explanation if isinstance(explanation, dict) else {}
+    samples = explanation.get("samples", [])
     return {
         "soil_nutrients_observed": {"schema_version": 1, "status": soil.get("status", "unavailable"),
                                     "records": records, "used_for_prediction": False},
         "soil_location_match": {"status": soil.get("status", "unavailable"), "records": matches},
+        "model_nutrient_inputs": recorded_inputs(samples, explanation.get('model_version')),
         "legacy_model_nutrient_inputs": {
             "representation": "legacy_training_scale", "compatible_with_cagro": False,
             "samples": [{"sample_index": i, **{"model_" + k: sample.get("inputs", {}).get(k)

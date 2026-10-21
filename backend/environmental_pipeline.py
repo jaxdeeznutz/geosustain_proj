@@ -8,6 +8,7 @@ from copy import deepcopy
 from suitability import attach_assessment, number
 from model_explainability import forest_snapshot
 from model_ranking import attach_model_ranking, ModelRankingUnavailable
+from nutrient_contract import legacy_inputs, model_values
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -116,9 +117,11 @@ def analyze_location(lat, lon, active_crops=None):
             # Reuse the same observations already fetched for this sample.
             n, nitrogen_quality, nitrogen_source = raw.get('nitrogen', (None, 'unavailable', 'Unavailable'))
             p,k = env.estimate_phosphorus_potassium(result['ndvi'], result['soil_ph'], result['elevation_m'])
-            nq = {'nitrogen': nitrogen_quality, 'nitrogen_source': nitrogen_source,
+            nutrients = legacy_inputs(n, p, k, nitrogen_quality, nitrogen_source)
+            nutrient_values = model_values(nutrients)
+            nq = {'nitrogen': nutrients['N']['quality'], 'nitrogen_source': nitrogen_source,
                   'phosphorus': 'estimated_proxy', 'potassium': 'estimated_proxy'}
-            inputs = {'N': n, 'P': p, 'K': k, 'temperature': result['temperature_c'],
+            inputs = {**nutrient_values, 'temperature': result['temperature_c'],
                       'humidity': result['live_humidity'], 'ph': result['soil_ph'],
                       'rainfall': result['rainfall_mm'], 'ndvi': result['ndvi'],
                       'elevation': result['elevation_m'], 'slope': result['slope_pct']}
@@ -140,6 +143,7 @@ def analyze_location(lat, lon, active_crops=None):
                 snapshot['role'] = 'crop_ranking'
                 snapshot['training_provenance'] = 'Kaggle crop data plus synthetic GIS features and local rows; no Panabo field validation established.'
                 snapshot['samples'][0].update(location={'lat':lat,'lon':lon},data_quality=deepcopy(quality),nutrient_quality=nq)
+                snapshot['samples'][0]['model_nutrient_inputs'] = nutrients
     except ModelRankingUnavailable:
         raise
     except Exception as exc:

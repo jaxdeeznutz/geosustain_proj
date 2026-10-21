@@ -141,6 +141,11 @@ CAGRO observations remain distinct from **legacy model nutrient inputs/proxies**
 
 ## Explicit API separation (schema version 1)
 
+The additive production nutrient contract and its scientific limitations are
+documented in [NPK_PRODUCTION_CONTRACT_AUDIT.md](NPK_PRODUCTION_CONTRACT_AUDIT.md).
+`model_nutrient_inputs` records validated legacy-adapter provenance per inference
+sample; legacy-adapter acceptance does not establish scientific compatibility.
+
 New analysis snapshots additionally include:
 - `soil_nutrients_observed`: status, used_for_prediction=false, and records.
   Every record has nitrogen/phosphorus/potassium objects with original value,

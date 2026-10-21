@@ -43,7 +43,6 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           GeoResultCard(child: GeoRecordSummary(r)),
-          CagroSoilObservationsCard(record: r),
           GeoResultCard(
             color: const Color(0xFFFFF6E5),
             child: Column(
@@ -132,6 +131,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
               ],
             ),
           ),
+          CagroSoilObservationsCard(record: r),
           if ('${cover['limitation'] ?? ''}'.isNotEmpty)
             GeoResultCard(
               color: const Color(0xFFE9F3FD),
