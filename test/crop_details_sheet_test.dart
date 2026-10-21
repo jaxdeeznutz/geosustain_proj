@@ -101,9 +101,12 @@ void main() {
     expect(find.text('Environmental Factors'), findsOneWidget);
     expect(find.text('0.66'), findsOneWidget);
     expect(find.text('0.32 – 0.75'), findsOneWidget);
-    expect(find.text('25.63 mm'), findsOneWidget);
+    expect(find.text('25.63 mm'), findsNothing);
+    expect(find.text('Annual Rainfall'), findsOneWidget);
+    expect(find.text('Rainfall (30 days)'), findsNothing);
+    expect(find.textContaining('Annual rainfall unavailable.'), findsOneWidget);
     expect(find.text('Suitable'), findsOneWidget);
-    expect(find.text('Outside range'), findsOneWidget);
+    expect(find.text('Outside range'), findsNothing);
     expect(find.text('Note'), findsOneWidget);
     expect(find.text('2nd recommendation'), findsNothing);
     expect(tester.takeException(), isNull);

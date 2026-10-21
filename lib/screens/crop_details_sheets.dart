@@ -202,13 +202,88 @@ List<CropFactorView> cropFactorViews(
   return views;
 }
 
-/// The ten recorded environmental inputs, separate from reference scoring.
+/// Annual rainfall reference comparison; never substitutes a model rain input.
+CropFactorView annualRainfallFactorView(
+  Map<String, dynamic> crop,
+  Map<String, dynamic> record,
+) {
+  final field = record.containsKey('rainfall_annual_mean_5y_mm')
+      ? 'rainfall_annual_mean_5y_mm'
+      : 'annual_rainfall_mm';
+  final metadata = analysisMapValue(
+    analysisMapValue(record['climate_field_metadata'])[field],
+  );
+  var value = analysisNumber(record[field]);
+  if (metadata.isNotEmpty &&
+      (metadata['unit'] != 'mm/year' ||
+          metadata['period'] != 'annual_mean_total' ||
+          metadata['status'] == 'unavailable_or_incompatible')) {
+    value = null;
+  }
+  Map<String, dynamic> comparison = {};
+  for (final raw in analysisListValue(crop['factors'])) {
+    final factor = analysisMapValue(raw);
+    if ([
+          'rainfall',
+          'annual_rainfall_mm',
+          'rainfall_annual_mean_5y_mm',
+        ].contains(factor['factor']) &&
+        factor['unit'] == 'mm/year' &&
+        factor['period'] == 'annual_mean_total') {
+      comparison = factor;
+      break;
+    }
+  }
+  final optimal = analysisListValue(
+    analysisMapValue(comparison['requirement'])['optimal'],
+  );
+  // Reuse backend evaluation of documented classes/absolute ranges, including
+  // gaps and boundaries. Never invent an annual range or recalculate a stale score.
+  final score =
+      value != null &&
+          analysisNumber(comparison['value']) == value &&
+          optimal.length == 2
+      ? analysisNumber(comparison['score'])
+      : null;
+  final state = score == null
+      ? CropFactorState.unassessed
+      : score >= 100
+      ? CropFactorState.suitable
+      : score <= 0
+      ? CropFactorState.outside
+      : CropFactorState.near;
+  return CropFactorView(
+    key: 'annual_rainfall_mm',
+    label:
+        field == 'rainfall_annual_mean_5y_mm' || metadata['baseline_years'] == 5
+        ? 'Annual Rainfall (5-year mean)'
+        : 'Annual Rainfall',
+    unit: 'mm/year',
+    value: value,
+    min: optimal.length == 2 ? analysisNumber(optimal[0]) : null,
+    max: optimal.length == 2 ? analysisNumber(optimal[1]) : null,
+    state: state,
+    interpretation: value == null
+        ? 'Annual rainfall unavailable. Recent rainfall is not used for this comparison.'
+        : switch (state) {
+            CropFactorState.suitable =>
+              'Suitable for the documented annual rainfall range.',
+            CropFactorState.near =>
+              'Limited: the documented annual rainfall criteria identify limitations.',
+            CropFactorState.outside => 'Outside documented range.',
+            CropFactorState.unassessed =>
+              'No matching annual rainfall assessment saved for this crop.',
+          },
+  );
+}
+
+/// Environmental display: annual rainfall screening plus other recorded factors.
 const environmentalFactorDefinitions = [
   (
-    'rainfall',
-    'Rainfall (30 days)',
-    'mm',
-    ['rainfall_30d_mm', 'rainfall_monthly_mm', 'monthly_rainfall_mm', 'rain'],
+    'annual_rainfall_mm',
+    'Annual Rainfall',
+    'mm/year',
+    ['rainfall_annual_mean_5y_mm', 'annual_rainfall_mm'],
   ),
   (
     'temperature',
@@ -216,7 +291,12 @@ const environmentalFactorDefinitions = [
     '°C',
     ['temperature_mean_5y_c', 'temperature_c', 'surface_temp_c', 'temp'],
   ),
-  ('humidity', 'Humidity', '%', ['humidity_current_pct', 'humidity', 'live_humidity']),
+  (
+    'humidity',
+    'Humidity',
+    '%',
+    ['humidity_current_pct', 'humidity', 'live_humidity'],
+  ),
   ('ndvi', 'Vegetation (NDVI)', '', ['ndvi']),
   ('ph', 'Soil pH', '', ['soil_ph']),
   ('N', 'Nitrogen (N)', '', ['nitrogen']),
@@ -233,6 +313,8 @@ List<CropFactorView> environmentalFactorViews(
   final saved = cropFactorViews(crop, record);
   return environmentalFactorDefinitions.map((definition) {
     final key = definition.$1;
+    if (key == 'annual_rainfall_mm')
+      return annualRainfallFactorView(crop, record);
     final modelValue = recordedModelInput(record, key);
     double? value = modelValue;
     // A model snapshot with missing inputs must not be silently filled with
@@ -252,9 +334,9 @@ List<CropFactorView> environmentalFactorViews(
     }
     CropFactorView? comparison;
     for (final candidate in saved) {
-      // Recent rain/current humidity cannot inherit annual reference ranges,
+      // Current humidity cannot inherit annual reference ranges,
       // even when the numbers happen to match. Old temperature periods are unknown.
-      if (key == 'rainfall' || key == 'humidity') continue;
+      if (key == 'humidity') continue;
       if (key == 'temperature') {
         final factors = analysisListValue(crop['factors']);
         final hasClimatePeriod = factors.any((entry) {
@@ -263,7 +345,8 @@ List<CropFactorView> environmentalFactorViews(
               factor['period'] == 'annual_mean';
         });
         if (record['climate_contract_version'] != 'climate-periods-v1' ||
-            !hasClimatePeriod) continue;
+            !hasClimatePeriod)
+          continue;
       }
       final matches =
           candidate.key == key || definition.$4.contains(candidate.key);
@@ -836,13 +919,19 @@ class EnvironmentalFactorCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            hasRange ? 'Preferred range comparison' : 'Model assessment',
+            hasRange
+                ? 'Preferred range comparison'
+                : factor.key == 'annual_rainfall_mm'
+                ? 'Annual rainfall comparison'
+                : 'Model assessment',
             style: TextStyle(fontSize: 10.5, color: CropSheetStyle.muted),
           ),
           const SizedBox(height: 2),
           Text(
             hasRange
                 ? _rangeText(factor.min, factor.max, factor.unit)
+                : factor.key == 'annual_rainfall_mm'
+                ? 'No documented annual range saved'
                 : factor.usedByModel
                 ? 'Used in crop prediction'
                 : 'Model input not recorded',
@@ -855,11 +944,20 @@ class EnvironmentalFactorCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          if (hasRange)
+          if (hasRange && factor.key == 'annual_rainfall_mm')
+            Text(switch (factor.state) {
+              CropFactorState.suitable => 'Suitable',
+              CropFactorState.near => 'Limited',
+              CropFactorState.outside => 'Outside documented range',
+              CropFactorState.unassessed => 'Not assessed',
+            }, style: TextStyle(fontSize: 12, color: statusColor))
+          else if (hasRange)
             MatchStatusBadge(state: factor.state)
           else
             Text(
-              factor.usedByModel
+              factor.key == 'annual_rainfall_mm'
+                  ? 'Annual reference screening only; this card does not show the model rainfall input.'
+                  : factor.usedByModel
                   ? 'The model evaluates factors together; it does not assign a separate suitability grade to each input.'
                   : 'This saved result cannot confirm whether the model used this factor.',
               style: const TextStyle(fontSize: 12, color: CropSheetStyle.muted),
@@ -1059,7 +1157,7 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
         _SheetHeading(
           'Environmental Factors',
           subtitle:
-              'Ten environmental factors used together by the model. Recorded crop-range comparisons are separate from the prediction.',
+              'Annual rainfall is compared with the crop’s documented annual requirements. Other recorded factors and reference comparisons are separate from the model ranking.',
         ),
         if (factors.isEmpty)
           const InfoExplanationCard(
@@ -1169,7 +1267,7 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
           _SheetHeading(
             'Environmental Factors',
             subtitle:
-                'Ten environmental factors. Model input availability and recorded range comparisons are shown separately.',
+                'Annual rainfall reference screening and other recorded environmental factors. These comparisons are separate from the model ranking.',
           ),
           for (final factor in factors) EnvironmentalFactorCard(factor: factor),
         ],

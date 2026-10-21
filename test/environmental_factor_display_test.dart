@@ -3,22 +3,36 @@ import 'package:flutter/material.dart';
 import 'package:geosustain_clean_arranged/main.dart';
 
 void main() {
-  test('new climate labels distinguish periods and exclude annual humidity ranges', () {
-    final views = environmentalFactorViews({
-      'factors': [
-        {'factor': 'humidity', 'value': 80, 'unit': '%', 'period': 'annual_mean',
-         'score': 100, 'requirement': {'optimal': [75, 90]}},
-      ],
-    }, {
-      'climate_contract_version': 'climate-periods-v1',
-      'temperature_mean_5y_c': 27,
-      'humidity_current_pct': 80,
-    });
-    expect(views[1].label, 'Air temperature (5-year mean)');
-    expect(views[1].value, 27);
-    expect(views[2].label, 'Humidity (current)');
-    expect(views[2].min, isNull);
-  });
+  test(
+    'new climate labels distinguish periods and exclude annual humidity ranges',
+    () {
+      final views = environmentalFactorViews(
+        {
+          'factors': [
+            {
+              'factor': 'humidity',
+              'value': 80,
+              'unit': '%',
+              'period': 'annual_mean',
+              'score': 100,
+              'requirement': {
+                'optimal': [75, 90],
+              },
+            },
+          ],
+        },
+        {
+          'climate_contract_version': 'climate-periods-v1',
+          'temperature_mean_5y_c': 27,
+          'humidity_current_pct': 80,
+        },
+      );
+      expect(views[1].label, 'Air temperature (5-year mean)');
+      expect(views[1].value, 27);
+      expect(views[2].label, 'Humidity (current)');
+      expect(views[2].min, isNull);
+    },
+  );
   test(
     'saved soil range compares parcel input even when reference reading differs',
     () {
@@ -78,7 +92,7 @@ void main() {
     },
   );
 
-  test('shows ten inputs and uses recorded 30-day rain, never annual rain', () {
+  test('shows annual rainfall comparison, never the recent model rainfall', () {
     final record = <String, dynamic>{
       'scoring_version': 'reference',
       'annual_rainfall_mm': 2742.48,
@@ -90,7 +104,8 @@ void main() {
           'factor': 'annual_rainfall_mm',
           'value': 2742.48,
           'unit': 'mm/year',
-          'score': 100,
+          'period': 'annual_mean_total',
+          'score': 50,
           'requirement': {
             'optimal': [1500, 2000],
           },
@@ -99,17 +114,20 @@ void main() {
     };
     final views = environmentalFactorViews(crop, record);
     expect(views.length, 10);
-    expect(views.first.label, 'Rainfall (30 days)');
-    expect(views.first.value, 94.2);
-    expect(views.first.min, isNull);
-    expect(views.first.state, CropFactorState.unassessed);
+    expect(views.first.label, 'Annual Rainfall');
+    expect(views.first.value, 2742.48);
+    expect(views.first.unit, 'mm/year');
+    expect(views.first.min, 1500);
+    expect(views.first.max, 2000);
+    expect(views.first.state, CropFactorState.near);
+    expect(views.first.usedByModel, isFalse);
     expect(views.firstWhere((v) => v.key == 'N').value, isNull);
     expect(views.firstWhere((v) => v.key == 'N').usedByModel, isFalse);
     expect(
       environmentalFactorViews(crop, {
         'annual_rainfall_mm': 2742.48,
       }).first.value,
-      isNull,
+      2742.48,
     );
   });
   test(
@@ -129,8 +147,8 @@ void main() {
           ],
         },
       });
-      expect(views.first.value, 0);
-      expect(views.first.usedByModel, isTrue);
+      expect(views.first.value, isNull);
+      expect(views.first.usedByModel, isFalse);
       expect(views[1].value, 28);
       expect(views.firstWhere((v) => v.key == 'N').value, isNull);
       expect(views.firstWhere((v) => v.key == 'N').usedByModel, isFalse);
