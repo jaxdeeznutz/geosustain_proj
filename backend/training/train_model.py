@@ -1,6 +1,11 @@
 import pandas as pd
 import numpy as np
-import joblib
+from datetime import datetime, timezone
+import hashlib
+import io
+from pathlib import Path
+import sys
+import sklearn
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.svm import SVC
@@ -18,17 +23,22 @@ from sklearn.metrics import accuracy_score, classification_report, precision_rec
 RANDOM_SEED = 42
 np.random.seed(RANDOM_SEED)
 
-DATASET_PATH = 'Crop_recommendation.csv'
-MODEL_PATH = 'crop_model.pkl'
-FEATURES_PATH = 'crop_model_features.pkl'
+BACKEND_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(BACKEND_DIR))
+from model_artifacts import APPROVED_LABELS, FEATURES, save_training_artifact
+
+DATASET_PATH = BACKEND_DIR / 'Crop_recommendation.csv'
+MODEL_PATH = BACKEND_DIR / 'crop_model.pkl'
+FEATURES_PATH = BACKEND_DIR / 'crop_model_features.pkl'
 
 # The current CSV and synthetic profiles do not establish compatible periods.
 # Fail before reading/augmenting data or overwriting any deployed artifact.
-from climate_training_contract import validate_training_periods
+from training.climate_training_contract import TRAINING_SOURCES, validate_training_periods
 validate_training_periods()
 
 print('Loading dataset...')
-df = pd.read_csv(DATASET_PATH)
+dataset_bytes = DATASET_PATH.read_bytes()
+df = pd.read_csv(io.BytesIO(dataset_bytes))
 
 required = ['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall', 'label']
 missing = [c for c in required if c not in df.columns]
@@ -196,10 +206,7 @@ print(f'Added localized crop rows: {len(local_df)}')
 # (e.g. mango, mungbean, pigeonpeas, blackgram — previously included here
 # by mistake, with no equivalent in the approved crop list) from diluting
 # Random Forest training or ever appearing as a learned class.
-SUPPORTED_LABELS = {
-    'rice', 'maize', 'banana', 'coconut', 'abaca', 'cacao', 'durian',
-    'cassava', 'sweet potato', 'rubber', 'pomelo', 'papaya', 'watermelon',
-}
+SUPPORTED_LABELS = APPROVED_LABELS
 df = df[df['label'].astype(str).str.lower().isin(SUPPORTED_LABELS)].copy()
 print(f'Focused training rows after local crop filter: {len(df)}')
 print('Training class counts:')
@@ -229,7 +236,7 @@ df['ndvi'] = df.apply(lambda r: round(sample_range(r['label'], 'ndvi'), 3) if pd
 df['elevation'] = df.apply(lambda r: round(sample_range(r['label'], 'elevation'), 2) if pd.isna(r.get('elevation')) else r['elevation'], axis=1)
 df['slope'] = df.apply(lambda r: round(sample_range(r['label'], 'slope'), 2) if pd.isna(r.get('slope')) else r['slope'], axis=1)
 
-features = ['N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall', 'ndvi', 'elevation', 'slope']
+features = list(FEATURES)
 X = df[features]
 y = df['label']
 
@@ -252,16 +259,10 @@ model.fit(X_train, y_train)
 
 pred = model.predict(X_test)
 acc = accuracy_score(y_test, pred)
-print(f'Model Training Complete! Accuracy: {acc * 100:.2f}%')
+print(f'Held-out dataset classification accuracy (not field suitability): {acc * 100:.2f}%')
 print(classification_report(y_test, pred, zero_division=0))
 
-joblib.dump(model, MODEL_PATH)
-joblib.dump(features, FEATURES_PATH)
-df.to_csv('Crop_recommendation_with_gis.csv', index=False)
-
-print(f'Saved model: {MODEL_PATH}')
-print(f'Saved feature list: {FEATURES_PATH}')
-print('Saved augmented dataset: Crop_recommendation_with_gis.csv')
+# Publish only after comparison evaluation and metadata validation both succeed.
 
 # ---------------------------------------------------------------------------
 # Model comparison: Decision Tree vs SVM vs Random Forest (GeoSustain Section
@@ -309,7 +310,7 @@ comparison = {
     'random_forest': _metrics(y_test, pred),
     'decision_tree': _metrics(y_test, dt_pred),
     'svm': _metrics(y_test, svm_pred),
-    'dataset': DATASET_PATH,
+    'dataset': DATASET_PATH.name,
     'test_size': 0.20,
     'random_seed': RANDOM_SEED,
     'features': features,
@@ -322,9 +323,34 @@ for name, key in [('Random Forest', 'random_forest'), ('Decision Tree', 'decisio
     m = comparison[key]
     print(f"{name:<15}{m['accuracy']*100:>9.2f}%{m['precision_macro']*100:>11.2f}%{m['recall_macro']*100:>9.2f}%{m['f1_macro']*100:>9.2f}%")
 
-COMPARISON_PATH = 'model_comparison_report.json'
-import json
-with open(COMPARISON_PATH, 'w') as f:
-    json.dump(comparison, f, indent=2)
-print(f'\nSaved model comparison report: {COMPARISON_PATH}')
-print('Random Forest remains the deployed production model (crop_model.pkl unchanged by this comparison).')
+training = {
+    'status': 'recorded',
+    'timestamp_utc': datetime.now(timezone.utc).isoformat(),
+    'random_seed': RANDOM_SEED,
+    'script_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    'dataset_sha256': hashlib.sha256(dataset_bytes).hexdigest(),
+    'sklearn_version': sklearn.__version__,
+    'model_parameters': model.get_params(),
+    'provenance': {
+        'base_dataset': DATASET_PATH.name,
+        'gis_features': 'Synthetic proxy ranges in CROP_GIS_RANGES; not measured GIS training observations.',
+        'local_rows': 'Synthetic LOCAL_CROP_PROFILES; not field observations.',
+        'climate_sources': TRAINING_SOURCES,
+        'climate_contract_sha256': hashlib.sha256(
+            Path(__file__).with_name('climate_training_contract.py').read_bytes()).hexdigest(),
+        'nutrient_compatibility': 'Physical units/method compatibility unverified; no CAGRO inputs or conversions.',
+        'field_validation': 'No Panabo field validation established.',
+    },
+    'evaluation': {
+        'scope': 'Held-out classification on augmented dataset; not field suitability or harvest probability.',
+        'limitation': 'Balancing occurs before splitting; duplicate resampled rows may cross the split. Synthetic profiles are not independent field validation.',
+        'test_fraction': 0.20, 'train_rows': len(X_train), 'test_rows': len(X_test),
+        'random_forest': comparison['random_forest'],
+        'decision_tree': comparison['decision_tree'], 'svm': comparison['svm'],
+    },
+}
+metadata = save_training_artifact(model, features, training, comparison, df)
+print(f'Saved model: {MODEL_PATH}')
+print(f'Saved feature list: {FEATURES_PATH}')
+print(f'Model version (SHA-256): {metadata["model_version"]}')
+print('Saved backend metadata, augmented dataset and comparison report; Random Forest remains production.')

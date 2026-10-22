@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "model_version": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "model_type": "RandomForestClassifier",
+  "feature_names": ["N", "P", "K", "temperature", "humidity", "ph", "rainfall", "ndvi", "elevation", "slope"],
+  "classes": ["abaca", "banana", "blackgram", "cacao", "cassava", "coconut", "durian", "maize", "mango", "mungbean", "papaya", "pigeonpeas", "pomelo", "rice", "rubber", "sweet potato", "watermelon"],
+  "training": {
+    "status": "legacy_unverified",
+    "timestamp_utc": null,
+    "random_seed": 42,
+    "script_sha256": null,
+    "dataset_sha256": null,
+    "provenance": {
+      "basis": "Audit of existing pickle attributes and repository code, not a retraining record.",
+      "documented_pipeline": "Repository describes Kaggle Crop_recommendation.csv plus synthetic GIS proxies and LOCAL_CROP_PROFILES; linkage of these exact sources to this artifact is unverified.",
+      "climate_compatibility": "Base CSV periods undocumented; local rainfall rolling_30_days, local temperature/humidity periods unspecified. Existing training guard blocks retraining.",
+      "nutrient_compatibility": "Physical units/method compatibility unverified; CAGRO historical reference data is not an approved model input.",
+      "class_mismatch": "17 artifact classes versus 13 current approved training labels. Existing ranking filters unapproved labels.",
+      "field_validation": "No Panabo field validation established."
+    },
+    "evaluation": null
+  }
+}

@@ -426,7 +426,11 @@ def fetch_open_meteo_weather(lat: float, lon: float) -> Dict[str, Any]:
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "service": "GeoSustain API", "revision": os.getenv('RENDER_GIT_COMMIT')}
+    from rainfallDatasets import model_health
+    model = model_health()
+    return {"status": "ok" if model['status'] == 'loaded' else 'degraded',
+            "service": "GeoSustain API", "revision": os.getenv('RENDER_GIT_COMMIT'),
+            "model": model}
 
 @app.get('/api/mobile/crops')
 def mobile_crop_catalog():

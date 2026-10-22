@@ -1,14 +1,11 @@
 from copy import deepcopy
 import config  # noqa: F401 -- load local environment before reading settings
 import ee
-import joblib
 from nutrient_contract import legacy_inputs, model_values
 import requests
 import os
 import json
-import hashlib
 import math
-import io
 import pandas as pd
 import time
 import threading
@@ -17,6 +14,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from google.oauth2 import service_account
 from model_explainability import forest_snapshot, content_hash
+from model_artifacts import load_model_artifact
 
 GEE_PROJECT = os.getenv('GEE_PROJECT_ID') or os.getenv('GEE_PROJECT') or 'capstone-493314'
 GEE_SERVICE_ACCOUNT_JSON = os.getenv('GEE_SERVICE_ACCOUNT_JSON')
@@ -97,13 +95,24 @@ def ensure_earth_engine_initialized():
 
 
 try:
-    with open(_asset_path('crop_model.pkl'), 'rb') as model_file:
-        _model_bytes = model_file.read()
-    MODEL_VERSION = hashlib.sha256(_model_bytes).hexdigest()
-    MODEL = joblib.load(io.BytesIO(_model_bytes))
-    del _model_bytes
-except Exception:
+    LOADED_MODEL = load_model_artifact()
+    MODEL, MODEL_VERSION = LOADED_MODEL.model, LOADED_MODEL.version
+    MODEL_LOAD_ERROR = None
+    logging.getLogger('uvicorn.error').info('Crop model loaded version=%s metadata=%s',
+                                          MODEL_VERSION, LOADED_MODEL.metadata_status)
+except Exception as exc:
+    LOADED_MODEL = None
     MODEL, MODEL_VERSION = None, None
+    MODEL_LOAD_ERROR = type(exc).__name__
+    logging.getLogger('uvicorn.error').exception('Crop model artifact validation/loading failed')
+
+
+def model_health():
+    if LOADED_MODEL is None:
+        return {'status': 'unavailable', 'model_version': None, 'error': MODEL_LOAD_ERROR}
+    return LOADED_MODEL.health()
+
+
 ANALYSIS_CACHE     = {}
 CACHE_TTL_SECONDS  = 300
 CROP_COMPAT_MIN    = 70.0
