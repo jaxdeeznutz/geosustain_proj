@@ -226,8 +226,16 @@ void main() {
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await mount(FarmBoundaryPage(state: gpsState));
       await capture('gps-ready');
+      // A pointer drag over the map pans it. Scroll the surrounding list's
+      // position directly, then settle layout before hitting the control.
+      final gpsScroll = tester.state<ScrollableState>(
+        find.byType(Scrollable).first,
+      );
+      gpsScroll.position.jumpTo(gpsScroll.position.maxScrollExtent);
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Start'));
-      await tester.tap(find.text('Start'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Start').hitTestable());
       await tester.pumpAndSettle();
       final start = DateTime.now().subtract(const Duration(seconds: 12));
       for (var i = 0; i < 3; i++) {

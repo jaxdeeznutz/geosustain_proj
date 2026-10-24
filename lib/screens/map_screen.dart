@@ -138,7 +138,7 @@ class _LiveFieldMapState extends State<LiveFieldMap> {
         cameraConstraint: CameraConstraint.contain(
           bounds: LatLngBounds(
             const LatLng(7.20, 125.50),
-            const LatLng(7.41, 125.72),
+            const LatLng(7.46, 125.72),
           ),
         ),
         onTap: (tap, point) {

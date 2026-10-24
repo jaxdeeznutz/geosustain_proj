@@ -403,6 +403,55 @@ const environmentalFactorDefinitions = [
   ('slope', 'Slope', '%', ['slope_pct']),
 ];
 
+/// Only use an assessment saved with a matching measurement/period/quality.
+/// A model feature importance or a missing criterion is not a factor grade.
+CropFactorView? savedEnvironmentalReference(
+  String key,
+  Map<String, dynamic> crop,
+) {
+  final wanted = key == 'ph' ? 'soil_ph' : key;
+  for (final raw in analysisListValue(crop['factors'])) {
+    final factor = analysisMapValue(raw);
+    if (factor['factor'] != wanted) continue;
+    final observation = analysisMapValue(factor['measurement']);
+    final requirement = analysisMapValue(factor['requirement']);
+    final optimal = analysisListValue(requirement['optimal']);
+    final value = analysisNumber(factor['value']);
+    final score = analysisNumber(factor['score']);
+    if (value == null ||
+        score == null ||
+        optimal.length != 2 ||
+        !['measured', 'modelled'].contains(observation['quality']) ||
+        observation['period'] != factor['period'] ||
+        observation['unit'] != factor['unit'] ||
+        analysisNumber(observation['value']) != value) {
+      continue;
+    }
+    return CropFactorView(
+      key: key,
+      label: key == 'temperature'
+          ? 'Air temperature (climate mean)'
+          : '${factor['label'] ?? wanted}',
+      unit: _cropUnit(factor['unit']),
+      value: value,
+      min: analysisNumber(optimal[0]),
+      max: analysisNumber(optimal[1]),
+      state: score >= 100
+          ? CropFactorState.suitable
+          : score <= 0
+          ? CropFactorState.outside
+          : CropFactorState.near,
+      referenceBased: true,
+      interpretation: score >= 100
+          ? 'Within the documented preferred range for this factor.'
+          : score <= 0
+          ? 'Outside the documented range for this factor.'
+          : 'Within the documented accepted range, with limitations.',
+    );
+  }
+  return null;
+}
+
 List<CropFactorView> environmentalFactorViews(
   Map<String, dynamic> crop,
   Map<String, dynamic> record,
@@ -432,8 +481,11 @@ List<CropFactorView> environmentalFactorViews(
         multiple: soilRecords.length > 1,
       );
     }
-    if (key == 'annual_rainfall_mm')
+    if (key == 'annual_rainfall_mm') {
       return annualRainfallFactorView(crop, record);
+    }
+    final reference = savedEnvironmentalReference(key, crop);
+    if (reference != null) return reference;
     final modelValue = recordedModelInput(record, key);
     double? value = modelValue;
     // A model snapshot with missing inputs must not be silently filled with
@@ -464,8 +516,9 @@ List<CropFactorView> environmentalFactorViews(
               factor['period'] == 'annual_mean';
         });
         if (record['climate_contract_version'] != 'climate-periods-v1' ||
-            !hasClimatePeriod)
+            !hasClimatePeriod) {
           continue;
+        }
       }
       final matches =
           candidate.key == key || definition.$4.contains(candidate.key);
@@ -775,8 +828,8 @@ class MatchStatusBadge extends StatelessWidget {
     final color = colorFor(state);
     final (icon, label) = switch (state) {
       CropFactorState.suitable => (Icons.check_circle, 'Suitable'),
-      CropFactorState.near => (Icons.error_outline, 'Near range'),
-      CropFactorState.outside => (Icons.error, 'Outside range'),
+      CropFactorState.near => (Icons.error_outline, 'Limited'),
+      CropFactorState.outside => (Icons.error, 'Not suitable'),
       CropFactorState.unassessed => (Icons.help_outline, 'Not assessed'),
     };
     return Row(
@@ -1046,7 +1099,7 @@ class EnvironmentalFactorCard extends StatelessWidget {
                 ? 'Preferred range comparison'
                 : reference
                 ? 'Reference comparison'
-                : 'Model assessment',
+                : 'Assessment',
             style: TextStyle(fontSize: 10.5, color: CropSheetStyle.muted),
           ),
           const SizedBox(height: 2),
@@ -1055,9 +1108,9 @@ class EnvironmentalFactorCard extends StatelessWidget {
                 ? _rangeText(factor.min, factor.max, factor.unit)
                 : reference
                 ? 'No compatible documented range saved'
-                : factor.usedByModel
-                ? 'Used in crop prediction'
-                : 'Model input not recorded',
+                : factor.value == null
+                ? 'Value unavailable'
+                : 'No compatible crop criterion saved',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
@@ -1067,24 +1120,16 @@ class EnvironmentalFactorCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          if (reference)
-            Text(switch (factor.state) {
-              CropFactorState.suitable => 'Suitable',
-              CropFactorState.near => 'Limited',
-              CropFactorState.outside => 'Outside documented range',
-              CropFactorState.unassessed => 'Not assessed',
-            }, style: TextStyle(fontSize: 12, color: statusColor))
-          else if (hasRange)
-            MatchStatusBadge(state: factor.state)
-          else
+          MatchStatusBadge(state: factor.state),
+          if (factor.state == CropFactorState.unassessed) ...[
+            const SizedBox(height: 4),
             Text(
               factor.key == 'annual_rainfall_mm'
-                  ? 'Annual reference screening only; this card does not show the model rainfall input.'
-                  : factor.usedByModel
-                  ? 'The model evaluates factors together; it does not assign a separate suitability grade to each input.'
-                  : 'This saved result cannot confirm whether the model used this factor.',
+                  ? 'A compatible annual observation and crop range are needed.'
+                  : 'A matching observation and documented crop range are needed before grading this factor.',
               style: const TextStyle(fontSize: 12, color: CropSheetStyle.muted),
             ),
+          ],
         ],
       ),
     );
@@ -1252,6 +1297,7 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = '${crop['crop'] ?? crop['name'] ?? 'Unnamed crop'}';
+    final preliminary = record['analysis_mode'] == 'preliminary_environmental';
     final score = analysisNumber(crop['compatibility_pct'] ?? crop['score']);
     final factors = environmentalFactorViews(crop, record);
     final seasonNote = crop['season_note'];
@@ -1260,8 +1306,10 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
         cropName: name,
         title: name,
         caption: 'Details',
-        badge: const _CropPill(
-          label: 'Recommended',
+        badge: _CropPill(
+          label: record['analysis_mode'] == 'preliminary_environmental'
+              ? 'Preliminary comparison'
+              : 'Recommended',
           icon: Icons.eco,
           background: CropSheetStyle.greenSoft,
           foreground: Color(0xFF14833B),
@@ -1269,14 +1317,25 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
       ),
       children: [
         if (isModelRanked(record)) _SheetHeading('AI Crop Ranking'),
-        SuitabilityScoreCard(
-          score: score,
-          scoreLabel: isModelRanked(record) ? 'Model score' : 'Suitability',
-          title: '$name was selected as the best match.',
-          description: isModelRanked(record)
-              ? 'Highest mean Random Forest class probability across the farm samples. Environmental comparisons below do not change this ranking.'
-              : 'The explanation below shows the measured conditions that contributed most to that result.',
-        ),
+        if (preliminary)
+          const InfoExplanationCard(
+            icon: Icons.info_outline,
+            title: 'Preliminary environmental comparison',
+            children: [
+              Text(
+                'Compare the available conditions below. CAGRO NPK is unavailable; no complete soil suitability score or recommendation is assigned.',
+              ),
+            ],
+          )
+        else
+          SuitabilityScoreCard(
+            score: score,
+            scoreLabel: isModelRanked(record) ? 'Model score' : 'Suitability',
+            title: '$name was selected as the best match.',
+            description: isModelRanked(record)
+                ? 'Highest mean Random Forest class probability across the farm samples. Environmental comparisons below do not change this ranking.'
+                : 'The explanation below shows the measured conditions that contributed most to that result.',
+          ),
         _gap(CropSheetStyle.sectionGap),
         _SheetHeading(
           'Environmental & Soil Reference Assessment',
@@ -1309,7 +1368,9 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
           accent: CropSheetStyle.blue,
           children: [
             Text(
-              isModelRanked(record)
+              preliminary
+                  ? 'Factor colors describe individual documented criteria only. Missing observations or criteria remain not assessed.'
+                  : isModelRanked(record)
                   ? 'Model class scores are not harvest probabilities. Training includes synthetic GIS features, and nutrient inputs include estimated proxies.'
                   : 'These values are based on the environmental conditions retrieved for your selected area. The suitability score considers all factors together.',
             ),
@@ -1343,6 +1404,7 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final name = '${crop['crop'] ?? crop['name'] ?? 'Unnamed crop'}';
+    final preliminary = record['analysis_mode'] == 'preliminary_environmental';
     final score = analysisNumber(crop['compatibility_pct'] ?? crop['score']);
     final factors = environmentalFactorViews(crop, record);
     final modelRanked = isModelRanked(record);
@@ -1355,27 +1417,40 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
         cropName: name,
         title: '$name details',
         badge: RankingBadge(
-          label: rankValue == null
+          label: record['analysis_mode'] == 'preliminary_environmental'
+              ? 'Preliminary comparison'
+              : rankValue == null
               ? 'Not ranked'
               : ordinalRecommendation(rankValue),
         ),
       ),
       children: [
         if (modelRanked) _SheetHeading('AI Crop Ranking'),
-        SuitabilityScoreCard(
-          score: score,
-          scoreLabel: modelRanked ? 'Model score' : 'Suitability',
-          title: score == null
-              ? 'Suitability unavailable'
-              : modelRanked
-              ? 'Model-ranked recommendation'
-              : farmerSuitability(score),
-          description: score == null
-              ? 'There was not enough recorded data to calculate a suitability score for this crop.'
-              : modelRanked
-              ? 'Ranked by mean Random Forest class probability across farm samples. This is not a probability of a successful harvest.'
-              : cropMatchDescription(score),
-        ),
+        if (preliminary)
+          const InfoExplanationCard(
+            icon: Icons.info_outline,
+            title: 'Preliminary environmental comparison',
+            children: [
+              Text(
+                'Compare the available conditions below. CAGRO NPK is unavailable; no complete soil suitability score or recommendation is assigned.',
+              ),
+            ],
+          )
+        else
+          SuitabilityScoreCard(
+            score: score,
+            scoreLabel: modelRanked ? 'Model score' : 'Suitability',
+            title: score == null
+                ? 'Suitability unavailable'
+                : modelRanked
+                ? 'Model-ranked recommendation'
+                : farmerSuitability(score),
+            description: score == null
+                ? 'There was not enough recorded data to calculate a suitability score for this crop.'
+                : modelRanked
+                ? 'Ranked by mean Random Forest class probability across farm samples. This is not a probability of a successful harvest.'
+                : cropMatchDescription(score),
+          ),
         _gap(CropSheetStyle.cardGap),
         InfoExplanationCard(
           icon: Icons.spa,
@@ -1399,12 +1474,13 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
           CagroSoilObservationsCard(record: record, crop: crop),
         ],
         _gap(CropSheetStyle.cardGap),
-        _SheetHeading(
-          scored
-              ? 'How this score was calculated'
-              : 'Why the model recommended this crop',
-        ),
-        if (scored)
+        if (!preliminary)
+          _SheetHeading(
+            scored
+                ? 'How this score was calculated'
+                : 'Why the model recommended this crop',
+          ),
+        if (!preliminary && scored)
           InfoExplanationCard(
             icon: Icons.insights,
             title: 'Scoring method',
@@ -1423,7 +1499,7 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
               ],
             ],
           )
-        else ...[
+        else if (!preliminary) ...[
           const InfoExplanationCard(
             icon: Icons.bar_chart,
             title: 'Model explanation',
@@ -1457,7 +1533,7 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
             ],
           ),
         ],
-        if (!modelRanked)
+        if (!modelRanked && !preliminary)
           const InfoExplanationCard(
             icon: Icons.info,
             title: 'How to interpret the score',

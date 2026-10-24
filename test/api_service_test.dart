@@ -90,7 +90,13 @@ void main() {
       'geosustain_pending_analysis': 'payload',
       'unrelated_setting': true,
     });
-    final api = ApiService();
+    final api = ApiService(
+      client: MockClient((request) async {
+        expect(request.url.path, '/api/mobile/logout');
+        expect(request.headers['Authorization'], 'Bearer old');
+        return http.Response('{"signed_out":true}', 200);
+      }),
+    );
     addTearDown(api.close);
     await api.logout();
     final prefs = await SharedPreferences.getInstance();

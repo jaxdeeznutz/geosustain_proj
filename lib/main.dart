@@ -8,7 +8,7 @@ import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart'
-    show SystemUiOverlayStyle, FilteringTextInputFormatter;
+    show SystemUiOverlayStyle, FilteringTextInputFormatter, rootBundle;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:geolocator/geolocator.dart';
@@ -20,6 +20,10 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
 import 'farm_geometry.dart';
+import 'boundary_draft_store.dart';
+import 'offline_farm_store.dart';
+import 'push_notifications.dart';
+import 'federated_identity.dart';
 
 part 'screens/mobile_visuals.dart';
 part 'screens/reference_visuals.dart';
@@ -33,8 +37,12 @@ part 'screens/reference_analysis.dart';
 part 'screens/home_screen.dart';
 part 'screens/map_screen.dart';
 part 'screens/my_farms_screen.dart';
+part 'screens/local_farm_page.dart';
 part 'screens/land_mapping_screen.dart';
 part 'screens/session_gate.dart';
+part 'screens/password_recovery.dart';
+part 'screens/email_verification.dart';
+part 'screens/identity_settings.dart';
 part 'screens/analyze_screen.dart';
 part 'screens/mobile_results.dart';
 part 'screens/analysis_explanation.dart';
@@ -42,6 +50,8 @@ part 'screens/crop_details_sheets.dart';
 part 'screens/history_screen.dart';
 part 'screens/profile_screen.dart';
 part 'screens/insights_report_admin_screen.dart';
+part 'screens/review_notifications.dart';
+part 'screens/activity_inbox.dart';
 part 'screens/settings_screen.dart';
 part 'web/auth/web_auth_login.dart';
 part 'web/web_analyst_shell.dart';
@@ -57,11 +67,14 @@ part 'web/screens/web_planner_queue_screen.dart';
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
+  lowBandwidthMode.value = prefs.getBool('settings_low_bandwidth') ?? true;
   appThemeMode.value = (prefs.getBool('settings_dark_mode') ?? false)
       ? ThemeMode.dark
       : ThemeMode.light;
   runApp(const GeoSustainApp());
 }
+
+final lowBandwidthMode = ValueNotifier<bool>(true);
 
 final appThemeMode = ValueNotifier<ThemeMode>(ThemeMode.light);
 
@@ -156,6 +169,9 @@ class GeoSustainApp extends StatelessWidget {
       builder: (context, mode, _) => MaterialApp(
         themeMode: mode,
         darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
+          textTheme: ThemeData.dark(
+            useMaterial3: true,
+          ).textTheme.apply(fontFamily: 'Roboto'),
           colorScheme: ColorScheme.fromSeed(
             seedColor: green,
             brightness: Brightness.dark,
@@ -311,7 +327,7 @@ class FarmerAuthScaffold extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 14),
-                  const Text(
+                  Text(
                     'GeoSustain',
                     style: TextStyle(
                       color: Colors.white,
@@ -320,7 +336,7 @@ class FarmerAuthScaffold extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  const Text(
+                  Text(
                     'Sustainable Farming, Guided by AI',
                     style: TextStyle(color: Colors.white70, fontSize: 13),
                   ),
@@ -330,8 +346,8 @@ class FarmerAuthScaffold extends StatelessWidget {
             Expanded(
               child: Container(
                 width: double.infinity,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFFBF8F2),
+                decoration: BoxDecoration(
+                  color: geoPanelColor(context, const Color(0xFFFBF8F2)),
                   borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
                 ),
                 child: SingleChildScrollView(
@@ -359,6 +375,24 @@ bool validNewPassword(String value) =>
     !RegExp(r'\s', unicode: true).hasMatch(value) &&
     RegExp(r'[!-\/:-@\[-`{-~]').hasMatch(value);
 
+String profilePhotoDataUrl(Uint8List bytes) {
+  if (bytes.length > 2 * 1024 * 1024) {
+    throw const FormatException(
+      'Choose a JPEG or PNG photo no larger than 2 MB.',
+    );
+  }
+  final png =
+      bytes.length >= 8 &&
+      listEquals(bytes.sublist(0, 8), [137, 80, 78, 71, 13, 10, 26, 10]);
+  final jpeg =
+      bytes.length >= 3 &&
+      bytes[0] == 255 &&
+      bytes[1] == 216 &&
+      bytes[2] == 255;
+  if (!png && !jpeg) throw const FormatException('Choose a JPEG or PNG photo.');
+  return 'data:image/${png ? 'png' : 'jpeg'};base64,${base64Encode(bytes)}';
+}
+
 void showAuthFeedback(
   BuildContext context,
   String message, {
@@ -379,7 +413,7 @@ void showAuthFeedback(
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(message, style: const TextStyle(color: Colors.white)),
+            child: Text(message, style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -393,6 +427,8 @@ class _LoginPageState extends State<LoginPage> {
   final passwordController = TextEditingController();
   bool loading = false;
   bool obscurePassword = true;
+  String? emailError;
+  String? passwordError;
 
   @override
   void dispose() {
@@ -404,16 +440,18 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> login() async {
     if (loading) return;
-    setState(() => loading = true);
-
     final email = emailController.text.trim();
     final password = passwordController.text;
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email) ||
-        password.isEmpty) {
-      setState(() => loading = false);
-      showMessage('Enter your email address and password.');
-      return;
-    }
+    setState(() {
+      emailError = email.isEmpty
+          ? 'Enter your email address.'
+          : !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)
+          ? 'Enter a valid email address, such as you@example.com.'
+          : null;
+      passwordError = password.isEmpty ? 'Enter your password.' : null;
+    });
+    if (emailError != null || passwordError != null) return;
+    setState(() => loading = true);
 
     try {
       await api.login(email, password);
@@ -437,14 +475,42 @@ class _LoginPageState extends State<LoginPage> {
     showAuthFeedback(context, friendlyErrorMessage(e));
   }
 
+  Future<void> googleLogin() async {
+    if (loading) return;
+    setState(() => loading = true);
+    try {
+      await api.googleLogin(await FirebaseIdentity.googleProof());
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const ShellPage()),
+      );
+    } catch (error) {
+      if (mounted) {
+        showAuthFeedback(
+          context,
+          error is ApiException
+              ? error.message
+              : FirebaseIdentity.errorMessage(error),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    if (MediaQuery.of(context).size.width >= 900) {
+    if (MediaQuery.sizeOf(context).width >= 900 &&
+        MediaQuery.sizeOf(context).height >= 600) {
       return WebAuthLoginShell(
         emailController: emailController,
         passwordController: passwordController,
+        emailError: emailError,
+        passwordError: passwordError,
         loading: loading,
         onLogin: login,
+        onGoogle: FirebaseIdentity.googleConfigured ? googleLogin : null,
         onCreate: () => Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const RegisterPage()),
@@ -455,32 +521,36 @@ class _LoginPageState extends State<LoginPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Welcome, Farmer!',
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w900,
-              color: Color(0xFF1F2A22),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Sign in to access your farms',
-            style: TextStyle(color: Colors.black54),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 26),
-          const Text(
+          Text(
             'Email Address',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
           const SizedBox(height: 6),
           TextField(
             controller: emailController,
+            onChanged: (_) => setState(() => emailError = null),
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               hintText: 'you@example.com',
+              errorText: emailError,
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
@@ -488,7 +558,7 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Password',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
@@ -498,14 +568,16 @@ class _LoginPageState extends State<LoginPage> {
             obscureText: obscurePassword,
             onSubmitted: (_) => loading ? null : login(),
             decoration: InputDecoration(
+              errorText: passwordError,
               hintText: '••••••••',
               filled: true,
-              fillColor: Colors.white,
+              fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
               ),
               suffixIcon: IconButton(
+                tooltip: obscurePassword ? 'Show password' : 'Hide password',
                 icon: Icon(
                   obscurePassword
                       ? Icons.visibility_off_outlined
@@ -517,11 +589,23 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
+          TextButton(
+            onPressed: loading
+                ? null
+                : () => Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => const PasswordRecoveryPage(),
+                    ),
+                  ),
+            child: Text('Forgot password?'),
+          ),
           const SizedBox(height: 24),
           FilledButton(
             onPressed: loading ? null : login,
             style: FilledButton.styleFrom(
               backgroundColor: green,
+              foregroundColor: Colors.white,
               minimumSize: const Size(64, GeoDesign.buttonHeight),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -536,7 +620,7 @@ class _LoginPageState extends State<LoginPage> {
                       color: Colors.white,
                     ),
                   )
-                : const Row(
+                : Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
@@ -551,6 +635,14 @@ class _LoginPageState extends State<LoginPage> {
                     ],
                   ),
           ),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: loading || !FirebaseIdentity.googleConfigured
+                ? null
+                : googleLogin,
+            icon: const Icon(Icons.account_circle_outlined),
+            label: const Text('Continue with Google'),
+          ),
           const SizedBox(height: 18),
           Center(
             child: TextButton(
@@ -560,15 +652,18 @@ class _LoginPageState extends State<LoginPage> {
                       context,
                       MaterialPageRoute(builder: (_) => const RegisterPage()),
                     ),
-              child: RichText(
-                text: const TextSpan(
-                  style: TextStyle(color: Colors.black54, fontSize: 13.5),
+              child: Text.rich(
+                TextSpan(
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    fontSize: 13.5,
+                  ),
                   children: [
                     TextSpan(text: "First time? "),
                     TextSpan(
                       text: 'Register here',
                       style: TextStyle(
-                        color: green,
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -598,6 +693,7 @@ class _RegisterPageState extends State<RegisterPage> {
   bool loading = false;
   bool obscurePassword = true;
   bool obscureConfirm = true;
+  String? usernameError, emailError, passwordError, confirmError;
 
   Future<void> register() async {
     if (loading) return;
@@ -605,30 +701,51 @@ class _RegisterPageState extends State<RegisterPage> {
     final email = emailController.text.trim().toLowerCase();
     final password = passwordController.text;
 
-    if (username.length < 3) {
-      return showMessage('Username must be at least 3 characters.');
-    }
-    if (!RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)) {
-      return showMessage('Enter a valid email address.');
-    }
-    if (!validNewPassword(password)) {
-      return showMessage(
-        'Use at least 8 characters (maximum 72 UTF-8 bytes), no spaces, and at least one special character (such as !, @, #).',
-      );
-    }
-    if (password != confirmPasswordController.text) {
-      return showMessage('Passwords do not match.');
+    setState(() {
+      usernameError = username.length < 3
+          ? 'Username must be at least 3 characters.'
+          : null;
+      emailError = !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(email)
+          ? 'Enter a valid email address.'
+          : null;
+      passwordError = !validNewPassword(password)
+          ? 'Use 8 or more characters, a special character and no spaces (maximum 72 UTF-8 bytes).'
+          : null;
+      confirmError = password != confirmPasswordController.text
+          ? 'Passwords do not match.'
+          : null;
+    });
+    if ([
+      usernameError,
+      emailError,
+      passwordError,
+      confirmError,
+    ].any((value) => value != null)) {
+      return;
     }
     setState(() => loading = true);
     try {
       const assignedRole = 'farmer';
-      await api.register(
+      final registration = await api.register(
         username: username,
         email: email,
         password: password,
         role: assignedRole,
       );
       if (!mounted) return;
+      if (registration['requires_verification'] == true) {
+        final ticket = registration['verification_ticket'];
+        if (ticket is! String || ticket.length < 32) {
+          throw const FormatException('Missing email verification ticket.');
+        }
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => EmailVerificationPage(email: email, ticket: ticket),
+          ),
+        );
+        return;
+      }
       showMessage(
         'Account created. Sign in with your email and password.',
         success: true,
@@ -638,7 +755,14 @@ class _RegisterPageState extends State<RegisterPage> {
         MaterialPageRoute(builder: (_) => const LoginPage()),
       );
     } catch (e) {
-      showMessage(e.toString().replaceFirst('Exception: ', ''));
+      if (mounted && e is ApiException && e.statusCode == 409) {
+        setState(
+          () =>
+              emailError = 'Email already registered. Sign in with this email.',
+        );
+      } else {
+        showMessage(friendlyErrorMessage(e));
+      }
     } finally {
       if (mounted) setState(() => loading = false);
     }
@@ -666,80 +790,72 @@ class _RegisterPageState extends State<RegisterPage> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          Text(
             'Create Account',
             style: TextStyle(
               fontSize: 26,
               fontWeight: FontWeight.w900,
-              color: Color(0xFF1F2A22),
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
+          Text(
             'Join GeoSustain for field analysis, recommendations, and saved reports.',
-            style: TextStyle(color: Colors.black54, height: 1.35),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 22),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: softGreen,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: green.withValues(alpha: .14)),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.agriculture_rounded, color: green, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    'Create a Farmer account. Analyst access is assigned by your administrator.',
-                    style: const TextStyle(
-                      color: darkGreen,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12.5,
-                      height: 1.25,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 18),
-          const Text(
+          Text(
             'Username',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
           const SizedBox(height: 6),
           TextField(
             controller: usernameController,
-            decoration: _fieldDecoration(),
+            onChanged: (value) => setState(() {
+              if (value.trim().length >= 3) usernameError = null;
+            }),
+            decoration: _fieldDecoration(
+              context,
+            ).copyWith(errorText: usernameError),
           ),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'Email Address',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
           const SizedBox(height: 6),
           TextField(
             controller: emailController,
+            onChanged: (_) => setState(() => emailError = null),
             keyboardType: TextInputType.emailAddress,
-            decoration: _fieldDecoration(hint: 'you@example.com'),
+            decoration: _fieldDecoration(
+              context,
+              hint: 'you@example.com',
+            ).copyWith(errorText: emailError),
           ),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'Password',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
           const SizedBox(height: 6),
           TextField(
             controller: passwordController,
+            onChanged: (value) => setState(() {
+              if (validNewPassword(value)) passwordError = null;
+              if (value == confirmPasswordController.text) confirmError = null;
+            }),
             inputFormatters: [
               FilteringTextInputFormatter.deny(RegExp(r'\s', unicode: true)),
             ],
             obscureText: obscurePassword,
-            decoration: _fieldDecoration().copyWith(
+            decoration: _fieldDecoration(context).copyWith(
+              errorText: passwordError,
               suffixIcon: IconButton(
+                tooltip: obscurePassword ? 'Show password' : 'Hide password',
                 icon: Icon(
                   obscurePassword
                       ? Icons.visibility_off_outlined
@@ -751,19 +867,24 @@ class _RegisterPageState extends State<RegisterPage> {
               ),
             ),
           ),
+          PasswordStrengthIndicator(password: passwordController.text),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'Confirm Password',
             style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
           ),
           const SizedBox(height: 6),
           TextField(
             controller: confirmPasswordController,
+            onChanged: (value) => setState(() {
+              if (value == passwordController.text) confirmError = null;
+            }),
             inputFormatters: [
               FilteringTextInputFormatter.deny(RegExp(r'\s', unicode: true)),
             ],
             obscureText: obscureConfirm,
-            decoration: _fieldDecoration().copyWith(
+            decoration: _fieldDecoration(context).copyWith(
+              errorText: confirmError,
               suffixIcon: IconButton(
                 icon: Icon(
                   obscureConfirm
@@ -781,6 +902,7 @@ class _RegisterPageState extends State<RegisterPage> {
             onPressed: loading ? null : register,
             style: FilledButton.styleFrom(
               backgroundColor: green,
+              foregroundColor: Colors.white,
               minimumSize: const Size(64, GeoDesign.buttonHeight),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
@@ -795,7 +917,7 @@ class _RegisterPageState extends State<RegisterPage> {
                       color: Colors.white,
                     ),
                   )
-                : const Text(
+                : Text(
                     'Register',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                   ),
@@ -806,15 +928,66 @@ class _RegisterPageState extends State<RegisterPage> {
   }
 }
 
-InputDecoration _fieldDecoration({String? hint}) => InputDecoration(
-  hintText: hint,
-  filled: true,
-  fillColor: Colors.white,
-  border: OutlineInputBorder(
-    borderRadius: BorderRadius.circular(14),
-    borderSide: BorderSide.none,
-  ),
-);
+class PasswordStrengthIndicator extends StatelessWidget {
+  final String password;
+  const PasswordStrengthIndicator({super.key, required this.password});
+  @override
+  Widget build(BuildContext context) {
+    if (password.isEmpty) return const SizedBox.shrink();
+    final groups = [
+      RegExp('[a-z]'),
+      RegExp('[A-Z]'),
+      RegExp('[0-9]'),
+      RegExp(r'[^a-zA-Z0-9\s]'),
+    ].where((r) => r.hasMatch(password)).length;
+    final level = !validNewPassword(password)
+        ? 1
+        : password.length >= 12 && groups == 4
+        ? 3
+        : 2;
+    final label = ['Weak', 'Medium', 'Strong'][level - 1];
+    final color = [
+      Theme.of(context).colorScheme.error,
+      const Color(0xFFAD7800),
+      Theme.of(context).colorScheme.primary,
+    ][level - 1];
+    return Padding(
+      padding: const EdgeInsets.only(top: 10),
+      child: Semantics(
+        liveRegion: true,
+        label: 'Password strength: $label',
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            LinearProgressIndicator(
+              value: level / 3,
+              color: color,
+              semanticsLabel: 'Password strength',
+            ),
+            const SizedBox(height: 5),
+            Text('Password strength: $label'),
+            const Text(
+              'Use a longer password with upper/lowercase letters, numbers and a special character.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+InputDecoration _fieldDecoration(BuildContext context, {String? hint}) =>
+    InputDecoration(
+      errorMaxLines: 3,
+      hintText: hint,
+      filled: true,
+      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide.none,
+      ),
+    );
 
 /// Converts a raw exception (network failure, timeout, or a server error
 /// message already wrapped in an Exception) into a short, non-technical
@@ -826,6 +999,9 @@ String friendlyErrorMessage(Object error) {
   // HTTP status is authoritative; transport text cannot establish offline state.
   if (error is ApiException) {
     if (error.statusCode == 401) {
+      if (error.message.toLowerCase().contains('invalid email or password')) {
+        return 'Incorrect email or password. Please try again.';
+      }
       return 'Your session has expired. Please log in again.';
     }
     if (error.statusCode == 500) {
@@ -864,6 +1040,101 @@ String friendlyErrorMessage(Object error) {
 }
 
 class AnalysisState extends ChangeNotifier {
+  bool offlineWorkspace = false, syncingFarms = false;
+  final Map<String, Map<String, dynamic>> _syncedFarms = {};
+  int get pendingFarmCount =>
+      farms.where((f) => f['_local_only'] == true).length;
+
+  Future<Map<String, dynamic>> saveFarm({
+    required String farmName,
+    required String locationName,
+    required List<Map<String, double>> polygon,
+    required String mappingMethod,
+    required String requestId,
+    double? gpsAccuracyM,
+    List<Map<String, dynamic>>? capture,
+  }) async {
+    final epoch = _sessionEpoch, owner = currentUser?['id'];
+    final local = await OfflineFarmStore.save(
+      requestId: requestId,
+      name: farmName,
+      location: locationName,
+      polygon: polygon,
+      method: mappingMethod,
+      gpsAccuracyM: gpsAccuracyM,
+      capture: capture,
+    );
+    if (!offlineWorkspace) {
+      try {
+        await syncPendingFarms();
+      } catch (_) {
+        /* Pending farm remains durable. */
+      }
+    }
+    final stored = await OfflineFarmStore.read();
+    if (!_active(epoch, owner)) {
+      throw StateError('The signed-in account changed.');
+    }
+    farms
+      ..clear()
+      ..addAll([
+        ...OfflineFarmStore.rows(stored['pending']),
+        ...OfflineFarmStore.rows(stored['farms']),
+      ]);
+    notifyListeners();
+    return _syncedFarms[requestId] ??
+        OfflineFarmStore.rows(
+          stored['pending'],
+        ).where((f) => f['request_id'] == requestId).firstOrNull ??
+        local;
+  }
+
+  Future<void> syncPendingFarms() async {
+    if (syncingFarms) return;
+    final epoch = _sessionEpoch, owner = currentUser?['id'];
+    syncingFarms = true;
+    notifyListeners();
+    try {
+      final stored = await OfflineFarmStore.read();
+      if (OfflineFarmStore.rows(stored['pending']).isNotEmpty) {
+        final user = await api.getMe();
+        if ('${user['id']}' != '${currentUser?['id']}') {
+          throw StateError('Sign in as the account that saved these farms.');
+        }
+        await OfflineFarmStore.sync((farm) async {
+          final saved = await api.createFarm(
+            farmName: '${farm['farm_name']}',
+            locationName: '${farm['location_name'] ?? ''}',
+            polygon: FarmGeometry.payload(
+              FarmGeometry.fromPayload(farm['selected_polygon']),
+            ),
+            mappingMethod: '${farm['mapping_method']}',
+            requestId: '${farm['request_id']}',
+            gpsAccuracyM: analysisNumber(farm['gps_accuracy_m']),
+          );
+          if (!_active(epoch, owner)) {
+            throw StateError('The signed-in account changed.');
+          }
+          _syncedFarms['${farm['request_id']}'] = saved;
+          return saved;
+        }, friendlyErrorMessage);
+      }
+      offlineWorkspace = false;
+    } finally {
+      final stored = await OfflineFarmStore.read();
+      if (_active(epoch, owner)) {
+        syncingFarms = false;
+        farms
+          ..clear()
+          ..addAll([
+            ...OfflineFarmStore.rows(stored['pending']),
+            ...OfflineFarmStore.rows(stored['farms']),
+          ]);
+        notifyListeners();
+      }
+    }
+  }
+
   bool _disposed = false;
   int _sessionEpoch = 0, _selectionEpoch = 0;
   bool historyLoading = false, historyLoaded = false;
@@ -936,6 +1207,9 @@ class AnalysisState extends ChangeNotifier {
   }
 
   void clearUserData() {
+    _syncedFarms.clear();
+    offlineWorkspace = false;
+    syncingFarms = false;
     _sessionEpoch++;
     _selectionEpoch++;
     _historyRefresh = null;
@@ -1247,6 +1521,7 @@ class AnalysisState extends ChangeNotifier {
     notifyListeners();
     try {
       final user = await api.getMe();
+      unawaited(PushNotifications.restore(api));
       if (_disposed || epoch != _sessionEpoch) return;
       if (currentUser?['id'] != null && currentUser?['id'] != user['id']) {
         clearUserData();
@@ -1255,7 +1530,7 @@ class AnalysisState extends ChangeNotifier {
       final photo = user['profile_photo'];
       if (photo != null && '$photo'.isNotEmpty) {
         try {
-          profilePhotoBytes = base64Decode('$photo');
+          profilePhotoBytes = base64Decode('$photo'.split(',').last);
         } catch (_) {}
       }
     } catch (error) {
@@ -1394,8 +1669,40 @@ class AnalysisState extends ChangeNotifier {
             (r) => r['farmer_id'] == null || '${r['farmer_id']}' == '$owner',
           ),
         );
+      offlineWorkspace = false;
+      await OfflineFarmStore.cacheFarms(List<Map<String, dynamic>>.from(farms));
+      var stored = await OfflineFarmStore.read();
+      if (OfflineFarmStore.rows(stored['pending']).isNotEmpty) {
+        await syncPendingFarms();
+        stored = await OfflineFarmStore.read();
+        if (_active(epoch, owner)) {
+          farms
+            ..clear()
+            ..addAll(OfflineFarmStore.rows(stored['farms']));
+        }
+      }
+      if (_active(epoch, owner)) {
+        farms.insertAll(0, OfflineFarmStore.rows(stored['pending']));
+      }
     } catch (error) {
-      if (_active(epoch, owner)) farmsError = friendlyErrorMessage(error);
+      if (_active(epoch, owner)) {
+        farmsError = friendlyErrorMessage(error);
+        if (error is! ApiException) offlineWorkspace = true;
+        try {
+          final stored = await OfflineFarmStore.read();
+          if (_active(epoch, owner)) {
+            farms
+              ..clear()
+              ..addAll([
+                ...OfflineFarmStore.rows(stored['pending']),
+                ...OfflineFarmStore.rows(stored['farms']),
+              ]);
+          }
+        } catch (_) {
+          farmsError =
+              'Saved farm storage is unavailable. Reconnect before creating another farm.';
+        }
+      }
     } finally {
       if (_active(epoch, owner)) {
         farmsLoading = false;
@@ -1541,26 +1848,36 @@ class AnalysisState extends ChangeNotifier {
   }
 
   Future<bool> submitAnalysisRecord(Map<String, dynamic> record) async {
-    final item = normalizeRecord(record);
-    final sessionRaw = item['session_id'];
-    final sessionId = sessionRaw is int
-        ? sessionRaw
-        : int.tryParse('$sessionRaw');
-    if (sessionId == null) return false;
-    try {
-      await api.submitAnalysisToPlanner(sessionId);
-    } catch (e) {
-      // A duplicate/rapid resubmit (or a resubmit that lands after the
-      // Analyst already acted) surfaces as "already pending/verified" —
-      // the Farmer's desired end state (submitted) is already true, so
-      // this isn't a real failure worth alarming them with.
-      if ('$e'.toLowerCase().contains('already pending') ||
-          '$e'.toLowerCase().contains('already verified')) {
-        await refreshHistoryData();
-        return true;
-      }
-      rethrow;
+    final id = int.tryParse('${normalizeRecord(record)['session_id']}');
+    if (id == null) return false;
+    final epoch = _sessionEpoch, owner = currentUser?['id'];
+    final response = await api.submitAnalysisToPlanner(id);
+    final submitted = analysisMapValue(response['submission']);
+    if (!_active(epoch, owner)) {
+      throw StateError('The signed-in account changed.');
     }
+    if ('${submitted['id']}' != '$id' ||
+        ![
+          'pending',
+          'verified',
+          'rejected',
+        ].contains(submitted['verification_status'])) {
+      throw const FormatException(
+        'The review response did not match this assessment.',
+      );
+    }
+    final update = {
+      for (final key in [
+        'verification_status',
+        'submitted_at',
+        'planner_notes',
+        'verified_at',
+      ])
+        if (submitted.containsKey(key)) key: submitted[key],
+    };
+    record.addAll(update);
+    if ('${result?['session_id']}' == '$id') result!.addAll(update);
+    notifyListeners();
     await refreshHistoryData();
     return true;
   }
@@ -1614,10 +1931,7 @@ class AnalysisState extends ChangeNotifier {
   }
 
   bool _insidePanabo(LatLng point) {
-    return point.latitude >= 7.20 &&
-        point.latitude <= 7.41 &&
-        point.longitude >= 125.50 &&
-        point.longitude <= 125.72;
+    return FarmGeometry.insideCoverage(point);
   }
 
   String _prettyAddress(Map<String, dynamic> address) {
@@ -1714,6 +2028,7 @@ class AnalysisState extends ChangeNotifier {
   void startWeatherAutoRefresh() {
     _weatherRefreshTimer?.cancel();
     _weatherRefreshTimer = Timer.periodic(const Duration(minutes: 2), (_) {
+      if (lowBandwidthMode.value) return;
       refreshLiveWeather();
     });
   }
@@ -1855,6 +2170,12 @@ class AnalysisState extends ChangeNotifier {
   }
 
   Future<String?> analyzeSavedFarm(Map<String, dynamic> farm) async {
+    if (farm['_local_only'] == true) {
+      return 'This farm is saved on your device. Sync it from My Farms before analyzing online.';
+    }
+    if (offlineWorkspace) {
+      return 'Analysis requires an internet connection. Reconnect and sync your farms first.';
+    }
     if (loading) return 'Analysis is already running. Please wait.';
     focusFarm(farm);
     final farmId = int.tryParse('${farm['id']}');
@@ -2049,11 +2370,22 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
   late final AnalysisState state;
   int index = 0;
   DialogRoute<void>? _analysisDialog;
+  bool _analysisDialogHidden = false;
+
+  void _openReview(int id) {
+    if (!mounted) return;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => NotificationsPage(state: state, initialSessionId: id),
+      ),
+    );
+  }
 
   void _syncAnalysisDialog() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (state.loading && _analysisDialog == null) {
+      if (!state.loading) _analysisDialogHidden = false;
+      if (state.loading && _analysisDialog == null && !_analysisDialogHidden) {
         final route = DialogRoute<void>(
           context: context,
           barrierDismissible: false,
@@ -2065,6 +2397,25 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
               builder: (_, _) => Stack(
                 children: [
                   FullscreenAnalysisOverlay(message: state.loadingMessage),
+                  Positioned(
+                    bottom: 32,
+                    left: 24,
+                    right: 24,
+                    child: SafeArea(
+                      child: FilledButton(
+                        onPressed: () {
+                          _analysisDialogHidden = true;
+                          final active = _analysisDialog;
+                          _analysisDialog = null;
+                          active?.navigator?.removeRoute(active);
+                          message(
+                            'Analysis continues. Its saved result will be available in History.',
+                          );
+                        },
+                        child: const Text('Continue in background'),
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -2085,10 +2436,27 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     state = widget.analysisState ?? AnalysisState();
+    PushNotifications.onReviewOpened = _openReview;
+    PushNotifications.onReviewReceived = (id) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('Your land analysis has been reviewed.'),
+          action: SnackBarAction(
+            label: 'View review',
+            onPressed: () => _openReview(id),
+          ),
+        ),
+      );
+    };
     state.addListener(_syncAnalysisDialog);
     _syncAnalysisDialog();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final linkedReview = kIsWeb
+          ? int.tryParse(Uri.base.queryParameters['review'] ?? '')
+          : null;
+      if (linkedReview != null && linkedReview > 0) _openReview(linkedReview);
       if (!state.userLoaded) {
         state.loadUserData().then((_) {
           if (mounted) state.refreshFarms();
@@ -2101,7 +2469,18 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
   }
 
   Future<void> logout() async {
-    await state.api.logout();
+    if (state.pendingFarmCount > 0) {
+      message(
+        'Pending farms stay on this device for this account. Sign in to the same account to sync them later.',
+      );
+    }
+    try {
+      await state.api.logout();
+    } catch (error) {
+      message(friendlyErrorMessage(error));
+      return;
+    }
+    await PushNotifications.stop();
     state.clearUserData();
     if (!mounted) return;
     Navigator.pushAndRemoveUntil(
@@ -2143,6 +2522,8 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    PushNotifications.onReviewOpened = null;
+    PushNotifications.onReviewReceived = null;
     state.removeListener(_syncAnalysisDialog);
     final dialog = _analysisDialog;
     _analysisDialog = null;
@@ -2167,7 +2548,9 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
     Widget tab(Widget Function() builder) =>
         ListenableBuilder(listenable: state, builder: (_, _) => builder());
 
-    final isDesktopWeb = MediaQuery.of(context).size.width >= 900;
+    final isDesktopWeb =
+        MediaQuery.sizeOf(context).width >= 900 &&
+        MediaQuery.sizeOf(context).height >= 600;
 
     if (!state.userLoaded) {
       return const Scaffold(
@@ -2375,24 +2758,24 @@ class FullscreenAnalysisOverlay extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 360),
               padding: const EdgeInsets.all(28),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: geoPanelColor(context, Colors.white),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const CircularProgressIndicator(
-                    color: green,
+                  CircularProgressIndicator(
+                    color: Theme.of(context).colorScheme.primary,
                     semanticsLabel: 'Farm analysis in progress',
                   ),
                   const SizedBox(height: 24),
-                  const Text(
+                  Text(
                     'Analyzing your farm',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 23,
                       fontWeight: FontWeight.bold,
-                      color: green,
+                      color: Theme.of(context).colorScheme.primary,
                     ),
                   ),
                   const SizedBox(height: 14),

@@ -67,7 +67,7 @@ def test_non_email_database_conflict_is_not_reported_as_duplicate_email(client, 
 
 @pytest.mark.parametrize('route',['verify-email','verify-code','send-verification','resend-verification'])
 def test_retired_routes_never_return_tokens(client,route):
-    result=client.post('/api/mobile/'+route,json={'email':'farmer@example.com','code':'000000'})
+    result=client.post('/api/mobile/'+route,json={'ticket':'x'*43,'code':'000000'})
     assert result.status_code == 410
     assert 'token' not in result.json()
 

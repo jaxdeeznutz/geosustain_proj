@@ -49,9 +49,9 @@ class GeoResultCard extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 14),
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: color,
+      color: geoPanelColor(context, color),
       borderRadius: BorderRadius.circular(24),
-      border: Border.all(color: GeoDesign.border),
+      border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
     ),
     child: child,
   );
@@ -135,12 +135,19 @@ class GeoInfoLine extends StatelessWidget {
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 15, color: GeoDesign.muted),
+        Icon(
+          icon,
+          size: 15,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
         const SizedBox(width: 5),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(fontSize: 13, color: GeoDesign.muted),
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
       ],
@@ -159,28 +166,34 @@ class GeoStatusPill extends StatelessWidget {
     this.foreground = GeoDesign.green800,
   });
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
-    decoration: BoxDecoration(
-      color: foreground.withValues(alpha: .1),
-      borderRadius: BorderRadius.circular(18),
-    ),
-    child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: foreground),
-        const SizedBox(width: 5),
-        Flexible(
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w700,
-              color: foreground,
+  Widget build(BuildContext context) {
+    final palette = ColorScheme.fromSeed(
+      seedColor: foreground,
+      brightness: Theme.of(context).brightness,
+    );
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: palette.primaryContainer,
+        borderRadius: BorderRadius.circular(18),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: palette.onPrimaryContainer),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w700,
+                color: palette.onPrimaryContainer,
+              ),
             ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }

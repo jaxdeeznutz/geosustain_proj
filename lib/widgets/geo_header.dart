@@ -170,8 +170,11 @@ class GeoHistoryBanner extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(20, 18, 14, 18),
     decoration: BoxDecoration(
-      gradient: const LinearGradient(
-        colors: [Color(0xFFEAF6EE), Color(0xFFDDF0E3)],
+      gradient: LinearGradient(
+        colors: [
+          geoPanelColor(context, const Color(0xFFEAF6EE)),
+          geoPanelColor(context, const Color(0xFFDDF0E3)),
+        ],
       ),
       borderRadius: BorderRadius.circular(26),
       border: Border.all(color: GeoDesign.mintBorder),
@@ -181,13 +184,13 @@ class GeoHistoryBanner extends StatelessWidget {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
+            children: [
               Text(
                 'Analysis History',
                 style: TextStyle(
                   fontSize: 26,
                   fontWeight: FontWeight.w800,
-                  color: GeoDesign.green900,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 1.1,
                 ),
               ),
@@ -196,7 +199,7 @@ class GeoHistoryBanner extends StatelessWidget {
                 'View your past land analyses, check statuses, and revisit your results.',
                 style: TextStyle(
                   fontSize: 15,
-                  color: GeoDesign.muted,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                   height: 1.4,
                 ),
               ),
@@ -251,10 +254,14 @@ class GeoHistoryBanner extends StatelessWidget {
                 bottom: 2,
                 child: Icon(Icons.eco, color: GeoDesign.green700, size: 34),
               ),
-              const Positioned(
+              Positioned(
                 right: 0,
                 bottom: 0,
-                child: Icon(Icons.history, color: GeoDesign.green900, size: 44),
+                child: Icon(
+                  Icons.history,
+                  color: Theme.of(context).colorScheme.onSurface,
+                  size: 44,
+                ),
               ),
             ],
           ),

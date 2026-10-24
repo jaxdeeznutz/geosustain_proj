@@ -8,7 +8,7 @@ import rainfallDatasets as engine
 import fastapi_app as api
 import database as db
 from model_explainability import finalize_explanation, content_hash
-from test_mobile_workflow import client, connection  # noqa: F401
+from test_mobile_workflow import connection
 
 
 def prediction(rain=105, temp=27.5):

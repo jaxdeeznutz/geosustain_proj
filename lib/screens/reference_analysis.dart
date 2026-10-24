@@ -32,8 +32,22 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
   int tab = 0;
   @override
   Widget build(BuildContext context) {
-    final r = widget.record, crops = rankedCropRecommendations(widget.record);
-    if (r['is_crop_recommended'] == false && r['land_cover'] is Map) {
+    final r = widget.record;
+    final preliminary = r['analysis_mode'] == 'preliminary_environmental';
+    final crops =
+        preliminary && analysisListValue(r['crop_assessments']).isNotEmpty
+        ? analysisListValue(r['crop_assessments'])
+              .whereType<Map>()
+              .map((entry) => Map<String, dynamic>.from(entry))
+              .where(
+                (entry) =>
+                    entry['classification'] != 'Disabled in crop settings',
+              )
+              .toList()
+        : rankedCropRecommendations(r);
+    if (r['is_crop_recommended'] == false &&
+        r['land_cover'] is Map &&
+        !(preliminary && crops.isNotEmpty)) {
       final cover = Map<String, dynamic>.from(r['land_cover']);
       final unverified =
           cover['status'] == 'unknown' ||
@@ -43,6 +57,11 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           GeoResultCard(child: GeoRecordSummary(r)),
+          if (r['preliminary_notice'] != null)
+            GeoResultCard(
+              color: const Color(0xFFFFF4D6),
+              child: Text('${r['preliminary_notice']}'),
+            ),
           GeoResultCard(
             color: const Color(0xFFFFF6E5),
             child: Column(
@@ -67,10 +86,10 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                         unverified
                             ? 'Land cover not verified'
                             : '${r['land_status'] ?? 'Land use advisory'}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 26,
                           fontWeight: FontWeight.w900,
-                          color: GeoDesign.ink,
+                          color: Theme.of(context).colorScheme.onSurface,
                         ),
                       ),
                     ),
@@ -79,10 +98,10 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                 const SizedBox(height: 12),
                 Text(
                   '${cover['message'] ?? r['analysis_summary'] ?? ''}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     height: 1.4,
-                    color: GeoDesign.ink,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -92,17 +111,17 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Land cover composition',
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.w800,
-                    color: GeoDesign.green900,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 if (unverified) ...[
                   const SizedBox(height: 12),
-                  const Text(
+                  Text(
                     'Incomplete satellite coverage. Mapped percentages do not establish that the remaining area is free of buildings or water.',
                   ),
                   GeoCoverBar(
@@ -132,20 +151,26 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             ),
           ),
           CagroSoilObservationsCard(record: r),
+          const GeoResultCard(
+            child: Text(
+              'This is a partial assessment, not a crop recommendation. You can ask an analyst to review the available evidence or retry online when coverage is available.',
+            ),
+          ),
+          AnalysisReviewCard(state: widget.state, record: r),
           if ('${cover['limitation'] ?? ''}'.isNotEmpty)
             GeoResultCard(
               color: const Color(0xFFE9F3FD),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Notes',
                     style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
                   ),
                   const SizedBox(height: 8),
                   Text(
                     '${cover['limitation']}',
-                    style: const TextStyle(height: 1.4, color: GeoDesign.muted),
+                    style: TextStyle(height: 1.4, color: GeoDesign.muted),
                   ),
                 ],
               ),
@@ -157,7 +182,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Data source',
                     style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
                   ),
@@ -167,10 +192,10 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                     const Divider(height: 24),
                     Text(
                       '${cover['attribution']}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
                         height: 1.4,
-                        color: GeoDesign.muted,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -188,6 +213,11 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (r['preliminary_notice'] != null)
+          GeoResultCard(
+            color: const Color(0xFFFFF4D6),
+            child: Text('${r['preliminary_notice']}'),
+          ),
         Card(
           child: Padding(
             padding: const EdgeInsets.all(13),
@@ -215,7 +245,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
-            color: softGreen,
+            color: geoPanelColor(context),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: const Color(0xFFD7EBDF)),
           ),
@@ -223,7 +253,10 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             children: [
               for (final item in [
                 (Icons.bar_chart, 'Overview'),
-                (Icons.eco_outlined, 'Recommended'),
+                (
+                  Icons.eco_outlined,
+                  preliminary ? 'Comparisons' : 'Recommended',
+                ),
                 (Icons.list, 'Key Factors'),
                 (Icons.map_outlined, 'Map'),
               ].indexed)
@@ -266,6 +299,8 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
           _AnalysisSection(
             title: modelRanked
                 ? 'Top model recommendation'
+                : preliminary
+                ? 'Preliminary environmental screening'
                 : 'Land suitability',
             icon: Icons.spa_outlined,
             children: [
@@ -275,10 +310,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                     : modern
                     ? 'REFERENCE-BASED SCREENING'
                     : farmerLandType(r).toUpperCase(),
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                ),
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700),
               ),
               const SizedBox(height: 7),
               Wrap(
@@ -286,10 +318,12 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Text(
-                    score == null
+                    preliminary
+                        ? 'Preliminary only'
+                        : score == null
                         ? 'Insufficient data'
                         : '${score.toStringAsFixed(1)}${modern && !modelRanked ? '/100' : '%'}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 29,
                       fontWeight: FontWeight.w800,
                       color: green,
@@ -301,7 +335,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                         : modern
                         ? 'Assessed-condition index'
                         : (score == null ? '' : farmerSuitability(score)),
-                    style: const TextStyle(fontSize: 12, color: green),
+                    style: TextStyle(fontSize: 12, color: green),
                   ),
                 ],
               ),
@@ -321,12 +355,17 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                 '${best['explanation'] ?? r['analysis_summary'] ?? analysisMapValue(r['xai_explanation'])['summary'] ?? 'No summary was recorded.'}',
               ),
               if (modelRanked)
-                const Text(
+                Text(
                   'Model class score, not a harvest probability. Nutrient inputs include estimates.',
                   style: TextStyle(fontSize: 12),
                 )
-              else if (modern)
+              else if (preliminary)
                 const Text(
+                  'Compare individual conditions below. Missing CAGRO NPK prevents a complete soil suitability assessment.',
+                  style: TextStyle(fontSize: 12),
+                )
+              else if (modern)
+                Text(
                   'Saved reference-based analysis. Run a new analysis to get model-ranked recommendations.',
                   style: TextStyle(fontSize: 12),
                 ),
@@ -334,15 +373,19 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
           ),
         if (tab == 0 || tab == 1)
           _AnalysisSection(
-            title: 'Recommended crops',
+            title: preliminary
+                ? 'Crop condition comparisons'
+                : 'Recommended crops',
             icon: Icons.spa_outlined,
             children: [
-              if (crops.isEmpty) const Text('No crop assessment was saved.'),
+              if (crops.isEmpty) Text('No crop assessment was saved.'),
               for (final entry in crops.indexed)
                 _cropRow(entry.$2, entry.$1 + 1, r),
               if (crops.isNotEmpty)
                 Text(
-                  modelRanked
+                  preliminary
+                      ? 'Available crop comparisons; this is not a complete suitability ranking.'
+                      : modelRanked
                       ? 'Top ${crops.length}, highest model score first.'
                       : 'Top ${crops.length}, highest recorded score first.',
                   style: TextStyle(fontSize: 12, color: Color(0xFF5D6A61)),
@@ -377,10 +420,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                             size: 21,
                           ),
                           const SizedBox(height: 5),
-                          Text(
-                            factor.label,
-                            style: const TextStyle(fontSize: 12),
-                          ),
+                          Text(factor.label, style: TextStyle(fontSize: 12)),
                           Text(
                             factor.value == null
                                 ? 'Unavailable'
@@ -388,24 +428,24 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                                     _cropNum(factor.value),
                                     factor.unit,
                                   ),
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
                               color: green,
                             ),
                           ),
                           if (['N', 'P', 'K'].contains(factor.key))
-                            const Text(
+                            Text(
                               'Existing model estimate; not a soil test',
                               style: TextStyle(fontSize: 10),
                             ),
                           if (factor.key == 'ndvi')
-                            const Text(
+                            Text(
                               'Vegetation only; not crop suitability',
                               style: TextStyle(fontSize: 10),
                             ),
                           if (factor.key == 'humidity')
-                            const Text(
+                            Text(
                               'Not a climate average',
                               style: TextStyle(fontSize: 10),
                             ),
@@ -421,7 +461,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                       if (modern)
                         SelectableText('${r['recommendation_scoring']}'),
                     ]),
-                child: const Text('See all details'),
+                child: Text('See all details'),
               ),
             ],
           ),
@@ -446,7 +486,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
               }
             },
             icon: const Icon(Icons.download_outlined),
-            label: const Text('Export analysis report'),
+            label: Text('Export analysis report'),
           ),
         ],
       ],
@@ -473,21 +513,20 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                 children: [
                   Text(
                     '$order. ${crop['crop']}',
-                    style: const TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
                   ),
                   const SizedBox(height: 5),
                   Text(
-                    score == null
+                    r['analysis_mode'] == 'preliminary_environmental'
+                        ? '${crop['assessed_count'] ?? 0} documented factors assessed'
+                        : score == null
                         ? 'Insufficient data'
                         : isModelRanked(r)
                         ? '${score.toStringAsFixed(1)}% · Model score'
                         : r['scoring_version'] != null
                         ? '${score.toStringAsFixed(1)}/100 · Assessed-condition index'
                         : '${score.toStringAsFixed(1)}% · ${crop['classification'] ?? farmerSuitability(score)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       color: green,
                       fontWeight: FontWeight.w700,
@@ -505,10 +544,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                   if (!isModelRanked(r) && crop['assessed_count'] != null)
                     Text(
                       '${crop['assessed_count']}/${crop['total_factors'] ?? 6} reference conditions assessed',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF64756C),
-                      ),
+                      style: TextStyle(fontSize: 11, color: Color(0xFF64756C)),
                     ),
                 ],
               ),
@@ -549,7 +585,7 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                   Expanded(
                     child: Text(
                       '${crop['crop']} details',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
                       ),
@@ -584,7 +620,7 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                         child: Text(
                           label.$2,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(fontSize: 10),
+                          style: TextStyle(fontSize: 10),
                         ),
                       ),
                     ),
@@ -609,7 +645,7 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                                 : isModelRanked(widget.record)
                                 ? 'Model score: ${score.toStringAsFixed(1)}%'
                                 : 'Screening index: ${score.toStringAsFixed(1)}/100',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
+                            style: TextStyle(fontWeight: FontWeight.w700),
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -639,17 +675,14 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                               Text('Period: ${factor['period']}'),
                               SelectableText(
                                 '${factor['requirement']['source']['title']}\n${factor['requirement']['source']['section']}\n${factor['requirement']['source']['url']}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: green,
-                                ),
+                                style: TextStyle(fontSize: 12, color: green),
                               ),
                               Text(
                                 '${factor['requirement']['limitations']}',
-                                style: const TextStyle(fontSize: 12),
+                                style: TextStyle(fontSize: 12),
                               ),
                             ] else
-                              const Text(
+                              Text(
                                 'No verified numerical criterion configured. This factor is unassessed.',
                               ),
                           ],
@@ -665,7 +698,7 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                           Text('${crop['method']}'),
                           Text(
                             'Configuration: ${crop['scoring_version']}',
-                            style: const TextStyle(fontSize: 12),
+                            style: TextStyle(fontSize: 12),
                           ),
                         ],
                       ),
@@ -678,7 +711,7 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                             ),
                             Text(
                               '${analysisMapValue(factor['measurement'])['source'] ?? 'Source unavailable'}',
-                              style: const TextStyle(fontSize: 12),
+                              style: TextStyle(fontSize: 12),
                             ),
                             if (analysisMapValue(
                                   factor['measurement'],
@@ -686,7 +719,7 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                                 null)
                               Text(
                                 '${factor['measurement']['start']} to ${factor['measurement']['end_exclusive']} (end excluded)',
-                                style: const TextStyle(fontSize: 12),
+                                style: TextStyle(fontSize: 12),
                               ),
                           ],
                         ),
@@ -724,7 +757,7 @@ class _LegacyModelSummary extends StatelessWidget {
               ? 'The legacy model could not run with the available inputs. It does not determine these crop scores.'
               : 'The retained forest ran on ${snapshots.length} sampled location(s). Its outputs are separate from these suitability calculations.',
         ),
-        const Text(
+        Text(
           'Training includes synthetic local rows and GIS features. Panabo field validation has not been established.',
           style: TextStyle(fontSize: 12),
         ),
@@ -736,7 +769,7 @@ class _LegacyModelSummary extends StatelessWidget {
             snapshot['features'],
           ).whereType<Map>().take(3))
             _ModelImportanceBar(feature: Map<String, dynamic>.from(f)),
-          const Text(
+          Text(
             'Global, unsigned feature importance; not an explanation of a particular prediction or crop ranking.',
             style: TextStyle(fontSize: 12),
           ),
@@ -753,7 +786,7 @@ class _LegacyModelSummary extends StatelessWidget {
                 ),
               ],
             ]),
-            child: const Text('View detailed explanation'),
+            child: Text('View detailed explanation'),
           ),
         ],
       ],

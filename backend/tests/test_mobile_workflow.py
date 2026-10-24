@@ -246,7 +246,11 @@ def test_analysis_insert_all_tables_match_sql_parameters(monkeypatch):
         "xai_explanation": {"summary": "actual"},
     }
     assert db.save_analysis_session(10, result, "polygon") == 42
-    assert len(cur.queries) == 4
+    assert len(cur.queries) == 6
+    assert 'INSERT INTO activity_notifications' in cur.queries[-2][0]
+    assert cur.queries[-2][1][-2:] == (42, 10)
+    assert 'INSERT INTO activity_push_deliveries' in cur.queries[-1][0]
+    assert cur.queries[-1][1] == (10,42)
     assert "result_snapshot" in cur.queries[0][0]
     assert (
         "verification_status" not in cur.queries[0][0]
@@ -276,7 +280,7 @@ def test_submission_retry_preserves_decision(monkeypatch):
 
 def test_boundary_edit_never_mutates_history(monkeypatch):
     conn, cur = connection(monkeypatch, [{"id": 5, "boundary_version": 2}])
-    db.update_farm_parcel(10, 5, polygon=RING)
+    db.update_farm_parcel(10, 5, polygon=RING, expected_boundary_version=1)
     assert all("UPDATE analysis_sessions" not in sql for sql, _ in cur.queries)
     assert "boundary_version=boundary_version+1" in cur.queries[0][0]
-    assert cur.queries[0][1][-2:] == [5, 10]
+    assert cur.queries[0][1][-3:] == [5, 10, 1]

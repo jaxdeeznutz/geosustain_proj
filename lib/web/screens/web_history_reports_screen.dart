@@ -1,6 +1,6 @@
 part of '../../main.dart';
 
-class WebHistoryScreen extends StatelessWidget {
+class WebHistoryScreen extends StatefulWidget {
   final AnalysisState state;
   final bool compact;
   const WebHistoryScreen({
@@ -8,6 +8,16 @@ class WebHistoryScreen extends StatelessWidget {
     required this.state,
     this.compact = false,
   });
+
+  @override
+  State<WebHistoryScreen> createState() => _WebHistoryScreenState();
+}
+
+class _WebHistoryScreenState extends State<WebHistoryScreen> {
+  AnalysisState get state => widget.state;
+  bool get compact => widget.compact;
+  int _page = 0;
+  String _query = '';
 
   String _topCropFromRecord(Map<String, dynamic> r) {
     final direct =
@@ -29,11 +39,52 @@ class WebHistoryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = state.historyRecords.take(compact ? 5 : 20).toList();
+    final all = state.historyRecords
+        .where(
+          (r) =>
+              '${r['session_id']} ${r['farm_name']} ${r['place_name']} ${r['report_title']}'
+                  .toLowerCase()
+                  .contains(_query.toLowerCase()),
+        )
+        .toList();
+    final maxPage = all.isEmpty ? 0 : (all.length - 1) ~/ 20;
+    if (_page > maxPage) _page = maxPage;
+    final rows = compact
+        ? all.take(5).toList()
+        : all.skip(_page * 20).take(20).toList();
     return _WebCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!compact) ...[
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Search all records',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) => setState(() {
+                _query = value;
+                _page = 0;
+              }),
+            ),
+            Wrap(
+              spacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text('${all.length} records · Page ${_page + 1}'),
+                TextButton(
+                  onPressed: _page > 0 ? () => setState(() => _page--) : null,
+                  child: const Text('Previous'),
+                ),
+                TextButton(
+                  onPressed: _page < maxPage
+                      ? () => setState(() => _page++)
+                      : null,
+                  child: const Text('Next'),
+                ),
+              ],
+            ),
+          ],
           Row(
             children: [
               const Expanded(
@@ -200,7 +251,7 @@ class WebHistoryScreen extends StatelessWidget {
   }
 }
 
-class WebReportsScreen extends StatelessWidget {
+class WebReportsScreen extends StatefulWidget {
   final AnalysisState state;
   final bool compact;
   const WebReportsScreen({
@@ -208,6 +259,16 @@ class WebReportsScreen extends StatelessWidget {
     required this.state,
     this.compact = false,
   });
+
+  @override
+  State<WebReportsScreen> createState() => _WebReportsScreenState();
+}
+
+class _WebReportsScreenState extends State<WebReportsScreen> {
+  AnalysisState get state => widget.state;
+  bool get compact => widget.compact;
+  int _page = 0;
+  String _query = '';
 
   Future<void> _downloadReport(
     BuildContext context,
@@ -226,11 +287,52 @@ class WebReportsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = state.generatedReports.take(compact ? 4 : 50).toList();
+    final all = state.generatedReports
+        .where(
+          (r) =>
+              '${r['session_id']} ${r['farm_name']} ${r['place_name']} ${r['report_title']}'
+                  .toLowerCase()
+                  .contains(_query.toLowerCase()),
+        )
+        .toList();
+    final maxPage = all.isEmpty ? 0 : (all.length - 1) ~/ 50;
+    if (_page > maxPage) _page = maxPage;
+    final rows = compact
+        ? all.take(4).toList()
+        : all.skip(_page * 50).take(50).toList();
     return _WebCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (!compact) ...[
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Search all records',
+                prefixIcon: Icon(Icons.search),
+              ),
+              onChanged: (value) => setState(() {
+                _query = value;
+                _page = 0;
+              }),
+            ),
+            Wrap(
+              spacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                Text('${all.length} records · Page ${_page + 1}'),
+                TextButton(
+                  onPressed: _page > 0 ? () => setState(() => _page--) : null,
+                  child: const Text('Previous'),
+                ),
+                TextButton(
+                  onPressed: _page < maxPage
+                      ? () => setState(() => _page++)
+                      : null,
+                  child: const Text('Next'),
+                ),
+              ],
+            ),
+          ],
           Row(
             children: [
               const Expanded(

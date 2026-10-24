@@ -101,3 +101,21 @@ def attach_assessment(result, measurements, active_crops=None):
         xai_explanation={'scope': 'suitability_calculation', 'method': METHOD},
         recommendation='Verify drainage, water supply, soil depth and seasonal conditions before planting.')
     return result
+
+
+def mark_preliminary(result):
+    """Keep factor evidence without exporting a complete recommendation/rank."""
+    for crop in result.get('crop_assessments', []):
+        crop.update(reference_condition_index=crop.get('compatibility_pct'),
+            compatibility_pct=None, rank=None, assessment_mode='preliminary_environmental')
+        if crop.get('classification') != 'Disabled in crop settings':
+            crop['classification'] = 'Preliminary environmental comparison'
+    result.update(analysis_mode='preliminary_environmental',
+        recommendation_basis='environmental_reference_screening',
+        top_crop_recommendations=[], alternative_crops=[], best_crop=None,
+        predicted_crop=None, crop=None, crop_compatibility_pct=None,
+        is_crop_recommended=False, suitability_level='Not fully assessed',
+        recommendation_title='Preliminary environmental screening',
+        analysis_summary='Preliminary environmental comparisons only. CAGRO NPK is unavailable; inspect individual factors and obtain a reviewed soil assessment before a complete crop recommendation.',
+        preliminary_notice='Preliminary environmental comparison. CAGRO NPK unavailable; not a complete soil suitability assessment.')
+    return result

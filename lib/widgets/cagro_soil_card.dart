@@ -19,12 +19,18 @@ class CagroSoilObservationsCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final soil = analysisMapValue(record['cagro_soil']);
     if (soil.isEmpty) return const SizedBox.shrink();
+    final scope =
+        record['session_id'] ??
+        record['id'] ??
+        record['farm_id'] ??
+        jsonEncode(soil);
     final rows = analysisListValue(
       soil['status'] == 'matched' ? soil['observations'] : [],
     ).whereType<Map>().map((r) => Map<String, dynamic>.from(r)).toList();
     if (rows.isEmpty) {
       return GeoResultCard(
         child: ExpansionTile(
+          key: PageStorageKey('cagro-$scope-unavailable'),
           tilePadding: EdgeInsets.zero,
           title: const Text(
             'Local soil data',
@@ -50,12 +56,12 @@ class CagroSoilObservationsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'CAGRO historical soil observations',
             style: TextStyle(
               fontSize: 19,
               fontWeight: FontWeight.w800,
-              color: GeoDesign.darkGreen,
+              color: Theme.of(context).colorScheme.primary,
             ),
           ),
           const SizedBox(height: 8),
@@ -63,9 +69,12 @@ class CagroSoilObservationsCard extends StatelessWidget {
           if (record['analysis_schema_version'] != null)
             const Text(cagroHistoricalNotice),
           const SizedBox(height: 8),
-          const Text(
-            'Current production model nutrient inputs were trained using a different NPK representation. CAGRO soil NPK observations are shown separately and are not yet used directly by the production model.',
-            style: TextStyle(fontSize: 13, color: GeoDesign.muted),
+          Text(
+            'Primary local soil source: CAGRO. Historical observations are kept separate; a locality match is not a current farm soil test. Crop estimates require compatible nutrient data.',
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           if (rows.isEmpty)
             const Padding(
@@ -74,7 +83,9 @@ class CagroSoilObservationsCard extends StatelessWidget {
             ),
           for (final row in rows)
             ExpansionTile(
-              key: ValueKey('cagro-${row['id']}'),
+              key: PageStorageKey(
+                'cagro-$scope-${row['id'] ?? '${row['source_file']}-${row['source_row']}'}',
+              ),
               tilePadding: EdgeInsets.zero,
               childrenPadding: const EdgeInsets.only(bottom: 16),
               title: Text(
@@ -178,17 +189,17 @@ class CagroSoilObservationsCard extends StatelessWidget {
                       Text('${row['data_note'] ?? ''}'),
                       Text(
                         '${row['location_note'] ?? ''}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: GeoDesign.muted,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'Source record: ${row['source_file']}, row ${row['source_row']}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: GeoDesign.muted,
+                          color: Theme.of(context).colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],

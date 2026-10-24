@@ -1,11 +1,11 @@
 {
-    "name": "geosustain_clean_arranged",
-    "short_name": "geosustain_clean_arranged",
+    "name": "GeoSustain",
+    "short_name": "GeoSustain",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "A new Flutter project.",
+    "background_color": "#075F36",
+    "theme_color": "#075F36",
+    "description": "Agricultural land analysis and planning support for Panabo City.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

@@ -10,7 +10,7 @@ let currentBaseLayer = 'satellite';
 let heatTintEnabled  = true;
 let coordMarker      = null;   // marker dropped by manual lat/lon input
 
-const panaboBounds    = L.latLngBounds([7.20, 125.50], [7.41, 125.72]);
+const panaboBounds    = L.latLngBounds([7.20, 125.50], [7.46, 125.72]);
 const selectedStyle   = { color:'#00e18c', weight:3, fillColor:'#22c97f', fillOpacity:0.28 };
 const unselectedStyle = { color:'#4ce09e', weight:2, fillColor:'#27b16f', fillOpacity:0.2  };
 
@@ -111,8 +111,8 @@ function initMap(lat=7.2915, lon=125.6255) {
       alert('Please enter valid latitude and longitude values.');
       return;
     }
-    if (latVal < 7.20 || latVal > 7.41 || lonVal < 125.50 || lonVal > 125.72) {
-      alert('Coordinates are outside Panabo City bounds.\nLat: 7.20–7.41 | Lon: 125.50–125.72');
+    if (latVal < 7.20 || latVal > 7.46 || lonVal < 125.50 || lonVal > 125.72) {
+      alert('Coordinates are outside Panabo City bounds.\nLat: 7.20–7.46 | Lon: 125.50–125.72');
       return;
     }
 
@@ -339,20 +339,22 @@ async function runAnalysis({ polygon=[], lat=null, lon=null }) {
   initMap();
 
   try {
-    let response;
-
-    if (lat !== null && lon !== null) {
-      // Manual coordinate point — GET request
-      response = await fetch(`/api/analysis?lat=${lat}&lon=${lon}`);
-    } else {
-      // Polygon — POST request
-      if (!polygon.length && activeDrawPolygon) polygon = getPolygonPoints();
-      response = await fetch('/api/analysis', {
-        method:  'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({ polygon }),
-      });
+    if (lat === null && !polygon.length && activeDrawPolygon) polygon = getPolygonPoints();
+    const payload = lat !== null && lon !== null ? {lat, lon} : {polygon};
+    const fingerprint = JSON.stringify(payload);
+    const storageKey = 'geosustain-analysis-retry';
+    let pending;
+    try { pending = JSON.parse(sessionStorage.getItem(storageKey)); } catch (_) {}
+    if (!pending || pending.fingerprint !== fingerprint) {
+      pending = {fingerprint, key: crypto.randomUUID()};
+      sessionStorage.setItem(storageKey, JSON.stringify(pending));
     }
+    const response = await fetch('/api/analysis', {
+      method: 'POST', headers: {'Content-Type':'application/json', 'Idempotency-Key':pending.key},
+      body: fingerprint,
+    });
+    if (response.status === 202) throw new Error('Analysis is still processing. Retry shortly with the same selection.');
+    if (response.ok) sessionStorage.removeItem(storageKey);
 
     if (!response.ok) throw new Error(`Server error: ${response.status}`);
     const data = await response.json();

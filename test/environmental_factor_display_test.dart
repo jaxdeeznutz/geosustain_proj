@@ -70,7 +70,7 @@ void main() {
   );
 
   testWidgets(
-    'recorded model input does not show the old unassessed range panel',
+    'model input without a compatible criterion is explicitly not assessed',
     (tester) async {
       final factor = environmentalFactorViews({}, {
         'model_explanation': {
@@ -86,8 +86,9 @@ void main() {
           home: Scaffold(body: EnvironmentalFactorCard(factor: factor)),
         ),
       );
-      expect(find.text('Used in crop prediction'), findsOneWidget);
-      expect(find.text('Not assessed'), findsNothing);
+      expect(find.text('Used in crop prediction'), findsNothing);
+      expect(find.text('Not assessed'), findsOneWidget);
+      expect(find.text('No compatible crop criterion saved'), findsOneWidget);
       expect(find.text('No crop-specific range saved'), findsNothing);
     },
   );

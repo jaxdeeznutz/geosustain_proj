@@ -43,7 +43,7 @@ void main() {
   for (final entry in [
     (1800.0, 100, CropFactorState.suitable, 'Suitable'),
     (2500.0, 50, CropFactorState.near, 'Limited'),
-    (4500.0, 0, CropFactorState.outside, 'Outside documented range'),
+    (4500.0, 0, CropFactorState.outside, 'Not suitable'),
   ]) {
     testWidgets('annual rainfall shows ${entry.$4} with documented range', (
       tester,

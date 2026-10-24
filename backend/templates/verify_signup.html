@@ -1,0 +1,12 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Verify email | GeoSustain</title><link rel="stylesheet" href="{{ url_for('static', path='auth.css') }}"></head>
+<body><main class="auth-wrapper"><section class="auth-card">
+<h1>Verify your email</h1><p>Enter the six-digit code sent to your email{% if email %}: {{ email }}{% endif %}. It expires in ten minutes.</p>
+{% for category,message in get_flashed_messages(with_categories=true) %}<p role="status">{{ message }}</p>{% endfor %}
+<form method="post" action="/verify-email"><label for="code">Email verification code</label>
+<input id="code" name="code" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" minlength="6" maxlength="6" required>
+<button type="submit">Verify email</button></form>
+<form method="post" action="/resend-verification"><button type="submit">Resend code</button></form>
+<p>Wait one minute before requesting another code.</p><a href="/register">Start again</a>
+</section></main></body></html>

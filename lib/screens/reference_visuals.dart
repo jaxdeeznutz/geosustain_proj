@@ -18,7 +18,7 @@ class FarmBanner extends StatelessWidget {
     margin: const EdgeInsets.only(bottom: 12),
     clipBehavior: Clip.antiAlias,
     decoration: BoxDecoration(
-      color: softGreen,
+      color: geoPanelColor(context),
       borderRadius: BorderRadius.circular(GeoDesign.cardRadius),
     ),
     child: LayoutBuilder(
@@ -44,19 +44,19 @@ class FarmBanner extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 21,
                     fontWeight: FontWeight.w800,
-                    color: darkGreen,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 7),
                 Text(
                   description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     height: 1.4,
-                    color: Color(0xFF435A53),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -182,10 +182,10 @@ class ReferenceStat extends StatelessWidget {
                     fit: BoxFit.scaleDown,
                     child: Text(
                       value,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 23,
                         fontWeight: FontWeight.w800,
-                        color: darkGreen,
+                        color: Theme.of(context).colorScheme.onSurface,
                       ),
                     ),
                   ),
@@ -198,7 +198,10 @@ class ReferenceStat extends StatelessWidget {
               child: Text(
                 label,
                 maxLines: 2,
-                style: const TextStyle(fontSize: 11, color: Color(0xFF45555B)),
+                style: TextStyle(
+                  fontSize: 11,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
               ),
             ),
           ],
@@ -231,13 +234,13 @@ class ReferenceAction extends StatelessWidget {
         fontSize: compact ? 11 : 14,
         height: 1.15,
         fontWeight: FontWeight.w800,
-        color: darkGreen,
+        color: Theme.of(context).colorScheme.onSurface,
       );
       final bodyStyle = TextStyle(
         fontFamily: 'Roboto',
         fontSize: compact ? 10 : 12,
         height: 1.3,
-        color: const Color(0xFF53635B),
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
       );
       double sharedHeight(List<String> labels, TextStyle style) {
         var result = 0.0;
@@ -269,7 +272,11 @@ class ReferenceAction extends StatelessWidget {
       ], bodyStyle);
       return Card(
         margin: EdgeInsets.zero,
-        color: blue ? GeoDesign.blue : softGreen,
+        color: Theme.of(context).brightness == Brightness.dark
+            ? Theme.of(context).colorScheme.surfaceContainerHigh
+            : blue
+            ? GeoDesign.blue
+            : softGreen,
         child: InkWell(
           onTap: onTap,
           borderRadius: BorderRadius.circular(GeoDesign.cardRadius),

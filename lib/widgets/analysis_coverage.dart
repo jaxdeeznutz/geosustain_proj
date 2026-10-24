@@ -1,9 +1,16 @@
 part of '../main.dart';
 
+bool farmCanAnalyze(Map<String, dynamic> farm) {
+  final coverage = analysisMapValue(farm['analysis_coverage']);
+  return coverage['can_analyze'] is bool
+      ? coverage['can_analyze'] == true
+      : coverage['supported'] != false;
+}
+
 const cagroHistoricalNotice =
     'CAGRO nutrient records provide locally available historical soil information for supported Panabo City locations. They may not represent the current exact soil condition of every point within the farm and should be supplemented by field or laboratory assessment when necessary.';
 const cagroCoverageNotice =
-    'GeoSustain currently provides formal crop analysis only for locations where available CAGRO soil information can support the assessment. Additional areas can be supported when more validated CAGRO soil records become available.';
+    'Preliminary environmental screening is available within the Panabo City reference boundary. CAGRO NPK is shown only where a matching historical soil record exists; elsewhere it is unavailable.';
 
 /// Shared Farmer, Analyst and report provenance; never reconstruct an old match.
 List<String> analysisCoverageLines(Map<String, dynamic> record) {
@@ -18,6 +25,10 @@ List<String> analysisCoverageLines(Map<String, dynamic> record) {
         ? 'Not recorded under the current coverage policy (older analysis).'
         : coverage['supported'] == true
         ? 'Supported'
+        : coverage['preliminary_supported'] == true
+        ? 'Preliminary screening; CAGRO NPK unavailable'
+        : coverage['can_analyze'] == false
+        ? 'Outside supported Panabo City boundary'
         : 'Location not supported for formal analysis'}',
   ];
   if (coverage['supported'] == true) {
@@ -197,8 +208,10 @@ class _CoverageExplorerState extends State<CoverageExplorer> {
           AnalysisCoverageCard(record: _checked!),
         if (_error != null) Text(_error!),
         ExpansionTile(
-          title: const Text('GeoSustain Supported Analysis Areas'),
-          subtitle: const Text('Reviewed areas and CAGRO reference locations'),
+          title: const Text('Panabo City screening and CAGRO coverage'),
+          subtitle: const Text(
+            'City reference boundary and historical soil locations',
+          ),
           onExpansionChanged: (open) {
             if (open && _catalog == null) _load();
           },
@@ -262,7 +275,7 @@ class _CoverageExplorerState extends State<CoverageExplorer> {
                 ),
               ),
               const Text(
-                'Green shading: supported analysis area (reviewed boundary). Purple marker: CAGRO reference location, not a barangay boundary. Full farm boundary must pass server matching.',
+                'Blue outline: Panabo City reference boundary (2020, geoBoundaries / NAMRIA / PSA / OCHA; CC BY 3.0 IGO). Green shading: reviewed CAGRO area. Purple marker: historical soil reference, not exact farm NPK.',
               ),
               for (final raw in analysisListValue(
                 _catalog!['reference_locations'],
@@ -280,7 +293,14 @@ class _CoverageExplorerState extends State<CoverageExplorer> {
 
 List<Polygon> coverageBoundaryPolygons(Map<String, dynamic> catalog) {
   final result = <Polygon>[];
-  for (final raw in analysisListValue(catalog['boundaries'])) {
+  final features = [
+    ...analysisListValue(catalog['boundaries']),
+    if (catalog['city_boundary'] is Map) catalog['city_boundary'],
+  ];
+  for (final raw in features) {
+    final isCity =
+        analysisMapValue(analysisMapValue(raw)['properties'])['shapeName'] ==
+        'City of Panabo';
     final geometry = analysisMapValue(analysisMapValue(raw)['geometry']);
     final polygons = geometry['type'] == 'Polygon'
         ? [geometry['coordinates']]
@@ -302,8 +322,10 @@ List<Polygon> coverageBoundaryPolygons(Map<String, dynamic> catalog) {
           Polygon(
             points: rings.first,
             holePointsList: rings.skip(1).toList(),
-            color: Colors.green.withValues(alpha: .25),
-            borderColor: Colors.green,
+            color: (isCity ? Colors.blue : Colors.green).withValues(
+              alpha: isCity ? .08 : .25,
+            ),
+            borderColor: isCity ? Colors.blue : Colors.green,
             borderStrokeWidth: 2,
           ),
         );

@@ -1,10 +1,12 @@
 part of '../main.dart';
 
 class WebAdminDashboard extends StatefulWidget {
+  final ApiService? api;
   final VoidCallback logout;
   final ValueChanged<String> message;
   const WebAdminDashboard({
     super.key,
+    this.api,
     required this.logout,
     required this.message,
   });
@@ -13,7 +15,7 @@ class WebAdminDashboard extends StatefulWidget {
 }
 
 class _WebAdminDashboardState extends State<WebAdminDashboard> {
-  final api = ApiService();
+  late final api = widget.api ?? ApiService();
   int page = 0;
   bool loading = true;
   Map<String, dynamic> stats = {};
@@ -22,6 +24,58 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   List<Map<String, dynamic>> crops = [];
   List<Map<String, dynamic>> auditLogs = [];
   String search = '';
+  String submittedSearch = '';
+  final offsets = <int, int>{1: 0, 2: 0, 4: 0};
+  final hasMore = <int, bool>{};
+
+  void _applySearch(String value) {
+    submittedSearch = value.trim();
+    search = submittedSearch;
+    offsets.updateAll((key, value) => 0);
+    _refresh();
+  }
+
+  Widget _pager() => Padding(
+    padding: const EdgeInsets.only(bottom: 16),
+    child: Wrap(
+      spacing: 12,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        SizedBox(
+          width: 260,
+          child: TextFormField(
+            initialValue: submittedSearch,
+            key: ValueKey('record-search-$page-$submittedSearch'),
+            decoration: const InputDecoration(
+              labelText: 'Search all records',
+              suffixIcon: Icon(Icons.search),
+            ),
+            onFieldSubmitted: _applySearch,
+          ),
+        ),
+        Text('Page ${(offsets[page] ?? 0) ~/ 50 + 1}'),
+        OutlinedButton(
+          onPressed: (offsets[page] ?? 0) > 0
+              ? () {
+                  offsets[page] = offsets[page]! - 50;
+                  _refresh();
+                }
+              : null,
+          child: const Text('Previous'),
+        ),
+        FilledButton(
+          onPressed: hasMore[page] == true
+              ? () {
+                  offsets[page] = (offsets[page] ?? 0) + 50;
+                  _refresh();
+                }
+              : null,
+          child: const Text('Next'),
+        ),
+      ],
+    ),
+  );
+  List<String> panelFailures = [];
 
   @override
   void initState() {
@@ -31,29 +85,72 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
 
   Future<void> _refresh() async {
     setState(() => loading = true);
-    try {
-      final results = await Future.wait([
-        api.getAdminDashboard(),
-        api.getAdminUsers(),
-        api.getAdminAnalyses(),
-        api.getAdminCrops(),
-        api.getAdminAuditLogs(),
-      ]);
-      stats = Map<String, dynamic>.from(results[0] as Map);
-      users = (results[1] as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList();
-      analyses = (results[2] as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList();
-      crops = (results[3] as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList();
-      auditLogs = (results[4] as List)
-          .map((e) => Map<String, dynamic>.from(e as Map))
-          .toList();
-    } catch (e) {
-      widget.message(e.toString().replaceFirst('Exception: ', ''));
+    final failures = <String>[];
+    Future<void> panel(
+      String name,
+      Future<dynamic> Function() fetch,
+      void Function(dynamic) apply,
+    ) async {
+      try {
+        final result = await fetch();
+        if (mounted) apply(result);
+      } catch (_) {
+        failures.add(name);
+      }
+    }
+
+    List<Map<String, dynamic>> records(dynamic result) => (result as List)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+    await Future.wait([
+      panel(
+        'Dashboard totals',
+        api.getAdminDashboard,
+        (value) => stats = Map<String, dynamic>.from(value as Map),
+      ),
+      panel(
+        'Users',
+        () => api.getRecordPage(
+          '/api/admin/users',
+          offset: offsets[1]!,
+          search: submittedSearch,
+        ),
+        (value) {
+          users = records(value['users']);
+          hasMore[1] = value['has_more'] == true;
+        },
+      ),
+      panel(
+        'Analyses',
+        () => api.getRecordPage(
+          '/api/admin/analyses',
+          offset: offsets[2]!,
+          search: submittedSearch,
+        ),
+        (value) {
+          analyses = records(value['analyses']);
+          hasMore[2] = value['has_more'] == true;
+        },
+      ),
+      panel('Crops', api.getAdminCrops, (value) => crops = records(value)),
+      panel(
+        'Audit logs',
+        () => api.getRecordPage(
+          '/api/admin/audit-logs',
+          offset: offsets[4]!,
+          search: submittedSearch,
+        ),
+        (value) {
+          auditLogs = records(value['logs']);
+          hasMore[4] = value['has_more'] == true;
+        },
+      ),
+    ]);
+    panelFailures = failures;
+    if (mounted && failures.isNotEmpty) {
+      widget.message(
+        'Could not refresh: ${failures.join(', ')}. Other panels remain available.',
+      );
     }
     if (mounted) setState(() => loading = false);
   }
@@ -72,6 +169,58 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       await _refresh();
     } catch (e) {
       widget.message(e.toString().replaceFirst('Exception: ', ''));
+    }
+  }
+
+  Future<void> _recovery(Map<String, dynamic> user) async {
+    final verified = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Verify ${user['username']} before recovery'),
+        content: const Text(
+          'Use the project identity-verification procedure and an established private contact channel. Issue this handoff only after confirming the account owner. It expires in 15 minutes and can be used once.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Identity verified; issue handoff'),
+          ),
+        ],
+      ),
+    );
+    if (verified != true) return;
+    try {
+      final token = await api.issuePasswordRecovery(int.parse('${user['id']}'));
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Private recovery handoff'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Send privately to the verified owner. Do not put this handoff in reports, screenshots or shared messages. Ask them to select Forgot password and choose a new password.',
+              ),
+              const SizedBox(height: 12),
+              SelectableText(token),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (error) {
+      widget.message(friendlyErrorMessage(error));
     }
   }
 
@@ -152,12 +301,14 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                   children: [
                     Icon(Icons.eco_rounded, color: Colors.white, size: 34),
                     SizedBox(width: 12),
-                    Text(
-                      'GeoSustain',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
+                    Expanded(
+                      child: Text(
+                        'GeoSustain',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
                     ),
                   ],
@@ -273,10 +424,25 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   }
 
   Widget _page(String title) {
-    if (page == 1) return _usersPage();
-    if (page == 2) return _analysesPage();
+    if (page == 1) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [_pager(), _usersPage()],
+      );
+    }
+    if (page == 2) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [_pager(), _analysesPage()],
+      );
+    }
     if (page == 3) return _settingsPage();
-    if (page == 4) return _auditPage();
+    if (page == 4) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [_pager(), _auditPage()],
+      );
+    }
     return _dashboardPage();
   }
 
@@ -296,11 +462,17 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
               ),
             ),
             const SizedBox(height: 5),
-            Text(subtitle, style: const TextStyle(color: Colors.black54)),
+            Text(
+              panelFailures.isEmpty
+                  ? subtitle
+                  : '$subtitle\nCould not refresh: ${panelFailures.join(', ')}. Retry with Refresh.',
+              style: const TextStyle(color: Colors.black54),
+            ),
           ],
         ),
       ),
       IconButton.filledTonal(
+        tooltip: 'Refresh administrator panels',
         onPressed: _refresh,
         icon: const Icon(Icons.refresh_rounded),
       ),
@@ -335,24 +507,26 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
             child: Icon(icon, color: green),
           ),
           const SizedBox(width: 16),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                '$value',
-                style: const TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.w900,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$value',
+                  style: const TextStyle(
+                    fontSize: 25,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
-              ),
-              Text(
-                label,
-                style: const TextStyle(
-                  color: Colors.black54,
-                  fontWeight: FontWeight.w700,
+                Text(
+                  label,
+                  style: const TextStyle(
+                    color: Colors.black54,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -369,23 +543,27 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       const SizedBox(height: 24),
       Row(
         children: [
-          _stat('Farmers', stats['farmers'] ?? 0, Icons.agriculture_rounded),
+          _stat(
+            'Farmers',
+            stats['farmers'] ?? 'Unavailable',
+            Icons.agriculture_rounded,
+          ),
           const SizedBox(width: 14),
           _stat(
             'Planning Analysts',
-            stats['planning_analysts'] ?? 0,
+            stats['planning_analysts'] ?? 'Unavailable',
             Icons.analytics_rounded,
           ),
           const SizedBox(width: 14),
           _stat(
             'Pending Submissions',
-            stats['pending'] ?? 0,
+            stats['pending'] ?? 'Unavailable',
             Icons.pending_actions_rounded,
           ),
           const SizedBox(width: 14),
           _stat(
             'Registered Parcels',
-            stats['registered_parcels'] ?? 0,
+            stats['registered_parcels'] ?? 'Unavailable',
             Icons.map_rounded,
           ),
         ],
@@ -395,21 +573,26 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         children: [
           _stat(
             'Total Analyses',
-            stats['total_analyses'] ?? 0,
+            stats['total_analyses'] ?? 'Unavailable',
             Icons.insights_rounded,
           ),
           const SizedBox(width: 14),
-          _stat('Verified', stats['verified'] ?? 0, Icons.verified_rounded),
+          _stat(
+            'Verified',
+            stats['verified'] ?? 'Unavailable',
+            Icons.verified_rounded,
+          ),
           const SizedBox(width: 14),
           _stat(
             'Inactive Accounts',
-            stats['inactive_users'] ?? 0,
+            stats['inactive_users'] ?? 'Unavailable',
             Icons.person_off_rounded,
           ),
           const SizedBox(width: 14),
           _stat(
             'Mapped Area (ha)',
-            ((stats['total_area_hectares'] as num?) ?? 0).toStringAsFixed(2),
+            (stats['total_area_hectares'] as num?)?.toStringAsFixed(2) ??
+                'Unavailable',
             Icons.square_foot_rounded,
           ),
         ],
@@ -453,7 +636,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         ),
         const SizedBox(height: 20),
         TextField(
-          onChanged: (v) => setState(() => search = v),
+          onSubmitted: _applySearch,
           decoration: const InputDecoration(
             prefixIcon: Icon(Icons.search),
             hintText: 'Search users by name, email, or role',
@@ -539,9 +722,24 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                           Text('${u['created_at'] ?? ''}'.split('T').first),
                         ),
                         DataCell(
-                          Switch(
-                            value: u['is_active'] == true,
-                            onChanged: (v) => _changeUser(u, active: v),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Semantics(
+                                label: 'Active account for ${u['username']}',
+                                child: Switch(
+                                  value: u['is_active'] == true,
+                                  onChanged: (v) => _changeUser(u, active: v),
+                                ),
+                              ),
+                              IconButton(
+                                tooltip: 'Recover account for ${u['username']}',
+                                onPressed: u['is_active'] == true
+                                    ? () => _recovery(u)
+                                    : null,
+                                icon: const Icon(Icons.lock_reset),
+                              ),
+                            ],
                           ),
                         ),
                       ],
@@ -735,6 +933,14 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       _header(
         'Audit & System',
         'Security-sensitive administrative activity: role changes and verification decisions.',
+      ),
+      TextButton.icon(
+        onPressed: () => Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => MessageLogPage(api: api)),
+        ),
+        icon: const Icon(Icons.notifications_outlined),
+        label: const Text('Push delivery log'),
       ),
       const SizedBox(height: 20),
       _card(

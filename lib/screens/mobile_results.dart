@@ -68,7 +68,7 @@ class AnalysisIdentity extends StatelessWidget {
           style: TextStyle(
             fontSize: compact ? 17 : 25,
             fontWeight: FontWeight.w800,
-            color: const Color(0xFF20382C),
+            color: Theme.of(context).colorScheme.onSurface,
           ),
         ),
         if (owner.isNotEmpty)
@@ -92,12 +92,12 @@ class AnalysisHistoryRow extends StatelessWidget {
   const AnalysisHistoryRow({super.key, required this.record, this.onTap});
   @override
   Widget build(BuildContext context) => Card(
-    color: Colors.white,
+    color: Theme.of(context).colorScheme.surfaceContainerLow,
     elevation: 0,
     margin: const EdgeInsets.only(bottom: 12),
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(24),
-      side: const BorderSide(color: GeoDesign.border),
+      side: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
     ),
     child: InkWell(
       borderRadius: BorderRadius.circular(24),
@@ -493,7 +493,7 @@ class _AnalysisSection extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) => Card(
-    color: surface,
+    color: geoPanelColor(context, surface),
     elevation: .5,
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(22),
@@ -503,11 +503,7 @@ class _AnalysisSection extends StatelessWidget {
     child: Padding(
       padding: const EdgeInsets.all(18),
       child: DefaultTextStyle.merge(
-        style: const TextStyle(
-          fontSize: 16,
-          height: 1.4,
-          color: Color(0xFF263C32),
-        ),
+        style: TextStyle(fontSize: 16, height: 1.4, color: Color(0xFF263C32)),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -515,16 +511,20 @@ class _AnalysisSection extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 if (icon != null) ...[
-                  Icon(icon, color: darkGreen, size: 24),
+                  Icon(
+                    icon,
+                    color: Theme.of(context).colorScheme.onSurface,
+                    size: 24,
+                  ),
                   const SizedBox(width: 10),
                 ],
                 Expanded(
                   child: Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w800,
-                      color: darkGreen,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                 ),
@@ -567,16 +567,14 @@ class AnalysisIndicatorsCard extends StatelessWidget {
       children: [
         Text(
           'Land type: ${farmerLandType(record)}',
-          style: const TextStyle(fontWeight: FontWeight.w700),
+          style: TextStyle(fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 8),
         const _AnalysisParagraph(
           'Land type comes from plant-cover rules. It does not prove that every crop will grow here.',
         ),
         if (present.isEmpty)
-          const Text(
-            'Environmental measurements are unavailable for this analysis.',
-          ),
+          Text('Environmental measurements are unavailable for this analysis.'),
         for (final item in present)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
@@ -592,7 +590,7 @@ class AnalysisIndicatorsCard extends StatelessWidget {
                       child: Text(
                         '${analysisNumber(record[item.$1])!.toStringAsFixed(item.$1 == 'ndvi' ? 3 : 1)}${item.$3.isEmpty ? '' : ' ${item.$3}'}',
                         textAlign: TextAlign.end,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                        style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
                   ],
@@ -601,10 +599,7 @@ class AnalysisIndicatorsCard extends StatelessWidget {
                   Text(
                     '${analysisMapValue(quality[item.$4])['overall_quality'] ?? analysisMapValue(quality[item.$4])['quality'] ?? 'Source quality unavailable'}'
                         .replaceAll('_', ' '),
-                    style: const TextStyle(
-                      fontSize: 14,
-                      color: Color(0xFF536258),
-                    ),
+                    style: TextStyle(fontSize: 14, color: Color(0xFF536258)),
                   ),
               ],
             ),
@@ -612,14 +607,14 @@ class AnalysisIndicatorsCard extends StatelessWidget {
         if (present.any(
           (i) => ['nitrogen', 'phosphorus', 'potassium'].contains(i.$1),
         ))
-          const Text(
+          Text(
             'Nutrient values are model inputs. Units are not specified in these records; they are not fertilizer application rates.',
             style: TextStyle(fontSize: 16),
           ),
         if (warnings.isNotEmpty || quality.isNotEmpty)
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
-            title: const Text('Data sources and limitations'),
+            title: Text('Data sources and limitations'),
             children: [
               for (final warning in warnings) _AnalysisParagraph('$warning'),
               for (final item in present)
@@ -646,7 +641,7 @@ class AnalysisCropsCard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (crops.isEmpty) const Text('No crop assessments were saved.'),
+        if (crops.isEmpty) Text('No crop assessments were saved.'),
         for (var i = 0; i < crops.length; i++)
           _CropAssessmentCard(
             key: ValueKey('crop-${crops[i]['crop']}'),
@@ -676,11 +671,11 @@ class AnalysisBoundaryPreview extends StatelessWidget {
     if (points.length < 3) return const SizedBox.shrink();
     return Card(
       child: ExpansionTile(
-        title: const Text('Analyzed boundary'),
+        title: Text('Analyzed boundary'),
         subtitle: Text(analysisAreaText(record)),
         childrenPadding: const EdgeInsets.all(12),
         children: [
-          const Text(
+          Text(
             'This boundary belongs to this analysis. Later edits to the farm do not change it.',
           ),
           const SizedBox(height: 12),
@@ -753,7 +748,14 @@ class _AnalysisReviewCardState extends State<AnalysisReviewCard> {
       }
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Analysis submitted for analyst review.')),
+        SnackBar(
+          content: Text(
+            widget.record['verification_status'] == 'verified' ||
+                    widget.record['verification_status'] == 'rejected'
+                ? 'This assessment has already been reviewed.'
+                : 'Analysis submitted for analyst review.',
+          ),
+        ),
       );
     } catch (e) {
       if (mounted) setState(() => _error = friendlyErrorMessage(e));
@@ -769,11 +771,15 @@ class _AnalysisReviewCardState extends State<AnalysisReviewCard> {
         widget.state.accountRole == 'farmer' &&
         widget.record['session_id'] != null &&
         analysisProcessingLabel(widget.record) == 'Completed' &&
-        ['draft', 'rejected'].contains(status);
+        status == 'draft';
     return _AnalysisSection(
       title: 'Analyst review',
       children: [
         VerificationStatusBadge(status: status),
+        if (widget.record['is_crop_recommended'] == false)
+          const Text(
+            'Review covers this partial assessment. It does not fill missing observations or establish crop suitability.',
+          ),
         const SizedBox(height: 10),
         Text(switch (status) {
           'verified' =>

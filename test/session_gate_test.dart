@@ -33,8 +33,8 @@ void main() {
           expect(await api.getToken(), 'saved-session');
           await tester.tap(find.text('Back to login'));
           await tester.pumpAndSettle();
-          expect(find.byType(LoginPage), findsOneWidget);
-          expect(await api.getToken(), isNull);
+          expect(find.text('Unable to restore your session'), findsOneWidget);
+          expect(await api.getToken(), 'saved-session');
         }
         expect(tester.takeException(), isNull);
       },

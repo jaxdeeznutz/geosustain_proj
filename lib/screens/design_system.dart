@@ -1,5 +1,10 @@
 part of '../main.dart';
 
+Color geoPanelColor(BuildContext context, [Color light = softGreen]) =>
+    Theme.of(context).brightness == Brightness.dark
+    ? Theme.of(context).colorScheme.surfaceContainerHigh
+    : light;
+
 abstract final class GeoDesign {
   static const green900 = Color(0xFF0A5C30);
   static const green800 = Color(0xFF0B6B3A);
@@ -41,12 +46,15 @@ class GeoSectionHeader extends StatelessWidget {
     child: Row(
       children: [
         Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 21,
-              fontWeight: FontWeight.w800,
-              color: darkGreen,
+          child: Semantics(
+            header: true,
+            child: Text(
+              title,
+              style: TextStyle(
+                fontSize: 21,
+                fontWeight: FontWeight.w800,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
             ),
           ),
         ),
@@ -143,21 +151,49 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
     this.showNotifications = true,
   });
   @override
-  Size get preferredSize =>
-      const Size.fromHeight(GeoDesign.headerHeight + GeoDesign.headerCurve);
+  Size get preferredSize {
+    final data = MediaQueryData.fromView(
+      WidgetsBinding.instance.platformDispatcher.views.first,
+    );
+    final compact =
+        data.size.width > data.size.height && data.size.height < 500;
+    final textHeight =
+        data.textScaler.scale(compact ? 18 : 21) * 1.2 +
+        data.textScaler.scale(12) * 1.15 * (compact ? 1 : 2) +
+        8;
+    return Size.fromHeight(
+      math.max(compact ? 60.0 : GeoDesign.headerHeight, textHeight) +
+          (compact ? 12 : GeoDesign.headerCurve),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final effectiveState =
         state ?? context.findAncestorStateOfType<_ShellPageState>()?.state;
     final leading =
         back ??
-        (nested && Navigator.canPop(context)
-            ? () => Navigator.maybePop(context)
-            : null);
+        (Navigator.canPop(context) ? () => Navigator.maybePop(context) : null);
     final pageColor = Theme.of(context).scaffoldBackgroundColor;
+    final size = MediaQuery.sizeOf(context);
+    final compact = size.width > size.height && size.height < 500;
+    final scaler = MediaQuery.textScalerOf(context);
+    final textHeight =
+        scaler.scale(compact ? 18 : 21) * 1.2 +
+        scaler.scale(12) * 1.15 * (compact ? 1 : 2) +
+        8;
+    final barHeight = math.max(
+      compact ? 60.0 : GeoDesign.headerHeight,
+      textHeight,
+    );
+    final curveHeight = compact ? 12.0 : GeoDesign.headerCurve;
+    final view = View.of(context);
+    final headerWidth =
+        size.width -
+        (view.padding.left + view.padding.right) / view.devicePixelRatio;
     final bar = Container(
-      height: GeoDesign.headerHeight,
-      width: MediaQuery.sizeOf(context).width,
+      height: barHeight,
+      width: headerWidth,
       color: green,
       padding: const EdgeInsets.symmetric(horizontal: GeoDesign.pagePadding),
       child: Theme(
@@ -186,28 +222,28 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
                 ),
                 const SizedBox(width: 8),
               ],
-              const Icon(Icons.eco, color: Colors.white, size: 34),
+              Icon(Icons.eco, color: Colors.white, size: compact ? 26 : 34),
               const SizedBox(width: 10),
               Expanded(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const FittedBox(
+                    FittedBox(
                       fit: BoxFit.scaleDown,
                       alignment: Alignment.centerLeft,
                       child: Text(
                         'GeoSustain',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 21,
+                          fontSize: compact ? 18 : 21,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
                     ),
                     Text(
                       title,
-                      maxLines: 2,
+                      maxLines: compact ? 1 : 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white,
@@ -239,12 +275,12 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
     );
     // The page's own background, with rounded top corners, overlaps the bar.
     final curve = Container(
-      height: GeoDesign.headerCurve,
-      width: MediaQuery.sizeOf(context).width,
+      height: curveHeight,
+      width: headerWidth,
       color: green,
       alignment: Alignment.bottomCenter,
       child: Container(
-        height: GeoDesign.headerCurve,
+        height: curveHeight,
         decoration: BoxDecoration(
           color: pageColor,
           borderRadius: const BorderRadius.vertical(top: Radius.circular(26)),
@@ -278,10 +314,10 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
       );
     }
     return SizedBox(
-      height: GeoDesign.headerHeight + GeoDesign.headerCurve,
+      height: barHeight + curveHeight,
       child: OverflowBox(
-        minWidth: MediaQuery.sizeOf(context).width,
-        maxWidth: MediaQuery.sizeOf(context).width,
+        minWidth: headerWidth,
+        maxWidth: headerWidth,
         child: block,
       ),
     );
@@ -460,11 +496,11 @@ class GeoInfoCard extends StatelessWidget {
           child: Text(
             label,
             maxLines: 2,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12,
               height: 1.15,
               fontWeight: FontWeight.w700,
-              color: darkGreen,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
         ),
@@ -472,10 +508,10 @@ class GeoInfoCard extends StatelessWidget {
         Text(
           subtitle,
           maxLines: 3,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 10,
             height: 1.2,
-            color: Color(0xFF53635B),
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -512,163 +548,183 @@ class GeoFarmCard extends StatelessWidget {
     final location = '${farm['location_name'] ?? ''}'.trim();
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                InkWell(
-                  onTap: onOpen,
-                  child: BoundaryThumbnail(farm, size: 92),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${farm['farm_name'] ?? 'Saved farm'}',
-                        style: const TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.w800,
-                          color: darkGreen,
-                        ),
-                      ),
-                      const SizedBox(height: 5),
-                      Text(
-                        location.isEmpty
-                            ? 'Location description not provided'
-                            : location,
-                        style: const TextStyle(
-                          fontSize: 11,
-                          height: 1.3,
-                          color: Color(0xFF59675E),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 6,
-                        runSpacing: 6,
-                        children: [
-                          GeoStatusChip(
-                            analysisAreaText(farm),
-                            icon: Icons.eco,
-                          ),
-                          GeoStatusChip(
-                            farm['mapping_method'] == 'gps_walk'
-                                ? 'GPS boundary'
-                                : 'Drawn polygon',
-                            icon: Icons.polyline_outlined,
-                          ),
-                          GeoStatusChip(
-                            '$count analyses',
-                            icon: Icons.bar_chart,
-                            color: GeoDesign.blue,
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-                SizedBox(
-                  width: 28,
-                  child: PopupMenuButton<String>(
-                    padding: EdgeInsets.zero,
-                    tooltip: 'Farm actions',
-                    onSelected: (value) {
-                      if (value == 'open') onOpen();
-                      if (value == 'edit') onEdit();
-                      if (value == 'archive') onArchive();
-                    },
-                    itemBuilder: (_) => const [
-                      PopupMenuItem(value: 'open', child: Text('Farm details')),
-                      PopupMenuItem(value: 'edit', child: Text('Edit')),
-                      PopupMenuItem(value: 'archive', child: Text('Archive')),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Icon(
-                  count == 0 ? Icons.circle : Icons.check_circle,
-                  size: 13,
-                  color: count == 0 ? const Color(0xFFE7A11D) : green,
-                ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    count == 0 ? 'Not analyzed yet' : 'Land analysis completed',
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: count == 0 ? const Color(0xFF9D6011) : green,
+      child: InkWell(
+        onTap: busy ? null : onOpen,
+        borderRadius: BorderRadius.circular(GeoDesign.cardRadius),
+        child: Padding(
+          padding: const EdgeInsets.all(14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  InkWell(
+                    key: ValueKey('farm-thumbnail-${farm['id']}'),
+                    onTap: busy ? null : onOpen,
+                    child: IgnorePointer(
+                      child: BoundaryThumbnail(farm, size: 92),
                     ),
                   ),
-                ),
-              ],
-            ),
-            if (count == 0)
-              const Padding(
-                padding: EdgeInsets.only(top: 4),
-                child: Text(
-                  'Analyze this farm to get crop recommendations.',
-                  style: TextStyle(fontSize: 11, color: Color(0xFF59675E)),
-                ),
-              ),
-            if (count > 0)
-              Padding(
-                padding: const EdgeInsets.only(top: 6),
-                child: VerificationStatusBadge(
-                  status:
-                      '${farm['latest_verification_status'] ?? farm['latest_review_status'] ?? 'draft'}',
-                ),
-              ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  flex: count == 0 ? 2 : 1,
-                  child: GeoButton(
-                    label: count == 0 ? 'Analyze This Farm' : 'View Results',
-                    icon: count == 0
-                        ? Icons.center_focus_strong
-                        : Icons.bar_chart,
-                    primary: count == 0,
-                    onPressed: busy
-                        ? null
-                        : count == 0
-                        ? onAnalyze
-                        : onResults,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GeoButton(
-                    label: 'Edit',
-                    icon: Icons.edit_outlined,
-                    onPressed: busy ? null : onEdit,
-                  ),
-                ),
-                if (count > 0) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: 12),
                   Expanded(
-                    child: GeoButton(
-                      label: 'Archive',
-                      icon: Icons.archive_outlined,
-                      danger: true,
-                      onPressed: busy ? null : onArchive,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${farm['farm_name'] ?? 'Saved farm'}',
+                          style: TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w800,
+                            color: Theme.of(context).colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 5),
+                        Text(
+                          location.isEmpty
+                              ? 'Location description not provided'
+                              : location,
+                          style: TextStyle(
+                            fontSize: 11,
+                            height: 1.3,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: [
+                            GeoStatusChip(
+                              analysisAreaText(farm),
+                              icon: Icons.eco,
+                            ),
+                            GeoStatusChip(
+                              farm['mapping_method'] == 'gps_walk'
+                                  ? 'GPS boundary'
+                                  : 'Drawn polygon',
+                              icon: Icons.polyline_outlined,
+                            ),
+                            GeoStatusChip(
+                              '$count analyses',
+                              icon: Icons.bar_chart,
+                              color: GeoDesign.blue,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    width: 28,
+                    child: PopupMenuButton<String>(
+                      padding: EdgeInsets.zero,
+                      tooltip: 'Farm actions',
+                      onSelected: (value) {
+                        if (value == 'open') onOpen();
+                        if (value == 'edit') onEdit();
+                        if (value == 'archive') onArchive();
+                      },
+                      itemBuilder: (_) => const [
+                        PopupMenuItem(
+                          value: 'open',
+                          child: Text('Farm details'),
+                        ),
+                        PopupMenuItem(value: 'edit', child: Text('Edit')),
+                        PopupMenuItem(value: 'archive', child: Text('Archive')),
+                      ],
                     ),
                   ),
                 ],
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Icon(
+                    count == 0 ? Icons.circle : Icons.check_circle,
+                    size: 13,
+                    color: count == 0 ? const Color(0xFFE7A11D) : green,
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      count == 0
+                          ? farm['_local_only'] == true
+                                ? '${farm['sync_state']}'
+                                : 'Not analyzed yet'
+                          : 'Land analysis completed',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              if (count == 0)
+                const Padding(
+                  padding: EdgeInsets.only(top: 4),
+                  child: Text(
+                    'Analyze this farm to get crop recommendations.',
+                    style: TextStyle(fontSize: 11),
+                  ),
+                ),
+              if (count > 0)
+                Padding(
+                  padding: const EdgeInsets.only(top: 6),
+                  child: VerificationStatusBadge(
+                    status:
+                        '${farm['latest_verification_status'] ?? farm['latest_review_status'] ?? 'draft'}',
+                  ),
+                ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    flex: count == 0 ? 2 : 1,
+                    child: GeoButton(
+                      label: count == 0
+                          ? farm['_local_only'] == true
+                                ? 'Sync before analysis'
+                                : 'Analyze This Farm'
+                          : 'View Results',
+                      icon: count == 0
+                          ? Icons.center_focus_strong
+                          : Icons.bar_chart,
+                      primary: count == 0,
+                      onPressed: busy
+                          ? null
+                          : count == 0
+                          ? onAnalyze
+                          : onResults,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: GeoButton(
+                      label: 'Edit',
+                      icon: Icons.edit_outlined,
+                      onPressed: busy ? null : onEdit,
+                    ),
+                  ),
+                  if (count > 0) ...[
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: GeoButton(
+                        label: 'Archive',
+                        icon: Icons.archive_outlined,
+                        danger: true,
+                        onPressed: busy ? null : onArchive,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

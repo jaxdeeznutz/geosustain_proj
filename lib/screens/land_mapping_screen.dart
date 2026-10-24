@@ -91,8 +91,8 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
   final _name = TextEditingController();
   final _location = TextEditingController();
   final _points = <LatLng>[];
-  final _times = <DateTime>[];
-  final _accuracies = <double>[];
+  final _times = <DateTime?>[];
+  final _accuracies = <double?>[];
   StreamSubscription<Position>? _subscription;
   int _streamGeneration = 0;
   Timer? _signalTimer;
@@ -116,6 +116,116 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _name.addListener(_persistDraft);
+    _location.addListener(_persistDraft);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreDraft());
+  }
+
+  bool _draftLoading = true;
+  bool _draftFinished = false;
+
+  Future<void> _persistDraft() async {
+    if (_draftLoading || _draftFinished) return;
+    try {
+      await BoundaryDraftStore.write(
+        'gps',
+        _points.isEmpty
+            ? null
+            : {
+                'points': _points
+                    .map((p) => {'lat': p.latitude, 'lng': p.longitude})
+                    .toList(),
+                'capture_version': 2,
+                'timestamps': _times
+                    .map((time) => time?.toIso8601String())
+                    .toList(),
+                'accuracies': _accuracies,
+                'name': _name.text,
+                'location': _location.text,
+                'request_key': _saveKey,
+                'fingerprint': _saveFingerprint,
+                'saved_farm_id': _saved?['id'],
+              },
+      );
+    } catch (_) {
+      if (mounted) {
+        super.setState(
+          () => _notice =
+              'Draft could not be stored on this device. Keep this page open until saving.',
+        );
+      }
+    }
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final draft = await BoundaryDraftStore.read('gps');
+      if (draft == null || !mounted) return;
+      final resume = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Resume boundary draft?'),
+          content: Text(
+            'An unfinished boundary for ${draft['name'] ?? 'this account'} is saved on this device.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Discard'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Resume'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      if (resume != true) {
+        await BoundaryDraftStore.write('gps', null);
+        return;
+      }
+      _points.addAll(FarmGeometry.fromPayload(draft['points']));
+      _name.text = '${draft['name'] ?? ''}';
+      _location.text = '${draft['location'] ?? ''}';
+      _saveKey = draft['request_key'] as String?;
+      _saveFingerprint = draft['fingerprint'] as String?;
+      final times = draft['timestamps'] is List
+          ? draft['timestamps'] as List
+          : [];
+      final accuracies = draft['accuracies'] is List
+          ? draft['accuracies'] as List
+          : [];
+      _times.addAll(
+        List.generate(
+          _points.length,
+          (i) => i < times.length ? DateTime.tryParse('${times[i]}') : null,
+        ),
+      );
+      _accuracies.addAll(
+        List.generate(
+          _points.length,
+          (i) => i < accuracies.length ? analysisNumber(accuracies[i]) : null,
+        ),
+      );
+      _hasStarted = _points.isNotEmpty;
+      _review = _points.length >= 3;
+      final id = int.tryParse('${draft['saved_farm_id']}');
+      if (id != null) _saved = await widget.state.api.getFarm(id);
+    } catch (_) {
+      _notice =
+          'Draft could not be fully restored. Review this boundary before saving.';
+    } finally {
+      _draftLoading = false;
+      if (mounted) super.setState(() {});
+    }
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    if (!_draftLoading) unawaited(_persistDraft());
   }
 
   @override
@@ -123,6 +233,8 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
     WidgetsBinding.instance.removeObserver(this);
     _subscription?.cancel();
     _signalTimer?.cancel();
+    _name.removeListener(_persistDraft);
+    _location.removeListener(_persistDraft);
     _controller.dispose();
     _name.dispose();
     _location.dispose();
@@ -158,7 +270,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
   }
 
   Future<void> _start() async {
-    if (_starting || _recording || _busy) return;
+    if (_draftLoading || _starting || _recording || _busy) return;
     setState(() {
       _starting = true;
       _showAppSettings = false;
@@ -339,7 +451,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
   }
 
   Future<void> _save() async {
-    if (_busy || _saved != null) return;
+    if (_draftLoading || _busy || _saved != null) return;
     final error = FarmGeometry.validate(_points);
     if (error != null) {
       _message(error);
@@ -365,13 +477,24 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
       _notice = null;
     });
     try {
-      final farm = await widget.state.api.createFarm(
+      final farm = await widget.state.saveFarm(
         farmName: _name.text.trim(),
         locationName: _location.text.trim(),
         polygon: payload,
         mappingMethod: 'gps_walk',
-        requestId: _saveKey,
-        gpsAccuracyM: _accuracies.isEmpty ? null : _accuracies.reduce(math.max),
+        requestId: _saveKey!,
+        capture: [
+          for (var i = 0; i < _points.length; i++)
+            {
+              'lat': _points[i].latitude,
+              'lon': _points[i].longitude,
+              'timestamp': _times[i]?.toIso8601String(),
+              'accuracy_m': _accuracies[i],
+            },
+        ],
+        gpsAccuracyM: _accuracies.whereType<double>().isEmpty
+            ? null
+            : _accuracies.whereType<double>().reduce(math.max),
       );
       widget.state.replaceFarms([
         farm,
@@ -380,7 +503,9 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
       if (mounted) {
         setState(() {
           _saved = farm;
-          _notice = 'Farm saved. Ready to analyze.';
+          _notice = farm['_local_only'] == true
+              ? 'Saved on this device. Sync from My Farms when internet is available; analysis requires an online connection.'
+              : 'Farm synced. Ready to analyze online.';
         });
       }
     } catch (error) {
@@ -400,6 +525,9 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
       _message(error);
       return;
     }
+    _draftFinished = true;
+    await BoundaryDraftStore.write('gps', null);
+    if (!mounted) return;
     Navigator.pop(context, true);
   }
 
@@ -660,18 +788,19 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                   FilledButton.icon(
                     onPressed: _busy ? null : _save,
                     icon: const Icon(Icons.save_outlined),
-                    label: Text(_busy ? 'Saving…' : 'Confirm and Save Farm'),
+                    label: Text(
+                      _busy
+                          ? 'Saving…'
+                          : widget.state.offlineWorkspace
+                          ? 'Save on device'
+                          : 'Confirm and Save Farm',
+                    ),
                   ),
                 ],
                 if (_saved != null) ...[
                   AnalysisCoverageCard(record: _saved!),
                   FilledButton.icon(
-                    onPressed:
-                        _busy ||
-                            analysisMapValue(
-                                  _saved!['analysis_coverage'],
-                                )['supported'] ==
-                                false
+                    onPressed: _busy || !farmCanAnalyze(_saved!)
                         ? null
                         : _analyze,
                     icon: const Icon(Icons.analytics_outlined),
@@ -731,7 +860,101 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   bool _busy = false, _saveAsFarm = true;
   Map<String, dynamic>? _saved;
   @override
+  void initState() {
+    super.initState();
+    _name.addListener(_persistDraft);
+    _location.addListener(_persistDraft);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _restoreDraft());
+  }
+
+  bool _draftLoading = true;
+  bool _draftFinished = false;
+
+  Future<void> _persistDraft() async {
+    if (_draftLoading || _draftFinished) return;
+    try {
+      await BoundaryDraftStore.write(
+        'polygon',
+        _points.isEmpty
+            ? null
+            : {
+                'points': _points
+                    .map((p) => {'lat': p.latitude, 'lng': p.longitude})
+                    .toList(),
+                'name': _name.text,
+                'location': _location.text,
+                'request_key': _saveKey,
+                'fingerprint': _saveFingerprint,
+                'saved_farm_id': _saved?['id'],
+                'save_as_farm': _saveAsFarm,
+              },
+      );
+    } catch (_) {
+      if (mounted) {
+        super.setState(
+          () => _notice =
+              'Draft could not be stored on this device. Keep this page open until saving.',
+        );
+      }
+    }
+  }
+
+  Future<void> _restoreDraft() async {
+    try {
+      final draft = await BoundaryDraftStore.read('polygon');
+      if (draft == null || !mounted) return;
+      final resume = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: const Text('Resume boundary draft?'),
+          content: Text(
+            'An unfinished boundary for ${draft['name'] ?? 'this account'} is saved on this device.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Discard'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Resume'),
+            ),
+          ],
+        ),
+      );
+      if (!mounted) return;
+      if (resume != true) {
+        await BoundaryDraftStore.write('polygon', null);
+        return;
+      }
+      _points.addAll(FarmGeometry.fromPayload(draft['points']));
+      _name.text = '${draft['name'] ?? ''}';
+      _location.text = '${draft['location'] ?? ''}';
+      _saveKey = draft['request_key'] as String?;
+      _saveFingerprint = draft['fingerprint'] as String?;
+      _saveAsFarm = draft['save_as_farm'] != false;
+      final id = int.tryParse('${draft['saved_farm_id']}');
+      if (id != null) _saved = await widget.state.api.getFarm(id);
+    } catch (_) {
+      _notice =
+          'Draft could not be fully restored. Review this boundary before saving.';
+    } finally {
+      _draftLoading = false;
+      if (mounted) super.setState(() {});
+    }
+  }
+
+  @override
+  void setState(VoidCallback fn) {
+    super.setState(fn);
+    if (!_draftLoading) unawaited(_persistDraft());
+  }
+
+  @override
   void dispose() {
+    _name.removeListener(_persistDraft);
+    _location.removeListener(_persistDraft);
     _controller.dispose();
     _name.dispose();
     _location.dispose();
@@ -739,7 +962,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   }
 
   void _tap(LatLng point) {
-    if (_busy || _saved != null || _mode == 'pan') return;
+    if (_draftLoading || _busy || _saved != null || _mode == 'pan') return;
     if (!FarmGeometry.insideCoverage(point)) {
       setState(
         () => _notice =
@@ -766,7 +989,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   }
 
   Future<void> _run({required bool analyze}) async {
-    if (_busy) return;
+    if (_draftLoading || _busy) return;
     final error = FarmGeometry.validate(_points);
     if (error != null) {
       setState(() => _notice = error);
@@ -793,12 +1016,12 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
           _saveKey =
               'farm-draw-${DateTime.now().microsecondsSinceEpoch}-${math.Random.secure().nextInt(1 << 30)}';
         }
-        _saved = await widget.state.api.createFarm(
+        _saved = await widget.state.saveFarm(
           farmName: _name.text.trim(),
           polygon: polygon,
           locationName: _location.text.trim(),
           mappingMethod: 'manual_draw',
-          requestId: _saveKey,
+          requestId: _saveKey!,
         );
         widget.state.replaceFarms([
           _saved!,
@@ -807,6 +1030,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
           ),
         ]);
       }
+      await _persistDraft();
       if (analyze) {
         String? analysisError;
         if (_saved != null) {
@@ -817,12 +1041,20 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
             ..addAll(FarmGeometry.fromPayload(FarmGeometry.payload(_points)));
           analysisError = await widget.state.analyzePolygon();
         }
-        if (analysisError != null) throw Exception(analysisError);
+        if (analysisError != null) {
+          if (mounted) setState(() => _notice = analysisError);
+          return;
+        }
+        _draftFinished = true;
+        await BoundaryDraftStore.write('polygon', null);
         if (mounted) {
           setState(() => _busy = false);
           Navigator.pop(context, true);
         }
       } else if (mounted) {
+        _draftFinished = true;
+        await BoundaryDraftStore.write('polygon', null);
+        if (!mounted) return;
         setState(() => _busy = false);
         Navigator.pushReplacement(
           context,
@@ -1022,7 +1254,7 @@ class _BoundaryBanner extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: softGreen,
+      color: geoPanelColor(context),
       borderRadius: BorderRadius.circular(GeoDesign.cardRadius),
     ),
     child: LayoutBuilder(
@@ -1035,10 +1267,10 @@ class _BoundaryBanner extends StatelessWidget {
               children: [
                 Text(
                   gps ? 'Walk the perimeter' : 'Draw Your Farm Boundary',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 19,
                     fontWeight: FontWeight.w800,
-                    color: darkGreen,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 5),
@@ -1046,10 +1278,10 @@ class _BoundaryBanner extends StatelessWidget {
                   gps
                       ? 'and return to your starting point.'
                       : 'Tap around your farm to draw its boundary. Edit or move points anytime. Device location is optional.',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     height: 1.35,
-                    color: Color(0xFF53635B),
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
                   ),
                 ),
                 if (gps) ...[
@@ -1072,9 +1304,11 @@ class _BoundaryBanner extends StatelessWidget {
                                   backgroundColor: const Color(0xFFC2E5CB),
                                   child: Text(
                                     '${step.$1 + 1}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 12,
-                                      color: darkGreen,
+                                      color: Theme.of(
+                                        context,
+                                      ).colorScheme.onSurface,
                                       fontWeight: FontWeight.w700,
                                     ),
                                   ),
@@ -1083,10 +1317,12 @@ class _BoundaryBanner extends StatelessWidget {
                                 Text(
                                   step.$2,
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 10,
                                     height: 1.25,
-                                    color: Color(0xFF53635B),
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.onSurfaceVariant,
                                   ),
                                 ),
                               ],
@@ -1102,7 +1338,7 @@ class _BoundaryBanner extends StatelessWidget {
           if (constraints.maxWidth >= 330 &&
               MediaQuery.textScalerOf(context).scale(1) <= 1.3) ...[
             const SizedBox(width: 8),
-            const Expanded(
+            Expanded(
               flex: 1,
               child: SizedBox(height: 120, child: GeoFieldIllustration()),
             ),
@@ -1119,10 +1355,10 @@ class _GpsTipCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: softGreen,
+      color: geoPanelColor(context),
       borderRadius: BorderRadius.circular(GeoDesign.smallRadius),
     ),
-    child: const Row(
+    child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
@@ -1145,7 +1381,7 @@ class _GpsTipCard extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 12,
                   height: 1.4,
-                  color: Color(0xFF53635B),
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                 ),
               ),
             ],
@@ -1163,7 +1399,7 @@ class _BoundarySummary extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(18),
     decoration: BoxDecoration(
-      color: const Color(0xFFEAF5EF),
+      color: geoPanelColor(context, const Color(0xFFEAF5EF)),
       borderRadius: BorderRadius.circular(20),
     ),
     child: Row(
@@ -1175,17 +1411,17 @@ class _BoundarySummary extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Area (Estimated)',
-                style: TextStyle(color: Color(0xFF58656B), fontSize: 12),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 5),
               Text(
                 '${(FarmGeometry.areaSquareMetres(points) / 10000).toStringAsFixed(3)} ha',
-                style: const TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -1197,17 +1433,17 @@ class _BoundarySummary extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Vertices',
-                style: TextStyle(color: Color(0xFF58656B), fontSize: 12),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  fontSize: 12,
+                ),
               ),
               const SizedBox(height: 5),
               Text(
                 '${points.length}',
-                style: const TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 23, fontWeight: FontWeight.w800),
               ),
             ],
           ),
@@ -1250,10 +1486,10 @@ class _MappingNotice extends StatelessWidget {
     margin: const EdgeInsets.symmetric(vertical: 10),
     padding: const EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: softGreen,
+      color: geoPanelColor(context),
       borderRadius: BorderRadius.circular(12),
     ),
-    child: Text(message, style: const TextStyle(color: darkGreen)),
+    child: Text(message, style: TextStyle(color: darkGreen)),
   );
 }
 
@@ -1286,9 +1522,21 @@ class _BoundaryMap extends StatefulWidget {
 class _BoundaryMapState extends State<_BoundaryMap> {
   bool _satellite = true, _fullscreen = false;
   final MapController _ownController = MapController();
+  bool get _effectiveSatellite => _satellite && !lowBandwidthMode.value;
+  void _bandwidthChanged() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    lowBandwidthMode.addListener(_bandwidthChanged);
+  }
+
   MapController get _map => widget.controller ?? _ownController;
   @override
   void dispose() {
+    lowBandwidthMode.removeListener(_bandwidthChanged);
     _ownController.dispose();
     super.dispose();
   }
@@ -1363,7 +1611,7 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                   children: [
                     TileLayer(
                       key: ValueKey(_tileAttempt),
-                      urlTemplate: _satellite
+                      urlTemplate: _effectiveSatellite
                           ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
                           : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.geosustain.mobile',
@@ -1454,10 +1702,11 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                   left: 8,
                   top: 8,
                   child: SegmentedButton<bool>(
-                    segments: const [
+                    segments: [
                       ButtonSegment(
                         value: true,
                         label: Text('Satellite'),
+                        enabled: !lowBandwidthMode.value,
                         icon: Icon(Icons.layers),
                       ),
                       ButtonSegment(
@@ -1466,7 +1715,7 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                         icon: Icon(Icons.map_outlined),
                       ),
                     ],
-                    selected: {_satellite},
+                    selected: {_effectiveSatellite},
                     onSelectionChanged: (v) =>
                         setState(() => _satellite = v.first),
                     showSelectedIcon: false,
@@ -1559,7 +1808,7 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                   child: ColoredBox(
                     color: Colors.white70,
                     child: Text(
-                      _satellite
+                      _effectiveSatellite
                           ? 'Imagery: Esri, Maxar, Earthstar Geographics'
                           : '© OpenStreetMap contributors',
                       style: const TextStyle(fontSize: 9),

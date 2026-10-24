@@ -1,25 +1,39 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 
   <base href="$FLUTTER_BASE_HREF">
 
   <meta charset="UTF-8">
   <meta content="IE=Edge" http-equiv="X-UA-Compatible">
-  <meta name="description" content="A new Flutter project.">
+  <meta name="description" content="Agricultural land analysis and planning support for Panabo City.">
 
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
-  <meta name="apple-mobile-web-app-title" content="geosustain_clean_arranged">
+  <meta name="apple-mobile-web-app-title" content="GeoSustain">
   <link rel="apple-touch-icon" href="icons/Icon-192.png">
 
-  <link rel="icon" type="image/png" href="favicon.png"/>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg"/>
 
-  <title>geosustain_clean_arranged</title>
+  <title>GeoSustain</title>
   <link rel="manifest" href="manifest.json">
 </head>
 <body>
+  <script>
+    // Flutter injects a restrictive viewport; retain browser pinch and page zoom.
+    const allowZoom = () => { const v = document.querySelector('meta[name="viewport"]'); if (v && v.content !== 'width=device-width, initial-scale=1') v.content = 'width=device-width, initial-scale=1'; };
+    new MutationObserver(allowZoom).observe(document.head, {childList:true, subtree:true, attributes:true, attributeFilter:['content']});
+    allowZoom();
+  </script>
   
+  <script src="firebase-config.js"></script>
+  <script>
+    if (self.GEOSUSTAIN_FIREBASE && 'serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('firebase-messaging-sw.js', {
+        scope: 'firebase-cloud-messaging-push-scope'
+      }));
+    }
+  </script>
   <script src="flutter_bootstrap.js" async></script>
 </body>
 </html>

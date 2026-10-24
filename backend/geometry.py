@@ -26,8 +26,8 @@ def polygon_centroid(polygon):
 
 
 def in_study_area(lat, lng):
-    # Existing app coverage rectangle, not an official administrative boundary.
-    return 7.20 <= lat <= 7.41 and 125.50 <= lng <= 125.72
+    from city_boundary import contains_point
+    return contains_point(lat, lng)
 
 
 def polygon_area_m2(polygon):
@@ -124,6 +124,9 @@ def normalize_polygon(polygon):
             "The boundary crosses or touches itself. Correct the boundary before continuing."
         )
     ring = [{"lat": lat, "lng": lng} for lat, lng in points + points[:1]]
+    from city_boundary import contains_polygon
+    if not contains_polygon(ring):
+        raise ValueError('The entire boundary must be inside the Panabo City reference boundary.')
     if polygon_area_m2(ring) < 4:
         raise ValueError("The boundary must enclose at least 4 square metres of land.")
     return ring

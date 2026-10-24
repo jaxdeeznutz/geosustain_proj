@@ -2,7 +2,7 @@
 from contextlib import nullcontext
 from unittest.mock import Mock
 
-from test_mobile_workflow import client, RING  # noqa: F401
+from test_mobile_workflow import RING
 from test_regressions import api
 from geometry import normalize_polygon, polygon_area_m2
 

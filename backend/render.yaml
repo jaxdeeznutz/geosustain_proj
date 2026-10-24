@@ -7,3 +7,5 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9
+      - key: ANALYSIS_JOBS_ENABLED
+        value: "1"

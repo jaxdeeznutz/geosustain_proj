@@ -74,7 +74,7 @@
       <tbody>
         {% for row in history %}
         <tr>
-          <td>{{ loop.index }}</td>
+          <td>{{ offset + loop.index }}</td>
           <td>{{ row.analyzed_at.strftime('%b %d, %Y %H:%M') if row.analyzed_at else '--' }}</td>
           <td>{{ '%.4f'|format(row.center_lat) }}, {{ '%.4f'|format(row.center_lon) }}</td>
           <td><strong>{{ row.predicted_crop or row.recommendation_title or '--' }}</strong></td>
@@ -105,6 +105,11 @@
          and draw a polygon to run your first analysis.</p>
     </div>
     {% endif %}
+    <nav aria-label="Analysis history pages" style="display:flex;gap:20px;margin-top:20px;">
+      {% if offset > 0 %}<a href="/history?offset={{ [0, offset - 20]|max }}">Previous</a>{% endif %}
+      <span>Page {{ (offset // 20) + 1 }}</span>
+      {% if has_more %}<a href="/history?offset={{ offset + 20 }}">Next</a>{% endif %}
+    </nav>
   </div>
 
 </body>

@@ -286,6 +286,11 @@ void main() {
         300,
         scrollable: find.byType(Scrollable).first,
       );
+      await Scrollable.ensureVisible(
+        tester.element(find.text('Analyze This Farm')),
+        alignment: .5,
+      );
+      await tester.pumpAndSettle();
       expect(find.text('Analyze This Farm').hitTestable(), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());

@@ -324,19 +324,35 @@ class _EditProfilePageState extends State<EditProfilePage> {
   }
 
   Future<void> pickPhoto() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(
-      source: ImageSource.gallery,
-      imageQuality: 70,
-      maxWidth: 512,
-      maxHeight: 512,
-    );
-    if (file == null) return;
-    final bytes = await file.readAsBytes();
-    setState(() {
-      pickedPhotoBytes = bytes;
-      pickedPhotoBase64 = base64Encode(bytes);
-    });
+    try {
+      final picker = ImagePicker();
+      final file = await picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 70,
+        maxWidth: 512,
+        maxHeight: 512,
+      );
+      if (file == null) return;
+      final bytes = await file.readAsBytes();
+      final encoded = profilePhotoDataUrl(bytes);
+      if (!mounted) return;
+      setState(() {
+        pickedPhotoBytes = bytes;
+        pickedPhotoBase64 = encoded;
+      });
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              error is FormatException
+                  ? error.message
+                  : friendlyErrorMessage(error),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   Future<void> saveProfile() async {
@@ -384,7 +400,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
         title: Text(delete ? 'Delete account?' : 'Deactivate account?'),
         content: Text(
           delete
-              ? 'This permanently removes your account and linked records from the online database.'
+              ? 'This removes your account, profile photo, farms, coordinates, analyses and reports. Anonymized decision and security audit evidence is retained. Database backups expire under the deployment retention policy.'
               : 'This disables your account until an admin reactivates it.',
         ),
         actions: [
@@ -424,7 +440,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget build(BuildContext context) {
     final avatarBytes = pickedPhotoBytes ?? widget.state.profilePhotoBytes;
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GeoSafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -516,7 +532,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       child: Text(
                         role == 'Agricultural Planning Analyst'
                             ? 'Agricultural Planning Analyst: view reports, saved analyses, and planning insights for independent environmental monitoring.'
-                            : 'Farmer: analyze land, get crop recommendations, save reports, and receive weather alerts.',
+                            : 'Farmer: analyze land, get crop recommendations, save reports, and view weather advisories and review decisions.',
                         style: const TextStyle(
                           color: darkGreen,
                           fontWeight: FontWeight.w700,
@@ -547,6 +563,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           : const Icon(Icons.save_outlined),
                       label: Text(saving ? 'Saving...' : 'Save Changes'),
                     ),
+                    IdentityProfileSection(state: widget.state),
                   ],
                 ),
               ),
@@ -594,7 +611,7 @@ class SavedAnalysesPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = state.savedAnalyses;
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GeoSafeArea(
         child: Column(
           children: [
@@ -658,7 +675,7 @@ class ReportsListPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = state.generatedReports;
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GeoSafeArea(
         child: Column(
           children: [
@@ -733,7 +750,7 @@ class SavedAnalysisDetailPage extends StatelessWidget {
     final lat = record['center_lat'] ?? record['lat'];
     final lon = record['center_lon'] ?? record['lon'];
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GeoSafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),

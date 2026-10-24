@@ -4,15 +4,21 @@ class WebAuthLoginShell extends StatelessWidget {
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final bool loading;
+  final String? emailError;
+  final String? passwordError;
   final VoidCallback onLogin;
   final VoidCallback onCreate;
+  final VoidCallback? onGoogle;
   const WebAuthLoginShell({
     super.key,
     required this.emailController,
     required this.passwordController,
     required this.loading,
+    this.emailError,
+    this.passwordError,
     required this.onLogin,
     required this.onCreate,
+    this.onGoogle,
   });
 
   @override
@@ -23,176 +29,202 @@ class WebAuthLoginShell extends StatelessWidget {
         children: [
           Expanded(
             flex: 9,
-            child: Container(
-              height: double.infinity,
-              padding: const EdgeInsets.fromLTRB(64, 56, 64, 36),
-              decoration: const BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [Color(0xFFF2FBF6), Color(0xFFE7F6EE)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
+            child: SingleChildScrollView(
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(64, 56, 64, 36),
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFF2FBF6), Color(0xFFE7F6EE)],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
                 ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.eco_rounded, color: green, size: 42),
-                      SizedBox(width: 12),
-                      Text(
-                        'GeoSustain',
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.eco_rounded, color: green, size: 42),
+                        SizedBox(width: 12),
+                        Text(
+                          'GeoSustain',
+                          style: TextStyle(
+                            fontSize: 34,
+                            fontWeight: FontWeight.w900,
+                            color: green,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 78),
+                    const Text(
+                      'Smart Decisions.\nSustainable Future.',
+                      style: TextStyle(
+                        fontSize: 42,
+                        height: 1.15,
+                        fontWeight: FontWeight.w900,
+                        color: Color(0xFF102018),
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    const SizedBox(
+                      width: 560,
+                      child: Text(
+                        'A web analyst dashboard for agricultural suitability, crop trends, environmental monitoring, and planning-ready reports.',
                         style: TextStyle(
-                          fontSize: 34,
-                          fontWeight: FontWeight.w900,
-                          color: green,
+                          fontSize: 17,
+                          height: 1.55,
+                          color: Colors.black54,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 78),
-                  const Text(
-                    'Smart Decisions.\nSustainable Future.',
-                    style: TextStyle(
-                      fontSize: 42,
-                      height: 1.15,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF102018),
                     ),
-                  ),
-                  const SizedBox(height: 22),
-                  const SizedBox(
-                    width: 560,
-                    child: Text(
-                      'A web analyst dashboard for agricultural suitability, crop trends, environmental monitoring, and planning-ready reports.',
+                    const SizedBox(height: 48),
+                    Wrap(
+                      spacing: 18,
+                      runSpacing: 18,
+                      children: const [
+                        _WebLoginFeature(
+                          icon: Icons.map_rounded,
+                          title: 'Geospatial Analysis',
+                          text: 'Review field suitability and mapped areas.',
+                        ),
+                        _WebLoginFeature(
+                          icon: Icons.query_stats_rounded,
+                          title: 'Data Insights',
+                          text: 'Analyze crop trends and suitability records.',
+                        ),
+                        _WebLoginFeature(
+                          icon: Icons.cloud_rounded,
+                          title: 'Weather Monitoring',
+                          text: 'Track rainfall and climate factors.',
+                        ),
+                        _WebLoginFeature(
+                          icon: Icons.picture_as_pdf_rounded,
+                          title: 'Reports & Export',
+                          text: 'Generate planning summaries and reports.',
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    const Text(
+                      'Secure access for agricultural planning',
                       style: TextStyle(
-                        fontSize: 17,
-                        height: 1.55,
-                        color: Colors.black54,
+                        color: Colors.black45,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 48),
-                  Wrap(
-                    spacing: 18,
-                    runSpacing: 18,
-                    children: const [
-                      _WebLoginFeature(
-                        icon: Icons.map_rounded,
-                        title: 'Geospatial Analysis',
-                        text: 'Review field suitability and mapped areas.',
-                      ),
-                      _WebLoginFeature(
-                        icon: Icons.query_stats_rounded,
-                        title: 'Data Insights',
-                        text: 'Analyze crop trends and suitability records.',
-                      ),
-                      _WebLoginFeature(
-                        icon: Icons.cloud_rounded,
-                        title: 'Weather Monitoring',
-                        text: 'Track rainfall, alerts, and climate factors.',
-                      ),
-                      _WebLoginFeature(
-                        icon: Icons.picture_as_pdf_rounded,
-                        title: 'Reports & Export',
-                        text: 'Generate planning summaries and reports.',
-                      ),
-                    ],
-                  ),
-                  const Spacer(),
-                  const Text(
-                    'Secure analyst access • Email + password • PostgreSQL-backed system',
-                    style: TextStyle(
-                      color: Colors.black45,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),
           Expanded(
             flex: 11,
-            child: Center(
-              child: Container(
-                width: 560,
-                padding: const EdgeInsets.all(48),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(30),
-                  border: Border.all(color: const Color(0xFFE1E8E2)),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: .06),
-                      blurRadius: 34,
-                      offset: const Offset(0, 18),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Container(
-                      width: 70,
-                      height: 70,
-                      decoration: const BoxDecoration(
-                        color: softGreen,
-                        shape: BoxShape.circle,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(vertical: 24),
+              child: Center(
+                child: Container(
+                  width: 560,
+                  padding: const EdgeInsets.all(48),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(30),
+                    border: Border.all(color: const Color(0xFFE1E8E2)),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: .06),
+                        blurRadius: 34,
+                        offset: const Offset(0, 18),
                       ),
-                      child: const Icon(
-                        Icons.eco_rounded,
-                        color: green,
-                        size: 46,
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Container(
+                        width: 70,
+                        height: 70,
+                        decoration: const BoxDecoration(
+                          color: softGreen,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.eco_rounded,
+                          color: green,
+                          size: 46,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Welcome Back!',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.w900,
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Welcome Back!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      'Sign in to your GeoSustain analyst dashboard',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.black54),
-                    ),
-                    const SizedBox(height: 34),
-                    TextField(
-                      controller: emailController,
-                      keyboardType: TextInputType.emailAddress,
-                      decoration: const InputDecoration(
-                        labelText: 'Email Address',
-                        prefixIcon: Icon(Icons.mail_outline),
+                      const SizedBox(height: 8),
+                      const Text(
+                        'Sign in to your GeoSustain analyst dashboard',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.black54),
                       ),
-                    ),
-                    const SizedBox(height: 14),
-                    TextField(
-                      controller: passwordController,
-                      obscureText: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: Icon(Icons.lock_outline),
+                      const SizedBox(height: 34),
+                      TextField(
+                        controller: emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          errorText: emailError,
+                          labelText: 'Email Address',
+                          prefixIcon: const Icon(Icons.mail_outline),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton.icon(
-                      onPressed: loading ? null : onLogin,
-                      icon: const Icon(Icons.arrow_forward_rounded),
-                      label: Text(
-                        loading ? 'Signing in...' : 'Sign In to Dashboard',
+                      const SizedBox(height: 14),
+                      TextField(
+                        controller: passwordController,
+                        obscureText: true,
+                        onSubmitted: (_) {
+                          if (!loading) onLogin();
+                        },
+                        decoration: InputDecoration(
+                          errorText: passwordError,
+                          labelText: 'Password',
+                          prefixIcon: const Icon(Icons.lock_outline),
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 18),
-                    TextButton(
-                      onPressed: loading ? null : onCreate,
-                      child: const Text('Create Analyst Account'),
-                    ),
-                  ],
+                      TextButton(
+                        onPressed: loading
+                            ? null
+                            : () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const PasswordRecoveryPage(),
+                                ),
+                              ),
+                        child: const Text('Forgot password?'),
+                      ),
+                      const SizedBox(height: 24),
+                      FilledButton.icon(
+                        onPressed: loading ? null : onLogin,
+                        icon: const Icon(Icons.arrow_forward_rounded),
+                        label: Text(
+                          loading ? 'Signing in...' : 'Sign In to Dashboard',
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: loading ? null : onGoogle,
+                        icon: const Icon(Icons.account_circle_outlined),
+                        label: const Text('Continue with Google'),
+                      ),
+                      const SizedBox(height: 18),
+                      TextButton(
+                        onPressed: loading ? null : onCreate,
+                        child: const Text('Create Farmer Account'),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),

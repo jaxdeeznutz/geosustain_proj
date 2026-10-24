@@ -5,7 +5,7 @@ from provider_cache import retrieve
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
-from suitability import attach_assessment, number
+from suitability import attach_assessment, mark_preliminary, number
 from model_explainability import forest_snapshot
 from model_ranking import attach_model_ranking, ModelRankingUnavailable
 from nutrient_contract import legacy_inputs, model_values
@@ -73,13 +73,15 @@ def terrain_slope(lat, lon):
         ee.Reducer.mean(), ee.Geometry.Point([lon,lat]).buffer(30), 30).get('slope').getInfo()
     return math.tan(math.radians(float(degrees))) * 100 if degrees is not None else None
 
-def analyze_location(lat, lon, active_crops=None):
+def analyze_location(lat, lon, active_crops=None, *, preliminary=False):
     import rainfallDatasets as env
     logger.info('Environmental retrieval started')
     measurements, raw, quality = {}, {}, {}
     tasks = {'soil_ph': env.get_soil_ph, 'elevation': env.get_elevation,
              'ndvi': env.get_ndvi, 'rainfall_recent': env.get_rainfall,
              'climate': climate_normals, 'slope': terrain_slope, 'weather': env.get_live_weather, 'nitrogen': env.get_soil_nitrogen}
+    if preliminary:
+        tasks.pop('nitrogen')
     with ThreadPoolExecutor(max_workers=4) as pool:
         ttls = {'soil_ph': 86400, 'elevation': 86400, 'slope': 86400,
                 'climate': 21600, 'ndvi': 3600, 'rainfall_recent': 900,
@@ -115,6 +117,9 @@ def analyze_location(lat, lon, active_crops=None):
         'land_type':'Vegetation observation only', 'land_status':'Environmental screening',
         'model_explanation':None}
     attach_climate_fields(result, measurements)
+    if preliminary:
+        assessed = attach_assessment(result, measurements, active_crops)
+        return mark_preliminary(assessed)
     # Rank with the existing model; retain input quality and training limitations.
     snapshot = None
     try:
@@ -181,4 +186,7 @@ def merge_results(samples, active_crops=None):
                       ('rainfall_mm','rainfall_recent'),('elevation_m','elevation'),('slope_pct','slope'),('ndvi','ndvi')]:
         result[field] = measurements.get(key,{}).get('value')
     attach_climate_fields(result, measurements)
-    return attach_model_ranking(attach_assessment(result,measurements,active_crops), snapshots, active_crops)
+    assessed = attach_assessment(result,measurements,active_crops)
+    if all(s.get('analysis_mode') == 'preliminary_environmental' for s in samples):
+        return mark_preliminary(assessed)
+    return attach_model_ranking(assessed, snapshots, active_crops)

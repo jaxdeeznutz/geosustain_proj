@@ -7,6 +7,9 @@ build/
 android/.gradle/
 android/.kotlin/
 android/local.properties
+android/key.properties
+*.jks
+*.keystore
 android/app/src/main/java/io/flutter/plugins/GeneratedPluginRegistrant.java
 __pycache__/
 *.py[cod]
@@ -23,3 +26,6 @@ venv/
 docs/research/*.pdf
 # Unverified user-provided soil records: local reference only.
 data/cagro_pending/
+
+# QA review outputs
+qa-findings/

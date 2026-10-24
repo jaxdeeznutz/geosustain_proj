@@ -73,7 +73,12 @@ void main() {
         find.textContaining('CAGRO historical soil observation.'),
         findsOneWidget,
       );
-      expect(find.text(status), findsOneWidget);
+      expect(
+        find.text(
+          status == 'Outside documented range' ? 'Not suitable' : status,
+        ),
+        findsOneWidget,
+      );
       expect(find.textContaining('Existing model estimate'), findsNothing);
       expect(find.text('Used in crop prediction'), findsNothing);
     });

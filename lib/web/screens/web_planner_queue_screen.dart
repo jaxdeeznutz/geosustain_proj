@@ -35,6 +35,8 @@ class WebPlannerQueueScreen extends StatefulWidget {
 class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
   AnalysisState get state => widget.state;
   bool _loadedOnce = false;
+  int _page = 0;
+  String _query = '';
 
   @override
   void initState() {
@@ -72,6 +74,15 @@ class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
   @override
   Widget build(BuildContext context) {
     final counts = state.plannerCounts;
+    final filtered = state.plannerQueue
+        .where(
+          (r) => '${r['session_id']} ${r['farmer_name']} ${r['place_name']}'
+              .toLowerCase()
+              .contains(_query.toLowerCase()),
+        )
+        .toList();
+    final maxPage = filtered.isEmpty ? 0 : (filtered.length - 1) ~/ 50;
+    if (_page > maxPage) _page = maxPage;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -152,6 +163,33 @@ class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
                   ),
                 ],
               ),
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Search all submissions',
+                  prefixIcon: Icon(Icons.search),
+                ),
+                onChanged: (value) => setState(() {
+                  _query = value;
+                  _page = 0;
+                }),
+              ),
+              Wrap(
+                spacing: 12,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Text('${filtered.length} submissions · Page ${_page + 1}'),
+                  TextButton(
+                    onPressed: _page > 0 ? () => setState(() => _page--) : null,
+                    child: const Text('Previous'),
+                  ),
+                  TextButton(
+                    onPressed: _page < maxPage
+                        ? () => setState(() => _page++)
+                        : null,
+                    child: const Text('Next'),
+                  ),
+                ],
+              ),
               const SizedBox(height: 18),
               if (state.plannerQueueLoading && !_loadedOnce)
                 const Padding(
@@ -175,7 +213,9 @@ class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
                     return Wrap(
                       spacing: 16,
                       runSpacing: 16,
-                      children: state.plannerQueue
+                      children: filtered
+                          .skip(_page * 50)
+                          .take(50)
                           .map(
                             (r) => SizedBox(
                               width: width,
@@ -777,6 +817,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                 ),
                 const Spacer(),
                 IconButton(
+                  tooltip: 'Close analysis review',
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close_rounded),
                 ),
@@ -1506,6 +1547,7 @@ class _PlannerMapPreview extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             Image.network(
+              semanticLabel: 'Satellite view of the submitted farm boundary',
               _satelliteUrl(),
               fit: BoxFit.fill,
               errorBuilder: (_, _, _) => Container(

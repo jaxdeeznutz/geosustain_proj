@@ -244,7 +244,7 @@ class ReportPage extends StatelessWidget {
         ? List.from(d!['data_quality_warnings'])
         : const [];
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GeoSafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -424,7 +424,7 @@ class AdminDashboardPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: bg,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: GeoSafeArea(
         child: ListView(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
@@ -507,22 +507,22 @@ class _AdminStat extends StatelessWidget {
   );
 }
 
-class NotificationsPage extends StatelessWidget {
+class WeatherNotificationsPage extends StatelessWidget {
   final AnalysisState? state;
-  const NotificationsPage({super.key, this.state});
+  const WeatherNotificationsPage({super.key, this.state});
 
   @override
   Widget build(BuildContext context) {
     final st = state;
     if (st == null) {
       return Scaffold(
-        backgroundColor: bg,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         body: GeoSafeArea(
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
               GeoSustainHeader(
-                title: 'Notifications',
+                title: 'Weather Advisories',
                 back: () => Navigator.pop(context),
                 trailing: const SizedBox(width: 48),
               ),
@@ -553,7 +553,7 @@ class NotificationsPage extends StatelessWidget {
           loading: st.weatherLoading,
         );
         return Scaffold(
-          backgroundColor: bg,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: GeoSafeArea(
             child: RefreshIndicator(
               onRefresh: () async {
@@ -563,7 +563,7 @@ class NotificationsPage extends StatelessWidget {
                 padding: const EdgeInsets.all(16),
                 children: [
                   GeoSustainHeader(
-                    title: 'Notifications',
+                    title: 'Weather Advisories',
                     back: () => Navigator.pop(context),
                     trailing: const SizedBox(width: 48),
                   ),
@@ -604,8 +604,10 @@ class NotificationsPage extends StatelessWidget {
                                     : () => st.refreshLiveWeather(),
                                 child: Text(
                                   st.weatherLoading ? 'Updating...' : 'Refresh',
-                                  style: const TextStyle(
-                                    color: green,
+                                  style: TextStyle(
+                                    color: Theme.of(
+                                      context,
+                                    ).colorScheme.primary,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -618,8 +620,10 @@ class NotificationsPage extends StatelessWidget {
                               st.liveWeather,
                               loading: st.weatherLoading,
                             ),
-                            style: const TextStyle(
-                              color: Colors.black54,
+                            style: TextStyle(
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
                               height: 1.35,
                             ),
                           ),

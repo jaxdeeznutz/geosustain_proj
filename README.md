@@ -1,4 +1,8 @@
+> Current implementation and QA evidence: [readiness execution](defense-evidence/readiness-execution/README.md), [updated QA](defense-evidence/readiness-execution/QA_CURRENT.html), [phase index](defense-readiness-plan/README.md). Scientific/provider/device and deployment acceptance remain explicit; local test passes are not whole-project signoff.
+
 # GeoSustain
+
+Defense implementation and evidence: [handover index](defense-evidence/2026-10-23/README.md), [work-item register](defense-evidence/2026-10-23/docs/WORK_ITEM_REGISTER.md), and [deployment/rollback](defense-evidence/2026-10-23/docs/DEPLOYMENT_AND_ROLLBACK.md). External account, push, device and scientific acceptance dependencies remain explicit in that register.
 
 Implementation notes: [model ranking](docs/MODEL_RANKING_2026-10-14.md), [environmental recovery](docs/ENVIRONMENTAL_RECOVERY_2026-10-14.md), and [analysis/CORS fixes](docs/ANALYSIS_CORS_FIX_2026-10-14.md).
 
@@ -42,11 +46,11 @@ Use `backend/.env.example` as a guide and retain your existing values for:
 - `SECRET_KEY`: your existing strong deployment signing secret. Changing it invalidates existing sessions/tokens.
 - `OPENWEATHER_API_KEY`: existing weather key.
 - `GEE_PROJECT_ID` and `GEE_SERVICE_ACCOUNT_JSON`, or locally authenticated Earth Engine credentials.
-- Email/password authentication uses PostgreSQL and bcrypt. No Firebase or SMTP configuration is required. The existing-account migration script is `backend/migrate_password_auth.py`.
+- Email/password authentication uses PostgreSQL and bcrypt. Email-code signup and one-use email recovery are implemented with TLS SMTP or Resend HTTPS; production defaults to required verification, while the explicit example `0` is for local development. Google sign-in, explicit password-account linking, profile phone editing and Firebase SMS proof exchange are implemented. They require an owned Firebase project and real mail sender, which have not been supplied. See [provider setup](deployment/IDENTITY_AND_DELIVERY_SETUP.md). The existing-account migration script is `backend/migrate_password_auth.py`.
 
 **Before deploying the cleaned backend to Render, ensure `OPENWEATHER_API_KEY` is configured in Render Environment.** The local `.env` is intentionally ignored by Git. The old public source-code fallback key has been removed. Consider rotating that previously embedded key separately.
 
-No changes were deployed during this review. Keep your current Render environment and database settings. Root `render.yaml` and `backend/render.yaml` are retained for the two existing repository-root layouts.
+The current changes have not been deployed. Root `render.yaml` and `backend/render.yaml` support the two existing repository-root layouts and enable durable analysis jobs. Read [release/signing/rollback handover](deployment/RELEASE_HANDOVER.md) before publishing matching backend/web/Android artifacts. Main Android release transport is HTTPS-only; local cleartext is restricted to the debug overlay. Release builds require the private signing configuration.
 
 ## Verification
 

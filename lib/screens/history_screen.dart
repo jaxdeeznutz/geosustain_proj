@@ -103,8 +103,10 @@ class _HistoryPageState extends State<HistoryPage> {
       return GeoSafeArea(
         child: Column(
           children: [
-            GeoHeader(
-              subtitle: 'History',
+            GeoSustainHeader(
+              title: 'History',
+              state: widget.state,
+              showNotifications: false,
               trailing: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -203,7 +205,7 @@ class _HistoryPageState extends State<HistoryPage> {
                                 labelStyle: TextStyle(
                                   color: _status == value
                                       ? Colors.white
-                                      : GeoDesign.green900,
+                                      : Theme.of(context).colorScheme.primary,
                                 ),
                                 onSelected: (_) =>
                                     setState(() => _status = value),
@@ -422,7 +424,22 @@ Future<Uint8List> buildAnalysisPdf(
   Map<String, dynamic> raw, {
   AnalysisState? state,
 }) async {
-  final data = Map<String, dynamic>.from(raw);
+  dynamic printable(dynamic value) {
+    if (value is String) {
+      return value.replaceAll(
+        RegExp(r'[\u{1F000}-\u{1FAFF}\uFE0F\u200D]', unicode: true),
+        '',
+      );
+    }
+    if (value is List) return value.map(printable).toList();
+    if (value is Map) {
+      return value.map((key, item) => MapEntry(key, printable(item)));
+    }
+    return value;
+  }
+
+  final data = Map<String, dynamic>.from(printable(raw) as Map);
+  final preliminary = data['analysis_mode'] == 'preliminary_environmental';
   final location = state != null
       ? await state.resolvePlaceForRecord(data)
       : (data['place_name'] ?? data['title'] ?? 'Unknown location').toString();
@@ -432,11 +449,12 @@ Future<Uint8List> buildAnalysisPdf(
   final crop = data['predicted_crop'] ?? 'Land Analysis';
   final compatibility =
       data['crop_compatibility_pct'] ?? data['compatibility_pct'] ?? '--';
-  final recommendation =
-      state?.recommendationText(data) ??
-      (data['recommendation_title'] ??
-          data['subtitle'] ??
-          'Land suitability analysis');
+  final recommendation = preliminary
+      ? 'Preliminary environmental screening'
+      : state?.recommendationText(data) ??
+            (data['recommendation_title'] ??
+                data['subtitle'] ??
+                'Land suitability analysis');
   dynamic rawAlternatives = data['alternative_crops'];
   dynamic rawTop = data['top_crop_recommendations'];
   if (rawAlternatives is String && rawAlternatives.trim().isNotEmpty) {
@@ -514,7 +532,20 @@ Future<Uint8List> buildAnalysisPdf(
       ? rawQuality
       : const [];
 
-  final doc = pw.Document();
+  final regular = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
+  final bold = await rootBundle.load('assets/fonts/NotoSans-Bold.ttf');
+  final symbols = await rootBundle.load(
+    'assets/fonts/NotoSansSymbols2-Regular.ttf',
+  );
+  final doc = pw.Document(
+    theme: pw.ThemeData.withFont(
+      base: pw.Font.ttf(regular),
+      bold: pw.Font.ttf(bold),
+      italic: pw.Font.ttf(regular),
+      boldItalic: pw.Font.ttf(bold),
+      fontFallback: [pw.Font.ttf(symbols)],
+    ),
+  );
   doc.addPage(
     pw.MultiPage(
       build: (context) => [
@@ -539,11 +570,17 @@ Future<Uint8List> buildAnalysisPdf(
           pw.Text('Selected planting month: $plantingMonth'),
         pw.SizedBox(height: 6),
         pw.Text('Recommendation: $recommendation'),
-        pw.Text('Crop Recommendation: $crop'),
-        pw.Text(
-          '${isModelRanked(data) ? 'Model score' : 'Recorded score'}: $compatibility%',
-        ),
-        if (alternatives.isNotEmpty) ...[
+        if (preliminary)
+          pw.Text(
+            'Preliminary environmental screening. CAGRO NPK unavailable; no complete crop recommendation or soil suitability score is assigned.',
+          )
+        else ...[
+          pw.Text('Crop Recommendation: $crop'),
+          pw.Text(
+            '${isModelRanked(data) ? 'Model score' : 'Recorded score'}: $compatibility%',
+          ),
+        ],
+        if (!preliminary && alternatives.isNotEmpty) ...[
           pw.SizedBox(height: 10),
           pw.Text(
             'Other ranked crops:',
@@ -635,7 +672,62 @@ Future<Uint8List> buildAnalysisPdf(
             ),
           ),
         ],
-        if (xai['summary'] != null) ...[
+        if (preliminary && assessedCrops(data).isNotEmpty) ...[
+          pw.SizedBox(height: 12),
+          pw.Text(
+            'Individual crop condition comparisons',
+            style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+          ),
+          pw.Text(
+            'These factor grades are not a complete soil suitability score or crop ranking.',
+          ),
+          for (final item in assessedCrops(data)) ...[
+            pw.SizedBox(height: 8),
+            pw.Text(
+              '${item['crop']}',
+              style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+            ),
+            pw.TableHelper.fromTextArray(
+              headerStyle: pw.TextStyle(
+                fontSize: 9,
+                fontWeight: pw.FontWeight.bold,
+              ),
+              cellStyle: const pw.TextStyle(fontSize: 9),
+              columnWidths: {
+                0: const pw.FlexColumnWidth(1.5),
+                1: const pw.FlexColumnWidth(1),
+                2: const pw.FlexColumnWidth(1.4),
+                3: const pw.FlexColumnWidth(1),
+              },
+              headers: [
+                'Factor',
+                'Observation',
+                'Preferred range',
+                'Assessment',
+              ],
+              data: environmentalFactorViews(item, data)
+                  .map(
+                    (factor) => [
+                      factor.label,
+                      factor.value == null
+                          ? 'Unavailable'
+                          : '${_cropNum(factor.value)} ${factor.unit}',
+                      factor.min == null && factor.max == null
+                          ? 'No compatible criterion'
+                          : '${factor.min ?? "No lower limit"} - ${factor.max ?? "No upper limit"} ${factor.unit}',
+                      switch (factor.state) {
+                        CropFactorState.suitable => 'Suitable',
+                        CropFactorState.near => 'Limited',
+                        CropFactorState.outside => 'Not suitable',
+                        CropFactorState.unassessed => 'Not assessed',
+                      },
+                    ],
+                  )
+                  .toList(),
+            ),
+          ],
+        ],
+        if (!preliminary && xai['summary'] != null) ...[
           pw.SizedBox(height: 14),
           pw.Text(
             'Why this recommendation (explainability)',
@@ -676,13 +768,17 @@ Future<Uint8List> buildAnalysisPdf(
         ),
         pw.SizedBox(height: 4),
         pw.Text('Status: ${analysisReviewLabel(verificationStatus)}'),
+        pw.Text(
+          'Analyst review records a decision; it does not establish land ownership or fill missing measurements.',
+          style: const pw.TextStyle(fontSize: 9),
+        ),
         if (verifiedAt != null) pw.Text('Reviewed: $verifiedAt'),
         if (plannerNotes != null && '$plannerNotes'.trim().isNotEmpty)
           pw.Text('Analyst notes: $plannerNotes'),
         pw.SizedBox(height: 18),
         pw.Divider(),
         pw.Text(
-          'This report is an AI-assisted agricultural estimate generated from satellite, weather, and soil-proxy data. '
+          '${preliminary ? 'This preliminary report compares recorded environmental conditions. CAGRO NPK is unavailable. ' : 'This report is an AI-assisted agricultural estimate generated from satellite, weather, and soil-proxy data. '}'
           'It is not a certified soil test, a cadastral or legal land survey, or a guarantee of crop performance. '
           'Farmers and planners should use it as a decision-support reference alongside on-site verification and local agricultural extension guidance.',
           style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),

@@ -3,7 +3,7 @@ import json
 from copy import deepcopy
 from unittest.mock import Mock
 import pytest
-from test_mobile_workflow import client, api
+from test_mobile_workflow import api
 from test_cagro_soil import square, boundary
 import cagro_soil
 from analysis_coverage import check_coverage, coverage_catalog, farm_coverage, VERSION
@@ -63,16 +63,15 @@ def test_centroid_uses_area_not_vertex_average():
     assert row == before
 
 
-def test_preflight_api_and_unsupported_mobile_stop_before_providers(client, monkeypatch):
+def test_preflight_distinguishes_preliminary_from_cagro_coverage(client, monkeypatch):
     infer = Mock(side_effect=AssertionError('No model/provider call allowed'))
     monkeypatch.setattr(api, 'analyze_location', infer)
     monkeypatch.setattr(api, 'screen_land_cover', infer)
     polygon = square(7.29,125.62)
     response = client.post('/api/mobile/analysis-coverage', json={'polygon':polygon})
     assert response.json()['analysis_coverage']['supported'] is False
-    response = client.post('/api/mobile/analysis', json={'polygon':polygon})
-    assert response.status_code == 422
-    assert response.json()['detail']['analysis_coverage']['supported'] is False
+    assert response.json()['analysis_coverage']['preliminary_supported'] is True
+    assert response.json()['analysis_coverage']['can_analyze'] is True
     infer.assert_not_called()
     supported = client.post('/api/mobile/analysis-coverage', json={'polygon':square(7.39242,125.62293)}).json()
     assert supported['analysis_coverage']['supported']
@@ -81,22 +80,22 @@ def test_preflight_api_and_unsupported_mobile_stop_before_providers(client, monk
 
 
 def test_web_cannot_bypass_with_supported_client_polygon(client, monkeypatch):
+    monkeypatch.setattr(api, 'find_analysis_request', lambda *args: None)
     monkeypatch.setattr(api, 'current_user', lambda request: {'id':10})
-    monkeypatch.setattr(api, 'get_farm_parcel', lambda *a: {'id':1,'farm_name':'Farm', 'boundary_version':1, 'polygon':square(7.29,125.62)})
+    monkeypatch.setattr(api, 'get_farm_parcel', lambda *a: {'id':1,'farm_name':'Farm', 'boundary_version':1, 'polygon':square(7.29,125.53)})
     infer = Mock()
     monkeypatch.setattr(api, 'analyze_location', infer)
-    response = client.post('/api/analysis', json={'farm_id':1,'polygon':square(7.39242,125.62293), 'analysis_coverage':{'supported':True}})
-    assert response.status_code == 422
-    assert response.json()['analysis_coverage']['supported'] is False
+    response = client.post('/api/analysis', headers={'Idempotency-Key':'coverage-guard-test'}, json={'farm_id':1,'polygon':square(7.39242,125.62293), 'analysis_coverage':{'supported':True}})
+    assert response.status_code == 400
     infer.assert_not_called()
 
 
 def test_mobile_uses_stored_unsupported_farm_even_if_client_claims_coverage(client, monkeypatch):
-    monkeypatch.setattr(api, 'get_farm_parcel', lambda *a: {'id':1,'farm_name':'Farm', 'boundary_version':1, 'polygon':square(7.29,125.62)})
+    monkeypatch.setattr(api, 'get_farm_parcel', lambda *a: {'id':1,'farm_name':'Farm', 'boundary_version':1, 'polygon':square(7.29,125.53)})
     infer = Mock()
     monkeypatch.setattr(api, 'analyze_location', infer)
     response = client.post('/api/mobile/analysis', json={'farm_id':1,'polygon':square(7.39242,125.62293), 'analysis_coverage':{'supported':True}})
-    assert response.status_code == 422
+    assert response.status_code == 400
     infer.assert_not_called()
 
 

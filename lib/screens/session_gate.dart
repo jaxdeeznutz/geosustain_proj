@@ -13,6 +13,48 @@ class _SessionGateState extends State<SessionGate> {
   bool checking = true;
   String? error;
   bool authenticated = false;
+  AnalysisState? offlineState;
+  bool offlineChosen = false;
+
+  Future<void> enterOffline() async {
+    try {
+      final token = await api.getToken();
+      final local = await OfflineFarmStore.read();
+      final user = analysisMapValue(local['identity']);
+      if (token == null || user['id'] == null || user['role'] != 'farmer') {
+        throw StateError(
+          'Sign in online as a farmer once on this device to enable saved farms offline.',
+        );
+      }
+      if (!mounted) return;
+      final state = AnalysisState();
+      state.currentUser = user;
+      state.userLoaded = true;
+      state.offlineWorkspace = true;
+      state.farms.addAll([
+        ...OfflineFarmStore.rows(local['pending']),
+        ...OfflineFarmStore.rows(local['farms']),
+      ]);
+      setState(() {
+        offlineChosen = true;
+        offlineState = state;
+        authenticated = true;
+        checking = false;
+        error = null;
+      });
+    } catch (_) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Offline farms are unavailable. Sign in online once on this device, or retry the connection.',
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
@@ -31,29 +73,57 @@ class _SessionGateState extends State<SessionGate> {
       checking = true;
       error = null;
     });
+    String? token;
     try {
-      final token = await api.getToken();
+      token = await api.getToken();
       if (token != null && token.isNotEmpty) {
         await api.getMe();
         authenticated = true;
       }
     } on ApiException catch (e) {
       if (e.statusCode == 401 || e.statusCode == 403) {
+        if (!mounted || await api.getToken() != token) return;
         await api.logout();
         authenticated = false;
+        if (mounted && offlineChosen) {
+          setState(() {
+            offlineChosen = false;
+            offlineState = null;
+            checking = false;
+          });
+        }
       } else {
         error = friendlyErrorMessage(e);
       }
     } catch (e) {
       error = friendlyErrorMessage(e);
     }
-    if (mounted) setState(() => checking = false);
+    if (mounted && !offlineChosen) setState(() => checking = false);
   }
 
   @override
   Widget build(BuildContext context) {
     if (checking) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return Scaffold(
+        body: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              const Text(
+                'Connecting to GeoSustain. The server may need about a minute to wake up.',
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 8),
+              TextButton(
+                onPressed: enterOffline,
+                child: const Text('Open saved farms offline'),
+              ),
+            ],
+          ),
+        ),
+      );
     }
     if (error != null) {
       return Scaffold(
@@ -78,8 +148,19 @@ class _SessionGateState extends State<SessionGate> {
                     child: const Text('Try again'),
                   ),
                   TextButton(
+                    onPressed: enterOffline,
+                    child: const Text('Open saved farms offline'),
+                  ),
+                  TextButton(
                     onPressed: () async {
-                      await api.logout();
+                      try {
+                        await api.logout();
+                      } catch (failure) {
+                        if (mounted) {
+                          setState(() => error = friendlyErrorMessage(failure));
+                        }
+                        return;
+                      }
                       if (mounted) {
                         setState(() {
                           error = null;
@@ -96,6 +177,8 @@ class _SessionGateState extends State<SessionGate> {
         ),
       );
     }
-    return authenticated ? const ShellPage() : const LoginPage();
+    return authenticated
+        ? ShellPage(analysisState: offlineState)
+        : const LoginPage();
   }
 }

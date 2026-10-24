@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <title>GeoSustain</title>
+  <rect width="100" height="100" rx="20" fill="#075F36"/>
+  <path d="M25 65C25 30 58 23 76 25C75 60 58 76 25 65Z" fill="#F1FAF3"/>
+  <path d="M28 74L64 37" fill="none" stroke="#9BD4A8" stroke-width="5" stroke-linecap="round"/>
+</svg>

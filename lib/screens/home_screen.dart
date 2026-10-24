@@ -167,6 +167,7 @@ class HomePage extends StatelessWidget {
                 child: Text(state.historyError ?? state.farmsError!),
               ),
             _heading(
+              context,
               'Quick Actions',
               () => showLandMethodPicker(context, state, () => go(2)),
             ),
@@ -222,7 +223,7 @@ class HomePage extends StatelessWidget {
                 ],
               ),
             ),
-            _heading('Recent Activity', () => go(3)),
+            _heading(context, 'Recent Activity', () => go(3)),
             if (state.historyRecords.isEmpty)
               const Card(
                 child: Padding(
@@ -252,7 +253,7 @@ class HomePage extends StatelessWidget {
                   onTap: () => openRecord(row),
                 ),
               ),
-            _heading('Current Weather', () async {
+            _heading(context, 'Current Weather', () async {
               final error = await state.refreshLiveWeather();
               if (error != null) message(error);
             }),
@@ -260,8 +261,13 @@ class HomePage extends StatelessWidget {
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(18),
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFDFF4FC), Colors.white],
+                gradient: LinearGradient(
+                  colors: Theme.of(context).brightness == Brightness.dark
+                      ? [
+                          Theme.of(context).colorScheme.surfaceContainerHigh,
+                          Theme.of(context).colorScheme.surfaceContainerLow,
+                        ]
+                      : const [Color(0xFFDFF4FC), Colors.white],
                 ),
               ),
               child: Column(
@@ -269,10 +275,10 @@ class HomePage extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.wb_cloudy_outlined,
                         size: 43,
-                        color: Color(0xFF4791B5),
+                        color: Theme.of(context).colorScheme.primary,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -280,10 +286,10 @@ class HomePage extends StatelessWidget {
                           weather == null
                               ? 'Weather unavailable'
                               : '${state.numText(weather['temperature_c'])} C',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 25,
                             fontWeight: FontWeight.w800,
-                            color: darkGreen,
+                            color: Theme.of(context).colorScheme.primary,
                           ),
                         ),
                       ),
@@ -293,12 +299,15 @@ class HomePage extends StatelessWidget {
                     weather == null
                         ? 'Pull to refresh. Live conditions are separate from saved analyses.'
                         : '${weather['weather_description'] ?? 'Conditions unavailable'} | Humidity ${state.numText(weather['live_humidity'])}% | Wind ${state.numText(weather['wind_speed_kmh'])} km/h',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.onSurface,
+                    ),
                   ),
                   Text(
                     'Panabo City | ${weather?['updated_at'] ?? weather?['observed_at'] ?? 'Update time unavailable'}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: Color(0xFF53636B),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -310,27 +319,28 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget _heading(String title, VoidCallback tap) => Padding(
-    padding: const EdgeInsets.fromLTRB(5, 18, 0, 8),
-    child: Row(
-      children: [
-        Expanded(
-          child: Text(
-            title,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-              color: darkGreen,
+  Widget _heading(BuildContext context, String title, VoidCallback tap) =>
+      Padding(
+        padding: const EdgeInsets.fromLTRB(5, 18, 0, 8),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
             ),
-          ),
+            TextButton(
+              onPressed: tap,
+              child: Text(title == 'Current Weather' ? 'Refresh' : 'See all'),
+            ),
+          ],
         ),
-        TextButton(
-          onPressed: tap,
-          child: Text(title == 'Current Weather' ? 'Refresh' : 'See all'),
-        ),
-      ],
-    ),
-  );
+      );
 }
 
 class SmartConditionCard extends StatelessWidget {

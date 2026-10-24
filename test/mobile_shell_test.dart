@@ -8,8 +8,17 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:geosustain_clean_arranged/main.dart';
 import 'package:geosustain_clean_arranged/api_service.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
 
 class _ShellApi extends ApiService {
+  _ShellApi()
+    : super(
+        client: MockClient((request) async {
+          expect(request.url.path, '/api/mobile/logout');
+          return http.Response('{"signed_out":true}', 200);
+        }),
+      );
   @override
   Future<List<dynamic>> getHistory() async => [];
   @override
@@ -32,31 +41,47 @@ class _ShellApi extends ApiService {
 }
 
 void main() {
-  testWidgets('analysis overlay covers nested routes and closes on completion', (tester) async {
-    SharedPreferences.setMockInitialValues({});
-    final state = AnalysisState(api: _ShellApi());
-    state.currentUser = {'id': 1, 'username': 'Farmer', 'role': 'farmer'};
-    state.userLoaded = true;
-    await tester.pumpWidget(MaterialApp(home: ShellPage(analysisState: state)));
-    await tester.pumpAndSettle();
-    final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
-    nav.push(MaterialPageRoute<void>(builder: (_) => const Scaffold(body: Text('Farm details'))));
-    await tester.pumpAndSettle();
-    state.loading = true;
-    state.notifyListeners();
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 400));
-    expect(find.text('Analyzing your farm'), findsOneWidget);
-    await tester.binding.handlePopRoute();
-    await tester.pump();
-    expect(find.text('Analyzing your farm'), findsOneWidget);
-    state.loading = false;
-    state.notifyListeners();
-    await tester.pumpAndSettle();
-    expect(find.text('Analyzing your farm'), findsNothing);
-    expect(find.text('Farm details'), findsOneWidget);
-    await tester.pumpWidget(const SizedBox.shrink());
-  });
+  testWidgets(
+    'analysis overlay covers nested routes and closes on completion',
+    (tester) async {
+      SharedPreferences.setMockInitialValues({});
+      final state = AnalysisState(api: _ShellApi());
+      state.currentUser = {'id': 1, 'username': 'Farmer', 'role': 'farmer'};
+      state.userLoaded = true;
+      await tester.pumpWidget(
+        MaterialApp(home: ShellPage(analysisState: state)),
+      );
+      await tester.pumpAndSettle();
+      final nav = tester.state<NavigatorState>(find.byType(Navigator).first);
+      nav.push(
+        MaterialPageRoute<void>(
+          builder: (_) => const Scaffold(body: Text('Farm details')),
+        ),
+      );
+      await tester.pumpAndSettle();
+      state.loading = true;
+      state.notifyListeners();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
+      expect(find.text('Analyzing your farm'), findsOneWidget);
+      await tester.binding.handlePopRoute();
+      await tester.pump();
+      expect(find.text('Analyzing your farm'), findsOneWidget);
+      await tester.tap(find.text('Continue in background'));
+      await tester.pump();
+      expect(state.loading, isTrue);
+      expect(find.text('Farm details'), findsOneWidget);
+      state.notifyListeners();
+      await tester.pump();
+      expect(find.text('Analyzing your farm'), findsNothing);
+      state.loading = false;
+      state.notifyListeners();
+      await tester.pumpAndSettle();
+      expect(find.text('Analyzing your farm'), findsNothing);
+      expect(find.text('Farm details'), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
   setUpAll(() async {
     final config = File('.dart_tool/package_config.json').absolute;
     final packages =

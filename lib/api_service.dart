@@ -1,4 +1,8 @@
 import 'dart:async';
+import 'session_token_store.dart';
+import 'boundary_draft_store.dart';
+import 'offline_farm_store.dart';
+import 'federated_identity.dart';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
@@ -19,11 +23,22 @@ class ApiService {
   // Default is the Render backend so Edge/Web/Android use the same source of truth.
   static const String _definedBaseUrl = String.fromEnvironment('API_BASE_URL');
 
-  static String get baseUrl =>
-      (_definedBaseUrl.isNotEmpty
-              ? _definedBaseUrl
-              : 'https://geosustain.onrender.com')
-          .replaceFirst(RegExp(r'/+$'), '');
+  static String get baseUrl {
+    final selected =
+        (_definedBaseUrl.isNotEmpty
+                ? _definedBaseUrl
+                : 'https://geosustain.onrender.com')
+            .replaceFirst(RegExp(r'/+$'), '');
+    final url = Uri.tryParse(selected);
+    if (kReleaseMode &&
+        (url == null ||
+            url.scheme != 'https' ||
+            url.host.isEmpty ||
+            url.userInfo.isNotEmpty)) {
+      throw StateError('The release requires a secure HTTPS service address.');
+    }
+    return selected;
+  }
 
   // Injectable transport permits API contract tests without a live account.
   ApiService({http.Client? client}) : _client = client ?? http.Client();
@@ -31,24 +46,40 @@ class ApiService {
 
   void close() => _client.close();
 
-  Future<String?> getToken() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token');
-  }
-
-  Future<void> saveToken(String token) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('token', token);
-  }
+  final _tokenStore = SessionTokenStore();
+  Future<String?> getToken() => _tokenStore.read();
+  Future<void> saveToken(String token) => _tokenStore.write(token);
 
   Future<void> logout() async {
+    final token = await getToken();
+    if (token != null) {
+      final response = await _client
+          .post(
+            Uri.parse('$baseUrl/api/mobile/logout'),
+            headers: {'Authorization': 'Bearer $token'},
+          )
+          .timeout(const Duration(seconds: 20));
+      if (response.statusCode >= 400 && response.statusCode != 401) {
+        throw ApiException(
+          response.statusCode,
+          'Sign-out could not be confirmed. Reconnect and try again.',
+        );
+      }
+    }
+    await _tokenStore.clear();
+    await FirebaseIdentity.signOut();
+    await BoundaryDraftStore.clearForSignOut();
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
     await prefs.remove('account_id');
     for (final key
         in prefs
             .getKeys()
-            .where((k) => k.startsWith('geosustain_pending_'))
+            .where(
+              (k) =>
+                  k.startsWith('geosustain_pending_') ||
+                  k.startsWith('geosustain_draft_'),
+            )
             .toList()) {
       await prefs.remove(key);
     }
@@ -98,7 +129,23 @@ class ApiService {
     Object? lastError;
     for (var attempt = 0; attempt < attempts; attempt++) {
       try {
-        return await request().timeout(timeout);
+        final value = await request().timeout(timeout);
+        if (value is http.Response &&
+            attempt < attempts - 1 &&
+            ([502, 503, 504].contains(value.statusCode) ||
+                (value.statusCode == 200 &&
+                    (value.headers['content-type'] ?? '').contains(
+                      'text/html',
+                    )))) {
+          await Future<void>.delayed(Duration(seconds: 2 + attempt * 2));
+          continue;
+        }
+        return value;
+      } on http.ClientException catch (e) {
+        lastError = e;
+        if (attempt < attempts - 1) {
+          await Future<void>.delayed(Duration(seconds: 2 + attempt * 2));
+        }
       } on TimeoutException catch (e) {
         lastError = e;
         if (attempt < attempts - 1) {
@@ -125,9 +172,15 @@ class ApiService {
     if (response.statusCode >= 400) {
       throw ApiException(
         response.statusCode,
-        _errorMessage(data, 'Login failed'),
+        response.statusCode == 401
+            ? 'Invalid email or password'
+            : _errorMessage(data, 'Login failed'),
       );
     }
+    return _acceptLogin(data);
+  }
+
+  Future<Map<String, dynamic>> _acceptLogin(Map<String, dynamic> data) async {
     final token = data['token'];
     if (token is! String || token.isEmpty) {
       throw const FormatException('The server did not return a login token.');
@@ -136,9 +189,93 @@ class ApiService {
     final prefs = await SharedPreferences.getInstance();
     if (data['user'] is Map && data['user']['id'] != null) {
       await prefs.setString('account_id', '${data['user']['id']}');
+      try {
+        await OfflineFarmStore.cacheIdentity(
+          Map<String, dynamic>.from(data['user']),
+        );
+      } catch (_) {
+        /* Offline entry will report unavailable storage. */
+      }
     }
     return data;
   }
+
+  Future<Map<String, dynamic>> _identityPost(
+    String path,
+    Map<String, dynamic> body, {
+    bool authenticated = true,
+  }) async {
+    final token = authenticated ? await getToken() : null;
+    if (authenticated && token == null) {
+      throw const ApiException(401, 'Sign in again to continue.');
+    }
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl$path'),
+          headers: {
+            'Content-Type': 'application/json',
+            if (token != null) 'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(body),
+        )
+        .timeout(const Duration(seconds: 45));
+    final data = _decodeJson(response);
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Unable to complete verification.'),
+      );
+    }
+    if (authenticated && await getToken() != token) {
+      throw const ApiException(
+        409,
+        'Account changed. Sign in again before continuing.',
+      );
+    }
+    return data;
+  }
+
+  Future<Map<String, dynamic>> googleLogin(String idToken) async =>
+      _acceptLogin(
+        await _identityPost('/api/mobile/auth/google', {
+          'id_token': idToken,
+        }, authenticated: false),
+      );
+  Future<Map<String, dynamic>> linkGoogle(
+    String idToken,
+    String password,
+  ) async =>
+      (await _identityPost('/api/mobile/auth/link-google', {
+            'id_token': idToken,
+            'current_password': password,
+          }))['user']
+          as Map<String, dynamic>;
+  Future<Map<String, dynamic>> startPhoneVerification(String phone) =>
+      _identityPost('/api/mobile/phone-verification/start', {
+        'phone_number': phone,
+      });
+  Future<Map<String, dynamic>> finishPhoneVerification(
+    String ticket,
+    String idToken,
+  ) async =>
+      (await _identityPost('/api/mobile/phone-verification/complete', {
+            'ticket': ticket,
+            'id_token': idToken,
+          }))['user']
+          as Map<String, dynamic>;
+  Future<Map<String, dynamic>> startPasswordReset(String email) =>
+      _identityPost('/api/mobile/password-reset/start', {
+        'email': email.trim().toLowerCase(),
+      }, authenticated: false);
+  Future<Map<String, dynamic>> finishPasswordReset(
+    String ticket,
+    String code,
+    String password,
+  ) => _identityPost('/api/mobile/password-reset/complete', {
+    'ticket': ticket,
+    'code': code,
+    'new_password': password,
+  }, authenticated: false);
 
   Future<Map<String, dynamic>> register({
     required String username,
@@ -163,6 +300,29 @@ class ApiService {
       throw ApiException(
         response.statusCode,
         _errorMessage(data, 'Registration failed'),
+      );
+    }
+    return data;
+  }
+
+  Future<Map<String, dynamic>> emailVerification(
+    String ticket, {
+    String? code,
+  }) async {
+    final response = await _client
+        .post(
+          Uri.parse(
+            '$baseUrl/api/mobile/${code == null ? 'resend-verification' : 'verify-email'}',
+          ),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'ticket': ticket, 'code': ?code}),
+        )
+        .timeout(const Duration(seconds: 30));
+    final data = _decodeJson(response);
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Email verification failed'),
       );
     }
     return data;
@@ -364,7 +524,7 @@ class ApiService {
     Map<String, dynamic> data;
     if (prior['status'] == 'completed' || prior['status'] == 'processing') {
       data = await _waitForAnalysis(key, token, prior);
-    } else if (prior['status'] == 'not_found') {
+    } else if (prior['status'] == 'not_found' || prior['status'] == 'failed') {
       try {
         final response = await _client
             .post(
@@ -825,8 +985,8 @@ class ApiService {
         Uri.parse('$baseUrl/api/mobile/me'),
         headers: {'Authorization': 'Bearer $token'},
       ),
-      timeout: const Duration(seconds: 20),
-    ).timeout(const Duration(seconds: 60));
+      timeout: const Duration(seconds: 45),
+    ).timeout(const Duration(seconds: 150));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw ApiException(
@@ -841,6 +1001,11 @@ class ApiService {
     if (user['id'] != null) {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString('account_id', '${user['id']}');
+      try {
+        await OfflineFarmStore.cacheIdentity(Map<String, dynamic>.from(user));
+      } catch (_) {
+        /* Online access remains available. */
+      }
     }
     return user;
   }
@@ -859,6 +1024,9 @@ class ApiService {
         response.statusCode,
         _errorMessage(data, 'Could not load this analysis.'),
       );
+    }
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session changed. Sign in again.');
     }
     return Map<String, dynamic>.from(data['analysis'] as Map);
   }
@@ -988,23 +1156,195 @@ class ApiService {
     return data;
   }
 
-  Future<List<dynamic>> getSavedAnalyses() async {
+  Future<List<dynamic>> _pagedList(
+    String path,
+    String key, {
+    Map<String, String> parameters = const {},
+  }) async {
     final token = await getToken();
+    final rows = <dynamic>[];
+    var offset = 0;
+    while (true) {
+      final uri = Uri.parse('$baseUrl$path').replace(
+        queryParameters: {...parameters, 'offset': '$offset', 'limit': '50'},
+      );
+      final response = await _client
+          .get(uri, headers: {'Authorization': 'Bearer $token'})
+          .timeout(const Duration(seconds: 60));
+      final data = _decodeJson(response);
+      if (response.statusCode >= 400) {
+        throw ApiException(
+          response.statusCode,
+          _errorMessage(data, 'Could not load records'),
+        );
+      }
+      if (await getToken() != token) {
+        throw const ApiException(401, 'Your session changed. Sign in again.');
+      }
+      final batch = data[key] as List;
+      rows.addAll(batch);
+      if (data['has_more'] != true) break;
+      if (batch.isEmpty) {
+        throw const FormatException('Invalid empty continuation page.');
+      }
+      offset += batch.length;
+    }
+    return rows;
+  }
+
+  Future<Map<String, dynamic>> getRecordPage(
+    String path, {
+    int offset = 0,
+    String search = '',
+    Map<String, String> parameters = const {},
+  }) async {
+    final token = await getToken();
+    final uri = Uri.parse('$baseUrl$path').replace(
+      queryParameters: {
+        'offset': '$offset',
+        'limit': '50',
+        'q': search,
+        ...parameters,
+      },
+    );
     final response = await _client
-        .get(
-          Uri.parse('$baseUrl/api/mobile/saved'),
-          headers: {'Authorization': 'Bearer $token'},
-        )
+        .get(uri, headers: {'Authorization': 'Bearer $token'})
         .timeout(const Duration(seconds: 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw ApiException(
         response.statusCode,
-        _errorMessage(data, 'Saved analyses failed'),
+        _errorMessage(data, 'Could not load records'),
       );
     }
-    return data['saved'] as List<dynamic>;
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session changed. Sign in again.');
+    }
+    return data;
   }
+
+  Future<void> markNotificationRead(
+    int id, {
+    bool bySession = false,
+    bool activity = false,
+  }) async {
+    final token = await getToken();
+    final response = await _client
+        .post(
+          Uri.parse(
+            '$baseUrl/api/mobile/${activity
+                ? 'activity'
+                : bySession
+                ? 'reviews'
+                : 'notifications'}/$id/read',
+          ),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(
+          _decodeJson(response),
+          'Could not mark this notification read.',
+        ),
+      );
+    }
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session changed. Sign in again.');
+    }
+  }
+
+  Future<void> markAllActivityRead() async {
+    final token = await getToken();
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/activity/read-all'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(_decodeJson(response), 'Could not update notifications.'),
+      );
+    }
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session changed. Sign in again.');
+    }
+  }
+
+  Future<void> recoverPassword(String token, String password) async {
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/mobile/recover-password'),
+          headers: {'Content-Type': 'application/json'},
+          body: jsonEncode({'recovery_token': token, 'new_password': password}),
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(_decodeJson(response), 'Recovery failed'),
+      );
+    }
+  }
+
+  Future<void> setPushSubscription(
+    String deviceToken,
+    bool enabled, {
+    String? expectedToken,
+  }) async {
+    final token = await getToken();
+    if (expectedToken != null && token != expectedToken) {
+      throw const ApiException(401, 'Your session changed. Sign in again.');
+    }
+    final response = await _client
+        .put(
+          Uri.parse('$baseUrl/api/mobile/push-subscription'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({
+            'token': deviceToken,
+            'enabled': enabled,
+            'platform': kIsWeb ? 'web' : 'android',
+          }),
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(_decodeJson(response), 'Push registration failed'),
+      );
+    }
+  }
+
+  Future<String> issuePasswordRecovery(int userId) async {
+    final token = await getToken();
+    final response = await _client
+        .post(
+          Uri.parse('$baseUrl/api/admin/users/$userId/recovery'),
+          headers: {
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          body: jsonEncode({'identity_verified': true}),
+        )
+        .timeout(const Duration(seconds: 30));
+    final data = _decodeJson(response);
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not issue recovery'),
+      );
+    }
+    return data['recovery_token'] as String;
+  }
+
+  Future<List<dynamic>> getSavedAnalyses() =>
+      _pagedList('/api/mobile/saved', 'saved');
 
   Future<Map<String, dynamic>> createReport(
     int sessionId, {
@@ -1031,29 +1371,15 @@ class ApiService {
     return data;
   }
 
-  Future<List<dynamic>> getReports() async {
-    final token = await getToken();
-    final response = await _client
-        .get(
-          Uri.parse('$baseUrl/api/mobile/reports'),
-          headers: {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 60));
-    final data = _decodeJson(response);
-    if (response.statusCode >= 400) {
-      throw ApiException(
-        response.statusCode,
-        _errorMessage(data, 'Reports failed'),
-      );
-    }
-    return data['reports'] as List<dynamic>;
-  }
+  Future<List<dynamic>> getReports() =>
+      _pagedList('/api/mobile/reports', 'reports');
 
   Future<Map<String, dynamic>> updateProfile({
     required String username,
     String? role,
     String? location,
     String? profilePhotoBase64,
+    String? phoneNumber,
   }) async {
     final token = await getToken();
     final response = await _client
@@ -1067,6 +1393,7 @@ class ApiService {
             'username': username,
             'location': ?location,
             'profile_photo': ?profilePhotoBase64,
+            'phone_number': ?phoneNumber,
           }),
         )
         .timeout(const Duration(seconds: 60));
@@ -1113,29 +1440,15 @@ class ApiService {
         _errorMessage(data, 'Delete account failed'),
       );
     }
+    await OfflineFarmStore.deleteCurrentAccountData();
     await logout();
   }
 
   // ---------------------------------------------------------------------
   // Planner verification workflow
   // ---------------------------------------------------------------------
-  Future<List<dynamic>> getPlannerQueue({String status = 'pending'}) async {
-    final token = await getToken();
-    final response = await _client
-        .get(
-          Uri.parse('$baseUrl/api/planner/queue?status=$status'),
-          headers: {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 60));
-    final data = _decodeJson(response);
-    if (response.statusCode >= 400) {
-      throw ApiException(
-        response.statusCode,
-        _errorMessage(data, 'Could not load verification queue'),
-      );
-    }
-    return data['queue'] as List<dynamic>;
-  }
+  Future<List<dynamic>> getPlannerQueue({String status = 'pending'}) =>
+      _pagedList('/api/planner/queue', 'queue', parameters: {'status': status});
 
   Future<Map<String, dynamic>> getPlannerSessionDetail(int sessionId) async {
     final token = await getToken();
@@ -1223,23 +1536,8 @@ class ApiService {
     return Map<String, dynamic>.from(data['stats'] ?? const {});
   }
 
-  Future<List<dynamic>> getAdminUsers() async {
-    final token = await getToken();
-    final response = await _client
-        .get(
-          Uri.parse('$baseUrl/api/admin/users'),
-          headers: {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 60));
-    final data = _decodeJson(response);
-    if (response.statusCode >= 400) {
-      throw ApiException(
-        response.statusCode,
-        _errorMessage(data, 'Could not load users'),
-      );
-    }
-    return List<dynamic>.from(data['users'] ?? const []);
-  }
+  Future<List<dynamic>> getAdminUsers() =>
+      _pagedList('/api/admin/users', 'users');
 
   Future<Map<String, dynamic>> updateAdminUser(
     int userId, {
@@ -1267,23 +1565,8 @@ class ApiService {
     return Map<String, dynamic>.from(data['user'] ?? const {});
   }
 
-  Future<List<dynamic>> getAdminAnalyses() async {
-    final token = await getToken();
-    final response = await _client
-        .get(
-          Uri.parse('$baseUrl/api/admin/analyses'),
-          headers: {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 60));
-    final data = _decodeJson(response);
-    if (response.statusCode >= 400) {
-      throw ApiException(
-        response.statusCode,
-        _errorMessage(data, 'Could not load analyses'),
-      );
-    }
-    return List<dynamic>.from(data['analyses'] ?? const []);
-  }
+  Future<List<dynamic>> getAdminAnalyses() =>
+      _pagedList('/api/admin/analyses', 'analyses');
 
   Future<List<dynamic>> getAdminCrops() async {
     final token = await getToken();
@@ -1338,21 +1621,6 @@ class ApiService {
     return Map<String, dynamic>.from(data['crop'] ?? const {});
   }
 
-  Future<List<dynamic>> getAdminAuditLogs() async {
-    final token = await getToken();
-    final response = await _client
-        .get(
-          Uri.parse('$baseUrl/api/admin/audit-logs'),
-          headers: {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 60));
-    final data = _decodeJson(response);
-    if (response.statusCode >= 400) {
-      throw ApiException(
-        response.statusCode,
-        _errorMessage(data, 'Could not load audit logs'),
-      );
-    }
-    return List<dynamic>.from(data['logs'] ?? const []);
-  }
+  Future<List<dynamic>> getAdminAuditLogs() =>
+      _pagedList('/api/admin/audit-logs', 'logs');
 }

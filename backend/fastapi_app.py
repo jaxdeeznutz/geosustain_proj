@@ -1,6 +1,11 @@
 import os
 import json
 import hashlib
+import secrets
+import database as defense_db
+import qa_closure
+import email_verification
+from defense_security import validate_profile_photo
 import logging
 import time
 import urllib.parse
@@ -19,7 +24,7 @@ from json_safe import json_safe
 from model_ranking import ModelRankingUnavailable
 from land_cover import screen_land_cover, advisory_result
 from cagro_soil import nutrient_layers
-from analysis_coverage import (require_coverage, coverage_catalog,
+from analysis_coverage import (require_analysis_coverage, require_point_coverage, coverage_catalog,
                                farm_coverage, CoverageUnavailable, VERSION as COVERAGE_VERSION,
                                HISTORICAL_NOTE)
 from fastapi.exceptions import RequestValidationError
@@ -56,7 +61,7 @@ from database import (
     get_planner_queue_counts,
     admin_dashboard_stats, admin_list_users, admin_update_user, admin_list_analyses,
     create_farm_parcel, list_farm_parcels, get_farm_parcel, update_farm_parcel,
-    attach_analysis_to_farm, get_climate_baseline, save_climate_baseline,
+    get_climate_baseline, save_climate_baseline,
     validate_farm_polygon, get_active_crop_keys, list_crop_reference,
     update_crop_reference, get_audit_logs,
     get_user_analysis, find_analysis_request, change_user_password,
@@ -450,6 +455,10 @@ def startup() -> None:
     try:
         init_db()
         print("Database initialized successfully.")
+        from push_delivery import start_worker
+        start_worker()
+        from analysis_jobs import start_worker as start_analysis_worker
+        start_analysis_worker()
     except Exception as exc:
         print(f"Database initialization warning: {exc}")
 
@@ -478,6 +487,8 @@ def hash_password(password: str) -> str:
 
 def sign_in_user(request: Request, user) -> None:
     request.session.clear()
+    request.session['sid'] = secrets.token_urlsafe(32)
+    defense_db.start_session(user['id'], request.session['sid'], MOBILE_TOKEN_MAX_AGE)
     request.session["user_id"] = user["id"]
     request.session["username"] = user["username"]
     request.session["role"] = user["role"]
@@ -487,7 +498,7 @@ def sign_in_user(request: Request, user) -> None:
 def current_user(request: Request):
     uid = request.session.get("user_id")
     user = get_user_by_id(uid) if uid else None
-    if user and user.get('is_active',True) and request.session.get('password_version',0) == user.get('password_version',0):
+    if user and not defense_db.session_revoked(request.session.get('sid')) and user.get('is_active',True) and request.session.get('password_version',0) == user.get('password_version',0):
         return user
     return None
 
@@ -500,8 +511,10 @@ def require_web_user(request: Request):
 
 
 def generate_mobile_token(user) -> str:
+    sid = secrets.token_urlsafe(32)
+    defense_db.start_session(user['id'], sid, MOBILE_TOKEN_MAX_AGE)
     return token_serializer.dumps(
-        {"id": user["id"], "password_version": user.get('password_version',0)},
+        {"id": user["id"], "sid": sid, "password_version": user.get('password_version',0)},
         salt="geosustain-mobile",
     )
 
@@ -514,6 +527,10 @@ def user_public_dict(user) -> Dict[str, Any]:
         "role": user["role"],
         "location": user.get('location'),
         "profile_photo": user.get('profile_photo'),
+        "email_verified": bool(user.get('email_verified')),
+        "auth_provider": user.get('auth_provider', 'email'),
+        "phone_number": user.get('phone_number'),
+        "phone_verified": user.get('phone_verified_at') is not None,
     }
 
 
@@ -527,7 +544,7 @@ def get_api_user(request: Request):
     except (BadSignature, SignatureExpired):
         raise HTTPException(status_code=401, detail="Unauthorized. Please log in again.")
     user = get_user_by_id(payload.get("id"))
-    if not user or not user.get('is_active',True) or payload.get('password_version',0) != user.get('password_version',0):
+    if not user or not user.get('is_active',True) or payload.get('password_version',0) != user.get('password_version',0) or defense_db.session_revoked(payload.get('sid')):
         raise HTTPException(status_code=401, detail="Unauthorized. Please log in again.")
     return user
 
@@ -929,7 +946,9 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
 
     logging.getLogger('uvicorn.error').info('Analysis geometry validated source=%s vertices=%s', analysis_source, len(polygon))
     # Enforced on both formal API routes, before provider calls or ranking.
-    coverage, matched_soil = require_coverage(polygon)
+    coverage, matched_soil = (require_analysis_coverage(polygon) if polygon
+                              else require_point_coverage(lat, lon))
+    preliminary = coverage['analysis_mode'] == 'preliminary_environmental'
 
     # Fetched once per analysis request (not once per sampled point) — a
     # Super Administrator's crop reference table can temporarily narrow the
@@ -955,7 +974,7 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         model_failures = []
         with ThreadPoolExecutor(max_workers=min(4, len(sample_points))) as executor:
             future_to_index = {
-                executor.submit(analyze_location, sample_lat, sample_lon, active_crops): index
+                executor.submit(analyze_location, sample_lat, sample_lon, active_crops, **({'preliminary': True} if preliminary else {})): index
                 for index, (sample_lat, sample_lon) in enumerate(sample_points)
             }
             for future in as_completed(future_to_index):
@@ -999,14 +1018,18 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
             })
         result["heatmap_grid"] = heatmap_grid
     else:
-        result = analyze_location(lat, lon, active_crops)
+        result = analyze_location(lat, lon, active_crops, **({'preliminary': True} if preliminary else {}))
 
     result["land_cover"] = cover
     result["cagro_soil"] = matched_soil
+    result['analysis_mode'] = coverage['analysis_mode']
+    if preliminary:
+        result['preliminary_notice'] = 'Preliminary environmental screening. CAGRO NPK unavailable for this farm; no complete soil suitability claim is made.'
     result.update(analysis_schema_version=COVERAGE_VERSION, analysis_coverage=coverage,
                   nutrient_basis='CAGRO historical local evidence; legacy Random Forest nutrient proxies remain separate',
                   historical_soil_notice=HISTORICAL_NOTE,
-                  centroid_method='Area-weighted polygon centroid; not a soil sample coordinate')
+                  centroid_method=('Area-weighted polygon centroid; not a soil sample coordinate' if polygon
+                                   else 'Selected point; not a farm centroid or soil sample coordinate'))
     result.update(nutrient_layers(result["cagro_soil"], result))
     planting_month = int((body or {}).get("intended_planting_month") or datetime.now().month)
     if not result.get('scoring_version'):
@@ -1073,12 +1096,22 @@ class LoginBody(BaseModel):
 
 
 class AnalysisBody(BaseModel):
-    lat: Optional[float] = None
-    lon: Optional[float] = None
+    lat: Optional[float] = Field(default=None, ge=-90, le=90, allow_inf_nan=False)
+    lon: Optional[float] = Field(default=None, ge=-180, le=180, allow_inf_nan=False)
     polygon: Optional[List[Dict[str, float]]] = None
     place_name: Optional[str] = None
     intended_planting_month: Optional[int] = Field(default=None, ge=1, le=12)
     farm_id: Optional[int] = None
+
+    @field_validator('polygon')
+    @classmethod
+    def finite_coordinates(cls, value):
+        if value is not None:
+            for point in value:
+                lat, lon = point.get('lat'), point.get('lng', point.get('lon'))
+                if lat is None or lon is None or not (-90 <= lat <= 90 and -180 <= lon <= 180):
+                    raise ValueError('Polygon coordinates must be finite and within latitude/longitude ranges.')
+        return value
 
 
 class SessionActionBody(BaseModel):
@@ -1099,6 +1132,18 @@ class ProfileUpdateBody(BaseModel):
     username: Optional[str] = Field(default=None, min_length=3, max_length=50)
     location: Optional[str] = Field(default=None, max_length=200)
     profile_photo: Optional[str] = None
+    phone_number: Optional[str] = Field(default=None, max_length=16)
+
+    @field_validator('phone_number')
+    @classmethod
+    def valid_phone(cls, value):
+        from federated_identity import normalize_phone
+        return normalize_phone(value) if value else value
+
+    @field_validator('profile_photo')
+    @classmethod
+    def valid_photo(cls, value):
+        return validate_profile_photo(value)
 
     @field_validator('username',mode='before')
     @classmethod
@@ -1198,6 +1243,15 @@ async def register_submit(request: Request):
             flash(request, error, "error")
         return render_template(request, "register.html", {"username": username, "email": email, "role": role})
 
+    if email_verification.enabled():
+        try:
+            challenge = email_verification.start(username, email, hash_password(password), SECRET_KEY)
+            request.session['email_signup_ticket'] = challenge['verification_ticket']
+            return render_template(request, 'verify_signup.html', {'email': email})
+        except HTTPException as exc:
+            flash(request, str(exc.detail), 'error')
+            return render_template(request, 'register.html', {'username': username, 'email': email})
+
     user = create_user(username, email, hash_password(password), role, email_verified=False, auth_provider="email")
     if not user:
         flash(request, "Registration failed. Please try again.", "error")
@@ -1208,14 +1262,41 @@ async def register_submit(request: Request):
 
 
 @app.get("/verify-email")
+def email_verify_page(request: Request):
+    if not request.session.get('email_signup_ticket'):
+        return RedirectResponse('/login', status_code=303)
+    return render_template(request, 'verify_signup.html')
+
+
 @app.post("/verify-email")
 @app.post("/resend-verification")
-def retired_email_verification():
-    return RedirectResponse("/login", status_code=303)
+async def email_verify_form(request: Request):
+    ticket = request.session.get('email_signup_ticket')
+    if not email_verification.enabled() or not ticket:
+        return RedirectResponse('/login', status_code=303)
+    try:
+        if request.url.path == '/resend-verification':
+            email_verification.resend(ticket, SECRET_KEY)
+            flash(request, 'A new code was sent.', 'success')
+        else:
+            form = await request.form()
+            code = str(form.get('code', ''))
+            if len(code) != 6 or not code.isascii() or not code.isdigit():
+                raise HTTPException(400, 'Enter the six-digit code from your email.')
+            email_verification.verify(ticket, code, SECRET_KEY)
+            request.session.pop('email_signup_ticket', None)
+            flash(request, 'Email verified. Please sign in.', 'success')
+            return RedirectResponse('/login', status_code=303)
+    except HTTPException as exc:
+        flash(request, str(exc.detail), 'error')
+    return render_template(request, 'verify_signup.html')
 
 
 @app.get("/logout", name="logout")
 def logout(request: Request):
+    sid = request.session.get('sid')
+    if sid:
+        defense_db.revoke_session(sid)
     request.session.clear()
     return RedirectResponse("/login", status_code=302)
 
@@ -1229,69 +1310,36 @@ def dashboard(request: Request):
 
 
 @app.get("/history", response_class=HTMLResponse, name="history")
-def history(request: Request):
+def history(request: Request, offset: int = Query(0, ge=0)):
     user = current_user(request)
     if not user:
         return RedirectResponse("/login", status_code=302)
-    rows = get_user_history(user["id"], limit=20)
-    return render_template(request, "history.html", {"user": user, "history": rows})
+    rows = get_user_history(user["id"], limit=21, offset=offset)
+    return render_template(request, "history.html", {"user": user, "history": rows[:20],
+        "offset":offset, "has_more":len(rows)>20})
 
 
 # ---------------------------------------------------------------------------
 # Web JSON API
 # ---------------------------------------------------------------------------
-@app.get("/api/analysis")
 @app.post("/api/analysis")
 async def analysis(request: Request):
     user = current_user(request)
     if not user:
-        return JSONResponse({"error": "Please log in to continue."}, status_code=401)
-
+        raise HTTPException(status_code=401, detail='Please sign in to continue.')
+    if request.headers.get('sec-fetch-site') == 'cross-site':
+        raise HTTPException(status_code=403, detail='Cross-site submission rejected.')
+    origin = request.headers.get('origin')
+    if origin and urllib.parse.urlsplit(origin).netloc != request.headers.get('host'):
+        raise HTTPException(status_code=403, detail='Cross-site submission rejected.')
+    key = request.headers.get('idempotency-key')
+    if not key:
+        raise HTTPException(status_code=400, detail='Idempotency-Key is required for safe retries.')
     try:
-        body = await request.json() if request.method == "POST" else None
-    except Exception:
-        body = {}
-
-    farm = None
-    if isinstance(body, dict) and body.get('farm_id'):
-        farm = get_farm_parcel(user['id'], body['farm_id'])
-        if not farm or farm.get('is_archived'):
-            return JSONResponse({'error': 'Farm not found or unavailable.'}, status_code=404)
-        body = dict(body, polygon=farm['polygon'])
-
-    try:
-        result, analysis_source = build_analysis_result(
-            body=body if request.method == "POST" else None,
-            query_args=dict(request.query_params),
-        )
-    except CoverageUnavailable as e:
-        return JSONResponse({'error': str(e), 'code': 'cagro_coverage_unsupported',
-                             'analysis_coverage': e.coverage}, status_code=422)
-    except ValueError as e:
-        return JSONResponse({"error": str(e)}, status_code=400)
-
-    try:
-        if farm:
-            result.update(farm_id=farm['id'], farm_name=farm['farm_name'],
-                          boundary_version=farm['boundary_version'])
-        session_id = save_analysis_session(user["id"], result, analysis_source)
-        result["session_id"] = session_id
-    except Exception as e:
-        print(f"DB save failed: {e}")
-        result["session_id"] = None
-        return result
-
-    # Attaching to a farm is optional and must not undo an already-successful
-    # session save if it fails (e.g. bad/foreign farm_id) — handle separately.
-    farm_id = (body or {}).get("farm_id") if isinstance(body, dict) else None
-    if farm_id:
-        try:
-            attach_analysis_to_farm(session_id, user["id"], farm_id)
-            result["farm_id"] = farm_id
-        except Exception as e:
-            print(f"Farm attach failed: {e}")
-
-    return result
+        body = AnalysisBody.model_validate(await request.json())
+    except (ValueError, TypeError):
+        raise HTTPException(status_code=422, detail='Invalid analysis inputs.')
+    return mobile_analysis(body, user, key)
 
 
 # ---------------------------------------------------------------------------
@@ -1309,6 +1357,8 @@ def mobile_register(body: RegisterBody):
         return JSONResponse({"error": "Password must be at most 72 UTF-8 bytes."}, status_code=400)
     if get_user_by_email(email):
         return JSONResponse({"error": "Email is already registered. Please log in."}, status_code=409)
+    if email_verification.enabled():
+        return email_verification.start(username, email, hash_password(body.password), SECRET_KEY)
     user = create_user(username, email, hash_password(body.password), role, auth_provider="email")
     if not user:
         return JSONResponse({"error": "Email is already registered. Please log in."}, status_code=409)
@@ -1327,18 +1377,110 @@ def mobile_login(body: LoginBody):
 
 
 
+class EmailTicketBody(BaseModel):
+    ticket: str = Field(min_length=32, max_length=128)
+
+
+class EmailCodeBody(EmailTicketBody):
+    code: str = Field(pattern=r"^[0-9]{6}$")
+
+
 @app.post("/api/mobile/verify-email")
 @app.post("/api/mobile/verify-code")
+def verify_signup_email(body: EmailCodeBody):
+    if not email_verification.enabled():
+        return JSONResponse({'error': 'Email verification is not enabled.'}, status_code=410)
+    return email_verification.verify(body.ticket, body.code, SECRET_KEY)
+
+
 @app.post("/api/mobile/send-verification")
 @app.post("/api/mobile/resend-verification")
-def retired_mobile_verification():
-    # Never issue a token from an email address or obsolete OTP alone.
-    return JSONResponse({"error": "Email verification is no longer required. Please log in with your password."}, status_code=410)
+def resend_signup_email(body: EmailTicketBody):
+    if not email_verification.enabled():
+        return JSONResponse({'error': 'Email verification is not enabled.'}, status_code=410)
+    return email_verification.resend(body.ticket, SECRET_KEY)
 
 
 @app.get("/api/mobile/me")
 def mobile_me(user=Depends(get_api_user)):
     return {"user": user_public_dict(user)}
+
+
+class ProviderTokenBody(BaseModel):
+    id_token: str = Field(min_length=32, max_length=8192)
+
+
+class PasswordResetStartBody(BaseModel):
+    email: str = Field(max_length=100)
+
+    @field_validator('email')
+    @classmethod
+    def normalize(cls, value):
+        return RegisterBody.valid_email(value.strip())
+
+
+class PasswordResetCompleteBody(EmailCodeBody):
+    new_password: str = Field(min_length=8, max_length=72)
+
+    @field_validator('new_password')
+    @classmethod
+    def valid_password(cls, value):
+        return validate_new_password(value)
+
+
+@app.post('/api/mobile/password-reset/start', status_code=202)
+def password_reset_start(body: PasswordResetStartBody):
+    import password_reset
+    return password_reset.start(body.email, SECRET_KEY)
+
+
+@app.post('/api/mobile/password-reset/complete')
+def password_reset_complete(body: PasswordResetCompleteBody):
+    import password_reset
+    return password_reset.complete(body.ticket, body.code, hash_password(body.new_password), SECRET_KEY)
+
+
+class LinkGoogleBody(ProviderTokenBody):
+    current_password: str = Field(max_length=1024)
+
+
+class PhoneStartBody(BaseModel):
+    phone_number: str = Field(min_length=9, max_length=16)
+
+    @field_validator('phone_number')
+    @classmethod
+    def normalize(cls, value):
+        from federated_identity import normalize_phone
+        return normalize_phone(value)
+
+
+class PhoneFinishBody(ProviderTokenBody):
+    ticket: str = Field(min_length=32, max_length=128)
+
+
+@app.post('/api/mobile/auth/google')
+def google_signin(body: ProviderTokenBody):
+    from federated_identity import google_login
+    user = google_login(body.id_token)
+    return {'user': user_public_dict(user), 'token': generate_mobile_token(user)}
+
+
+@app.post('/api/mobile/auth/link-google')
+def google_link(body: LinkGoogleBody, user=Depends(get_api_user)):
+    from federated_identity import link_google
+    return {'user': user_public_dict(link_google(user, body.id_token, body.current_password))}
+
+
+@app.post('/api/mobile/phone-verification/start')
+def phone_start(body: PhoneStartBody, user=Depends(get_api_user)):
+    from federated_identity import start_phone
+    return start_phone(user, body.phone_number)
+
+
+@app.post('/api/mobile/phone-verification/complete')
+def phone_finish(body: PhoneFinishBody, user=Depends(get_api_user)):
+    from federated_identity import finish_phone
+    return {'user': user_public_dict(finish_phone(user, body.ticket, body.id_token))}
 
 
 @app.post('/api/mobile/change-password')
@@ -1363,6 +1505,7 @@ def mobile_update_me(body: ProfileUpdateBody, user=Depends(get_api_user)):
         username=(body.username.strip() if body.username else None),
         location=body.location,
         profile_photo=body.profile_photo,
+        **({'phone_number': body.phone_number} if body.phone_number is not None else {}),
     )
     return {"user": user_public_dict(updated or get_user_by_id(user["id"]))}
 
@@ -1376,18 +1519,25 @@ def mobile_update_profile_alias(body: ProfileUpdateBody, user=Depends(get_api_us
         username=body.username,
         location=body.location,
         profile_photo=body.profile_photo,
+        **({'phone_number': body.phone_number} if body.phone_number is not None else {}),
     )
     return {"user": user_public_dict(updated or get_user_by_id(user["id"]))}
 
 @app.post("/api/mobile/me/deactivate")
 def mobile_deactivate_me(user=Depends(get_api_user)):
-    deactivate_user(user["id"])
+    try:
+        deactivate_user(user["id"])
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     return {"ok": True, "message": "Account deactivated."}
 
 
 @app.delete("/api/mobile/me")
 def mobile_delete_me(user=Depends(get_api_user)):
-    delete_user(user["id"])
+    try:
+        delete_user(user["id"])
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     return {"ok": True, "message": "Account deleted."}
 
 
@@ -1407,8 +1557,9 @@ def api_admin_dashboard(user=Depends(require_super_admin)):
     return {'stats': admin_dashboard_stats()}
 
 @app.get('/api/admin/users')
-def api_admin_users(user=Depends(require_super_admin)):
-    return {'users': admin_list_users()}
+def api_admin_users(user=Depends(require_super_admin), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query("", max_length=160)):
+    rows = admin_list_users(limit=limit+1, offset=offset, q=q)
+    return {"users": rows[:limit], "has_more": len(rows)>limit}
 
 @app.patch('/api/admin/users/{user_id}')
 def api_admin_update_user(user_id: int, body: AdminUserUpdateBody, user=Depends(require_super_admin)):
@@ -1424,8 +1575,9 @@ def api_admin_update_user(user_id: int, body: AdminUserUpdateBody, user=Depends(
     return {'user': updated}
 
 @app.get('/api/admin/analyses')
-def api_admin_analyses(user=Depends(require_super_admin)):
-    return {'analyses': admin_list_analyses()}
+def api_admin_analyses(user=Depends(require_super_admin), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query("", max_length=160)):
+    rows = admin_list_analyses(limit=limit+1, offset=offset, q=q)
+    return {"analyses": rows[:limit], "has_more": len(rows)>limit}
 
 
 @app.get('/api/admin/crops')
@@ -1454,12 +1606,15 @@ def api_admin_update_crop(crop_key: str, body: CropReferenceUpdateBody, user=Dep
 
 
 @app.get('/api/admin/audit-logs')
-def api_admin_audit_logs(user=Depends(require_super_admin)):
-    return {'logs': get_audit_logs()}
+def api_admin_audit_logs(user=Depends(require_super_admin), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query("", max_length=160)):
+    rows = get_audit_logs(limit=limit+1, offset=offset, q=q)
+    return {"logs": rows[:limit], "has_more": len(rows)>limit}
 
 
 @app.get("/api/mobile/weather")
-def mobile_live_weather(lat: float, lon: float):
+def mobile_live_weather(request: Request, lat: float = Query(ge=-90, le=90, allow_inf_nan=False), lon: float = Query(ge=-180, le=180, allow_inf_nan=False)):
+    qa_closure.enforce_quota(request.client.host if request.client else 'unknown', 'weather', 60)
+    qa_closure.enforce_quota('all', 'provider_weather', 300)
     # Public lightweight endpoint for the Home page. Auth is intentionally not
     # required because live weather should load before/after password login and
     # should not break when a local token is missing or expired.
@@ -1494,6 +1649,8 @@ def mobile_counts(user=Depends(get_api_user)):
 @app.post("/api/mobile/save-analysis")
 def mobile_save_analysis(body: SessionActionBody, user=Depends(get_api_user)):
     item = save_analysis_for_user(user["id"], body.session_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Analysis not found.")
     return {"saved": item}
 
 
@@ -1508,23 +1665,29 @@ def mobile_submit_to_planner(body: SessionActionBody, user=Depends(get_api_user)
 
 
 @app.get("/api/mobile/saved")
-def mobile_saved(user=Depends(get_api_user)):
-    return {"saved": get_saved_analyses(user["id"], limit=50)}
+def mobile_saved(user=Depends(get_api_user), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query("", max_length=160)):
+    rows = get_saved_analyses(user["id"], limit=limit+1, offset=offset, q=q)
+    return {"saved": rows[:limit], "has_more": len(rows)>limit}
 
 
 @app.post("/api/mobile/report")
 def mobile_create_report(body: SessionActionBody, user=Depends(get_api_user)):
     item = create_report_for_user(user["id"], body.session_id, body.title)
+    if not item:
+        raise HTTPException(status_code=404, detail="Analysis not found.")
     return {"report": item}
 
 
 @app.get("/api/mobile/reports")
-def mobile_reports(user=Depends(get_api_user)):
-    return {"reports": get_reports(user["id"], limit=50)}
+def mobile_reports(user=Depends(get_api_user), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query("", max_length=160)):
+    rows = get_reports(user["id"], limit=limit+1, offset=offset, q=q)
+    return {"reports": rows[:limit], "has_more": len(rows)>limit}
 
 
 @app.get("/api/mobile/reverse-geocode")
-def mobile_reverse_geocode(lat: float, lon: float, user=Depends(get_api_user)):
+def mobile_reverse_geocode(lat: float = Query(ge=-90, le=90, allow_inf_nan=False), lon: float = Query(ge=-180, le=180, allow_inf_nan=False), user=Depends(get_api_user)):
+    qa_closure.enforce_quota(user['id'], 'geocode', 60)
+    qa_closure.enforce_quota('all', 'provider_geocode', 300)
     return {"place_name": reverse_geocode_place(lat, lon)}
 
 
@@ -1549,6 +1712,7 @@ class FarmCreateBody(BaseModel):
         return value
 
 class FarmUpdateBody(BaseModel):
+    expected_boundary_version: int = Field(ge=1)
     farm_name: Optional[str] = Field(default=None,min_length=2,max_length=160)
     location_name: Optional[str] = Field(default=None,max_length=240)
     polygon: Optional[List[Dict[str, float]]] = None
@@ -1599,7 +1763,10 @@ def mobile_update_farm(farm_id: int, body: FarmUpdateBody, user=Depends(get_api_
         ok, err = validate_farm_polygon(body.polygon)
         if not ok:
             raise HTTPException(status_code=400, detail=err)
-    row=update_farm_parcel(user['id'],farm_id,**body.model_dump(exclude_none=True))
+    try:
+        row=update_farm_parcel(user['id'],farm_id,**body.model_dump(exclude_none=True))
+    except ValueError as exc:
+        raise HTTPException(status_code=409, detail=str(exc)) from exc
     if not row: raise HTTPException(status_code=404, detail='Farm parcel not found.')
     return {'farm':farm_coverage(row)}
 
@@ -1646,14 +1813,15 @@ class VerifySessionBody(BaseModel):
 
 
 @app.get("/api/planner/queue")
-def planner_queue(status: str = "pending", planner=Depends(require_planner)):
+def planner_queue(status: str = "pending", planner=Depends(require_planner), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query("", max_length=160)):
     """List analyzed land submissions for the planner to review.
 
     `status` query param: 'pending' (default), 'verified', 'rejected', or 'all'.
     """
     if status not in ("pending", "verified", "rejected", "all"):
         status = "pending"
-    return {"queue": get_planner_queue(status=status, limit=200)}
+    rows = get_planner_queue(status=status, limit=limit+1, offset=offset, q=q)
+    return {"queue": rows[:limit], "has_more": len(rows)>limit}
 
 
 @app.get("/api/planner/counts")
@@ -1688,12 +1856,30 @@ def planner_verify(body: VerifySessionBody, planner=Depends(require_planner)):
 @app.get('/api/mobile/analysis-requests/{request_id}')
 def mobile_analysis_request(request_id: str, user=Depends(get_api_user)):
     request_identity(request_id, {})
+    import analysis_jobs
+    queued = analysis_jobs.status(user['id'], request_id) if analysis_jobs.enabled() else None
+    if queued:
+        return queued
     return analysis_request_status(user['id'], request_id)
 
 
 @app.post("/api/mobile/analysis")
 def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user), idempotency_key: Optional[str]=Header(default=None)):
     key, _ = request_identity(idempotency_key, body.model_dump(exclude_none=True))
+    import analysis_jobs
+    if analysis_jobs.enabled():
+        if not idempotency_key:
+            raise HTTPException(400, 'Idempotency-Key is required for queued analysis.')
+        payload = body.model_dump(exclude_none=True)
+        key, digest = request_identity(idempotency_key, payload)
+        try:
+            prior = find_analysis_request(user['id'], key, digest)
+        except ValueError as exc:
+            raise HTTPException(409, str(exc))
+        if prior:
+            return json_safe(prior)
+        analysis_jobs.enqueue(user, key, digest, payload)
+        return JSONResponse({'status':'processing','stage':'queued','request_id':key}, status_code=202)
     logger = logging.getLogger('uvicorn.error')
     started = time.monotonic()
     # Logs deliberately omit bearer tokens, coordinates, email and provider secrets.
@@ -1706,6 +1892,13 @@ def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user), idempotency_
             logger.info('Analysis completed user=%s farm=%s session=%s seconds=%.1f', user['id'], body.farm_id, result.get('session_id'), time.monotonic()-started)
             return json_safe(result)
     except Exception as exc:
+        code = exc.status_code if isinstance(exc,HTTPException) else 503
+        if code in (400,404,409,422,502,503):
+            try:
+                from activity_notifications import record_failure
+                record_failure(user['id'],key,body.farm_id,code)
+            except Exception:
+                logger.warning('Could not persist analysis failure activity.')
         if isinstance(exc, HTTPException):
             logger.warning('Analysis rejected user=%s farm=%s status=%s seconds=%.1f', user['id'], body.farm_id, exc.status_code, time.monotonic()-started)
         else:
@@ -1713,7 +1906,7 @@ def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user), idempotency_
         raise
 
 
-def _perform_mobile_analysis(body, user, idempotency_key):
+def _perform_mobile_analysis(body, user, idempotency_key, charge_quota=True):
     payload=body.model_dump(exclude_none=True)
     key,digest=request_identity(idempotency_key,payload)
     try:
@@ -1722,6 +1915,9 @@ def _perform_mobile_analysis(body, user, idempotency_key):
             return prior
     except ValueError as exc:
         raise HTTPException(status_code=409,detail=str(exc))
+    if charge_quota:
+        qa_closure.enforce_quota(user['id'], 'analysis', 10)
+        qa_closure.enforce_quota('all', 'provider_analysis', 60)
     farm=None
     if body.farm_id:
         farm=get_farm_parcel(user['id'],body.farm_id)
@@ -1770,3 +1966,152 @@ def _perform_mobile_analysis(body, user, idempotency_key):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run("fastapi_app:app", host="0.0.0.0", port=8000, reload=False)
+
+
+@app.post('/api/mobile/logout')
+def mobile_logout(request: Request, user=Depends(get_api_user)):
+    payload = token_serializer.loads(request.headers['authorization'].split(' ', 1)[1].strip(),
+        salt='geosustain-mobile', max_age=MOBILE_TOKEN_MAX_AGE)
+    defense_db.revoke_session(payload['sid'], MOBILE_TOKEN_MAX_AGE)
+    return {'signed_out': True}
+
+
+@app.get('/api/mobile/notifications')
+def notifications(user=Depends(get_api_user), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100)):
+    return qa_closure.inbox(user['id'], offset, limit)
+
+
+@app.get('/api/mobile/activity')
+def activity_inbox(user=Depends(get_api_user), offset: int=Query(0,ge=0), limit: int=Query(50,ge=1,le=100),
+                   unread_only: bool=False, event_type: Optional[str]=Query(None,pattern='^(analysis_ready|analysis_partial|analysis_failed|submitted|review|submission_received)$')):
+    import activity_notifications as activity
+    return activity.inbox(user['id'],offset,limit,unread_only,event_type)
+
+
+@app.post('/api/mobile/activity/read-all')
+def activity_read_all(user=Depends(get_api_user)):
+    import activity_notifications as activity
+    return activity.mark_all(user['id'])
+
+
+@app.post('/api/mobile/activity/{event_id}/read')
+def activity_read(event_id: int, user=Depends(get_api_user)):
+    import activity_notifications as activity
+    item=activity.mark_read(user['id'],event_id)
+    if not item: raise HTTPException(404,'Activity is no longer available.')
+    return item
+
+
+@app.post('/api/mobile/notifications/{notification_id}/read')
+def read_notification(notification_id: int, user=Depends(get_api_user)):
+    row = qa_closure.read_notification(user['id'], notification_id)
+    if not row:
+        raise HTTPException(404, 'Notification is no longer available.')
+    return row
+
+
+@app.post('/api/mobile/reviews/{session_id}/read')
+def read_review(session_id: int, user=Depends(get_api_user)):
+    row = qa_closure.read_notification(user['id'], session_id, by_session=True)
+    if not row:
+        raise HTTPException(404, 'Review notification is no longer available.')
+    return row
+
+
+@app.get('/api/admin/messages')
+def notification_log(user=Depends(require_super_admin), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100)):
+    return qa_closure.message_log(offset, limit)
+
+
+class PushSubscriptionBody(BaseModel):
+    token: str = Field(min_length=20, max_length=4096)
+    platform: str = Field(pattern='^(android|web)$')
+    enabled: bool
+
+
+@app.put('/api/mobile/push-subscription')
+def push_subscription(request: Request, body: PushSubscriptionBody, user=Depends(get_api_user)):
+    from push_delivery import configured, register
+    if body.enabled and not configured():
+        raise HTTPException(status_code=503, detail='Push provider is not configured. Ask the project administrator to complete Firebase setup.')
+    payload = token_serializer.loads(request.headers['authorization'].split(' ', 1)[1].strip(),
+        salt='geosustain-mobile', max_age=MOBILE_TOKEN_MAX_AGE)
+    register(user['id'], payload['sid'], user.get('password_version',0), body.token, body.platform, body.enabled)
+    return {'enabled':body.enabled}
+
+
+class RecoveryIssueBody(BaseModel):
+    identity_verified: bool
+
+
+class RecoveryRedeemBody(BaseModel):
+    recovery_token: str = Field(min_length=32, max_length=128)
+    new_password: str = Field(min_length=8, max_length=72)
+
+    @field_validator('new_password')
+    @classmethod
+    def password_size(cls, value):
+        return validate_new_password(value)
+
+
+@app.post('/api/admin/users/{user_id}/recovery')
+def admin_recovery(user_id: int, body: RecoveryIssueBody, user=Depends(require_super_admin)):
+    if not body.identity_verified:
+        raise HTTPException(status_code=400, detail='Verify the account owner before issuing a recovery handoff.')
+    token = defense_db.issue_password_recovery(user_id, user['id'])
+    if token is None:
+        raise HTTPException(status_code=404, detail='Active account not found.')
+    return JSONResponse({'recovery_token': token, 'expires_in_seconds': 900},
+                        headers={'Cache-Control': 'no-store'})
+
+
+@app.post('/api/mobile/recover-password')
+def recover_password(body: RecoveryRedeemBody):
+    if not defense_db.redeem_password_recovery(body.recovery_token, hash_password(body.new_password)):
+        raise HTTPException(status_code=400, detail='Recovery handoff is invalid, expired or already used.')
+    return {'message': 'Password changed. Sign in using your new password.'}
+
+
+@app.get('/ready')
+def readiness():
+    checks = {'database': 'unavailable', 'model': 'unavailable'}
+    try:
+        conn = defense_db.psycopg2.connect(defense_db.DATABASE_URL,
+            connect_timeout=3, options='-c statement_timeout=2000')
+        try:
+            with conn.cursor() as cur:
+                cur.execute('''SELECT u.password_version,u.phone_verified_at,u.google_sub, a.actor_reference, f.boundary_version
+                    FROM users u LEFT JOIN audit_logs a ON FALSE LEFT JOIN farm_parcels f ON FALSE
+                    LEFT JOIN revoked_sessions r ON FALSE LEFT JOIN password_recovery p ON FALSE
+                    LEFT JOIN push_subscriptions s ON FALSE
+                    LEFT JOIN review_notifications n ON FALSE
+                    LEFT JOIN request_quotas q ON FALSE
+                    LEFT JOIN analysis_jobs j ON FALSE
+                    LEFT JOIN session_activity t ON FALSE
+                    LEFT JOIN password_reset_challenges pr ON FALSE
+                    LEFT JOIN phone_verification_challenges pc ON FALSE
+                    LEFT JOIN activity_push_deliveries ap ON FALSE LIMIT 1''')
+            checks['database'] = 'ready'
+        finally:
+            conn.close()
+    except Exception:
+        pass
+    if analyze_location is not None and ANALYSIS_IMPORT_ERROR is None:
+        from rainfallDatasets import model_health
+        try:
+            if model_health().get('status') == 'loaded':
+                checks['model'] = 'ready'
+        except Exception:
+            pass
+    if os.getenv('PUSH_REQUIRED', '').lower() == 'true':
+        from push_delivery import configured
+        checks['push_configuration'] = 'ready' if configured() else 'unavailable'
+    if email_verification.enabled():
+        from mail_delivery import configured as mail_configured
+        checks['email_configuration'] = 'ready' if mail_configured() else 'unavailable'
+    if os.getenv('IDENTITY_REQUIRED', '').lower() == 'true':
+        from federated_identity import project_id
+        checks['identity_configuration'] = 'ready' if project_id() else 'unavailable'
+    ready = all(value == 'ready' for value in checks.values())
+    return JSONResponse({'status': 'ready' if ready else 'not_ready', 'checks': checks},
+        status_code=200 if ready else 503, headers={'Cache-Control': 'no-store'})

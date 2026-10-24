@@ -29,11 +29,12 @@ class FarmGeometry {
     );
   }
 
+  // Provisional offline envelope; the backend checks the full city polygon.
   static bool insideCoverage(LatLng point) =>
       point.latitude.isFinite &&
       point.longitude.isFinite &&
       point.latitude >= 7.20 &&
-      point.latitude <= 7.41 &&
+      point.latitude <= 7.46 &&
       point.longitude >= 125.50 &&
       point.longitude <= 125.72;
 

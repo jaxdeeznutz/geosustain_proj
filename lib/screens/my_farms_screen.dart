@@ -24,6 +24,18 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
   String _search = '', _filter = 'All Farms';
   bool _loading = true;
   String? _error;
+  final _searchController = TextEditingController();
+  List<Map<String, dynamic>> get _visibleFarms => widget.state.farms
+      .where(
+        (f) =>
+            '${f['farm_name']} ${f['location_name']}'.toLowerCase().contains(
+              _search,
+            ) &&
+            (_filter == 'All Farms' ||
+                (_filter == 'Analyzed') ==
+                    ((analysisNumber(f['analysis_count']) ?? 0) > 0)),
+      )
+      .toList();
   @override
   void initState() {
     super.initState();
@@ -35,6 +47,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     widget.state.removeListener(_refresh);
     super.dispose();
   }
@@ -69,6 +82,16 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
   }
 
   Future<void> _open(Map<String, dynamic> farm, {String? action}) async {
+    if (farm['_local_only'] == true) {
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => LocalFarmPage(state: widget.state, farm: farm),
+        ),
+      );
+      if (mounted) setState(() {});
+      return;
+    }
     widget.state.focusFarm(farm);
     final analyzed = await Navigator.push<bool>(
       context,
@@ -86,6 +109,10 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
   }
 
   Future<void> _analyzeFarm(Map<String, dynamic> farm) async {
+    if (farm['_local_only'] == true) {
+      await _open(farm);
+      return;
+    }
     if (widget.state.loading) return;
     final error = await widget.state.analyzeSavedFarm(farm);
     if (!mounted) return;
@@ -112,12 +139,6 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   GeoHeaderAction(
-                    tooltip: 'Search farms',
-                    onPressed: () => setState(() => _showSearch = !_showSearch),
-                    icon: Icons.search,
-                  ),
-                  const SizedBox(width: 8),
-                  GeoHeaderAction(
                     tooltip: 'Create a farm',
                     accent: true,
                     onPressed: () => showLandMethodPicker(
@@ -134,6 +155,48 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
               'Manage Your Farms',
               'View, edit, and analyze your saved farm areas. Create a new boundary or analyze an existing area anytime.',
             ),
+            if (widget.state.offlineWorkspace ||
+                widget.state.pendingFarmCount > 0)
+              Card(
+                child: Padding(
+                  padding: const EdgeInsets.all(14),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.state.offlineWorkspace
+                            ? 'Offline workspace'
+                            : 'Device farm sync',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      Text(
+                        '${widget.state.pendingFarmCount} pending farms. GPS works offline; map tiles and analysis need internet. Sync does not start an analysis.',
+                      ),
+                      FilledButton.icon(
+                        onPressed: widget.state.syncingFarms
+                            ? null
+                            : () async {
+                                try {
+                                  await widget.state.syncPendingFarms();
+                                  await _load();
+                                } catch (error) {
+                                  if (mounted) {
+                                    setState(
+                                      () =>
+                                          _error = friendlyErrorMessage(error),
+                                    );
+                                  }
+                                }
+                              },
+                        icon: const Icon(Icons.sync),
+                        label: Text(
+                          widget.state.syncingFarms ? 'Syncing…' : 'Sync now',
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -172,12 +235,12 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
               crossAxisAlignment: WrapCrossAlignment.center,
               spacing: 12,
               children: [
-                const Text(
+                Text(
                   'Saved Farms',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.w800,
-                    color: darkGreen,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 DropdownButton<String>(
@@ -192,20 +255,30 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
             ),
             const Text('Your boundaries, results, and review updates.'),
             const SizedBox(height: 12),
-            if (_showSearch)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    labelText: 'Search farms',
-                    prefixIcon: Icon(Icons.search),
-                  ),
-                  onChanged: (v) => setState(() => _search = v.toLowerCase()),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  labelText: 'Search farms',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _search.isEmpty
+                      ? null
+                      : IconButton(
+                          tooltip: 'Clear search',
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _search = '');
+                          },
+                        ),
                 ),
+                onChanged: (v) => setState(() => _search = v.toLowerCase()),
               ),
+            ),
             if (_loading) const LinearProgressIndicator(),
             if (_error != null) _MappingNotice(_error!),
-            if (!_loading && widget.state.farms.isEmpty)
+            if (!_loading && _error == null && widget.state.farms.isEmpty)
               const Card(
                 child: Padding(
                   padding: EdgeInsets.all(24),
@@ -214,15 +287,19 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
                   ),
                 ),
               ),
-            for (final farm in widget.state.farms.where(
-              (f) =>
-                  '${f['farm_name']} ${f['location_name']}'
-                      .toLowerCase()
-                      .contains(_search) &&
-                  (_filter == 'All Farms' ||
-                      (_filter == 'Analyzed') ==
-                          ((analysisNumber(f['analysis_count']) ?? 0) > 0)),
-            ))
+            if (!_loading &&
+                _error == null &&
+                widget.state.farms.isNotEmpty &&
+                _visibleFarms.isEmpty)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text(
+                    'No matching farms. Try another name or change the filter.',
+                  ),
+                ),
+              ),
+            for (final farm in _visibleFarms)
               GeoFarmCard(
                 farm: farm,
                 busy: widget.state.loading,
@@ -237,7 +314,6 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
       ),
     ),
   );
-  bool _showSearch = false;
 }
 
 class FarmDetailsPage extends StatefulWidget {
@@ -318,7 +394,9 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
         _recordsLoaded = true;
       });
     } catch (error) {
-      if (mounted) setState(() => _notice = friendlyErrorMessage(error));
+      if (mounted) {
+        setState(() => _notice = friendlyErrorMessage(error));
+      }
     } finally {
       if (mounted) setState(() => _loading = false);
     }
@@ -415,10 +493,12 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
     if (confirmed != true || !mounted) return;
     setState(() => _busy = true);
     try {
-      final updated = await widget.state.api.updateFarm(
-        int.parse('${_farm['id']}'),
-        {'farm_name': newName, 'location_name': newLocation},
-      );
+      final updated = await widget.state.api
+          .updateFarm(int.parse('${_farm['id']}'), {
+            'farm_name': newName,
+            'location_name': newLocation,
+            'expected_boundary_version': _farm['boundary_version'],
+          });
       _farm = {..._farm, ...updated};
       widget.state.replaceFarms(
         widget.state.farms
@@ -426,7 +506,29 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
             .toList(),
       );
     } catch (error) {
-      if (mounted) setState(() => _notice = friendlyErrorMessage(error));
+      if (error is ApiException && error.statusCode == 409) {
+        try {
+          final fresh = await widget.state.api.getFarm(
+            int.parse('${_farm['id']}'),
+          );
+          if (mounted) {
+            setState(() {
+              _farm = fresh;
+              _notice =
+                  'Another edit was saved. The farm has been reloaded; review it and edit again.';
+            });
+          }
+        } catch (_) {
+          if (mounted) {
+            setState(
+              () => _notice =
+                  'Another edit was saved. Reload the farm before editing again.',
+            );
+          }
+        }
+      } else if (mounted) {
+        setState(() => _notice = friendlyErrorMessage(error));
+      }
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -457,6 +559,7 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
     try {
       await widget.state.api.updateFarm(int.parse('${_farm['id']}'), {
         'is_archived': true,
+        'expected_boundary_version': _farm['boundary_version'],
       });
       widget.state.replaceFarms(
         widget.state.farms
@@ -557,10 +660,7 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
                     _busy ||
                         _loading ||
                         points.isEmpty ||
-                        analysisMapValue(
-                              _farm['analysis_coverage'],
-                            )['supported'] ==
-                            false
+                        !farmCanAnalyze(_farm)
                     ? null
                     : _analyze,
                 icon: const Icon(Icons.analytics_outlined),

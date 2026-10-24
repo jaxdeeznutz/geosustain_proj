@@ -72,6 +72,7 @@ bool isModelRanked(Map<String, dynamic> record) =>
 List<Map<String, dynamic>> rankedCropRecommendations(
   Map<String, dynamic> record,
 ) {
+  if (record['analysis_mode'] == 'preliminary_environmental') return [];
   final seen = <String>{};
   final crops = assessedCrops(record)
       .where((crop) {

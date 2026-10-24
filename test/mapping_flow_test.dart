@@ -125,6 +125,7 @@ void main() {
       expect(gps.fixes.hasListener, isFalse);
       tester.binding.handleAppLifecycleStateChanged(AppLifecycleState.resumed);
       await tester.pumpAndSettle();
+      await revealControls(tester);
       expect(find.textContaining('Recording paused because'), findsOneWidget);
       expect(gps.subscriptions, 1);
       expect(find.text('Resume'), findsOneWidget);
@@ -136,10 +137,19 @@ void main() {
   testWidgets(
     'GPS perimeter closes and saves once without automatically requesting review',
     (tester) async {
-      SharedPreferences.setMockInitialValues({'token': 'fixture-token'});
+      SharedPreferences.setMockInitialValues({
+        'token': 'fixture-token',
+        'account_id': '10',
+      });
       final requests = <http.Request>[];
       final client = MockClient((request) async {
         requests.add(request);
+        if (request.url.path == '/api/mobile/me') {
+          return http.Response(
+            '{"user":{"id":10,"username":"Fixture farmer","role":"farmer"}}',
+            200,
+          );
+        }
         expect(request.url.path, '/api/mobile/farms');
         final body = jsonDecode(request.body);
         expect(body['mapping_method'], 'gps_walk');
@@ -149,13 +159,14 @@ void main() {
         expect(polygon.first, polygon.last);
         return http.Response(
           jsonEncode({
-            'farm': {'id': 8, ...body},
+            'farm': {'id': 8, 'farmer_id': 10, ...body},
           }),
           201,
         );
       });
       state.dispose();
-      state = AnalysisState(api: ApiService(client: client));
+      state = AnalysisState(api: ApiService(client: client))
+        ..currentUser = {'id': 10, 'role': 'farmer'};
       await mount(tester, FarmBoundaryPage(state: state));
       await revealControls(tester);
       await revealControls(tester);
@@ -199,7 +210,18 @@ void main() {
       await revealControls(tester);
       await tester.tap(find.text('Confirm and Save Farm'));
       await tester.pumpAndSettle();
-      expect(requests.length, 1);
+      expect(
+        requests.where((r) => r.url.path == '/api/mobile/farms').length,
+        1,
+      );
+      expect(
+        requests.any(
+          (r) =>
+              r.url.path.contains('submit-to-planner') ||
+              r.url.path == '/api/mobile/analysis',
+        ),
+        isFalse,
+      );
       expect(state.farms.single['id'], 8);
       expect(find.text('Analyze This Farm'), findsOneWidget);
       expect(tester.takeException(), isNull);

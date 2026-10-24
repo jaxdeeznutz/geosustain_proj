@@ -1,4 +1,6 @@
 import os
+import secrets
+import hashlib
 from contextlib import contextmanager
 import config  # noqa: F401 -- load local environment before reading settings
 import psycopg2
@@ -15,6 +17,116 @@ DATABASE_URL = os.getenv(
 def get_conn():
     """Open and return a fresh psycopg2 connection."""
     return psycopg2.connect(DATABASE_URL, cursor_factory=RealDictCursor, connect_timeout=10)
+
+
+def audit_in_transaction(cur, actor_id, role, action, target_type=None, target_id=None, details=None):
+    """A failure aborts the caller's mutation. Stable IDs survive account removal."""
+    cur.execute("""INSERT INTO audit_logs
+        (actor_user_id, actor_role, actor_reference, action, target_type, target_id, details)
+        VALUES (%s, %s, %s, %s, %s, %s, %s)""",
+        (actor_id, role, f'account:{actor_id}' if actor_id else 'trusted-operator',
+         action, target_type, target_id, Json(details or {})))
+
+
+def protect_last_admin(cur, user_id):
+    cur.execute('SELECT pg_advisory_xact_lock(714262601)')
+    cur.execute("SELECT role, is_active FROM users WHERE id=%s FOR UPDATE", (user_id,))
+    user = cur.fetchone()
+    if user and user['is_active'] and user['role'] in ('admin', 'super_admin'):
+        cur.execute("SELECT COUNT(*) AS count FROM users WHERE is_active AND role IN ('admin','super_admin')")
+        if cur.fetchone()['count'] <= 1:
+            raise ValueError('The last active Super Admin cannot be removed, deactivated or demoted.')
+
+
+def revoke_session(session_id, max_age=86400):
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM push_subscriptions WHERE session_hash=%s', (hashlib.sha256(session_id.encode()).hexdigest(),))
+            cur.execute('DELETE FROM revoked_sessions WHERE expires_at < NOW()')
+            cur.execute("""INSERT INTO revoked_sessions (session_hash, expires_at)
+                VALUES (%s, NOW() + %s * INTERVAL '1 second') ON CONFLICT DO NOTHING""",
+                (hashlib.sha256(session_id.encode()).hexdigest(), max_age))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def start_session(user_id, session_id, max_age=86400):
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM session_activity WHERE expires_at<NOW()')
+            cur.execute("INSERT INTO session_activity(session_hash,user_id,expires_at) VALUES (%s,%s,NOW()+%s*INTERVAL '1 second')",
+                (hashlib.sha256(session_id.encode()).hexdigest(),user_id,max_age))
+        conn.commit()
+    finally:
+        conn.close()
+
+
+def session_revoked(session_id):
+    if not session_id:
+        return True  # pre-migration tokens must sign in once
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT 1 FROM revoked_sessions WHERE session_hash=%s AND expires_at > NOW()',
+                        (hashlib.sha256(session_id.encode()).hexdigest(),))
+            if cur.fetchone() is not None:
+                return True
+            idle_seconds = max(60, int(os.getenv('SESSION_IDLE_SECONDS','1800')))
+            cur.execute("""UPDATE session_activity SET last_seen=NOW()
+                WHERE session_hash=%s AND expires_at>NOW()
+                AND last_seen>NOW()-%s*INTERVAL '1 second' RETURNING session_hash""",
+                (hashlib.sha256(session_id.encode()).hexdigest(),idle_seconds))
+            active = cur.fetchone() is not None
+        conn.commit()
+        return not active
+    finally:
+        conn.close()
+
+
+def issue_password_recovery(user_id, actor_id):
+    token = secrets.token_urlsafe(32)
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, password_version FROM users WHERE id=%s AND is_active FOR UPDATE', (user_id,))
+            user = cur.fetchone()
+            if not user:
+                return None
+            cur.execute('DELETE FROM password_recovery WHERE user_id=%s', (user_id,))
+            cur.execute("""INSERT INTO password_recovery (token_hash, user_id, password_version, expires_at, issued_by)
+                VALUES (%s,%s,%s,NOW()+INTERVAL '15 minutes',%s)""",
+                (hashlib.sha256(token.encode()).hexdigest(), user_id, user['password_version'], actor_id))
+            audit_in_transaction(cur, actor_id, 'super_admin', 'recovery_issue', 'user', user_id)
+        conn.commit()
+        return token
+    finally:
+        conn.close()
+
+
+def redeem_password_recovery(token, password_hash):
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""SELECT * FROM password_recovery WHERE token_hash=%s
+                AND used_at IS NULL AND expires_at > NOW() FOR UPDATE""",
+                (hashlib.sha256(token.encode()).hexdigest(),))
+            recovery = cur.fetchone()
+            if not recovery:
+                return False
+            cur.execute("""UPDATE users SET password_hash=%s, password_version=password_version+1,
+                updated_at=NOW() WHERE id=%s AND password_version=%s AND is_active RETURNING id""",
+                (password_hash, recovery['user_id'], recovery['password_version']))
+            if not cur.fetchone():
+                return False
+            cur.execute('UPDATE password_recovery SET used_at=NOW() WHERE token_hash=%s', (recovery['token_hash'],))
+            audit_in_transaction(cur, recovery['user_id'], None, 'recovery_redeem', 'user', recovery['user_id'])
+        conn.commit()
+        return True
+    finally:
+        conn.close()
 
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS users (
@@ -337,6 +449,36 @@ def init_db():
                     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 )
             """)
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_history_user_order ON analysis_sessions (user_id, analyzed_at DESC, id DESC)")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_queue_order ON analysis_sessions (verification_status, analyzed_at DESC, id DESC)")
+            cur.execute("ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS actor_reference TEXT")
+            cur.execute("UPDATE audit_logs SET actor_reference='account:' || actor_user_id WHERE actor_reference IS NULL AND actor_user_id IS NOT NULL")
+            cur.execute("""CREATE TABLE IF NOT EXISTS revoked_sessions (
+                session_hash CHAR(64) PRIMARY KEY, expires_at TIMESTAMPTZ NOT NULL)""")
+            cur.execute("""CREATE TABLE IF NOT EXISTS password_recovery (
+                token_hash CHAR(64) PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+                password_version INTEGER NOT NULL, expires_at TIMESTAMPTZ NOT NULL,
+                used_at TIMESTAMPTZ, issued_by INTEGER REFERENCES users(id) ON DELETE SET NULL)""")
+            cur.execute("""CREATE TABLE IF NOT EXISTS push_subscriptions (
+                token TEXT PRIMARY KEY, user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                session_hash CHAR(64) NOT NULL, password_version INTEGER NOT NULL,
+                platform VARCHAR(10) NOT NULL, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())""")
+            cur.execute("""CREATE TABLE IF NOT EXISTS push_deliveries (
+                id BIGSERIAL PRIMARY KEY, token TEXT REFERENCES push_subscriptions(token) ON DELETE CASCADE,
+                session_id INTEGER REFERENCES analysis_sessions(id) ON DELETE CASCADE,
+                attempts INTEGER NOT NULL DEFAULT 0, next_attempt_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+                sent_at TIMESTAMPTZ, last_error VARCHAR(80), UNIQUE(token,session_id))""")
+            cur.execute("CREATE INDEX IF NOT EXISTS idx_push_pending ON push_deliveries(next_attempt_at,id) WHERE sent_at IS NULL")
+            from email_verification import migrate as migrate_email
+            migrate_email(cur)
+            from federated_identity import migrate as migrate_identity
+            migrate_identity(cur)
+            from password_reset import migrate as migrate_reset
+            migrate_reset(cur)
+            from qa_closure import migrate
+            migrate(cur)
+            from analysis_jobs import migrate as migrate_jobs
+            migrate_jobs(cur)
             cur.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs (created_at DESC)")
         conn.commit()
     finally:
@@ -558,7 +700,7 @@ def get_user_by_username(username: str):
 
 
 
-def update_user_profile(user_id: int, username: str = None, role: str = None, location: str = None, profile_photo: str = None):
+def update_user_profile(user_id: int, username: str = None, role: str = None, location: str = None, profile_photo: str = None, phone_number: str = None):
     """Update editable SELF-SERVICE profile fields and return the updated public row.
 
     SECURITY: this function is used by the mobile/web self-service "update my
@@ -581,6 +723,11 @@ def update_user_profile(user_id: int, username: str = None, role: str = None, lo
     if profile_photo is not None:
         updates.append("profile_photo = %s")
         values.append(profile_photo)
+    if phone_number is not None:
+        from federated_identity import normalize_phone
+        normalized = normalize_phone(phone_number) if phone_number else None
+        updates.extend(["phone_verified_at = CASE WHEN phone_number IS NOT DISTINCT FROM %s THEN phone_verified_at ELSE NULL END", "phone_number = %s"])
+        values.extend([normalized, normalized])
     if not updates:
         return get_user_by_id(user_id)
     updates.append("updated_at = NOW()")
@@ -593,7 +740,8 @@ def update_user_profile(user_id: int, username: str = None, role: str = None, lo
                 UPDATE users
                 SET {', '.join(updates)}
                 WHERE id = %s
-                RETURNING id, username, email, role, location, profile_photo, is_active, created_at, updated_at
+                RETURNING id, username, email, role, location, profile_photo, is_active, created_at, updated_at,
+                    phone_number,phone_verified_at,email_verified,auth_provider
                 """,
                 tuple(values),
             )
@@ -608,7 +756,9 @@ def deactivate_user(user_id: int):
     conn = get_conn()
     try:
         with conn.cursor() as cur:
-            cur.execute("UPDATE users SET is_active = FALSE, updated_at = NOW() WHERE id = %s", (user_id,))
+            protect_last_admin(cur, user_id)
+            cur.execute("UPDATE users SET is_active = FALSE, password_version=password_version+1, updated_at = NOW() WHERE id = %s", (user_id,))
+            cur.execute("DELETE FROM push_subscriptions WHERE user_id=%s", (user_id,))
         conn.commit()
         return True
     finally:
@@ -619,6 +769,13 @@ def delete_user(user_id: int):
     conn = get_conn()
     try:
         with conn.cursor() as cur:
+            protect_last_admin(cur, user_id)
+            audit_in_transaction(cur, user_id, None, 'account_delete', 'user', user_id)
+            cur.execute("UPDATE audit_logs SET details=details-'target_username' WHERE target_type='user' AND target_id=%s", (user_id,))
+            # The owner-approved rule removes every owned location-bearing row.
+            cur.execute("DELETE FROM analysis_sessions WHERE user_id=%s", (user_id,))
+            cur.execute("DELETE FROM pending_registrations WHERE LOWER(email)=(SELECT LOWER(email) FROM users WHERE id=%s)", (user_id,))
+            cur.execute("DELETE FROM email_signup_challenges WHERE LOWER(email)=(SELECT LOWER(email) FROM users WHERE id=%s)", (user_id,))
             cur.execute("DELETE FROM users WHERE id = %s", (user_id,))
         conn.commit()
         return True
@@ -783,6 +940,8 @@ def save_analysis_session(user_id, result: dict, analysis_source: str, request_k
                 ),
             )
 
+            from activity_notifications import analysis_saved
+            analysis_saved(cur,user_id,session_id,result.get('is_crop_recommended') is False)
         conn.commit()
         return session_id
     finally:
@@ -965,7 +1124,7 @@ def _history_select_sql(extra_select="", extra_join="", where_prefix="s.user_id 
                 LEFT JOIN users owner ON owner.id = s.user_id
                 {extra_join}
                 WHERE {where_prefix}
-                ORDER BY s.analyzed_at DESC
+                ORDER BY s.analyzed_at DESC, s.id DESC
             """
 
 
@@ -994,6 +1153,9 @@ def submit_analysis_to_planner(user_id: int, session_id: int):
                                FROM analysis_sessions WHERE id=%s AND user_id=%s
                                AND verification_status IN ('pending','verified','rejected')""", (session_id,user_id))
                 row=cur.fetchone()
+            if row:
+                from activity_notifications import submitted
+                submitted(cur,user_id,session_id)
         conn.commit()
         return dict(row) if row else None
     finally:
@@ -1015,8 +1177,13 @@ def save_analysis_for_user(user_id: int, session_id: int):
                 (user_id, session_id, session_id, user_id),
             )
             row = cur.fetchone()
+            if not row:
+                cur.execute("SELECT id, user_id, session_id, saved_at FROM saved_analyses WHERE user_id=%s AND session_id=%s", (user_id, session_id))
+                row = cur.fetchone()
+                if row:
+                    row = dict(row, already_saved=True)
         conn.commit()
-        return dict(row) if row else {"user_id": user_id, "session_id": session_id, "already_saved": True}
+        return dict(row) if row else None
     finally:
         conn.close()
 
@@ -1037,13 +1204,16 @@ def create_report_for_user(user_id: int, session_id: int, title: str = None):
                 (user_id, session_id, title, session_id, user_id),
             )
             row = cur.fetchone()
+            if not row:
+                cur.execute("SELECT id, user_id, session_id, report_title, created_at FROM reports WHERE user_id=%s AND session_id=%s", (user_id, session_id))
+                row = cur.fetchone()
         conn.commit()
-        return dict(row) if row else {"user_id": user_id, "session_id": session_id, "already_reported": True}
+        return dict(row) if row else None
     finally:
         conn.close()
 
 
-def get_saved_analyses(user_id: int, limit: int = 50):
+def get_saved_analyses(user_id: int, limit: int = 50, offset: int = 0, q: str = ""):
     """Return saved/bookmarked analyses for a user."""
     conn = get_conn()
     try:
@@ -1052,9 +1222,9 @@ def get_saved_analyses(user_id: int, limit: int = 50):
                 _history_select_sql(
                     extra_select=", sv.saved_at",
                     extra_join="INNER JOIN saved_analyses sv ON sv.session_id = s.id AND sv.user_id = s.user_id",
-                    where_prefix="s.user_id = %s",
-                ) + " LIMIT %s",
-                (user_id, limit),
+                    where_prefix="s.user_id = %s AND (%s = '' OR concat_ws(' ', s.id, s.place_name, s.farm_name_snapshot) ILIKE %s)",
+                ) + " LIMIT %s OFFSET %s",
+                (user_id, q, "%"+q+"%", limit, offset),
             )
             rows = cur.fetchall()
         return enrich_history_rows(rows)
@@ -1062,7 +1232,7 @@ def get_saved_analyses(user_id: int, limit: int = 50):
         conn.close()
 
 
-def get_reports(user_id: int, limit: int = 50):
+def get_reports(user_id: int, limit: int = 50, offset: int = 0, q: str = ""):
     """Return generated report records for a user."""
     conn = get_conn()
     try:
@@ -1071,9 +1241,9 @@ def get_reports(user_id: int, limit: int = 50):
                 _history_select_sql(
                     extra_select=", rp.id AS report_id, rp.report_title, rp.created_at AS report_created_at",
                     extra_join="INNER JOIN reports rp ON rp.session_id = s.id AND rp.user_id = s.user_id",
-                    where_prefix="s.user_id = %s",
-                ) + " LIMIT %s",
-                (user_id, limit),
+                    where_prefix="s.user_id = %s AND (%s = '' OR concat_ws(' ', s.id, s.place_name, s.farm_name_snapshot) ILIKE %s)",
+                ) + " LIMIT %s OFFSET %s",
+                (user_id, q, "%"+q+"%", limit, offset),
             )
             rows = cur.fetchall()
         return enrich_history_rows(rows)
@@ -1169,7 +1339,7 @@ _PLANNER_SESSION_SELECT = """
 """
 
 
-def get_planner_queue(status: str = "pending", limit: int = 100):
+def get_planner_queue(status: str = "pending", limit: int = 100, offset: int = 0, q: str = ""):
     """
     Return analyzed land sessions for the planner to review, joined with the
     submitting farmer's basic info. `status` can be 'pending', 'verified',
@@ -1179,17 +1349,18 @@ def get_planner_queue(status: str = "pending", limit: int = 100):
     try:
         with conn.cursor() as cur:
             farmer_only = " WHERE LOWER(COALESCE(u.role, 'farmer')) = 'farmer' AND s.verification_status IN ('pending','verified','rejected') "
+            farmer_only += " AND (%s = '' OR concat_ws(' ', s.id, s.place_name, u.username) ILIKE %s) "
             if status == "all":
                 cur.execute(
-                    _PLANNER_SESSION_SELECT + farmer_only + " ORDER BY s.analyzed_at DESC LIMIT %s",
-                    (limit,),
+                    _PLANNER_SESSION_SELECT + farmer_only + " ORDER BY s.analyzed_at DESC, s.id DESC LIMIT %s OFFSET %s",
+                    (q, "%"+q+"%", limit, offset),
                 )
             else:
                 cur.execute(
                     _PLANNER_SESSION_SELECT
                     + farmer_only
-                    + " AND s.verification_status = %s ORDER BY s.analyzed_at DESC LIMIT %s",
-                    (status, limit),
+                    + " AND s.verification_status = %s ORDER BY s.analyzed_at DESC, s.id DESC LIMIT %s OFFSET %s",
+                    (q, "%"+q+"%", status, limit, offset),
                 )
             rows = cur.fetchall()
         return enrich_history_rows(rows)
@@ -1255,14 +1426,17 @@ def verify_analysis_session(session_id: int, planner_id: int, status: str, notes
                 (status, planner_id, notes, session_id),
             )
             row = cur.fetchone()
+            if row:
+                audit_in_transaction(cur, planner_id, 'agricultural_planning_analyst',
+                    'verification_decision', 'analysis_session', session_id,
+                    {'decision': status, 'has_notes': bool(notes)})
+                from push_delivery import queue_review
+                queue_review(cur, session_id)
+                from qa_closure import queue_notification
+                queue_notification(cur, session_id)
         conn.commit()
         if not row:
             return None
-        write_audit_log(
-            planner_id, 'agricultural_planning_analyst', 'verification_decision',
-            target_type='analysis_session', target_id=session_id,
-            details={'decision': status, 'has_notes': bool(notes)},
-        )
         return get_planner_session_detail(session_id)
     finally:
         conn.close()
@@ -1311,23 +1485,25 @@ def admin_dashboard_stats():
                 SELECT COUNT(*) AS total_analyses,
                        COUNT(*) FILTER (WHERE verification_status='pending') AS pending,
                        COUNT(*) FILTER (WHERE verification_status='verified') AS verified,
-                       COUNT(*) FILTER (WHERE verification_status='rejected') AS rejected,
-                       COUNT(*) FILTER (WHERE selected_polygon IS NOT NULL) AS registered_parcels,
-                       COALESCE(SUM(area_hectares) FILTER (WHERE area_hectares IS NOT NULL),0) AS total_area_hectares
+                       COUNT(*) FILTER (WHERE verification_status='rejected') AS rejected
                 FROM analysis_sessions
             """)
             analyses = dict(cur.fetchone() or {})
-            return {**users, **analyses}
+            cur.execute("""SELECT COUNT(*) FILTER (WHERE NOT is_archived) AS registered_parcels,
+                COUNT(*) FILTER (WHERE is_archived) AS archived_parcels,
+                COALESCE(SUM(area_hectares) FILTER (WHERE NOT is_archived), 0) AS total_area_hectares
+                FROM farm_parcels""")
+            return {**users, **analyses, **dict(cur.fetchone() or {})}
 
 
-def admin_list_users(limit: int = 200):
+def admin_list_users(limit: int = 200, offset: int = 0, q: str = ""):
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT id, username, email, role, location, is_active, email_verified,
                        auth_provider, created_at, updated_at
-                FROM users ORDER BY created_at DESC LIMIT %s
-            """, (limit,))
+                FROM users WHERE (%s = '' OR concat_ws(' ', id, username, email, role) ILIKE %s) ORDER BY created_at DESC, id DESC LIMIT %s OFFSET %s
+            """, (q, "%"+q+"%", limit, offset))
             return [dict(r) for r in cur.fetchall()]
 
 
@@ -1351,19 +1527,20 @@ def write_audit_log(actor_user_id, actor_role, action, target_type=None, target_
         print(f"Audit log write failed (non-fatal): {exc}")
 
 
-def get_audit_logs(limit: int = 200):
+def get_audit_logs(limit: int = 200, offset: int = 0, q: str = ""):
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
                 """
                 SELECT a.id, a.action, a.target_type, a.target_id, a.details, a.created_at,
-                       a.actor_role, u.username AS actor_username, u.email AS actor_email
+                       a.actor_role, a.actor_reference, u.username AS actor_username, u.email AS actor_email
                 FROM audit_logs a
                 LEFT JOIN users u ON u.id = a.actor_user_id
-                ORDER BY a.created_at DESC
-                LIMIT %s
+                WHERE (%s = '' OR concat_ws(' ', a.id, a.action, a.actor_reference, u.username) ILIKE %s)
+                ORDER BY a.created_at DESC, a.id DESC
+                LIMIT %s OFFSET %s
                 """,
-                (limit,),
+                (q, "%"+q+"%", limit, offset),
             )
             return [dict(r) for r in cur.fetchall()]
 
@@ -1382,7 +1559,6 @@ def admin_update_user(user_id: int, role=None, is_active=None, actor_user_id=Non
         'planner': 'agricultural_planning_analyst',
         'admin': 'super_admin',
     }
-    before = get_user_by_id(user_id)
     sets=[]; vals=[]
     if role is not None:
         role=str(role).strip().lower()
@@ -1397,37 +1573,37 @@ def admin_update_user(user_id: int, role=None, is_active=None, actor_user_id=Non
     sets.append('updated_at=NOW()'); vals.append(user_id)
     with get_conn() as conn:
         with conn.cursor() as cur:
+            cur.execute("SELECT pg_advisory_xact_lock(714262601)")
+            cur.execute("SELECT * FROM users WHERE id=%s FOR UPDATE", (user_id,))
+            before = cur.fetchone()
+            if role not in (None, 'super_admin') or is_active is False:
+                protect_last_admin(cur, user_id)
+            if before and ((role is not None and role != before['role']) or is_active is False):
+                sets.append('password_version=password_version+1')
+                cur.execute('DELETE FROM push_subscriptions WHERE user_id=%s', (user_id,))
             cur.execute(f"UPDATE users SET {', '.join(sets)} WHERE id=%s RETURNING id,username,email,role,location,is_active,email_verified,auth_provider,created_at,updated_at", tuple(vals))
-            row=cur.fetchone(); conn.commit()
+            row=cur.fetchone()
+            if row:
+                audit_in_transaction(cur, actor_user_id, actor_role, 'user_update', 'user', user_id,
+                    {'before_role': before['role'], 'role': row['role'], 'is_active': row['is_active']})
+            conn.commit()
     updated = dict(row) if row else None
-    if updated and before:
-        details = {}
-        if role is not None and before.get('role') != updated.get('role'):
-            details['role'] = {'from': before.get('role'), 'to': updated.get('role')}
-        if is_active is not None and before.get('is_active') != updated.get('is_active'):
-            details['is_active'] = {'from': before.get('is_active'), 'to': updated.get('is_active')}
-        if details:
-            write_audit_log(
-                actor_user_id, actor_role, 'user_update',
-                target_type='user', target_id=user_id,
-                details={**details, 'target_username': updated.get('username')},
-            )
     return updated
 
 
-def admin_list_analyses(limit: int = 200):
+def admin_list_analyses(limit: int = 200, offset: int = 0, q: str = ""):
     with get_conn() as conn:
         with conn.cursor() as cur:
             cur.execute("""
                 SELECT s.id AS session_id, s.place_name, s.analysis_source, s.analyzed_at,
                        s.verification_status, s.area_hectares, s.center_lat, s.center_lon,
                        u.id AS user_id, u.username, u.email, u.role,
-                       c.predicted_crop, c.crop_compatibility_pct
+                       c.predicted_crop, c.compatibility_pct AS crop_compatibility_pct
                 FROM analysis_sessions s
                 LEFT JOIN users u ON u.id=s.user_id
                 LEFT JOIN crop_recommendations c ON c.session_id=s.id
-                ORDER BY s.analyzed_at DESC LIMIT %s
-            """, (limit,))
+                WHERE (%s = '' OR concat_ws(' ', s.id, s.place_name, u.username, u.email) ILIKE %s) ORDER BY s.analyzed_at DESC, s.id DESC LIMIT %s OFFSET %s
+            """, (q, "%"+q+"%", limit, offset))
             return [dict(r) for r in cur.fetchall()]
 
 
@@ -1490,14 +1666,11 @@ def update_crop_reference(crop_key: str, label=None, growth_cycle=None, est_yiel
                 tuple(vals),
             )
             row = cur.fetchone()
+            if row:
+                audit_in_transaction(cur, actor_user_id, actor_role, 'crop_reference_update',
+                    'crop_reference', row['id'], {'crop_key': crop_key, 'is_active': row['is_active']})
             conn.commit()
     updated = dict(row) if row else None
-    if updated:
-        write_audit_log(
-            actor_user_id, actor_role, 'crop_reference_update',
-            target_type='crop_reference', target_id=updated.get('id'),
-            details={'crop_key': crop_key, 'is_active': updated.get('is_active')},
-        )
     return updated
 
 
@@ -1577,6 +1750,7 @@ def get_farm_parcel(farmer_id: int, farm_id: int):
 
 
 def update_farm_parcel(farmer_id: int, farm_id: int, **changes):
+    expected = changes.pop('expected_boundary_version', None)
     allowed={'farm_name','location_name','polygon','mapping_method','gps_accuracy_m','is_archived'}
     data={k:v for k,v in changes.items() if k in allowed and v is not None}
     if 'polygon' in data:
@@ -1589,14 +1763,17 @@ def update_farm_parcel(farmer_id: int, farm_id: int, **changes):
     if not data:
         return get_farm_parcel(farmer_id, farm_id)
     sets=', '.join(f"{k}=%s" for k in data)
-    if 'polygon' in data:
-        sets += ', boundary_version=boundary_version+1'
-    vals=list(data.values())+[farm_id,farmer_id]
+    sets += ', boundary_version=boundary_version+1'
+    vals=list(data.values())+[farm_id,farmer_id,expected]
     conn=get_conn()
     try:
         with conn.cursor() as cur:
-            cur.execute(f"UPDATE farm_parcels SET {sets}, updated_at=NOW() WHERE id=%s AND farmer_id=%s RETURNING *", vals)
+            cur.execute(f"UPDATE farm_parcels SET {sets}, updated_at=NOW() WHERE id=%s AND farmer_id=%s AND boundary_version=%s RETURNING *", vals)
             row=cur.fetchone()
+            if not row:
+                cur.execute("SELECT id FROM farm_parcels WHERE id=%s AND farmer_id=%s", (farm_id, farmer_id))
+                if cur.fetchone():
+                    raise ValueError('This farm changed. Reload it before saving your edit.')
         conn.commit()
         return dict(row) if row else None
     finally:
