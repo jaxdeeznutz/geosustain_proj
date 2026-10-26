@@ -63,7 +63,7 @@ class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
 
     if (sessionId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('This record has no valid session ID.')),
+        SnackBar(content: Text('This record has no valid session ID.')),
       );
       return;
     }
@@ -96,7 +96,7 @@ class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
                 subtitle: 'Awaiting your decision',
               ),
             ),
-            const SizedBox(width: 18),
+            SizedBox(width: 18),
             Expanded(
               child: _WebKpiCard(
                 icon: Icons.check_circle_rounded,
@@ -105,7 +105,7 @@ class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
                 subtitle: 'Approved land analyses',
               ),
             ),
-            const SizedBox(width: 18),
+            SizedBox(width: 18),
             Expanded(
               child: _WebKpiCard(
                 icon: Icons.cancel_rounded,
@@ -116,14 +116,14 @@ class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
             ),
           ],
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         _WebCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -137,12 +137,12 @@ class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
                         SizedBox(height: 3),
                         Text(
                           'Open a submission to review the complete parcel analysis.',
-                          style: TextStyle(color: Colors.black54),
+                          style: TextStyle(color: WebPortalColors.muted),
                         ),
                       ],
                     ),
                   ),
-                  for (final item in const [
+                  for (final item in [
                     ('Pending', 'pending'),
                     ('Verified', 'verified'),
                     ('Rejected', 'rejected'),
@@ -154,17 +154,20 @@ class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
                       current: state.plannerQueueStatus,
                       onSelect: (v) => state.loadPlannerQueue(status: v),
                     ),
-                    const SizedBox(width: 8),
+                    SizedBox(width: 8),
                   ],
                   IconButton(
                     tooltip: 'Refresh',
                     onPressed: _refresh,
-                    icon: const Icon(Icons.refresh_rounded, color: green),
+                    icon: Icon(
+                      Icons.refresh_rounded,
+                      color: WebPortalColors.accent,
+                    ),
                   ),
                 ],
               ),
               TextField(
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Search all submissions',
                   prefixIcon: Icon(Icons.search),
                 ),
@@ -180,29 +183,33 @@ class _WebPlannerQueueScreenState extends State<WebPlannerQueueScreen> {
                   Text('${filtered.length} submissions · Page ${_page + 1}'),
                   TextButton(
                     onPressed: _page > 0 ? () => setState(() => _page--) : null,
-                    child: const Text('Previous'),
+                    child: Text('Previous'),
                   ),
                   TextButton(
                     onPressed: _page < maxPage
                         ? () => setState(() => _page++)
                         : null,
-                    child: const Text('Next'),
+                    child: Text('Next'),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               if (state.plannerQueueLoading && !_loadedOnce)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(44),
-                  child: Center(child: CircularProgressIndicator(color: green)),
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      color: WebPortalColors.accent,
+                    ),
+                  ),
                 )
               else if (state.plannerQueue.isEmpty)
-                const Padding(
+                Padding(
                   padding: EdgeInsets.all(42),
                   child: Center(
                     child: Text(
                       'No submissions found.',
-                      style: TextStyle(color: Colors.black45),
+                      style: TextStyle(color: WebPortalColors.muted),
                     ),
                   ),
                 )
@@ -271,17 +278,17 @@ class _PlannerReviewLoaderState extends State<_PlannerReviewLoader> {
       builder: (context, snapshot) {
         if (snapshot.connectionState != ConnectionState.done) {
           return Dialog(
-            insetPadding: const EdgeInsets.all(24),
+            insetPadding: EdgeInsets.all(24),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(22),
             ),
             child: SizedBox(
               width: 420,
               height: 220,
-              child: const Column(
+              child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  CircularProgressIndicator(color: green),
+                  CircularProgressIndicator(color: WebPortalColors.accent),
                   SizedBox(height: 18),
                   Text(
                     'Loading complete land analysis...',
@@ -295,40 +302,40 @@ class _PlannerReviewLoaderState extends State<_PlannerReviewLoader> {
 
         if (snapshot.hasError || snapshot.data == null) {
           return Dialog(
-            insetPadding: const EdgeInsets.all(24),
+            insetPadding: EdgeInsets.all(24),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(22),
             ),
             child: SizedBox(
               width: 520,
               child: Padding(
-                padding: const EdgeInsets.all(26),
+                padding: EdgeInsets.all(26),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.error_outline_rounded,
                       color: Color(0xFFE45B5B),
                       size: 46,
                     ),
-                    const SizedBox(height: 12),
-                    const Text(
+                    SizedBox(height: 12),
+                    Text(
                       'Could not open analysis review',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       '${snapshot.error ?? 'No detail was returned.'}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.black54),
+                      style: TextStyle(color: WebPortalColors.muted),
                     ),
-                    const SizedBox(height: 18),
+                    SizedBox(height: 18),
                     FilledButton(
                       onPressed: () => Navigator.pop(context),
-                      child: const Text('Close'),
+                      child: Text('Close'),
                     ),
                   ],
                 ),
@@ -338,7 +345,7 @@ class _PlannerReviewLoaderState extends State<_PlannerReviewLoader> {
         }
 
         return Dialog(
-          insetPadding: const EdgeInsets.all(24),
+          insetPadding: EdgeInsets.all(24),
           backgroundColor: Colors.transparent,
           elevation: 0,
           child: SizedBox(
@@ -372,7 +379,7 @@ class _StatusFilterChip extends StatelessWidget {
       onTap: () => onSelect(value),
       borderRadius: BorderRadius.circular(999),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: EdgeInsets.symmetric(horizontal: 14, vertical: 8),
         decoration: BoxDecoration(
           color: selected ? green : softGreen,
           borderRadius: BorderRadius.circular(999),
@@ -397,10 +404,10 @@ class _PlannerQueueCard extends StatelessWidget {
 
   double? _n(dynamic v) => v is num ? v.toDouble() : double.tryParse('$v');
   Color _statusColor(String s) => s == 'verified'
-      ? const Color(0xFF1FA463)
+      ? Color(0xFF1FA463)
       : s == 'rejected'
-      ? const Color(0xFFE45B5B)
-      : const Color(0xFFE9A829);
+      ? Color(0xFFE45B5B)
+      : Color(0xFFE9A829);
 
   @override
   Widget build(BuildContext context) {
@@ -417,16 +424,16 @@ class _PlannerQueueCard extends StatelessWidget {
         onTap: onTap,
         borderRadius: BorderRadius.circular(20),
         child: Ink(
-          padding: const EdgeInsets.all(18),
+          padding: EdgeInsets.all(18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: WebPortalColors.surface,
             borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: const Color(0xFFE3ECE5)),
+            border: Border.all(color: Color(0xFFE3ECE5)),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withValues(alpha: .035),
                 blurRadius: 16,
-                offset: const Offset(0, 8),
+                offset: Offset(0, 8),
               ),
             ],
           ),
@@ -439,16 +446,16 @@ class _PlannerQueueCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: softGreen,
+                      color: WebPortalColors.tint,
                       borderRadius: BorderRadius.circular(14),
                     ),
-                    child: const Icon(
+                    child: Icon(
                       Icons.eco_rounded,
-                      color: green,
+                      color: WebPortalColors.accent,
                       size: 27,
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  SizedBox(width: 12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -457,16 +464,16 @@ class _PlannerQueueCard extends StatelessWidget {
                           place,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const SizedBox(height: 3),
+                        SizedBox(height: 3),
                         Text(
                           'Submitted by $farmer',
-                          style: const TextStyle(
-                            color: Colors.black54,
+                          style: TextStyle(
+                            color: WebPortalColors.muted,
                             fontSize: 12.5,
                           ),
                         ),
@@ -479,7 +486,7 @@ class _PlannerQueueCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               Row(
                 children: [
                   Expanded(
@@ -502,23 +509,27 @@ class _PlannerQueueCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              SizedBox(height: 16),
               Row(
                 children: [
-                  const Icon(Icons.touch_app_rounded, size: 17, color: green),
-                  const SizedBox(width: 7),
-                  const Expanded(
+                  Icon(
+                    Icons.touch_app_rounded,
+                    size: 17,
+                    color: WebPortalColors.accent,
+                  ),
+                  SizedBox(width: 7),
+                  Expanded(
                     child: Text(
                       'Open complete analysis review',
                       style: TextStyle(
-                        color: green,
+                        color: WebPortalColors.accent,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
                   ),
                   Icon(
                     Icons.arrow_forward_rounded,
-                    color: green.withValues(alpha: .8),
+                    color: WebPortalColors.accent.withValues(alpha: .8),
                   ),
                 ],
               ),
@@ -540,14 +551,14 @@ class _CardFact extends StatelessWidget {
     children: [
       Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 10.5,
-          color: Colors.black45,
+          color: WebPortalColors.muted,
           fontWeight: FontWeight.w900,
           letterSpacing: .4,
         ),
       ),
-      const SizedBox(height: 5),
+      SizedBox(height: 5),
       Text(
         value,
         maxLines: 1,
@@ -582,7 +593,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
 
   Map<String, dynamic> get r => widget.row;
   double? n(dynamic v) => v is num ? v.toDouble() : double.tryParse('$v');
-  List<dynamic> list(dynamic v) => v is List ? v : const [];
+  List<dynamic> list(dynamic v) => v is List ? v : [];
 
   @override
   void initState() {
@@ -646,16 +657,16 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
     final minV = values.reduce((a, b) => a < b ? a : b),
         maxV = values.reduce((a, b) => a > b ? a : b);
     final t = maxV == minV ? .75 : ((value - minV) / (maxV - minV)).clamp(0, 1);
-    if (t >= .75) return const Color(0xFF16A765);
-    if (t >= .5) return const Color(0xFF8BD450);
-    if (t >= .25) return const Color(0xFFF0AA20);
-    return const Color(0xFFE95B55);
+    if (t >= .75) return Color(0xFF16A765);
+    if (t >= .5) return Color(0xFF8BD450);
+    if (t >= .25) return Color(0xFFF0AA20);
+    return Color(0xFFE95B55);
   }
 
   Future<void> decide(String status) async {
     if (status == 'rejected' && notes.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
             'Add a rejection reason in Planning Analyst Notes first.',
           ),
@@ -679,13 +690,11 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           FilledButton(
             style: FilledButton.styleFrom(
-              backgroundColor: status == 'verified'
-                  ? green
-                  : const Color(0xFFE45B5B),
+              backgroundColor: status == 'verified' ? green : Color(0xFFE45B5B),
             ),
             onPressed: () => Navigator.pop(context, true),
             child: Text(status == 'verified' ? 'Verify' : 'Reject'),
@@ -721,7 +730,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
               '${r['land_type'] ?? 'arable'}'.trim().toLowerCase() == 'arable';
     final crop = isCrop
         ? '${r['predicted_crop'] ?? 'No crop'}'
-        : '${r['land_status'] ?? r['recommendation_title'] ?? 'Non-arable area'}';
+        : '${r['land_status'] ?? r['recommendation_title'] ?? 'Land assessment'}';
     final status = '${r['verification_status'] ?? 'pending'}';
     final score = n(r['compatibility_pct']);
     final center = parcelCenter;
@@ -743,7 +752,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
     if (!isCrop && bullets.isEmpty) {
       final ndvi = n(r['ndvi']);
       bullets.add(
-        'Crop recommendation was stopped because the parcel was classified as ${crop.toLowerCase()}.',
+        'A complete crop recommendation is unavailable. Review coverage and source quality below.',
       );
       if (ndvi != null) {
         bullets.add(
@@ -787,47 +796,50 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
       child: Column(
         children: [
           Padding(
-            padding: const EdgeInsets.fromLTRB(22, 16, 12, 14),
+            padding: EdgeInsets.fromLTRB(22, 16, 12, 14),
             child: Row(
               children: [
                 Container(
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: softGreen,
+                    color: WebPortalColors.tint,
                     borderRadius: BorderRadius.circular(13),
                   ),
-                  child: const Icon(Icons.fact_check_outlined, color: green),
+                  child: Icon(
+                    Icons.fact_check_outlined,
+                    color: WebPortalColors.accent,
+                  ),
                 ),
-                const SizedBox(width: 12),
-                const Text(
+                SizedBox(width: 12),
+                Text(
                   'Analysis Review',
                   style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 _SmallBadge(
                   status == 'pending'
                       ? 'Pending Review'
                       : status[0].toUpperCase() + status.substring(1),
                   color: status == 'verified'
-                      ? const Color(0xFF1FA463)
+                      ? Color(0xFF1FA463)
                       : status == 'rejected'
-                      ? const Color(0xFFE45B5B)
-                      : const Color(0xFFE9A829),
+                      ? Color(0xFFE45B5B)
+                      : Color(0xFFE9A829),
                 ),
-                const Spacer(),
+                Spacer(),
                 IconButton(
                   tooltip: 'Close analysis review',
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close_rounded),
+                  icon: Icon(Icons.close_rounded),
                 ),
               ],
             ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(20),
               child: Column(
                 children: [
                   // Compact two-column hero: square map on the left, summary on the right.
@@ -835,14 +847,14 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                   CagroSoilObservationsCard(record: r),
                   ModelExplanationCard(record: r),
                   if (r['analysis_schema_version'] != null) ...[
-                    const Text('AI Crop Ranking — Model scores'),
+                    Text('AI Crop Ranking — Model scores'),
                     for (final raw in analysisListValue(
                       r['top_crop_recommendations'],
                     ).take(5))
                       Text(
                         '${analysisMapValue(raw)['crop']}: ${analysisMapValue(raw)['compatibility_pct']}% Model score',
                       ),
-                    const Text('Environmental & Soil Reference Assessment'),
+                    Text('Environmental & Soil Reference Assessment'),
                     for (final factor in environmentalFactorViews(
                       analysisMapValue(
                         analysisListValue(
@@ -877,7 +889,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                                 setState(() => layer = value),
                           ),
                         ),
-                        const SizedBox(width: 14),
+                        SizedBox(width: 14),
                         Expanded(
                           flex: 5,
                           child: _ReviewSection(
@@ -885,7 +897,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                             icon: Icons.assignment_outlined,
                             child: LayoutBuilder(
                               builder: (context, c) {
-                                const gap = 10.0;
+                                final gap = 10.0;
                                 final cellWidth = (c.maxWidth - gap) / 2;
                                 return SingleChildScrollView(
                                   child: Wrap(
@@ -918,11 +930,11 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                                               ? (score == null
                                                     ? '--'
                                                     : '${score.toStringAsFixed(1)}%')
-                                              : 'Not recommended',
+                                              : 'Not assessed',
                                           caption: isCrop
                                               ? (isModelRanked(r)
                                                     ? 'AI Crop Ranking'
-                                                    : '${r['suitability_level'] ?? ''}')
+                                                    : 'Recorded model score')
                                               : '${r['recommendation_title'] ?? ''}',
                                         ),
                                       ),
@@ -965,14 +977,14 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
                   if (r['analysis_schema_version'] == null)
                     _ReviewSection(
                       title: 'Environmental & Soil Data',
                       icon: Icons.eco_outlined,
                       child: LayoutBuilder(
                         builder: (context, c) {
-                          const gap = 10.0;
+                          final gap = 10.0;
                           final itemWidth = (c.maxWidth - gap * 4) / 5;
                           bool isEst(String key) {
                             final dq = r['data_quality'];
@@ -1073,7 +1085,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                         },
                       ),
                     ),
-                  const SizedBox(height: 14),
+                  SizedBox(height: 14),
                   SizedBox(
                     height: 270,
                     child: Row(
@@ -1087,32 +1099,35 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                                 : 'Why was crop recommendation stopped?',
                             icon: Icons.auto_awesome_outlined,
                             child: bullets.isEmpty
-                                ? const Text(
+                                ? Text(
                                     'No explanation stored for this older analysis.',
-                                    style: TextStyle(color: Colors.black54),
+                                    style: TextStyle(
+                                      color: WebPortalColors.muted,
+                                    ),
                                   )
                                 : SingleChildScrollView(
                                     child: Column(
                                       children: bullets
                                           .map(
                                             (b) => Padding(
-                                              padding: const EdgeInsets.only(
+                                              padding: EdgeInsets.only(
                                                 bottom: 9,
                                               ),
                                               child: Row(
                                                 crossAxisAlignment:
                                                     CrossAxisAlignment.start,
                                                 children: [
-                                                  const Icon(
+                                                  Icon(
                                                     Icons.check_circle_rounded,
-                                                    color: green,
+                                                    color:
+                                                        WebPortalColors.accent,
                                                     size: 17,
                                                   ),
-                                                  const SizedBox(width: 8),
+                                                  SizedBox(width: 8),
                                                   Expanded(
                                                     child: Text(
                                                       b,
-                                                      style: const TextStyle(
+                                                      style: TextStyle(
                                                         height: 1.35,
                                                       ),
                                                     ),
@@ -1127,16 +1142,18 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                           ),
                         ),
                         if (isCrop) ...[
-                          const SizedBox(width: 14),
+                          SizedBox(width: 14),
                           Expanded(
                             flex: isFarmerSubmission ? 3 : 4,
                             child: _ReviewSection(
-                              title: 'Other Suitable Crops',
+                              title: 'Other Ranked Crops',
                               icon: Icons.local_florist_outlined,
                               child: alts.isEmpty
-                                  ? const Text(
+                                  ? Text(
                                       'No alternative crops stored.',
-                                      style: TextStyle(color: Colors.black54),
+                                      style: TextStyle(
+                                        color: WebPortalColors.muted,
+                                      ),
                                     )
                                   : SingleChildScrollView(
                                       child: Column(
@@ -1145,21 +1162,21 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                                               ? Map<String, dynamic>.from(a)
                                               : <String, dynamic>{};
                                           return Padding(
-                                            padding: const EdgeInsets.only(
+                                            padding: EdgeInsets.only(
                                               bottom: 10,
                                             ),
                                             child: Row(
                                               children: [
-                                                const Icon(
+                                                Icon(
                                                   Icons.eco_rounded,
-                                                  color: green,
+                                                  color: WebPortalColors.accent,
                                                   size: 18,
                                                 ),
-                                                const SizedBox(width: 8),
+                                                SizedBox(width: 8),
                                                 Expanded(
                                                   child: Text(
                                                     '${m['crop'] ?? m['name'] ?? a}',
-                                                    style: const TextStyle(
+                                                    style: TextStyle(
                                                       fontWeight:
                                                           FontWeight.w700,
                                                     ),
@@ -1167,8 +1184,9 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                                                 ),
                                                 Text(
                                                   '${m['compatibility_pct'] ?? m['score'] ?? ''}${m['compatibility_pct'] != null || m['score'] != null ? '%' : ''}',
-                                                  style: const TextStyle(
-                                                    color: green,
+                                                  style: TextStyle(
+                                                    color:
+                                                        WebPortalColors.accent,
                                                     fontWeight: FontWeight.w900,
                                                   ),
                                                 ),
@@ -1182,7 +1200,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                           ),
                         ],
                         if (isFarmerSubmission) ...[
-                          const SizedBox(width: 14),
+                          SizedBox(width: 14),
                           Expanded(
                             flex: 4,
                             child: _ReviewSection(
@@ -1194,7 +1212,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                                       maxLength: 500,
                                       minLines: 5,
                                       maxLines: 6,
-                                      decoration: const InputDecoration(
+                                      decoration: InputDecoration(
                                         hintText:
                                             'Add verification notes for the farmer...',
                                       ),
@@ -1204,7 +1222,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                                         notes.text.trim().isEmpty
                                             ? 'No planner notes were added.'
                                             : notes.text.trim(),
-                                        style: const TextStyle(height: 1.45),
+                                        style: TextStyle(height: 1.45),
                                       ),
                                     ),
                             ),
@@ -1217,33 +1235,33 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
               ),
             ),
           ),
-          const Divider(height: 1),
+          Divider(height: 1),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 OutlinedButton(
                   onPressed: saving ? null : () => Navigator.pop(context),
-                  child: const Text('Close'),
+                  child: Text('Close'),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 if (isFarmerSubmission && status == 'pending') ...[
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: const Color(0xFFE45B5B),
-                      side: const BorderSide(color: Color(0xFFE45B5B)),
+                      foregroundColor: Color(0xFFE45B5B),
+                      side: BorderSide(color: Color(0xFFE45B5B)),
                     ),
                     onPressed: saving ? null : () => decide('rejected'),
-                    icon: const Icon(Icons.close_rounded),
-                    label: const Text('Reject'),
+                    icon: Icon(Icons.close_rounded),
+                    label: Text('Reject'),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   FilledButton.icon(
                     style: FilledButton.styleFrom(backgroundColor: green),
                     onPressed: saving ? null : () => decide('verified'),
                     icon: saving
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 16,
                             height: 16,
                             child: CircularProgressIndicator(
@@ -1251,8 +1269,8 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                               color: Colors.white,
                             ),
                           )
-                        : const Icon(Icons.check_rounded),
-                    label: const Text('Verify'),
+                        : Icon(Icons.check_rounded),
+                    label: Text('Verify'),
                   ),
                 ],
               ],
@@ -1264,7 +1282,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
 
     if (widget.embedded) {
       return Material(
-        color: Colors.white,
+        color: WebPortalColors.surface,
         borderRadius: BorderRadius.circular(22),
         clipBehavior: Clip.antiAlias,
         child: content,
@@ -1272,7 +1290,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
     }
 
     return Dialog(
-      insetPadding: const EdgeInsets.all(24),
+      insetPadding: EdgeInsets.all(24),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
       child: content,
     );
@@ -1287,11 +1305,11 @@ class _ReviewSection extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: double.infinity,
-    padding: const EdgeInsets.all(16),
+    padding: EdgeInsets.all(16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: WebPortalColors.surface,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: const Color(0xFFE3ECE5)),
+      border: Border.all(color: Color(0xFFE3ECE5)),
       boxShadow: [
         BoxShadow(color: Colors.black.withValues(alpha: .025), blurRadius: 12),
       ],
@@ -1302,19 +1320,23 @@ class _ReviewSection extends StatelessWidget {
         if (title != null) ...[
           Row(
             children: [
-              Icon(icon ?? Icons.info_outline, color: green, size: 20),
-              const SizedBox(width: 8),
+              Icon(
+                icon ?? Icons.info_outline,
+                color: WebPortalColors.accent,
+                size: 20,
+              ),
+              SizedBox(width: 8),
               Text(
                 title!,
-                style: const TextStyle(
-                  color: green,
+                style: TextStyle(
+                  color: WebPortalColors.accent,
                   fontWeight: FontWeight.w900,
                   fontSize: 15,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 13),
+          SizedBox(height: 13),
         ],
         child,
       ],
@@ -1334,7 +1356,7 @@ class _SummaryFact extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(horizontal: 10),
+    padding: EdgeInsets.symmetric(horizontal: 10),
     child: Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1342,38 +1364,35 @@ class _SummaryFact extends StatelessWidget {
           width: 38,
           height: 38,
           decoration: BoxDecoration(
-            color: softGreen,
+            color: WebPortalColors.tint,
             borderRadius: BorderRadius.circular(10),
           ),
-          child: Icon(icon, color: green, size: 20),
+          child: Icon(icon, color: WebPortalColors.accent, size: 20),
         ),
-        const SizedBox(width: 10),
+        SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(fontSize: 11, color: Colors.black54),
+                style: TextStyle(fontSize: 11, color: WebPortalColors.muted),
               ),
-              const SizedBox(height: 3),
+              SizedBox(height: 3),
               Text(
                 value,
                 maxLines: 3,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 14,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 14),
               ),
               if (caption != null && caption!.isNotEmpty)
                 Text(
                   caption!,
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10.5,
-                    color: green,
+                    color: WebPortalColors.accent,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -1412,12 +1431,12 @@ class _MetricBox extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: 165,
-    padding: const EdgeInsets.all(12),
+    padding: EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: const Color(0xFFFBFDFC),
+      color: Color(0xFFFBFDFC),
       borderRadius: BorderRadius.circular(13),
       border: Border.all(
-        color: estimated ? const Color(0xFFF0C987) : const Color(0xFFE8EFE9),
+        color: estimated ? Color(0xFFF0C987) : Color(0xFFE8EFE9),
       ),
     ),
     child: Row(
@@ -1426,12 +1445,12 @@ class _MetricBox extends StatelessWidget {
           width: 34,
           height: 34,
           decoration: BoxDecoration(
-            color: softGreen,
+            color: WebPortalColors.tint,
             borderRadius: BorderRadius.circular(9),
           ),
-          child: Icon(icon, color: green, size: 18),
+          child: Icon(icon, color: WebPortalColors.accent, size: 18),
         ),
-        const SizedBox(width: 9),
+        SizedBox(width: 9),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1440,13 +1459,13 @@ class _MetricBox extends StatelessWidget {
                 children: [
                   Text(
                     label,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 10.5,
-                      color: Colors.black54,
+                      color: WebPortalColors.muted,
                     ),
                   ),
                   if (estimated)
-                    const Padding(
+                    Padding(
                       padding: EdgeInsets.only(left: 4),
                       child: Icon(
                         Icons.info_outline_rounded,
@@ -1460,10 +1479,7 @@ class _MetricBox extends StatelessWidget {
                 _shownValue(),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 13.5,
-                ),
+                style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13.5),
               ),
             ],
           ),
@@ -1530,7 +1546,7 @@ class _PlannerMapPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const layers = [
+    final layers = [
       'NDVI',
       'Suitability',
       'Soil pH',
@@ -1551,17 +1567,21 @@ class _PlannerMapPreview extends StatelessWidget {
               _satelliteUrl(),
               fit: BoxFit.fill,
               errorBuilder: (_, _, _) => Container(
-                color: const Color(0xFFE7EFE8),
+                color: Color(0xFFE7EFE8),
                 alignment: Alignment.center,
-                child: const Column(
+                child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.map_outlined, color: green, size: 42),
+                    Icon(
+                      Icons.map_outlined,
+                      color: WebPortalColors.accent,
+                      size: 42,
+                    ),
                     SizedBox(height: 8),
                     Text(
                       'Map preview unavailable',
                       style: TextStyle(
-                        color: green,
+                        color: WebPortalColors.accent,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
@@ -1591,9 +1611,9 @@ class _PlannerMapPreview extends StatelessWidget {
               child: Material(
                 color: Colors.transparent,
                 child: Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: .96),
+                    color: WebPortalColors.surface.withValues(alpha: .96),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -1608,14 +1628,14 @@ class _PlannerMapPreview extends StatelessWidget {
                       children: layers.map((item) {
                         final selected = selectedLayer == item;
                         return Padding(
-                          padding: const EdgeInsets.only(right: 6),
+                          padding: EdgeInsets.only(right: 6),
                           child: ChoiceChip(
                             label: Text(item),
                             selected: selected,
                             onSelected: (_) => onLayerChanged(item),
                             selectedColor: softGreen,
                             labelStyle: TextStyle(
-                              color: selected ? green : Colors.black54,
+                              color: selected ? green : WebPortalColors.muted,
                               fontWeight: FontWeight.w700,
                               fontSize: 11,
                             ),
@@ -1631,17 +1651,14 @@ class _PlannerMapPreview extends StatelessWidget {
               left: 12,
               bottom: 12,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: .95),
+                  color: WebPortalColors.surface.withValues(alpha: .95),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
+                  children: [
                     CircleAvatar(radius: 5, backgroundColor: Color(0xFFE95B55)),
                     SizedBox(width: 5),
                     Text('Low', style: TextStyle(fontSize: 11)),
@@ -1662,20 +1679,17 @@ class _PlannerMapPreview extends StatelessWidget {
                 right: 12,
                 bottom: 12,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: .95),
+                    color: WebPortalColors.surface.withValues(alpha: .95),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Text(
                     polygon.length >= 3
                         ? 'Polygon saved • no heatmap samples available'
                         : 'Point analysis • no polygon boundary saved',
-                    style: const TextStyle(
-                      color: Colors.black54,
+                    style: TextStyle(
+                      color: WebPortalColors.muted,
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
                     ),

@@ -116,7 +116,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
     if (opening || !mounted) return;
     setState(() => opening = true);
     try {
-      final detail = await api.getAnalysis(sessionId);
+      Map<String, dynamic> detail;
+      try {
+        detail = await api.getAnalysis(sessionId);
+      } on ApiException catch (failure) {
+        if (failure.statusCode != 404 || widget.state?.isPlanner != true) {
+          rethrow;
+        }
+        detail = await api.getPlannerSessionDetail(sessionId);
+      }
       await api.markNotificationRead(
         id ?? sessionId,
         bySession: id == null,

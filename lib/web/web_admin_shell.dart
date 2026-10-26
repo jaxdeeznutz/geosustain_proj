@@ -36,7 +36,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   }
 
   Widget _pager() => Padding(
-    padding: const EdgeInsets.only(bottom: 16),
+    padding: EdgeInsets.only(bottom: 16),
     child: Wrap(
       spacing: 12,
       crossAxisAlignment: WrapCrossAlignment.center,
@@ -46,7 +46,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
           child: TextFormField(
             initialValue: submittedSearch,
             key: ValueKey('record-search-$page-$submittedSearch'),
-            decoration: const InputDecoration(
+            decoration: InputDecoration(
               labelText: 'Search all records',
               suffixIcon: Icon(Icons.search),
             ),
@@ -61,7 +61,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                   _refresh();
                 }
               : null,
-          child: const Text('Previous'),
+          child: Text('Previous'),
         ),
         FilledButton(
           onPressed: hasMore[page] == true
@@ -70,7 +70,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                   _refresh();
                 }
               : null,
-          child: const Text('Next'),
+          child: Text('Next'),
         ),
       ],
     ),
@@ -80,6 +80,9 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   @override
   void initState() {
     super.initState();
+    PortalRoutes.start();
+    page = PortalRoutes.pageFor(routePages, 'admin');
+    PortalRoutes.current.addListener(_routeChanged);
     _refresh();
   }
 
@@ -177,17 +180,17 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Verify ${user['username']} before recovery'),
-        content: const Text(
+        content: Text(
           'Use the project identity-verification procedure and an established private contact channel. Issue this handoff only after confirming the account owner. It expires in 15 minutes and can be used once.',
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Identity verified; issue handoff'),
+            child: Text('Identity verified; issue handoff'),
           ),
         ],
       ),
@@ -199,22 +202,22 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       await showDialog<void>(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('Private recovery handoff'),
+          title: Text('Private recovery handoff'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Send privately to the verified owner. Do not put this handoff in reports, screenshots or shared messages. Ask them to select Forgot password and choose a new password.',
               ),
-              const SizedBox(height: 12),
+              SizedBox(height: 12),
               SelectableText(token),
             ],
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
+              child: Text('Close'),
             ),
           ],
         ),
@@ -244,18 +247,18 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         content: TextField(
           controller: controller,
           maxLines: 3,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Suitability note shown to Farmers/Analysts',
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text('Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Save'),
+            child: Text('Save'),
           ),
         ],
       ),
@@ -272,154 +275,155 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     }
   }
 
+  static final routePages = [
+    'dashboard',
+    'users',
+    'analyses',
+    'crops',
+    'audit',
+  ];
+  void _routeChanged() {
+    if (mounted) {
+      setState(() => page = PortalRoutes.pageFor(routePages, 'admin'));
+    }
+  }
+
+  @override
+  void dispose() {
+    PortalRoutes.current.removeListener(_routeChanged);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
-    const items = [
+    final items = [
       (Icons.dashboard_rounded, 'Dashboard'),
       (Icons.people_alt_rounded, 'User Management'),
       (Icons.landscape_rounded, 'Farm & Analysis Monitoring'),
       (Icons.calendar_month_rounded, 'Crop & Season Settings'),
       (Icons.history_rounded, 'Audit & System'),
     ];
-    return Scaffold(
-      body: Row(
-        children: [
-          Container(
-            width: 280,
-            padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFF043F25), green],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return WebPortalFrame(
+      navigation: Container(
+        width: 280,
+        padding: EdgeInsets.fromLTRB(24, 28, 24, 24),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF043F25), green],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: ListView(
+          children: [
+            Row(
               children: [
-                const Row(
-                  children: [
-                    Icon(Icons.eco_rounded, color: Colors.white, size: 34),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'GeoSustain',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 28,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 30),
-                const Row(
-                  children: [
-                    CircleAvatar(
-                      backgroundColor: Colors.white24,
-                      child: Icon(
-                        Icons.admin_panel_settings_rounded,
-                        color: Colors.white,
-                      ),
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Super Administrator',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                          Text(
-                            'System Management',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 28),
+                Icon(Icons.eco_rounded, color: Colors.white, size: 34),
+                SizedBox(width: 12),
                 Expanded(
-                  child: ListView.separated(
-                    itemCount: items.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 6),
-                    itemBuilder: (_, i) => InkWell(
-                      onTap: () => setState(() => page = i),
-                      borderRadius: BorderRadius.circular(14),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 14,
-                        ),
-                        decoration: BoxDecoration(
-                          color: page == i
-                              ? Colors.white24
-                              : Colors.transparent,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(items[i].$1, color: Colors.white),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Text(
-                                items[i].$2,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                InkWell(
-                  onTap: widget.logout,
-                  child: const Padding(
-                    padding: EdgeInsets.all(14),
-                    child: Row(
-                      children: [
-                        Icon(Icons.logout_rounded, color: Colors.white),
-                        SizedBox(width: 14),
-                        Text(
-                          'Logout',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
+                  child: Text(
+                    'GeoSustain',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
               ],
             ),
-          ),
-          Expanded(
-            child: Container(
-              color: const Color(0xFFF4F8F5),
-              child: loading
-                  ? const Center(child: CircularProgressIndicator(color: green))
-                  : SingleChildScrollView(
-                      padding: const EdgeInsets.all(32),
-                      child: _page(items[page].$2),
-                    ),
+            SizedBox(height: 30),
+            Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: Colors.white24,
+                  child: Icon(
+                    Icons.admin_panel_settings_rounded,
+                    color: Colors.white,
+                  ),
+                ),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Super Administrator',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      Text(
+                        'System Management',
+                        style: TextStyle(color: Colors.white70, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ),
-        ],
+            SizedBox(height: 28),
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: items.length,
+              separatorBuilder: (_, _) => SizedBox(height: 6),
+              itemBuilder: (_, i) => InkWell(
+                onTap: () => PortalRoutes.go('/admin/${routePages[i]}'),
+                borderRadius: BorderRadius.circular(14),
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: page == i ? Colors.white24 : Colors.transparent,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(items[i].$1, color: Colors.white),
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          items[i].$2,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            InkWell(
+              onTap: widget.logout,
+              child: Padding(
+                padding: EdgeInsets.all(14),
+                child: Row(
+                  children: [
+                    Icon(Icons.logout_rounded, color: Colors.white),
+                    SizedBox(width: 14),
+                    Text(
+                      'Logout',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
+      child: loading
+          ? Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
+              padding: EdgeInsets.all(24),
+              child: _page(items[page].$2),
+            ),
     );
   }
 
@@ -455,18 +459,18 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 28,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF153223),
+                color: WebPortalColors.ink,
               ),
             ),
-            const SizedBox(height: 5),
+            SizedBox(height: 5),
             Text(
               panelFailures.isEmpty
                   ? subtitle
                   : '$subtitle\nCould not refresh: ${panelFailures.join(', ')}. Retry with Refresh.',
-              style: const TextStyle(color: Colors.black54),
+              style: TextStyle(color: WebPortalColors.muted),
             ),
           ],
         ),
@@ -474,21 +478,21 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       IconButton.filledTonal(
         tooltip: 'Refresh administrator panels',
         onPressed: _refresh,
-        icon: const Icon(Icons.refresh_rounded),
+        icon: Icon(Icons.refresh_rounded),
       ),
     ],
   );
   Widget _card(Widget child) => Container(
-    padding: const EdgeInsets.all(22),
+    padding: EdgeInsets.all(22),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(20),
-      border: Border.all(color: const Color(0xFFE1EBE4)),
+      border: Border.all(color: Color(0xFFE1EBE4)),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withValues(alpha: .035),
           blurRadius: 18,
-          offset: const Offset(0, 8),
+          offset: Offset(0, 8),
         ),
       ],
     ),
@@ -499,29 +503,26 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: softGreen,
+              color: WebPortalColors.tint,
               borderRadius: BorderRadius.circular(15),
             ),
-            child: Icon(icon, color: green),
+            child: Icon(icon, color: WebPortalColors.accent),
           ),
-          const SizedBox(width: 16),
+          SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   '$value',
-                  style: const TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.w900,
-                  ),
+                  style: TextStyle(fontSize: 25, fontWeight: FontWeight.w900),
                 ),
                 Text(
                   label,
-                  style: const TextStyle(
-                    color: Colors.black54,
+                  style: TextStyle(
+                    color: WebPortalColors.muted,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
@@ -540,7 +541,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         'Super Administrator Dashboard',
         'Manage GeoSustain users, records, roles, and system configuration.',
       ),
-      const SizedBox(height: 24),
+      SizedBox(height: 24),
       Row(
         children: [
           _stat(
@@ -548,19 +549,19 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
             stats['farmers'] ?? 'Unavailable',
             Icons.agriculture_rounded,
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           _stat(
             'Planning Analysts',
             stats['planning_analysts'] ?? 'Unavailable',
             Icons.analytics_rounded,
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           _stat(
             'Pending Submissions',
             stats['pending'] ?? 'Unavailable',
             Icons.pending_actions_rounded,
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           _stat(
             'Registered Parcels',
             stats['registered_parcels'] ?? 'Unavailable',
@@ -568,7 +569,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
           ),
         ],
       ),
-      const SizedBox(height: 18),
+      SizedBox(height: 18),
       Row(
         children: [
           _stat(
@@ -576,19 +577,19 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
             stats['total_analyses'] ?? 'Unavailable',
             Icons.insights_rounded,
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           _stat(
             'Verified',
             stats['verified'] ?? 'Unavailable',
             Icons.verified_rounded,
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           _stat(
             'Inactive Accounts',
             stats['inactive_users'] ?? 'Unavailable',
             Icons.person_off_rounded,
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           _stat(
             'Mapped Area (ha)',
             (stats['total_area_hectares'] as num?)?.toStringAsFixed(2) ??
@@ -597,9 +598,9 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
           ),
         ],
       ),
-      const SizedBox(height: 24),
+      SizedBox(height: 24),
       _card(
-        const Column(
+        Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
@@ -609,7 +610,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
             SizedBox(height: 12),
             Text(
               '• Manage and activate user accounts\n• Monitor registered farm parcels and analysis records\n• Maintain local crop and seasonal reference settings\n• Review system activity without replacing the Agricultural Planning Analyst’s verification role',
-              style: TextStyle(height: 1.8, color: Colors.black87),
+              style: TextStyle(height: 1.8, color: WebPortalColors.ink),
             ),
           ],
         ),
@@ -634,20 +635,20 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
           'User Management',
           'Manage Farmers, Agricultural Planning Analysts, and Super Administrators.',
         ),
-        const SizedBox(height: 20),
+        SizedBox(height: 20),
         TextField(
           onSubmitted: _applySearch,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             prefixIcon: Icon(Icons.search),
             hintText: 'Search users by name, email, or role',
           ),
         ),
-        const SizedBox(height: 16),
+        SizedBox(height: 16),
         _card(
           SingleChildScrollView(
             scrollDirection: Axis.horizontal,
             child: DataTable(
-              columns: const [
+              columns: [
                 DataColumn(label: Text('User')),
                 DataColumn(label: Text('Role')),
                 DataColumn(label: Text('Status')),
@@ -668,15 +669,13 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                               children: [
                                 Text(
                                   '${u['username']}',
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                  ),
+                                  style: TextStyle(fontWeight: FontWeight.w800),
                                 ),
                                 Text(
                                   '${u['email']}',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: Colors.black54,
+                                    color: WebPortalColors.muted,
                                   ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
@@ -687,8 +686,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                         DataCell(
                           DropdownButton<String>(
                             value: _normalizedRole('${u['role']}'),
-                            underline: const SizedBox(),
-                            items: const [
+                            underline: SizedBox(),
+                            items: [
                               DropdownMenuItem(
                                 value: 'farmer',
                                 child: Text('Farmer'),
@@ -737,7 +736,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                                 onPressed: u['is_active'] == true
                                     ? () => _recovery(u)
                                     : null,
-                                icon: const Icon(Icons.lock_reset),
+                                icon: Icon(Icons.lock_reset),
                               ),
                             ],
                           ),
@@ -769,12 +768,12 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         'Farm & Analysis Monitoring',
         'Monitor registered parcels and analysis records across the system.',
       ),
-      const SizedBox(height: 20),
+      SizedBox(height: 20),
       _card(
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
           child: DataTable(
-            columns: const [
+            columns: [
               DataColumn(label: Text('Owner')),
               DataColumn(label: Text('Role')),
               DataColumn(label: Text('Location')),
@@ -841,39 +840,39 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         'Crop & Season Settings',
         'Manage which approved crops GeoSustain can currently recommend, and their reference info.',
       ),
-      const SizedBox(height: 20),
+      SizedBox(height: 20),
       _card(
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Approved crop reference',
               style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
             ),
-            const SizedBox(height: 6),
-            const Text(
+            SizedBox(height: 6),
+            Text(
               'This is the finalized GeoSustain crop set. Deactivating a crop here removes it from new recommendations immediately — it does not add crops outside this approved list, and does not change environmental scoring.',
               style: TextStyle(
                 height: 1.5,
-                color: Colors.black54,
+                color: WebPortalColors.muted,
                 fontSize: 13,
               ),
             ),
-            const SizedBox(height: 16),
+            SizedBox(height: 16),
             if (crops.isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(16),
                 child: Text('No crop reference rows found.'),
               )
             else
               ...crops.map(
                 (c) => Container(
-                  margin: const EdgeInsets.only(bottom: 10),
-                  padding: const EdgeInsets.all(14),
+                  margin: EdgeInsets.only(bottom: 10),
+                  padding: EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFFBFDFC),
+                    color: Color(0xFFFBFDFC),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFFE8EFE9)),
+                    border: Border.all(color: Color(0xFFE8EFE9)),
                   ),
                   child: Row(
                     children: [
@@ -883,25 +882,25 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                           children: [
                             Text(
                               '${c['label']}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 14.5,
                               ),
                             ),
-                            const SizedBox(height: 3),
+                            SizedBox(height: 3),
                             Text(
                               '${c['growth_cycle'] ?? '--'} • ${c['est_yield'] ?? '--'}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.black54,
+                                color: WebPortalColors.muted,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               '${c['suitability_note'] ?? ''}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.black54,
+                                color: WebPortalColors.muted,
                               ),
                             ),
                           ],
@@ -909,7 +908,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                       ),
                       IconButton(
                         onPressed: () => _editCropNote(c),
-                        icon: const Icon(Icons.edit_note_rounded, size: 20),
+                        icon: Icon(Icons.edit_note_rounded, size: 20),
                         tooltip: 'Edit note',
                       ),
                       Switch(
@@ -939,26 +938,26 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
           context,
           MaterialPageRoute(builder: (_) => MessageLogPage(api: api)),
         ),
-        icon: const Icon(Icons.notifications_outlined),
-        label: const Text('Push delivery log'),
+        icon: Icon(Icons.notifications_outlined),
+        label: Text('Push delivery log'),
       ),
-      const SizedBox(height: 20),
+      SizedBox(height: 20),
       _card(
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Recent activity',
               style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
             ),
-            const SizedBox(height: 6),
-            const Text(
+            SizedBox(height: 6),
+            Text(
               'Every role/status change and every Farmer-submission verification decision is recorded here, regardless of which screen or API call made it.',
-              style: TextStyle(fontSize: 13, color: Colors.black54),
+              style: TextStyle(fontSize: 13, color: WebPortalColors.muted),
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: 14),
             if (auditLogs.isEmpty)
-              const Padding(
+              Padding(
                 padding: EdgeInsets.all(16),
                 child: Text('No audit activity recorded yet.'),
               )
@@ -1004,25 +1003,28 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                 }
                 return ListTile(
                   contentPadding: EdgeInsets.zero,
-                  leading: Icon(icon, color: green),
+                  leading: Icon(icon, color: WebPortalColors.accent),
                   title: Text(
                     '$actor — ${action.replaceAll('_', ' ')}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w700,
                       fontSize: 13.5,
                     ),
                   ),
                   subtitle: Text(
                     '${detailText.isEmpty ? '' : '$detailText • '}${log['created_at'] ?? ''}',
-                    style: const TextStyle(fontSize: 12),
+                    style: TextStyle(fontSize: 12),
                   ),
                 );
               }),
-            const Divider(height: 28),
+            Divider(height: 28),
             ListTile(
-              leading: const Icon(Icons.cloud_done_rounded, color: green),
-              title: const Text('Backend and Supabase monitoring'),
-              subtitle: const Text(
+              leading: Icon(
+                Icons.cloud_done_rounded,
+                color: WebPortalColors.accent,
+              ),
+              title: Text('Backend and Supabase monitoring'),
+              subtitle: Text(
                 'Use Render and Supabase logs for deployment, database, and infrastructure-level health.',
               ),
             ),

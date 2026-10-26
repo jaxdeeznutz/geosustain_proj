@@ -24,117 +24,123 @@ class WebAuthLoginShell extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: WebPortalColors.surface,
       body: Row(
         children: [
-          Expanded(
-            flex: 9,
-            child: SingleChildScrollView(
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(64, 56, 64, 36),
-                decoration: const BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [Color(0xFFF2FBF6), Color(0xFFE7F6EE)],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
+          if (MediaQuery.sizeOf(context).width >= 1000)
+            Expanded(
+              flex: 9,
+              child: SingleChildScrollView(
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(64, 56, 64, 36),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [WebPortalColors.canvas, WebPortalColors.canvas],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
                   ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.eco_rounded, color: green, size: 42),
-                        SizedBox(width: 12),
-                        Text(
-                          'GeoSustain',
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.eco_rounded,
+                            color: WebPortalColors.accent,
+                            size: 42,
+                          ),
+                          SizedBox(width: 12),
+                          Text(
+                            'GeoSustain',
+                            style: TextStyle(
+                              fontSize: 34,
+                              fontWeight: FontWeight.w900,
+                              color: WebPortalColors.accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 78),
+                      Text(
+                        'Smart Decisions.\nSustainable Future.',
+                        style: TextStyle(
+                          fontSize: 42,
+                          height: 1.15,
+                          fontWeight: FontWeight.w900,
+                          color: WebPortalColors.ink,
+                        ),
+                      ),
+                      SizedBox(height: 22),
+                      SizedBox(
+                        width: 560,
+                        child: Text(
+                          'A web analyst dashboard for agricultural suitability, crop trends, environmental monitoring, and planning-ready reports.',
                           style: TextStyle(
-                            fontSize: 34,
-                            fontWeight: FontWeight.w900,
-                            color: green,
+                            fontSize: 17,
+                            height: 1.55,
+                            color: WebPortalColors.muted,
                           ),
                         ),
-                      ],
-                    ),
-                    const SizedBox(height: 78),
-                    const Text(
-                      'Smart Decisions.\nSustainable Future.',
-                      style: TextStyle(
-                        fontSize: 42,
-                        height: 1.15,
-                        fontWeight: FontWeight.w900,
-                        color: Color(0xFF102018),
                       ),
-                    ),
-                    const SizedBox(height: 22),
-                    const SizedBox(
-                      width: 560,
-                      child: Text(
-                        'A web analyst dashboard for agricultural suitability, crop trends, environmental monitoring, and planning-ready reports.',
+                      SizedBox(height: 48),
+                      Wrap(
+                        spacing: 18,
+                        runSpacing: 18,
+                        children: [
+                          _WebLoginFeature(
+                            icon: Icons.map_rounded,
+                            title: 'Geospatial Analysis',
+                            text: 'Review field suitability and mapped areas.',
+                          ),
+                          _WebLoginFeature(
+                            icon: Icons.query_stats_rounded,
+                            title: 'Data Insights',
+                            text:
+                                'Analyze crop trends and suitability records.',
+                          ),
+                          _WebLoginFeature(
+                            icon: Icons.cloud_rounded,
+                            title: 'Weather Monitoring',
+                            text: 'Track rainfall and climate factors.',
+                          ),
+                          _WebLoginFeature(
+                            icon: Icons.picture_as_pdf_rounded,
+                            title: 'Reports & Export',
+                            text: 'Generate planning summaries and reports.',
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 32),
+                      Text(
+                        'Secure access for agricultural planning',
                         style: TextStyle(
-                          fontSize: 17,
-                          height: 1.55,
-                          color: Colors.black54,
+                          color: WebPortalColors.muted,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 48),
-                    Wrap(
-                      spacing: 18,
-                      runSpacing: 18,
-                      children: const [
-                        _WebLoginFeature(
-                          icon: Icons.map_rounded,
-                          title: 'Geospatial Analysis',
-                          text: 'Review field suitability and mapped areas.',
-                        ),
-                        _WebLoginFeature(
-                          icon: Icons.query_stats_rounded,
-                          title: 'Data Insights',
-                          text: 'Analyze crop trends and suitability records.',
-                        ),
-                        _WebLoginFeature(
-                          icon: Icons.cloud_rounded,
-                          title: 'Weather Monitoring',
-                          text: 'Track rainfall and climate factors.',
-                        ),
-                        _WebLoginFeature(
-                          icon: Icons.picture_as_pdf_rounded,
-                          title: 'Reports & Export',
-                          text: 'Generate planning summaries and reports.',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                    const Text(
-                      'Secure access for agricultural planning',
-                      style: TextStyle(
-                        color: Colors.black45,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
           Expanded(
             flex: 11,
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 24),
+              padding: EdgeInsets.symmetric(vertical: 24),
               child: Center(
                 child: Container(
                   width: 560,
-                  padding: const EdgeInsets.all(48),
+                  padding: EdgeInsets.all(48),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: WebPortalColors.surface,
                     borderRadius: BorderRadius.circular(30),
-                    border: Border.all(color: const Color(0xFFE1E8E2)),
+                    border: Border.all(color: Color(0xFFE1E8E2)),
                     boxShadow: [
                       BoxShadow(
                         color: Colors.black.withValues(alpha: .06),
                         blurRadius: 34,
-                        offset: const Offset(0, 18),
+                        offset: Offset(0, 18),
                       ),
                     ],
                   ),
@@ -145,18 +151,18 @@ class WebAuthLoginShell extends StatelessWidget {
                       Container(
                         width: 70,
                         height: 70,
-                        decoration: const BoxDecoration(
-                          color: softGreen,
+                        decoration: BoxDecoration(
+                          color: WebPortalColors.tint,
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(
+                        child: Icon(
                           Icons.eco_rounded,
-                          color: green,
+                          color: WebPortalColors.accent,
                           size: 46,
                         ),
                       ),
-                      const SizedBox(height: 20),
-                      const Text(
+                      SizedBox(height: 20),
+                      Text(
                         'Welcome Back!',
                         textAlign: TextAlign.center,
                         style: TextStyle(
@@ -164,34 +170,30 @@ class WebAuthLoginShell extends StatelessWidget {
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: 8),
-                      const Text(
+                      SizedBox(height: 8),
+                      Text(
                         'Sign in to your GeoSustain analyst dashboard',
                         textAlign: TextAlign.center,
-                        style: TextStyle(color: Colors.black54),
+                        style: TextStyle(color: WebPortalColors.muted),
                       ),
-                      const SizedBox(height: 34),
+                      SizedBox(height: 34),
                       TextField(
                         controller: emailController,
+                        autofillHints: [AutofillHints.username],
                         keyboardType: TextInputType.emailAddress,
                         decoration: InputDecoration(
                           errorText: emailError,
                           labelText: 'Email Address',
-                          prefixIcon: const Icon(Icons.mail_outline),
+                          prefixIcon: Icon(Icons.mail_outline),
                         ),
                       ),
-                      const SizedBox(height: 14),
-                      TextField(
+                      SizedBox(height: 14),
+                      _WebPasswordField(
                         controller: passwordController,
-                        obscureText: true,
+                        errorText: passwordError,
                         onSubmitted: (_) {
                           if (!loading) onLogin();
                         },
-                        decoration: InputDecoration(
-                          errorText: passwordError,
-                          labelText: 'Password',
-                          prefixIcon: const Icon(Icons.lock_outline),
-                        ),
                       ),
                       TextButton(
                         onPressed: loading
@@ -199,29 +201,43 @@ class WebAuthLoginShell extends StatelessWidget {
                             : () => Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => const PasswordRecoveryPage(),
+                                  builder: (_) => PasswordRecoveryPage(),
                                 ),
                               ),
-                        child: const Text('Forgot password?'),
+                        child: Text('Forgot password?'),
                       ),
-                      const SizedBox(height: 24),
+                      SizedBox(height: 24),
                       FilledButton.icon(
                         onPressed: loading ? null : onLogin,
-                        icon: const Icon(Icons.arrow_forward_rounded),
+                        icon: Icon(Icons.arrow_forward_rounded),
                         label: Text(
                           loading ? 'Signing in...' : 'Sign In to Dashboard',
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      SizedBox(height: 12),
                       OutlinedButton.icon(
                         onPressed: loading ? null : onGoogle,
-                        icon: const Icon(Icons.account_circle_outlined),
-                        label: const Text('Continue with Google'),
+                        icon: Icon(Icons.account_circle_outlined),
+                        label: Text('Continue with Google'),
                       ),
-                      const SizedBox(height: 18),
+                      if (onGoogle == null)
+                        Padding(
+                          padding: EdgeInsets.only(top: 8),
+                          child: Text(
+                            'Google sign-in is currently unavailable. Use your email and password.',
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+                      SizedBox(height: 18),
                       TextButton(
                         onPressed: loading ? null : onCreate,
-                        child: const Text('Create Farmer Account'),
+                        child: Text('Create Farmer Account'),
+                      ),
+                      SizedBox(height: 12),
+                      SelectableText(
+                        'Build ${WebBuildIdentity.id}',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.labelSmall,
                       ),
                     ],
                   ),
@@ -233,6 +249,42 @@ class WebAuthLoginShell extends StatelessWidget {
       ),
     );
   }
+}
+
+class _WebPasswordField extends StatefulWidget {
+  final TextEditingController controller;
+  final String? errorText;
+  final ValueChanged<String> onSubmitted;
+  const _WebPasswordField({
+    required this.controller,
+    this.errorText,
+    required this.onSubmitted,
+  });
+  @override
+  State<_WebPasswordField> createState() => _WebPasswordFieldState();
+}
+
+class _WebPasswordFieldState extends State<_WebPasswordField> {
+  bool hidden = true;
+  @override
+  Widget build(BuildContext context) => TextField(
+    controller: widget.controller,
+    obscureText: hidden,
+    autofillHints: [AutofillHints.password],
+    onSubmitted: widget.onSubmitted,
+    decoration: InputDecoration(
+      labelText: 'Password',
+      errorText: widget.errorText,
+      prefixIcon: Icon(Icons.lock_outline),
+      suffixIcon: IconButton(
+        tooltip: hidden ? 'Show password' : 'Hide password',
+        onPressed: () => setState(() => hidden = !hidden),
+        icon: Icon(
+          hidden ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+        ),
+      ),
+    ),
+  );
 }
 
 class _WebLoginFeature extends StatelessWidget {
@@ -256,24 +308,21 @@ class _WebLoginFeature extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: WebPortalColors.surface,
               borderRadius: BorderRadius.circular(14),
             ),
-            child: Icon(icon, color: green),
+            child: Icon(icon, color: WebPortalColors.accent),
           ),
-          const SizedBox(width: 14),
+          SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(fontWeight: FontWeight.w900),
-                ),
-                const SizedBox(height: 4),
+                Text(title, style: TextStyle(fontWeight: FontWeight.w900)),
+                SizedBox(height: 4),
                 Text(
                   text,
-                  style: const TextStyle(color: Colors.black54, height: 1.3),
+                  style: TextStyle(color: WebPortalColors.muted, height: 1.3),
                 ),
               ],
             ),

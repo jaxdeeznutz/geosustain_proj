@@ -22,6 +22,12 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
   AnalysisState get state => widget.state;
 
   Future<void> runWebAnalysis() async {
+    if (state.polygonPoints.isNotEmpty && state.polygonPoints.length < 3) {
+      widget.message(
+        'Complete a boundary with at least three distinct points, or clear it to analyze a point.',
+      );
+      return;
+    }
     final err = state.polygonPoints.length >= 3
         ? await state.analyzePolygon()
         : await state.analyzePoint();
@@ -29,36 +35,100 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
     if (mounted) setState(() => popupVisible = true);
   }
 
+  List<String> get routePages => [
+    'dashboard',
+    'map',
+    'analyze',
+    'history',
+    'reports',
+    'trends',
+    if (state.isPlanner) 'queue',
+    'settings',
+    'activity',
+  ];
   @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: const Color(0xFFF4F8F5),
-      child: Row(
-        children: [
-          _WebSidebar(
-            state: state,
-            selectedIndex: page,
-            onSelect: (i) => setState(() => page = i),
-            logout: widget.logout,
-          ),
-          Expanded(
-            child: ListenableBuilder(
-              listenable: state,
-              builder: (_, _) => _WebPageFrame(
-                page: page,
-                state: state,
-                popupVisible: popupVisible,
-                onClosePopup: () => setState(() => popupVisible = false),
-                onAnalyze: runWebAnalysis,
-                message: widget.message,
-                onNavigate: (i) => setState(() => page = i),
+  void initState() {
+    super.initState();
+    PortalRoutes.start();
+    page = PortalRoutes.pageFor(routePages, 'operator');
+    PortalRoutes.current.addListener(_routeChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _openLinkedRecord());
+  }
+
+  void _routeChanged() {
+    if (!mounted) return;
+    setState(() => page = PortalRoutes.pageFor(routePages, 'operator'));
+    _openLinkedRecord();
+  }
+
+  void _navigate(int index) {
+    PortalRoutes.go('/operator/${routePages[index]}');
+  }
+
+  int? _openedRecord;
+  Future<void> _openLinkedRecord() async {
+    final id = int.tryParse(
+      PortalRoutes.current.value.queryParameters['session'] ?? '',
+    );
+    if (id == null || id <= 0 || id == _openedRecord) return;
+    _openedRecord = id;
+    if (page == routePages.indexOf('queue') && state.isPlanner) {
+      await openPlannerAnalysisReview(context, state, id);
+    } else if (page == routePages.indexOf('history')) {
+      try {
+        final record = await state.api.getAnalysis(id);
+        if (!mounted) return;
+        await showDialog<void>(
+          context: context,
+          builder: (_) => AlertDialog(
+            title: Text('Recorded analysis'),
+            content: SizedBox(
+              width: 680,
+              child: SingleChildScrollView(
+                child: WebAnalysisEvidence(state: state, record: record),
               ),
             ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text('Close'),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+        );
+      } catch (error) {
+        widget.message(friendlyErrorMessage(error));
+      }
+    }
   }
+
+  @override
+  void dispose() {
+    PortalRoutes.current.removeListener(_routeChanged);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => WebPortalFrame(
+    navigation: _WebSidebar(
+      state: state,
+      selectedIndex: page,
+      onSelect: _navigate,
+      logout: widget.logout,
+    ),
+    child: ListenableBuilder(
+      listenable: state,
+      builder: (_, _) => _WebPageFrame(
+        page: page,
+        state: state,
+        popupVisible: popupVisible,
+        onClosePopup: () => setState(() => popupVisible = false),
+        onAnalyze: runWebAnalysis,
+        message: widget.message,
+        onNavigate: _navigate,
+      ),
+    ),
+  );
 }
 
 class _WebSidebar extends StatelessWidget {
@@ -73,7 +143,7 @@ class _WebSidebar extends StatelessWidget {
     required this.logout,
   });
 
-  static const _baseItems = [
+  static final _baseItems = [
     (Icons.dashboard_rounded, 'Dashboard'),
     (Icons.map_rounded, 'Map Analysis'),
     (Icons.center_focus_strong_rounded, 'Analyze Area'),
@@ -81,13 +151,15 @@ class _WebSidebar extends StatelessWidget {
     (Icons.picture_as_pdf_rounded, 'Reports'),
     (Icons.show_chart_rounded, 'Crop Trends'),
   ];
-  static const _plannerItem = (Icons.fact_check_rounded, 'Verification Queue');
-  static const _settingsItem = (Icons.settings_rounded, 'Settings');
+  static final _plannerItem = (Icons.fact_check_rounded, 'Verification Queue');
+  static final _settingsItem = (Icons.settings_rounded, 'Settings');
+  static final _activityItem = (Icons.notifications_outlined, 'Activity');
 
   static List<(IconData, String)> itemsFor(bool isPlanner) => [
     ..._baseItems,
     if (isPlanner) _plannerItem,
     _settingsItem,
+    _activityItem,
   ];
 
   @override
@@ -96,47 +168,52 @@ class _WebSidebar extends StatelessWidget {
         '${state.currentUser?['username'] ?? state.currentUser?['name'] ?? 'Analyst'}';
     return Container(
       width: 280,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Color(0xFF064E2E), Color(0xFF08733F)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 28, 24, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: EdgeInsets.fromLTRB(24, 28, 24, 24),
+      child: ListView(
         children: [
-          const Row(
+          Row(
             children: [
               Icon(Icons.eco_rounded, color: Colors.white, size: 34),
               SizedBox(width: 12),
-              Text(
-                'GeoSustain',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'GeoSustain',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 34),
+          SizedBox(height: 34),
           Row(
             children: [
               CircleAvatar(
                 radius: 26,
-                backgroundColor: Colors.white.withValues(alpha: .2),
+                backgroundColor: WebPortalColors.surface.withValues(alpha: .2),
                 child: Text(
                   name.isEmpty ? 'A' : name[0].toUpperCase(),
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white,
                     fontWeight: FontWeight.w900,
                     fontSize: 20,
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -145,13 +222,13 @@ class _WebSidebar extends StatelessWidget {
                       name,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
+                      style: TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const Text(
-                      'Agricultural Planning Agricultural Planning Analyst',
+                    Text(
+                      'Agricultural Planning Analyst',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 12,
@@ -163,54 +240,56 @@ class _WebSidebar extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 28),
-          Expanded(
-            child: ListView.separated(
-              itemCount: itemsFor(state.isPlanner).length,
-              separatorBuilder: (_, _) => const SizedBox(height: 6),
-              itemBuilder: (_, i) {
-                final rowItems = itemsFor(state.isPlanner);
-                final selected = selectedIndex == i;
-                return InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: () => onSelect(i),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 14,
-                    ),
-                    decoration: BoxDecoration(
-                      color: selected
-                          ? Colors.white.withValues(alpha: .20)
-                          : Colors.transparent,
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(rowItems[i].$1, color: Colors.white, size: 22),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Text(
-                            rowItems[i].$2,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w900,
-                            ),
+          SizedBox(height: 28),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: itemsFor(state.isPlanner).length,
+            separatorBuilder: (_, _) => SizedBox(height: 6),
+            itemBuilder: (_, i) {
+              final rowItems = itemsFor(state.isPlanner);
+              final selected = selectedIndex == i;
+              return InkWell(
+                borderRadius: BorderRadius.circular(14),
+                onTap: () {
+                  if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
+                    Navigator.pop(context);
+                  }
+                  onSelect(i);
+                },
+                child: Container(
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: selected
+                        ? Colors.white.withValues(alpha: .20)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(rowItems[i].$1, color: Colors.white, size: 22),
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          rowItems[i].$2,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w900,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                );
-              },
-            ),
+                ),
+              );
+            },
           ),
           InkWell(
             borderRadius: BorderRadius.circular(14),
             onTap: logout,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: const Row(
+              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
                 children: [
                   Icon(Icons.logout_rounded, color: Colors.white),
                   SizedBox(width: 14),
@@ -261,6 +340,7 @@ class _WebPageFrame extends StatelessWidget {
       'Crop Trends',
       if (isPlanner) 'Verification Queue',
       'Settings',
+      'Activity',
     ];
     final subtitles = [
       'Overview of suitability results, live conditions, and quick actions',
@@ -272,6 +352,7 @@ class _WebPageFrame extends StatelessWidget {
       if (isPlanner)
         'Review farmer-submitted land analyses and approve or reject them',
       'Manage dashboard preferences and account settings',
+      'Analysis, review and account activity',
     ];
     final index = page.clamp(0, titles.length - 1);
 
@@ -301,6 +382,8 @@ class _WebPageFrame extends StatelessWidget {
       body = WebCropTrendsScreen(state: state);
     } else if (isPlanner && page == 6) {
       body = WebPlannerQueueScreen(state: state);
+    } else if (page == (isPlanner ? 8 : 7)) {
+      body = NotificationsPage(state: state);
     } else {
       body = WebSettingsScreen(state: state);
     }
@@ -310,7 +393,7 @@ class _WebPageFrame extends StatelessWidget {
         key: ValueKey('web_page_$index'),
         slivers: [
           SliverPadding(
-            padding: const EdgeInsets.fromLTRB(32, 28, 32, 40),
+            padding: EdgeInsets.fromLTRB(32, 28, 32, 40),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 if (page != 0) ...[
@@ -320,9 +403,18 @@ class _WebPageFrame extends StatelessWidget {
                     state: state,
                     message: message,
                   ),
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                 ],
-                body,
+                if (page == (isPlanner ? 8 : 7))
+                  SizedBox(
+                    height: math.max(
+                      400.0,
+                      MediaQuery.sizeOf(context).height - 220,
+                    ),
+                    child: body,
+                  )
+                else
+                  body,
               ]),
             ),
           ),

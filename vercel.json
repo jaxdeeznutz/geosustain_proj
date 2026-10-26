@@ -1,0 +1,16 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": null,
+  "buildCommand": "bash deployment/vercel_build.sh",
+  "outputDirectory": "build/web",
+  "headers": [
+    {"source": "/(.*)", "headers": [
+      {"key":"X-Content-Type-Options","value":"nosniff"},
+      {"key":"X-Frame-Options","value":"DENY"},
+      {"key":"Referrer-Policy","value":"strict-origin-when-cross-origin"},
+      {"key":"Content-Security-Policy","value":"frame-ancestors 'none'; base-uri 'self'; object-src 'none'"}
+    ]},
+    {"source":"/(index.html|flutter_bootstrap.js|main.dart.js|flutter_service_worker.js|firebase-config.js|firebase-messaging-sw.js|manifest.json|version.json|build-info.json)","headers":[{"key":"Cache-Control","value":"no-cache, max-age=0, must-revalidate"}]},
+    {"source":"/","headers":[{"key":"Cache-Control","value":"no-cache, max-age=0, must-revalidate"}]}
+  ]
+}

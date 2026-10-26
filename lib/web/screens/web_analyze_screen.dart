@@ -18,10 +18,10 @@ class WebAnalyzeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
+              WebAdaptiveRow(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -35,7 +35,7 @@ class WebAnalyzeScreen extends StatelessWidget {
                         SizedBox(height: 4),
                         Text(
                           'Use the same analysis engine as mobile: select a point, draw a polygon, then run crop and environmental suitability.',
-                          style: TextStyle(color: Colors.black54),
+                          style: TextStyle(color: WebPortalColors.muted),
                         ),
                       ],
                     ),
@@ -50,29 +50,31 @@ class WebAnalyzeScreen extends StatelessWidget {
                     label: Text(
                       state.drawing ? 'Stop Drawing' : 'Draw Polygon',
                     ),
-                    style: OutlinedButton.styleFrom(foregroundColor: green),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: WebPortalColors.accent,
+                    ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   OutlinedButton.icon(
                     onPressed: state.clearSelection,
-                    icon: const Icon(Icons.clear_rounded),
-                    label: const Text('Clear'),
+                    icon: Icon(Icons.clear_rounded),
+                    label: Text('Clear'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.red,
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   FilledButton.icon(
                     onPressed: state.loading ? null : onAnalyze,
-                    icon: const Icon(Icons.analytics_rounded),
+                    icon: Icon(Icons.analytics_rounded),
                     label: Text(
                       state.polygonPoints.length >= 3
                           ? 'Analyze Polygon'
                           : 'Analyze Point',
                     ),
                     style: FilledButton.styleFrom(
-                      minimumSize: const Size(0, 44),
-                      padding: const EdgeInsets.symmetric(
+                      minimumSize: Size(0, 44),
+                      padding: EdgeInsets.symmetric(
                         horizontal: 16,
                         vertical: 12,
                       ),
@@ -80,8 +82,8 @@ class WebAnalyzeScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
-              Row(
+              SizedBox(height: 16),
+              WebAdaptiveRow(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
@@ -94,36 +96,42 @@ class WebAnalyzeScreen extends StatelessWidget {
                           onClosePopup: () {},
                           onAnalyze: onAnalyze,
                         ),
-                        const SizedBox(height: 16),
-                        Row(
+                        SizedBox(height: 16),
+                        WebAdaptiveRow(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
                               child: SizedBox(
                                 height: 340,
-                                child: _WebEnvironmentPanel(
-                                  state: state,
-                                  compact: true,
+                                child: SingleChildScrollView(
+                                  child: _WebEnvironmentPanel(
+                                    state: state,
+                                    compact: true,
+                                  ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Expanded(
                               child: SizedBox(
                                 height: 340,
-                                child: _WebInfrastructurePanel(
-                                  state: state,
-                                  compact: true,
+                                child: SingleChildScrollView(
+                                  child: _WebInfrastructurePanel(
+                                    state: state,
+                                    compact: true,
+                                  ),
                                 ),
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            SizedBox(width: 12),
                             Expanded(
                               child: SizedBox(
                                 height: 340,
-                                child: _WebDistributionPanel(
-                                  state: state,
-                                  compact: true,
+                                child: SingleChildScrollView(
+                                  child: _WebDistributionPanel(
+                                    state: state,
+                                    compact: true,
+                                  ),
                                 ),
                               ),
                             ),
@@ -132,7 +140,7 @@ class WebAnalyzeScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(width: 18),
+                  SizedBox(width: 18),
                   Expanded(
                     flex: 4,
                     child: Column(
@@ -141,7 +149,7 @@ class WebAnalyzeScreen extends StatelessWidget {
                           state: state,
                           onAnalyze: onAnalyze,
                         ),
-                        const SizedBox(height: 18),
+                        SizedBox(height: 18),
                         _WebRecommendedCropPanel(state: state),
                       ],
                     ),
@@ -163,31 +171,31 @@ class _WebAnalyzeInputPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _WebCard(
-    padding: const EdgeInsets.all(18),
+    padding: EdgeInsets.all(18),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Selected Field',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         TextField(
           controller: state.latController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Latitude',
             prefixIcon: Icon(Icons.location_on_outlined),
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         TextField(
           controller: state.lonController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Longitude',
             prefixIcon: Icon(Icons.location_on_outlined),
           ),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         _InfoLine(
           icon: Icons.place_rounded,
           title: 'Selected Area',
@@ -205,10 +213,10 @@ class _WebAnalyzeInputPanel extends StatelessWidget {
               ? 'Boundary polygon'
               : 'Single point',
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         DropdownButtonFormField<int>(
           initialValue: state.intendedPlantingMonth,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Intended Planting Month',
             prefixIcon: Icon(Icons.calendar_month_rounded),
           ),
@@ -221,14 +229,14 @@ class _WebAnalyzeInputPanel extends StatelessWidget {
           }),
           onChanged: state.loading ? null : state.setIntendedPlantingMonth,
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         const _WebSeasonLegend(),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: state.loading ? null : onAnalyze,
-            icon: const Icon(Icons.analytics_rounded),
+            icon: Icon(Icons.analytics_rounded),
             label: Text(
               state.polygonPoints.length >= 3
                   ? 'Analyze Polygon'
@@ -248,7 +256,7 @@ class _WebSeasonLegend extends StatelessWidget {
     Widget chip(Color color, String label, String tip) => Tooltip(
       message: tip,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: EdgeInsets.symmetric(horizontal: 8, vertical: 6),
         decoration: BoxDecoration(
           color: color.withValues(alpha: .10),
           borderRadius: BorderRadius.circular(20),
@@ -262,14 +270,11 @@ class _WebSeasonLegend extends StatelessWidget {
               height: 8,
               decoration: BoxDecoration(color: color, shape: BoxShape.circle),
             ),
-            const SizedBox(width: 6),
+            SizedBox(width: 6),
             Flexible(
               child: Text(
                 label,
-                style: const TextStyle(
-                  fontSize: 10.5,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 10.5, fontWeight: FontWeight.w800),
               ),
             ),
           ],
@@ -278,45 +283,45 @@ class _WebSeasonLegend extends StatelessWidget {
     );
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(10),
+      padding: EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAF7),
+        color: WebPortalColors.canvas,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDDE9DF)),
+        border: Border.all(color: Color(0xFFDDE9DF)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Season legend',
             style: TextStyle(
               fontSize: 11,
               fontWeight: FontWeight.w900,
-              color: green,
+              color: WebPortalColors.accent,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           Wrap(
             spacing: 6,
             runSpacing: 6,
             children: [
               chip(
-                const Color(0xFF168A4A),
+                Color(0xFF168A4A),
                 'In season',
                 'Inside the preferred local planting window.',
               ),
               chip(
-                const Color(0xFF57A96B),
+                Color(0xFF57A96B),
                 'Establishment',
                 'Preferred period for establishing perennial crops.',
               ),
               chip(
-                const Color(0xFFE6A21A),
+                Color(0xFFE6A21A),
                 'Managed',
                 'Possible year-round with irrigation or moisture management.',
               ),
               chip(
-                const Color(0xFFD9534F),
+                Color(0xFFD9534F),
                 'Out of season',
                 'Seasonal penalty is applied to the crop score.',
               ),
@@ -339,7 +344,7 @@ class _WebInfrastructurePanel extends StatelessWidget {
     final slope = d['slope_pct'] ?? d['slope'];
     final elevation = d['elevation_m'] ?? d['elevation'];
     return _WebCard(
-      padding: compact ? const EdgeInsets.all(14) : const EdgeInsets.all(22),
+      padding: compact ? EdgeInsets.all(14) : EdgeInsets.all(22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -378,7 +383,7 @@ class _WebInfrastructurePanel extends StatelessWidget {
             maxLines: compact ? 2 : null,
             overflow: compact ? TextOverflow.ellipsis : TextOverflow.visible,
             style: TextStyle(
-              color: Colors.black54,
+              color: WebPortalColors.muted,
               height: compact ? 1.25 : 1.4,
               fontSize: compact ? 12 : 14,
             ),
@@ -400,24 +405,24 @@ class _InfoLine extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
+    padding: EdgeInsets.only(bottom: 12),
     child: Row(
       children: [
-        Icon(icon, color: green),
-        const SizedBox(width: 10),
+        Icon(icon, color: WebPortalColors.accent),
+        SizedBox(width: 10),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(fontSize: 12, color: Colors.black54),
+                style: TextStyle(fontSize: 12, color: WebPortalColors.muted),
               ),
               Text(
                 value,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(fontWeight: FontWeight.w900),
+                style: TextStyle(fontWeight: FontWeight.w900),
               ),
             ],
           ),

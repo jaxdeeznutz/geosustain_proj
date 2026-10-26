@@ -66,6 +66,11 @@ class ApiService {
         );
       }
     }
+    await clearLocalSession();
+  }
+
+  /// Use after server-confirmed account closure or an already rejected session.
+  Future<void> clearLocalSession() async {
     await _tokenStore.clear();
     await FirebaseIdentity.signOut();
     await BoundaryDraftStore.clearForSignOut();
@@ -1083,6 +1088,9 @@ class ApiService {
 
   Future<List<dynamic>> getHistory() => _history();
 
+  Future<Map<String, dynamic>> getWebSummary() =>
+      getRecordPage('/api/web/summary');
+
   Future<List<dynamic>> getFarmHistory(int farmId) => _history(farmId: farmId);
 
   Future<List<dynamic>> _history({int? farmId}) async {
@@ -1423,6 +1431,27 @@ class ApiService {
       );
     }
     await logout();
+  }
+
+  Future<void> closeWebAccount({
+    required bool delete,
+    String? password,
+    String? googleProof,
+  }) async {
+    final token = await getToken();
+    await _identityPost('/api/web/account-action', {
+      'action': delete ? 'delete' : 'deactivate',
+      'current_password': ?password,
+      'firebase_id_token': ?googleProof,
+    });
+    if (await getToken() != token) {
+      throw const ApiException(
+        409,
+        'The session changed. Refresh before continuing.',
+      );
+    }
+    if (delete) await OfflineFarmStore.deleteCurrentAccountData();
+    await clearLocalSession();
   }
 
   Future<void> deleteAccount() async {

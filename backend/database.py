@@ -964,7 +964,7 @@ def enrich_history_rows(rows):
     return enriched
 
 
-def get_user_history(user_id: int, limit: int = 20, offset: int = 0, farm_id=None):
+def get_user_history(user_id: int, limit: int = 20, offset: int = 0, farm_id=None, q: str = ''):
     conn = get_conn()
     try:
         with conn.cursor() as cur:
@@ -973,6 +973,9 @@ def get_user_history(user_id: int, limit: int = 20, offset: int = 0, farm_id=Non
             if farm_id is not None:
                 where += ' AND s.farm_id = %s'
                 params.append(farm_id)
+            if q:
+                where += " AND concat_ws(' ', s.id, s.place_name, s.farm_name_snapshot, fp.farm_name) ILIKE %s"
+                params.append('%' + q + '%')
             cur.execute(_history_select_sql(where_prefix=where) + ' LIMIT %s OFFSET %s', (*params, limit, offset))
             return enrich_history_rows(cur.fetchall())
     finally:

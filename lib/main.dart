@@ -7,6 +7,7 @@ import 'dart:math' as math;
 import 'package:flutter/foundation.dart';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/semantics.dart' show SemanticsBinding, SemanticsHandle;
 import 'package:flutter/services.dart'
     show SystemUiOverlayStyle, FilteringTextInputFormatter, rootBundle;
 import 'package:flutter_map/flutter_map.dart';
@@ -24,6 +25,10 @@ import 'boundary_draft_store.dart';
 import 'offline_farm_store.dart';
 import 'push_notifications.dart';
 import 'federated_identity.dart';
+import 'web_build_identity.dart';
+import 'web/analysis_metrics.dart';
+import 'web/portal_routes.dart';
+import 'web/web_record_controller.dart';
 
 part 'screens/mobile_visuals.dart';
 part 'screens/reference_visuals.dart';
@@ -57,6 +62,8 @@ part 'web/auth/web_auth_login.dart';
 part 'web/web_analyst_shell.dart';
 part 'web/web_admin_shell.dart';
 part 'web/widgets/web_common.dart';
+part 'web/widgets/web_analysis_evidence.dart';
+part 'web/widgets/web_portal_layout.dart';
 part 'web/screens/web_dashboard_screen.dart';
 part 'web/screens/web_map_screen.dart';
 part 'web/screens/web_analyze_screen.dart';
@@ -66,6 +73,10 @@ part 'web/screens/web_planner_queue_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  if (kIsWeb) {
+    // Keep the browser control tree available to keyboard/screen-reader users.
+    webSemanticsHandles.add(SemanticsBinding.instance.ensureSemantics());
+  }
   final prefs = await SharedPreferences.getInstance();
   lowBandwidthMode.value = prefs.getBool('settings_low_bandwidth') ?? true;
   appThemeMode.value = (prefs.getBool('settings_dark_mode') ?? false)
@@ -75,6 +86,7 @@ void main() async {
 }
 
 final lowBandwidthMode = ValueNotifier<bool>(true);
+final webSemanticsHandles = <SemanticsHandle>[];
 
 final appThemeMode = ValueNotifier<ThemeMode>(ThemeMode.light);
 
@@ -178,7 +190,7 @@ class GeoSustainApp extends StatelessWidget {
           ),
         ),
         debugShowCheckedModeBanner: false,
-        title: 'GeoSustain Mobile',
+        title: 'GeoSustain',
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: green).copyWith(
             primary: green,
@@ -192,6 +204,7 @@ class GeoSustainApp extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             labelStyle: const TextStyle(
+              inherit: false,
               fontFamily: 'Roboto',
               color: darkGreen,
               fontWeight: FontWeight.w600,
@@ -203,7 +216,11 @@ class GeoSustainApp extends StatelessWidget {
             height: 76,
             iconTheme: WidgetStatePropertyAll(IconThemeData(size: 24)),
             labelTextStyle: WidgetStatePropertyAll(
-              TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+              TextStyle(
+                inherit: false,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
           scaffoldBackgroundColor: bg,
@@ -215,6 +232,7 @@ class GeoSustainApp extends StatelessWidget {
             centerTitle: true,
             elevation: 0,
             titleTextStyle: TextStyle(
+              inherit: false,
               fontFamily: 'Roboto',
               fontSize: 18,
               fontWeight: FontWeight.w800,
@@ -250,6 +268,7 @@ class GeoSustainApp extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
               ),
               textStyle: const TextStyle(
+                inherit: false,
                 fontFamily: 'Roboto',
                 fontWeight: FontWeight.w800,
               ),
@@ -501,8 +520,9 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (MediaQuery.sizeOf(context).width >= 900 &&
-        MediaQuery.sizeOf(context).height >= 600) {
+    if (kIsWeb ||
+        (MediaQuery.sizeOf(context).width >= 900 &&
+            MediaQuery.sizeOf(context).height >= 600)) {
       return WebAuthLoginShell(
         emailController: emailController,
         passwordController: passwordController,
@@ -1221,6 +1241,8 @@ class AnalysisState extends ChangeNotifier {
     farmsError = null;
     historyLoaded = false;
     historyLoading = false;
+    webSummary = null;
+    resourceErrors.clear();
     userLoaded = false;
     _weatherRefreshTimer?.cancel();
     _loadingTimer?.cancel();
@@ -1279,6 +1301,9 @@ class AnalysisState extends ChangeNotifier {
   Map<String, dynamic>? result;
   Map<String, dynamic>? liveWeather;
   Map<String, dynamic>? currentUser;
+  Map<String, dynamic>? webSummary;
+  final resourceErrors = <String, String>{};
+  bool get webOperator => kIsWeb && (isAnalystRole || isSuperAdmin);
   bool userLoaded = false;
   Uint8List? profilePhotoBytes;
   Map<String, dynamic> profileCounts = {
@@ -1563,7 +1588,11 @@ class AnalysisState extends ChangeNotifier {
     historyError = null;
     notifyListeners();
     try {
-      final rows = await api.getHistory();
+      final rows = webOperator
+          ? analysisListValue(
+              (await api.getRecordPage('/api/web/history'))['history'],
+            )
+          : await api.getHistory();
       if (!_active(epoch, owner)) return;
       historyRecords
         ..clear()
@@ -1604,43 +1633,86 @@ class AnalysisState extends ChangeNotifier {
     }
     if (!_active(epoch, owner)) return;
     // Coalesce simultaneous tab refreshes and fetch each account resource once.
+    resourceErrors.clear();
     await Future.wait([
+      if (webOperator)
+        () async {
+          try {
+            final summary = await api.getWebSummary();
+            if (_active(epoch, owner)) webSummary = summary;
+          } catch (error) {
+            if (_active(epoch, owner)) {
+              resourceErrors['summary'] = friendlyErrorMessage(error);
+            }
+          }
+        }(),
       () async {
         try {
-          final rows = await api.getSavedAnalyses();
+          final rows = webOperator
+              ? analysisListValue(
+                  (await api.getRecordPage('/api/mobile/saved'))['saved'],
+                )
+              : await api.getSavedAnalyses();
           if (_active(epoch, owner)) {
             savedAnalyses
               ..clear()
               ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
           }
-        } catch (_) {}
+        } catch (error) {
+          if (_active(epoch, owner)) {
+            resourceErrors['saved'] = friendlyErrorMessage(error);
+          }
+        }
       }(),
       () async {
         try {
-          final rows = await api.getReports();
+          final rows = webOperator
+              ? analysisListValue(
+                  (await api.getRecordPage('/api/mobile/reports'))['reports'],
+                )
+              : await api.getReports();
           if (_active(epoch, owner)) {
             generatedReports
               ..clear()
               ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
           }
-        } catch (_) {}
+        } catch (error) {
+          if (_active(epoch, owner)) {
+            resourceErrors['reports'] = friendlyErrorMessage(error);
+          }
+        }
       }(),
       () async {
         try {
           final counts = await api.getCounts();
           if (_active(epoch, owner)) profileCounts = counts;
-        } catch (_) {}
+        } catch (error) {
+          if (_active(epoch, owner)) {
+            resourceErrors['counts'] = friendlyErrorMessage(error);
+          }
+        }
       }(),
       if (isPlanner)
         () async {
           try {
-            final rows = await api.getPlannerQueue(status: 'verified');
+            final rows = webOperator
+                ? analysisListValue(
+                    (await api.getRecordPage(
+                      '/api/planner/queue',
+                      parameters: {'status': 'verified'},
+                    ))['queue'],
+                  )
+                : await api.getPlannerQueue(status: 'verified');
             if (_active(epoch, owner)) {
               verifiedTrendRecords
                 ..clear()
                 ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
             }
-          } catch (_) {}
+          } catch (error) {
+            if (_active(epoch, owner)) {
+              resourceErrors['verified_trends'] = friendlyErrorMessage(error);
+            }
+          }
         }(),
     ]);
     if (_active(epoch, owner)) notifyListeners();
@@ -2569,15 +2641,17 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
       );
     }
 
-    if (!isDesktopWeb && (state.isAnalystRole || state.isSuperAdmin)) {
+    if (!kIsWeb &&
+        !isDesktopWeb &&
+        (state.isAnalystRole || state.isSuperAdmin)) {
       return AccessDeniedPage(desktopAttempt: false, logout: logout);
     }
 
-    if (isDesktopWeb && state.isSuperAdmin) {
+    if ((kIsWeb || isDesktopWeb) && state.isSuperAdmin) {
       return WebAdminDashboard(logout: logout, message: message);
     }
 
-    if (isDesktopWeb && state.isAnalystRole) {
+    if ((kIsWeb || isDesktopWeb) && state.isAnalystRole) {
       return Scaffold(
         body: Stack(
           children: [

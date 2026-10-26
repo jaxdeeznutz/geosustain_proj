@@ -1,6 +1,7 @@
 part of '../../main.dart';
 
 bool _isCropAnalysisRecord(Map<String, dynamic> record) {
+  if (WebAnalysisMetrics.preliminary(record)) return false;
   final raw = record['is_crop_recommended'];
   if (raw is bool) return raw;
   final text = '$raw'.trim().toLowerCase();
@@ -14,7 +15,9 @@ String _mapRecordPrimaryValue(Map<String, dynamic> record) {
   if (_isCropAnalysisRecord(record)) {
     return '${record['crop_recommendation'] ?? record['recommended_crop'] ?? record['predicted_crop'] ?? record['crop'] ?? 'No crop'}';
   }
-  return '${record['land_status'] ?? record['recommendation_title'] ?? record['predicted_crop'] ?? 'Non-arable area'}';
+  return WebAnalysisMetrics.preliminary(record)
+      ? 'Preliminary screening'
+      : '${record['land_status'] ?? record['recommendation_title'] ?? 'Land assessment'}';
 }
 
 double? _recordAreaHectares(Map<String, dynamic> record) {
@@ -67,7 +70,7 @@ double? _recordAreaHectares(Map<String, dynamic> record) {
     } catch (_) {}
   }
   if (points.length < 3) return null;
-  const earthRadius = 6378137.0;
+  final earthRadius = 6378137.0;
   final meanLat =
       points.map((p) => p.latitude).reduce((a, b) => a + b) /
       points.length *
@@ -179,7 +182,7 @@ class _WebMapScreenState extends State<WebMapScreen> {
         raw = raw['points'];
       }
     }
-    if (raw is! List) return const [];
+    if (raw is! List) return [];
     final result = <LatLng>[];
     for (final item in raw) {
       if (item is Map) {
@@ -206,13 +209,7 @@ class _WebMapScreenState extends State<WebMapScreen> {
     return result;
   }
 
-  double? _suitability(Map<String, dynamic> record) {
-    final raw =
-        record['crop_compatibility_pct'] ??
-        record['compatibility_pct'] ??
-        record['suitability'];
-    return raw is num ? raw.toDouble() : double.tryParse('$raw');
-  }
+  double? _suitability(Map<String, dynamic> record) => WebAnalysisMetrics.modelScore(record);
 
   String _crop(Map<String, dynamic> record) => _mapRecordPrimaryValue(record);
 
@@ -220,19 +217,19 @@ class _WebMapScreenState extends State<WebMapScreen> {
       '${record['place_name'] ?? record['location'] ?? record['address'] ?? 'Analyzed Area'}';
 
   Color _markerColor(double? value) {
-    if (value == null) return const Color(0xFF8B97A3);
-    if (value >= 75) return const Color(0xFF087A47);
-    if (value >= 50) return const Color(0xFF7CCF55);
-    if (value >= 25) return const Color(0xFFF0A51A);
-    return const Color(0xFFE84F4F);
+    if (value == null) return Color(0xFF8B97A3);
+    if (value >= 75) return Color(0xFF087A47);
+    if (value >= 50) return Color(0xFF7CCF55);
+    if (value >= 25) return Color(0xFFF0A51A);
+    return Color(0xFFE84F4F);
   }
 
   String _label(double? value) {
     if (value == null) return 'No data';
-    if (value >= 75) return 'Highly Suitable';
-    if (value >= 50) return 'Suitable';
-    if (value >= 25) return 'Moderately Suitable';
-    return 'Low Suitability';
+    if (value >= 75) return 'High model score';
+    if (value >= 50) return 'Medium model score';
+    if (value >= 25) return 'Low model score';
+    return 'Very low model score';
   }
 
   void _select(Map<String, dynamic> record) {
@@ -278,7 +275,7 @@ class _WebMapScreenState extends State<WebMapScreen> {
         ? null
         : validSuitability.reduce((a, b) => a + b) / validSuitability.length;
 
-    return Row(
+    return WebAdaptiveRow(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Expanded(
@@ -289,10 +286,10 @@ class _WebMapScreenState extends State<WebMapScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding: const EdgeInsets.fromLTRB(18, 14, 18, 12),
+                  padding: EdgeInsets.fromLTRB(18, 14, 18, 12),
                   child: Row(
                     children: [
-                      const Expanded(
+                      Expanded(
                         child: Text(
                           'Interactive Review Map',
                           style: TextStyle(
@@ -306,12 +303,8 @@ class _WebMapScreenState extends State<WebMapScreen> {
                         label: state.satellite ? 'Satellite' : 'Street',
                         onTap: state.toggleSatellite,
                       ),
-                      const SizedBox(width: 8),
-                      _ToolbarChip(
-                        icon: Icons.filter_alt_outlined,
-                        label: 'All Markers  ${mapRecords.length}',
-                        onTap: () {},
-                      ),
+                      SizedBox(width: 8),
+                      _SmallBadge('${mapRecords.length} loaded map records'),
                     ],
                   ),
                 ),
@@ -334,7 +327,7 @@ class _WebMapScreenState extends State<WebMapScreen> {
             ),
           ),
         ),
-        const SizedBox(width: 18),
+        SizedBox(width: 18),
         SizedBox(
           width: 370,
           child: Column(
@@ -343,30 +336,30 @@ class _WebMapScreenState extends State<WebMapScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'GIS Review Summary',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
                       ),
                     ),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     _SummaryMetric(
                       icon: Icons.location_on_rounded,
                       label: 'Total Analyzed Lands',
                       value: '${mapRecords.length}',
                       caption: 'Across all saved analyses',
                     ),
-                    const Divider(height: 24),
+                    Divider(height: 24),
                     _SummaryMetric(
                       icon: Icons.eco_rounded,
-                      label: 'Average Suitability',
+                      label: 'Average Model Score',
                       value: average == null
                           ? '--'
                           : '${average.toStringAsFixed(1)}%',
                       caption: 'Across all analyzed lands',
                     ),
-                    const Divider(height: 24),
+                    Divider(height: 24),
                     _SummaryMetric(
                       icon: Icons.trending_up_rounded,
                       label: 'Infrastructure Overlays',
@@ -376,14 +369,14 @@ class _WebMapScreenState extends State<WebMapScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               _WebCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
                       children: [
-                        const Expanded(
+                        Expanded(
                           child: Text(
                             'Recent Analyzed Lands',
                             style: TextStyle(
@@ -394,21 +387,21 @@ class _WebMapScreenState extends State<WebMapScreen> {
                         ),
                         Text(
                           '${rows.length} shown',
-                          style: const TextStyle(
-                            color: Colors.black45,
+                          style: TextStyle(
+                            color: WebPortalColors.muted,
                             fontSize: 12,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     if (rows.isEmpty)
-                      const Padding(
+                      Padding(
                         padding: EdgeInsets.all(20),
                         child: Center(
                           child: Text(
                             'No analyzed areas yet.',
-                            style: TextStyle(color: Colors.black45),
+                            style: TextStyle(color: WebPortalColors.muted),
                           ),
                         ),
                       )
@@ -427,16 +420,16 @@ class _WebMapScreenState extends State<WebMapScreen> {
                           onTap: () => _select(r),
                         ),
                       ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     SizedBox(
                       width: double.infinity,
                       child: OutlinedButton.icon(
                         onPressed: widget.onGoToAnalyzeArea,
-                        icon: const Icon(Icons.center_focus_strong_rounded),
-                        label: const Text('Go to Analyze Area'),
+                        icon: Icon(Icons.center_focus_strong_rounded),
+                        label: Text('Go to Analyze Area'),
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: green,
-                          padding: const EdgeInsets.symmetric(vertical: 15),
+                          foregroundColor: WebPortalColors.accent,
+                          padding: EdgeInsets.symmetric(vertical: 15),
                         ),
                       ),
                     ),
@@ -467,10 +460,10 @@ class _ToolbarChip extends StatelessWidget {
     icon: Icon(icon, size: 18),
     label: Text(label),
     style: OutlinedButton.styleFrom(
-      foregroundColor: const Color(0xFF26352C),
-      side: const BorderSide(color: Color(0xFFDCE6DE)),
+      foregroundColor: Color(0xFF26352C),
+      side: BorderSide(color: Color(0xFFDCE6DE)),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      padding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     ),
   );
 }
@@ -495,36 +488,36 @@ class _SummaryMetric extends StatelessWidget {
         width: 46,
         height: 46,
         decoration: BoxDecoration(
-          color: softGreen,
+          color: WebPortalColors.tint,
           borderRadius: BorderRadius.circular(14),
         ),
-        child: Icon(icon, color: green),
+        child: Icon(icon, color: WebPortalColors.accent),
       ),
-      const SizedBox(width: 12),
+      SizedBox(width: 12),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.black54,
+              style: TextStyle(
+                color: WebPortalColors.muted,
                 fontSize: 12,
                 fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 2),
+            SizedBox(height: 2),
             Text(
               value,
-              style: const TextStyle(
-                color: green,
+              style: TextStyle(
+                color: WebPortalColors.accent,
                 fontSize: 21,
                 fontWeight: FontWeight.w900,
               ),
             ),
             Text(
               caption,
-              style: const TextStyle(color: Colors.black45, fontSize: 11),
+              style: TextStyle(color: WebPortalColors.muted, fontSize: 11),
             ),
           ],
         ),
@@ -560,9 +553,9 @@ class _RecentLandRow extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 180),
-        margin: const EdgeInsets.only(bottom: 7),
-        padding: const EdgeInsets.all(11),
+        duration: Duration(milliseconds: 180),
+        margin: EdgeInsets.only(bottom: 7),
+        padding: EdgeInsets.all(11),
         decoration: BoxDecoration(
           color: selected ? softGreen : Colors.transparent,
           borderRadius: BorderRadius.circular(14),
@@ -581,7 +574,7 @@ class _RecentLandRow extends StatelessWidget {
               ),
               child: Icon(Icons.eco_rounded, color: color, size: 21),
             ),
-            const SizedBox(width: 10),
+            SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -590,23 +583,23 @@ class _RecentLandRow extends StatelessWidget {
                     place,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(fontWeight: FontWeight.w900, fontSize: 13),
                   ),
-                  const SizedBox(height: 2),
+                  SizedBox(height: 2),
                   Text(
                     '$crop${date.isEmpty ? '' : ' • $date'}',
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(color: Colors.black45, fontSize: 11),
+                    style: TextStyle(
+                      color: WebPortalColors.muted,
+                      fontSize: 11,
+                    ),
                   ),
                 ],
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
+              padding: EdgeInsets.symmetric(horizontal: 9, vertical: 6),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: .12),
                 borderRadius: BorderRadius.circular(20),
@@ -710,9 +703,7 @@ class _InteractiveReviewMap extends StatelessWidget {
                       Icons.location_on_rounded,
                       color: color,
                       size: 48,
-                      shadows: const [
-                        Shadow(color: Colors.black26, blurRadius: 5),
-                      ],
+                      shadows: [Shadow(color: Colors.black26, blurRadius: 5)],
                     ),
                   ),
                 ),
@@ -749,7 +740,7 @@ class _InteractiveReviewMap extends StatelessWidget {
                 Icons.location_on_rounded,
                 color: color,
                 size: 43,
-                shadows: const [Shadow(color: Colors.black26, blurRadius: 5)],
+                shadows: [Shadow(color: Colors.black26, blurRadius: 5)],
               ),
             ),
           ),
@@ -757,7 +748,7 @@ class _InteractiveReviewMap extends StatelessWidget {
       }
     }
     return ClipRRect(
-      borderRadius: const BorderRadius.only(
+      borderRadius: BorderRadius.only(
         bottomLeft: Radius.circular(20),
         bottomRight: Radius.circular(20),
       ),
@@ -772,7 +763,7 @@ class _InteractiveReviewMap extends StatelessWidget {
                 initialZoom: 12.8,
                 minZoom: 10,
                 maxZoom: 18,
-                interactionOptions: const InteractionOptions(
+                interactionOptions: InteractionOptions(
                   flags: InteractiveFlag.all,
                 ),
               ),
@@ -805,7 +796,7 @@ class _InteractiveReviewMap extends StatelessWidget {
                       } catch (_) {}
                     },
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   _MapControl(
                     icon: Icons.remove_rounded,
                     onTap: () {
@@ -817,7 +808,7 @@ class _InteractiveReviewMap extends StatelessWidget {
                       } catch (_) {}
                     },
                   ),
-                  const SizedBox(height: 6),
+                  SizedBox(height: 6),
                   _MapControl(
                     icon: Icons.my_location_rounded,
                     onTap: () {
@@ -845,7 +836,7 @@ class _MapControl extends StatelessWidget {
   const _MapControl({required this.icon, required this.onTap});
   @override
   Widget build(BuildContext context) => Material(
-    color: Colors.white,
+    color: WebPortalColors.surface,
     borderRadius: BorderRadius.circular(12),
     elevation: 2,
     child: InkWell(
@@ -854,7 +845,7 @@ class _MapControl extends StatelessWidget {
       child: SizedBox(
         width: 43,
         height: 43,
-        child: Icon(icon, color: const Color(0xFF26352C)),
+        child: Icon(icon, color: Color(0xFF26352C)),
       ),
     ),
   );
@@ -891,22 +882,22 @@ class _MarkerInfoCard extends StatelessWidget {
         : '${areaHa.toStringAsFixed(areaHa < 1 ? 3 : 2)} ha';
     final isCrop = _isCropAnalysisRecord(record);
     final primaryLabel = isCrop ? 'Recommended Crop' : 'Land Assessment';
-    final scoreLabel = isCrop ? 'Suitability' : 'Agricultural Use';
+    final scoreLabel = isCrop ? 'AI model score' : 'Assessment';
     final scoreValue = isCrop && suitability != null
         ? '${suitability!.toStringAsFixed(1)}%'
-        : 'Not recommended';
-    final badgeText = isCrop ? suitabilityLabel : 'Non-arable';
+        : 'Not assessed';
+    final badgeText = isCrop ? suitabilityLabel : 'Land assessment';
     return Material(
       color: Colors.transparent,
       elevation: 8,
       borderRadius: BorderRadius.circular(18),
       child: Container(
         width: 306,
-        padding: const EdgeInsets.all(14),
+        padding: EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: WebPortalColors.surface,
           borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFE0E9E2)),
+          border: Border.all(color: Color(0xFFE0E9E2)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -924,7 +915,7 @@ class _MarkerInfoCard extends StatelessWidget {
                   ),
                   child: Icon(Icons.eco_rounded, color: markerColor, size: 21),
                 ),
-                const SizedBox(width: 10),
+                SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -933,18 +924,18 @@ class _MarkerInfoCard extends StatelessWidget {
                         place,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      SizedBox(height: 2),
                       Text(
                         '$primaryLabel: $crop',
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.black54,
+                        style: TextStyle(
+                          color: WebPortalColors.muted,
                           fontSize: 11,
                         ),
                       ),
@@ -953,14 +944,14 @@ class _MarkerInfoCard extends StatelessWidget {
                 ),
                 InkWell(
                   onTap: onClose,
-                  child: const Padding(
+                  child: Padding(
                     padding: EdgeInsets.all(3),
                     child: Icon(Icons.close_rounded, size: 18),
                   ),
                 ),
               ],
             ),
-            const Divider(height: 16),
+            Divider(height: 16),
             Row(
               children: [
                 Expanded(
@@ -969,8 +960,8 @@ class _MarkerInfoCard extends StatelessWidget {
                     children: [
                       Text(
                         scoreLabel,
-                        style: const TextStyle(
-                          color: Colors.black45,
+                        style: TextStyle(
+                          color: WebPortalColors.muted,
                           fontSize: 11,
                         ),
                       ),
@@ -986,10 +977,7 @@ class _MarkerInfoCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 7,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 10, vertical: 7),
                   decoration: BoxDecoration(
                     color: markerColor.withValues(alpha: .12),
                     borderRadius: BorderRadius.circular(20),
@@ -1005,7 +993,7 @@ class _MarkerInfoCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Row(
               children: [
                 Expanded(
@@ -1024,17 +1012,17 @@ class _MarkerInfoCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton(
                 onPressed: onOpenDetails,
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: green,
-                  backgroundColor: softGreen,
+                  foregroundColor: WebPortalColors.accent,
+                  backgroundColor: WebPortalColors.tint,
                   side: BorderSide.none,
                 ),
-                child: const Text('View Details'),
+                child: Text('View Details'),
               ),
             ),
           ],
@@ -1056,21 +1044,21 @@ class _MiniInfo extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Row(
     children: [
-      Icon(icon, size: 17, color: Colors.black54),
-      const SizedBox(width: 6),
+      Icon(icon, size: 17, color: WebPortalColors.muted),
+      SizedBox(width: 6),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               label,
-              style: const TextStyle(color: Colors.black45, fontSize: 9),
+              style: TextStyle(color: WebPortalColors.muted, fontSize: 9),
             ),
             Text(
               value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
             ),
           ],
         ),

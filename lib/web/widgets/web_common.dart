@@ -11,14 +11,14 @@ class _WebCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: padding,
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: WebPortalColors.surface,
       borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: const Color(0xFFE4ECE6)),
+      border: Border.all(color: Color(0xFFE4ECE6)),
       boxShadow: [
         BoxShadow(
           color: Colors.black.withValues(alpha: .035),
           blurRadius: 18,
-          offset: const Offset(0, 8),
+          offset: Offset(0, 8),
         ),
       ],
     ),
@@ -32,7 +32,7 @@ class _SmallBadge extends StatelessWidget {
   const _SmallBadge(this.text, {this.color = green});
   @override
   Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+    padding: EdgeInsets.symmetric(horizontal: 10, vertical: 6),
     decoration: BoxDecoration(
       color: color.withValues(alpha: .12),
       borderRadius: BorderRadius.circular(999),
@@ -56,27 +56,25 @@ class _WebHeader extends StatelessWidget {
     required this.message,
   });
   @override
-  Widget build(BuildContext context) => Row(
+  Widget build(BuildContext context) => WebAdaptiveRow(
     crossAxisAlignment: CrossAxisAlignment.center,
     children: [
-      const Icon(Icons.menu_rounded, color: green, size: 32),
-      const SizedBox(width: 18),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            Semantics(header: true, child: Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w900,
-                color: Color(0xFF102018),
+                color: WebPortalColors.ink,
               ),
-            ),
-            const SizedBox(height: 4),
+            )),
+            SizedBox(height: 4),
             Text(
               subtitle,
-              style: const TextStyle(color: Colors.black54, fontSize: 15),
+              style: TextStyle(color: WebPortalColors.muted, fontSize: 15),
             ),
           ],
         ),
@@ -88,22 +86,24 @@ class _WebHeader extends StatelessWidget {
                 final err = await state.refreshLiveWeather();
                 if (err != null) message(err);
               },
-        icon: const Icon(Icons.refresh_rounded),
-        label: Text(state.weatherLoading ? 'Refreshing...' : 'Refresh Data'),
+        icon: Icon(Icons.refresh_rounded),
+        label: Text(
+          state.weatherLoading ? 'Refreshing weather...' : 'Refresh Weather',
+        ),
         style: OutlinedButton.styleFrom(
-          foregroundColor: green,
-          side: const BorderSide(color: Color(0xFFE1E8E2)),
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          foregroundColor: WebPortalColors.accent,
+          side: BorderSide(color: Color(0xFFE1E8E2)),
+          padding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
         ),
       ),
-      const SizedBox(width: 14),
-      const Icon(
-        Icons.notifications_none_rounded,
-        color: Color(0xFF33443A),
-        size: 28,
+      SizedBox(width: 14),
+      IconButton(
+        tooltip: 'Open activity',
+        onPressed: () => PortalRoutes.go('/operator/activity'),
+        icon: Icon(Icons.notifications_none_rounded),
       ),
     ],
   );
@@ -128,40 +128,37 @@ class _WebKpiCard extends StatelessWidget {
           width: 62,
           height: 62,
           decoration: BoxDecoration(
-            color: softGreen,
+            color: WebPortalColors.tint,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: Icon(icon, color: green, size: 32),
+          child: Icon(icon, color: WebPortalColors.accent, size: 32),
         ),
-        const SizedBox(width: 18),
+        SizedBox(width: 18),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.black54,
+                style: TextStyle(
+                  color: WebPortalColors.muted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 6),
+              SizedBox(height: 6),
               Text(
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: green,
+                style: TextStyle(
+                  color: WebPortalColors.accent,
                   fontWeight: FontWeight.w800,
                   fontSize: 12,
                 ),
@@ -242,7 +239,7 @@ class _WebMapVisualState extends State<_WebMapVisual> {
               left: 18,
               child: _SmallBadge(
                 state.satellite ? 'Satellite' : 'Street',
-                color: green,
+                color: WebPortalColors.accent,
               ),
             ),
             if (state.result?['heatmap_grid'] is List &&
@@ -251,9 +248,9 @@ class _WebMapVisualState extends State<_WebMapVisual> {
                 top: 70,
                 right: 18,
                 child: Container(
-                  padding: const EdgeInsets.all(6),
+                  padding: EdgeInsets.all(6),
                   decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: .96),
+                    color: WebPortalColors.surface.withValues(alpha: .96),
                     borderRadius: BorderRadius.circular(12),
                     boxShadow: [
                       BoxShadow(
@@ -281,7 +278,7 @@ class _WebMapVisualState extends State<_WebMapVisual> {
                                 labelStyle: TextStyle(
                                   color: state.heatmapLayer == layer
                                       ? green
-                                      : Colors.black54,
+                                      : WebPortalColors.muted,
                                   fontSize: 11,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -301,14 +298,14 @@ class _WebMapVisualState extends State<_WebMapVisual> {
                     icon: Icons.layers_rounded,
                     onTap: state.toggleSatellite,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   _MapToolButton(
                     icon: state.drawing
                         ? Icons.edit_off_rounded
                         : Icons.polyline_rounded,
                     onTap: state.toggleDrawing,
                   ),
-                  const SizedBox(width: 8),
+                  SizedBox(width: 8),
                   _MapToolButton(
                     icon: Icons.clear_rounded,
                     onTap: state.clearSelection,
@@ -321,25 +318,25 @@ class _WebMapVisualState extends State<_WebMapVisual> {
               bottom: 18,
               child: FilledButton.icon(
                 onPressed: state.loading ? null : _analyze,
-                icon: const Icon(Icons.analytics_rounded),
+                icon: Icon(Icons.analytics_rounded),
                 label: Text(
                   state.polygonPoints.length >= 3
                       ? 'Analyze Polygon'
                       : 'Analyze Point',
                 ),
                 style: FilledButton.styleFrom(
-                  minimumSize: const Size(0, 44),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
+                  minimumSize: Size(0, 44),
+                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
               ),
             ),
-            Positioned(left: 18, bottom: 18, child: _SuitabilityLegend()),
+            if (state.heatmapLayer == 'Suitability' &&
+                analysisListValue(state.result?['heatmap_grid']).isNotEmpty)
+              Positioned(left: 18, bottom: 72, child: _SuitabilityLegend()),
             if (widget.showPopup)
               Positioned(
-                left: 28,
+                left: 18,
+                right: 18,
                 top: 82,
                 child: _WebMapPopup(
                   state: state,
@@ -371,27 +368,31 @@ class _WebMapPopup extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasResult = state.result != null;
-    final displayCrop = hasResult && crop.trim().isNotEmpty && crop != '--'
+    final displayCrop = WebAnalysisMetrics.preliminary(state.result ?? {})
+        ? 'Preliminary screening'
+        : hasResult && crop.trim().isNotEmpty && crop != '--'
         ? crop
         : 'Select or draw an area';
     final pctText = pct == null
-        ? 'Ready for analysis'
-        : '${double.tryParse('$pct')?.toStringAsFixed(1) ?? pct}% suitability';
+        ? (state.result == null
+              ? 'Ready for analysis'
+              : 'No complete model score')
+        : '${double.tryParse('$pct')?.toStringAsFixed(1) ?? pct}% model score';
 
     return Material(
       color: Colors.transparent,
       child: Container(
         width: 300,
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(18),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: WebPortalColors.surface,
           borderRadius: BorderRadius.circular(22),
-          border: Border.all(color: const Color(0xFFE2ECE6)),
+          border: Border.all(color: Color(0xFFE2ECE6)),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: .10),
               blurRadius: 24,
-              offset: const Offset(0, 12),
+              offset: Offset(0, 12),
             ),
           ],
         ),
@@ -405,59 +406,59 @@ class _WebMapPopup extends StatelessWidget {
                   width: 42,
                   height: 42,
                   decoration: BoxDecoration(
-                    color: green.withValues(alpha: .12),
+                    color: WebPortalColors.accent.withValues(alpha: .12),
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: const Icon(Icons.eco_rounded, color: green),
+                  child: Icon(Icons.eco_rounded, color: WebPortalColors.accent),
                 ),
-                const SizedBox(width: 12),
+                SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     displayCrop,
                     maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 17,
                       fontWeight: FontWeight.w900,
-                      color: Color(0xFF173B2A),
+                      color: WebPortalColors.ink,
                     ),
                   ),
                 ),
                 IconButton(
                   tooltip: 'Close',
                   onPressed: onClose,
-                  icon: const Icon(Icons.close_rounded),
+                  icon: Icon(Icons.close_rounded),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 12),
             Text(
               pctText,
               style: TextStyle(
                 fontWeight: FontWeight.w800,
-                color: hasResult ? green : Colors.black54,
+                color: hasResult ? green : WebPortalColors.muted,
               ),
             ),
-            const SizedBox(height: 10),
+            SizedBox(height: 10),
             Text(
               state.polygonPoints.length >= 3
                   ? 'Polygon area: ${state.polygonPoints.length} points selected'
                   : 'Point: ${state.selectedPoint.latitude.toStringAsFixed(5)}, ${state.selectedPoint.longitude.toStringAsFixed(5)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
                 height: 1.35,
-                color: Colors.black54,
+                color: WebPortalColors.muted,
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
               state.selectedPlaceName,
               maxLines: 2,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 13,
-                color: Colors.black45,
+                color: WebPortalColors.muted,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -473,14 +474,15 @@ class _MapToolButton extends StatelessWidget {
   final VoidCallback onTap;
   const _MapToolButton({required this.icon, required this.onTap});
   @override
-  Widget build(BuildContext context) => Material(
-    color: Colors.white.withValues(alpha: .94),
-    borderRadius: BorderRadius.circular(12),
-    child: InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
-      child: SizedBox(width: 42, height: 42, child: Icon(icon, color: green)),
-    ),
+  Widget build(BuildContext context) => IconButton.filledTonal(
+    tooltip: icon == Icons.layers_rounded
+        ? 'Change map layer'
+        : icon == Icons.clear_rounded
+        ? 'Clear map selection'
+        : 'Toggle boundary drawing',
+    onPressed: onTap,
+    icon: Icon(icon),
+    constraints: const BoxConstraints(minWidth: 48, minHeight: 48),
   );
 }
 
@@ -488,15 +490,15 @@ class _SuitabilityLegend extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     width: 180,
-    padding: const EdgeInsets.all(12),
+    padding: EdgeInsets.all(12),
     decoration: BoxDecoration(
-      color: Colors.white.withValues(alpha: .92),
+      color: WebPortalColors.surface.withValues(alpha: .92),
       borderRadius: BorderRadius.circular(14),
     ),
-    child: const Column(
+    child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('Suitability', style: TextStyle(fontWeight: FontWeight.w900)),
+        Text('Map score bands', style: TextStyle(fontWeight: FontWeight.w900)),
         SizedBox(height: 8),
         _LegendDot(color: Color(0xFF1FA463), label: '75% - 100%'),
         _LegendDot(color: Color(0xFF8BDD75), label: '50% - 75%'),
@@ -513,7 +515,7 @@ class _LegendDot extends StatelessWidget {
   const _LegendDot({required this.color, required this.label});
   @override
   Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 8),
+    padding: EdgeInsets.only(bottom: 8),
     child: Row(
       children: [
         Container(
@@ -521,11 +523,11 @@ class _LegendDot extends StatelessWidget {
           height: 11,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 8),
+        SizedBox(width: 8),
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
           ),
         ),
       ],

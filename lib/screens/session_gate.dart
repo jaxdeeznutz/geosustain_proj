@@ -83,7 +83,7 @@ class _SessionGateState extends State<SessionGate> {
     } on ApiException catch (e) {
       if (e.statusCode == 401 || e.statusCode == 403) {
         if (!mounted || await api.getToken() != token) return;
-        await api.logout();
+        await api.clearLocalSession();
         authenticated = false;
         if (mounted && offlineChosen) {
           setState(() {

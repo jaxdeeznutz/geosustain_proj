@@ -16,41 +16,6 @@ class WebDashboardScreen extends StatelessWidget {
     required this.onOpenReports,
   });
 
-  bool _isCropRecord(Map<String, dynamic> row) {
-    final flag = row['is_crop_recommended'];
-    final isCrop = flag is bool
-        ? flag
-        : !['false', '0'].contains('$flag'.trim().toLowerCase());
-    final landType = '${row['land_type'] ?? 'arable'}'.toLowerCase();
-    final crop = _recordTitle(row).toUpperCase();
-    return isCrop &&
-        landType == 'arable' &&
-        !crop.contains('ADVISORY') &&
-        !crop.contains('LAND USE') &&
-        !crop.contains('INFRASTRUCTURE') &&
-        !crop.contains('WATER');
-  }
-
-  String _recordTitle(Map<String, dynamic> row) {
-    final direct =
-        row['predicted_crop'] ??
-        row['crop_recommendation'] ??
-        row['recommended_crop'] ??
-        row['land_status'] ??
-        row['recommendation_title'];
-    if (direct != null && '$direct'.trim().isNotEmpty) return '$direct';
-    final top = row['top_crop_recommendations'];
-    if (top is List && top.isNotEmpty && top.first is Map) {
-      return '${(top.first as Map)['crop'] ?? (top.first as Map)['name'] ?? 'Analysis'}';
-    }
-    return 'Land analysis';
-  }
-
-  double? _recordPct(Map<String, dynamic> row) {
-    final raw = row['crop_compatibility_pct'] ?? row['compatibility_pct'];
-    return raw is num ? raw.toDouble() : double.tryParse('$raw');
-  }
-
   double _recordAreaHa(Map<String, dynamic> row) {
     final ha = row['area_hectares'] ?? row['area_ha'];
     final haValue = ha is num ? ha.toDouble() : double.tryParse('$ha');
@@ -67,145 +32,141 @@ class WebDashboardScreen extends StatelessWidget {
     final records = state.historyRecords
         .map((e) => Map<String, dynamic>.from(e))
         .toList();
-    final cropRecords = records.where(_isCropRecord).toList();
-    final validPcts = cropRecords
-        .map(_recordPct)
-        .whereType<double>()
-        .where((v) => v > 0)
-        .toList();
-    final avg = validPcts.isEmpty
-        ? null
-        : validPcts.reduce((a, b) => a + b) / validPcts.length;
-    final cropCounts = <String, int>{};
-    for (final row in cropRecords) {
-      final crop = _recordTitle(row);
-      cropCounts[crop] = (cropCounts[crop] ?? 0) + 1;
-    }
-    String? topCrop;
-    if (cropCounts.isNotEmpty) {
-      topCrop = cropCounts.entries
-          .reduce((a, b) => a.value >= b.value ? a : b)
-          .key;
-    }
-    final totalArea = records.fold<double>(
-      0,
-      (sum, row) => sum + _recordAreaHa(row),
-    );
-    final weather = state.liveWeather ?? const <String, dynamic>{};
+    final metrics = WebAnalysisMetrics(records);
+    final summary = state.webSummary;
+    final summaryReady = summary != null;
+    final avg = summaryReady
+        ? analysisNumber(summary['average_model_score'])
+        : metrics.average;
+    final frequencies = analysisListValue(summary?['frequencies']);
+    final topCrop = summaryReady
+        ? (frequencies.isEmpty
+              ? null
+              : '${analysisMapValue(frequencies.first)['crop']}')
+        : metrics.mostFrequent;
+    final totalArea = summaryReady
+        ? (analysisNumber(summary['cumulative_area_ha']) ?? 0)
+        : metrics.records.fold<double>(
+            0,
+            (sum, row) => sum + _recordAreaHa(row),
+          );
+    final weather = state.liveWeather ?? <String, dynamic>{};
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (!summaryReady)
+          Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Summary of currently loaded records only. Whole-account statistics are not available yet.',
+            ),
+          ),
+        if (state.historyError != null || state.resourceErrors.isNotEmpty)
+          WebResourceWarning(state: state),
         _DashboardWelcomeRow(name: name, state: state, weather: weather),
-        const SizedBox(height: 18),
-        Row(
+        SizedBox(height: 18),
+        WebAdaptiveRow(
           children: [
             Expanded(
               child: _DashboardKpi(
                 icon: Icons.assignment_rounded,
                 title: 'Total Analyses',
-                value: '${records.length}',
+                value: '${summary?['analysis_count'] ?? records.length}',
                 subtitle: records.isEmpty
                     ? 'No analyses yet'
                     : 'Across all saved areas',
                 warning: records.isEmpty,
               ),
             ),
-            const SizedBox(width: 18),
+            SizedBox(width: 18),
             Expanded(
               child: _DashboardKpi(
                 icon: Icons.eco_rounded,
-                title: 'Average Suitability',
+                title: 'Average Model Score',
                 value: avg == null ? '—' : '${avg.toStringAsFixed(1)}%',
                 subtitle: avg == null
                     ? 'Start your first crop analysis'
-                    : 'Verified crop recommendations',
+                    : 'Recorded crop model scores',
               ),
             ),
-            const SizedBox(width: 18),
+            SizedBox(width: 18),
             Expanded(
               child: _DashboardKpi(
                 icon: Icons.spa_rounded,
-                title: 'Most Suitable Crop',
+                title: 'Most Frequent Recommendation',
                 value: topCrop ?? '—',
                 subtitle: topCrop == null
                     ? 'Not available yet'
                     : 'Most frequently recommended',
               ),
             ),
-            const SizedBox(width: 18),
+            SizedBox(width: 18),
             Expanded(
               child: _DashboardKpi(
                 icon: Icons.map_rounded,
-                title: 'Areas Analyzed',
+                title: 'Cumulative Analysis Area',
                 value: totalArea > 0
                     ? '${totalArea.toStringAsFixed(2)} ha'
                     : '0.00 ha',
                 subtitle: totalArea > 0
-                    ? 'Combined polygon area'
+                    ? 'Repeated farm analyses count separately'
                     : 'No measured polygons yet',
               ),
             ),
           ],
         ),
-        const SizedBox(height: 18),
-        Row(
+        SizedBox(height: 18),
+        WebAdaptiveRow(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               flex: 7,
               child: _DashboardGettingStarted(onStartAnalyze: onStartAnalyze),
             ),
-            const SizedBox(width: 18),
+            SizedBox(width: 18),
             Expanded(
               flex: 3,
-              child: SizedBox(
-                height: 420,
-                child: Column(
-                  children: [
-                    Expanded(
-                      child: _DashboardQuickActions(
-                        onStartAnalyze: onStartAnalyze,
-                        onOpenMapAnalysis: onOpenMapAnalysis,
-                        onOpenHistory: onOpenHistory,
-                        onOpenReports: onOpenReports,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    Expanded(
-                      child: _DashboardWeather(state: state, weather: weather),
-                    ),
-                  ],
-                ),
+              child: Column(
+                children: [
+                  _DashboardQuickActions(
+                    onStartAnalyze: onStartAnalyze,
+                    onOpenMapAnalysis: onOpenMapAnalysis,
+                    onOpenHistory: onOpenHistory,
+                    onOpenReports: onOpenReports,
+                  ),
+                  SizedBox(height: 18),
+                  _DashboardWeather(state: state, weather: weather),
+                ],
               ),
             ),
           ],
         ),
-        const SizedBox(height: 18),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _DashboardRecentAnalyses(
-                  state: state,
-                  records: records.take(4).toList(),
-                  onOpenHistory: onOpenHistory,
-                  titleFor: _recordTitle,
-                  isCrop: _isCropRecord,
-                ),
+        SizedBox(height: 18),
+        WebAdaptiveRow(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(
+              child: _DashboardRecentAnalyses(
+                state: state,
+                records: records.take(4).toList(),
+                onOpenHistory: onOpenHistory,
+                titleFor: (row) =>
+                    WebAnalysisMetrics.cropName(row) ??
+                    '${row['recommendation_title'] ?? 'Land assessment'}',
+                isCrop: WebAnalysisMetrics.isCrop,
               ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: _DashboardRecentReports(
-                  state: state,
-                  onOpenReports: onOpenReports,
-                ),
+            ),
+            SizedBox(width: 18),
+            Expanded(
+              child: _DashboardRecentReports(
+                state: state,
+                onOpenReports: onOpenReports,
               ),
-              const SizedBox(width: 18),
-              const Expanded(child: _DashboardDidYouKnow()),
-            ],
-          ),
+            ),
+            SizedBox(width: 18),
+            Expanded(child: _DashboardDidYouKnow()),
+          ],
         ),
       ],
     );
@@ -235,55 +196,56 @@ class _DashboardWelcomeRow extends StatelessWidget {
           width: 54,
           height: 54,
           decoration: BoxDecoration(
-            color: softGreen,
+            color: WebPortalColors.tint,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: const Icon(Icons.eco_rounded, color: green, size: 30),
+          child: Icon(
+            Icons.eco_rounded,
+            color: WebPortalColors.accent,
+            size: 30,
+          ),
         ),
-        const SizedBox(width: 14),
+        SizedBox(width: 14),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 'Welcome back, $name!',
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 4),
-              const Text(
+              SizedBox(height: 4),
+              Text(
                 "Here's what's happening with your agricultural insights today.",
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: WebPortalColors.muted),
               ),
             ],
           ),
         ),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+          padding: EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: WebPortalColors.surface,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: const Color(0xFFE1EAE3)),
+            border: Border.all(color: Color(0xFFE1EAE3)),
           ),
           child: Row(
             children: [
-              const Icon(Icons.cloud_outlined, color: green),
-              const SizedBox(width: 10),
+              Icon(Icons.cloud_outlined, color: WebPortalColors.accent),
+              SizedBox(width: 10),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     temp == '--' ? 'Weather unavailable' : '$temp °C',
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
-                    ),
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
                   ),
                   Text(
                     condition,
-                    style: const TextStyle(color: Colors.black54, fontSize: 12),
+                    style: TextStyle(
+                      color: WebPortalColors.muted,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -311,47 +273,44 @@ class _DashboardKpi extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _WebCard(
-    padding: const EdgeInsets.all(20),
+    padding: EdgeInsets.all(20),
     child: Row(
       children: [
         Container(
           width: 56,
           height: 56,
           decoration: BoxDecoration(
-            color: softGreen,
+            color: WebPortalColors.tint,
             borderRadius: BorderRadius.circular(17),
           ),
-          child: Icon(icon, color: green, size: 28),
+          child: Icon(icon, color: WebPortalColors.accent, size: 28),
         ),
-        const SizedBox(width: 16),
+        SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 title,
-                style: const TextStyle(
-                  color: Colors.black54,
+                style: TextStyle(
+                  color: WebPortalColors.muted,
                   fontWeight: FontWeight.w700,
                 ),
               ),
-              const SizedBox(height: 5),
+              SizedBox(height: 5),
               Text(
                 value,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontSize: 23,
-                  fontWeight: FontWeight.w900,
-                ),
+                style: TextStyle(fontSize: 23, fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 4),
               Text(
                 subtitle,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
-                  color: warning ? const Color(0xFFE09B20) : green,
+                  color: warning ? Color(0xFFE09B20) : green,
                   fontSize: 12,
                   fontWeight: FontWeight.w800,
                 ),
@@ -370,101 +329,87 @@ class _DashboardGettingStarted extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => _WebCard(
-    child: SizedBox(
-      height: 420,
-      child: Row(
-        children: [
-          Expanded(
-            flex: 6,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Get Started with GeoSustain',
-                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'Get Started with GeoSustain',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Begin a land analysis to receive crop recommendations, land assessments, and planning insights.',
+          style: TextStyle(color: WebPortalColors.muted),
+        ),
+        SizedBox(height: 24),
+        LayoutBuilder(
+          builder: (_, box) => Wrap(
+            spacing: 16,
+            runSpacing: 20,
+            children: [
+              for (final step in const [
+                _DashboardStep(
+                  icon: Icons.location_on_rounded,
+                  title: 'Select Area',
+                  subtitle: 'Choose a point or draw a polygon',
                 ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Begin a land analysis to receive crop recommendations, land assessments, and planning insights.',
-                  style: TextStyle(color: Colors.black54),
+                _DashboardStep(
+                  icon: Icons.layers_rounded,
+                  title: 'Analyze Land',
+                  subtitle: 'Evaluate soil, weather, terrain, and NDVI',
                 ),
-                const Spacer(),
-                const Row(
-                  children: [
-                    Expanded(
-                      child: _DashboardStep(
-                        icon: Icons.location_on_rounded,
-                        title: 'Select Area',
-                        subtitle: 'Choose a point or draw a polygon',
-                      ),
-                    ),
-                    _DashboardStepLine(),
-                    Expanded(
-                      child: _DashboardStep(
-                        icon: Icons.layers_rounded,
-                        title: 'Analyze Land',
-                        subtitle: 'Evaluate soil, weather, terrain, and NDVI',
-                      ),
-                    ),
-                    _DashboardStepLine(),
-                    Expanded(
-                      child: _DashboardStep(
-                        icon: Icons.eco_rounded,
-                        title: 'Get Results',
-                        subtitle: 'Receive a crop or land-use assessment',
-                      ),
-                    ),
-                    _DashboardStepLine(),
-                    Expanded(
-                      child: _DashboardStep(
-                        icon: Icons.description_rounded,
-                        title: 'Generate Report',
-                        subtitle: 'Save and export your assessment',
-                      ),
-                    ),
-                  ],
+                _DashboardStep(
+                  icon: Icons.eco_rounded,
+                  title: 'Get Results',
+                  subtitle: 'Receive a crop or land-use assessment',
                 ),
-                const Spacer(),
+                _DashboardStep(
+                  icon: Icons.description_rounded,
+                  title: 'Generate Report',
+                  subtitle: 'Save and export your assessment',
+                ),
+              ])
                 SizedBox(
-                  width: double.infinity,
-                  child: FilledButton.icon(
-                    onPressed: onStartAnalyze,
-                    icon: const Icon(Icons.add_location_alt_rounded),
-                    label: const Text('Start New Analysis'),
-                  ),
+                  width: box.maxWidth < 500
+                      ? (box.maxWidth - 16) / 2
+                      : (box.maxWidth - 48) / 4,
+                  child: step,
                 ),
-                const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {},
-                    icon: const Icon(Icons.help_outline_rounded),
-                    label: const Text('How It Works'),
-                    style: OutlinedButton.styleFrom(foregroundColor: green),
-                  ),
+            ],
+          ),
+        ),
+        SizedBox(height: 24),
+        FilledButton.icon(
+          onPressed: onStartAnalyze,
+          icon: Icon(Icons.add_location_alt_rounded),
+          label: Text('Start New Analysis'),
+        ),
+        SizedBox(height: 10),
+        OutlinedButton.icon(
+          onPressed: () => showDialog<void>(
+            context: context,
+            builder: (_) => AlertDialog(
+              title: Text('How GeoSustain works'),
+              content: SingleChildScrollView(
+                child: Text(
+                  '1. Select a point or draw a valid farm boundary.\n\n2. Analyze the area. Preliminary screening can have unassessed factors; a model score is not a soil test.\n\n3. Review sources, dates and limits. Save an analysis or generate its report.\n\n4. Use the verification queue for submitted farmer analyses when your role permits it. Review decisions do not replace field or laboratory evidence.',
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text('Close'),
                 ),
               ],
             ),
           ),
-          const SizedBox(width: 24),
-          Expanded(
-            flex: 3,
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFEAF5EC),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(18),
-                child: Image.asset(
-                  'assets/images/dashboard/dashboard_map_illustration.png',
-                  fit: BoxFit.contain,
-                ),
-              ),
-            ),
+          icon: Icon(Icons.help_outline_rounded),
+          label: Text('How It Works'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: WebPortalColors.accent,
           ),
-        ],
-      ),
+        ),
+      ],
     ),
   );
 }
@@ -485,38 +430,26 @@ class _DashboardStep extends StatelessWidget {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: softGreen,
+          color: WebPortalColors.tint,
           borderRadius: BorderRadius.circular(15),
         ),
-        child: Icon(icon, color: green),
+        child: Icon(icon, color: WebPortalColors.accent),
       ),
-      const SizedBox(height: 9),
+      SizedBox(height: 9),
       Text(
         title,
         textAlign: TextAlign.center,
-        style: const TextStyle(fontWeight: FontWeight.w900),
+        style: TextStyle(fontWeight: FontWeight.w900),
       ),
-      const SizedBox(height: 4),
+      SizedBox(height: 4),
       Text(
         subtitle,
         textAlign: TextAlign.center,
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(color: Colors.black54, fontSize: 11),
+        style: TextStyle(color: WebPortalColors.muted, fontSize: 11),
       ),
     ],
-  );
-}
-
-class _DashboardStepLine extends StatelessWidget {
-  const _DashboardStepLine();
-  @override
-  Widget build(BuildContext context) => Expanded(
-    child: Container(
-      height: 1,
-      margin: const EdgeInsets.only(bottom: 58),
-      color: const Color(0xFF9BCBAA),
-    ),
   );
 }
 
@@ -536,47 +469,53 @@ class _DashboardQuickActions extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Quick Actions',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: FilledButton.icon(
             onPressed: onStartAnalyze,
-            icon: const Icon(Icons.add_circle_outline_rounded),
-            label: const Text('Start New Analysis'),
+            icon: Icon(Icons.add_circle_outline_rounded),
+            label: Text('Start New Analysis'),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: onOpenMapAnalysis,
-            icon: const Icon(Icons.map_rounded),
-            label: const Text('View Map'),
-            style: OutlinedButton.styleFrom(foregroundColor: green),
+            icon: Icon(Icons.map_rounded),
+            label: Text('View Map'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: WebPortalColors.accent,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: onOpenHistory,
-            icon: const Icon(Icons.history_rounded),
-            label: const Text('Analysis History'),
-            style: OutlinedButton.styleFrom(foregroundColor: green),
+            icon: Icon(Icons.history_rounded),
+            label: Text('Analysis History'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: WebPortalColors.accent,
+            ),
           ),
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         SizedBox(
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: onOpenReports,
-            icon: const Icon(Icons.description_rounded),
-            label: const Text('Reports'),
-            style: OutlinedButton.styleFrom(foregroundColor: green),
+            icon: Icon(Icons.description_rounded),
+            label: Text('Reports'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: WebPortalColors.accent,
+            ),
           ),
         ),
       ],
@@ -601,7 +540,7 @@ class _DashboardWeather extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
+          Row(
             children: [
               Expanded(
                 child: Text(
@@ -611,11 +550,11 @@ class _DashboardWeather extends StatelessWidget {
               ),
               Text(
                 'Panabo City',
-                style: TextStyle(color: Colors.black45, fontSize: 12),
+                style: TextStyle(color: WebPortalColors.muted, fontSize: 12),
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               Expanded(
@@ -653,24 +592,24 @@ class _DashboardWeather extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          SizedBox(height: 12),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(12),
+            padding: EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: softGreen,
+              color: WebPortalColors.tint,
               borderRadius: BorderRadius.circular(13),
             ),
             child: Row(
               children: [
-                const Icon(Icons.cloud_outlined, color: green),
-                const SizedBox(width: 10),
+                Icon(Icons.cloud_outlined, color: WebPortalColors.accent),
+                SizedBox(width: 10),
                 Expanded(
                   child: Text(
                     condition,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      color: darkGreen,
+                      color: WebPortalColors.accent,
                     ),
                   ),
                 ),
@@ -695,10 +634,10 @@ class _DashboardWeatherMetric extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Column(
     children: [
-      Icon(icon, color: green),
-      const SizedBox(height: 5),
-      Text(value, style: const TextStyle(fontWeight: FontWeight.w900)),
-      Text(label, style: const TextStyle(color: Colors.black45, fontSize: 10)),
+      Icon(icon, color: WebPortalColors.accent),
+      SizedBox(height: 5),
+      Text(value, style: TextStyle(fontWeight: FontWeight.w900)),
+      Text(label, style: TextStyle(color: WebPortalColors.muted, fontSize: 10)),
     ],
   );
 }
@@ -721,21 +660,21 @@ class _DashboardRecentAnalyses extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
+        WebAdaptiveRow(
           children: [
-            const Expanded(
+            Expanded(
               child: Text(
                 'Recent Analyses',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
               ),
             ),
-            TextButton(onPressed: onOpenHistory, child: const Text('View All')),
+            TextButton(onPressed: onOpenHistory, child: Text('View All')),
           ],
         ),
-        const SizedBox(height: 8),
+        SizedBox(height: 8),
         if (records.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18),
+            padding: EdgeInsets.symmetric(vertical: 18),
             child: Column(
               children: [
                 SizedBox(
@@ -745,20 +684,20 @@ class _DashboardRecentAnalyses extends StatelessWidget {
                     fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 6),
-                const Text(
+                SizedBox(height: 6),
+                Text(
                   'No analyses yet',
                   style: TextStyle(fontWeight: FontWeight.w900),
                 ),
-                const SizedBox(height: 4),
-                const Text(
+                SizedBox(height: 4),
+                Text(
                   'Your recent land analyses will appear here.',
-                  style: TextStyle(color: Colors.black45),
+                  style: TextStyle(color: WebPortalColors.muted),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: 12),
                 OutlinedButton(
                   onPressed: onOpenHistory,
-                  child: const Text('Open History'),
+                  child: Text('Open History'),
                 ),
               ],
             ),
@@ -770,12 +709,12 @@ class _DashboardRecentAnalyses extends StatelessWidget {
               onTap: onOpenHistory,
               borderRadius: BorderRadius.circular(13),
               child: Container(
-                margin: const EdgeInsets.only(bottom: 9),
-                padding: const EdgeInsets.all(12),
+                margin: EdgeInsets.only(bottom: 9),
+                padding: EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF9FCFA),
+                  color: Color(0xFFF9FCFA),
                   borderRadius: BorderRadius.circular(13),
-                  border: Border.all(color: const Color(0xFFE3ECE5)),
+                  border: Border.all(color: Color(0xFFE3ECE5)),
                 ),
                 child: Row(
                   children: [
@@ -783,7 +722,7 @@ class _DashboardRecentAnalyses extends StatelessWidget {
                       width: 38,
                       height: 38,
                       decoration: BoxDecoration(
-                        color: crop ? softGreen : const Color(0xFFFFE8E8),
+                        color: crop ? softGreen : Color(0xFFFFE8E8),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Icon(
@@ -791,7 +730,7 @@ class _DashboardRecentAnalyses extends StatelessWidget {
                         color: crop ? green : Colors.redAccent,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -800,24 +739,24 @@ class _DashboardRecentAnalyses extends StatelessWidget {
                             '${row['place_name'] ?? row['location'] ?? 'Analyzed Area'}',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(fontWeight: FontWeight.w900),
+                            style: TextStyle(fontWeight: FontWeight.w900),
                           ),
-                          const SizedBox(height: 3),
+                          SizedBox(height: 3),
                           Text(
                             titleFor(row),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.black54,
+                            style: TextStyle(
+                              color: WebPortalColors.muted,
                               fontSize: 12,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const Icon(
+                    Icon(
                       Icons.arrow_forward_rounded,
-                      color: green,
+                      color: WebPortalColors.accent,
                       size: 18,
                     ),
                   ],
@@ -846,22 +785,19 @@ class _DashboardRecentReports extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Recent Reports',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
                 ),
               ),
-              TextButton(
-                onPressed: onOpenReports,
-                child: const Text('View All'),
-              ),
+              TextButton(onPressed: onOpenReports, child: Text('View All')),
             ],
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: 8),
           if (reports.isEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 18),
+              padding: EdgeInsets.symmetric(vertical: 18),
               child: Column(
                 children: [
                   SizedBox(
@@ -871,16 +807,16 @@ class _DashboardRecentReports extends StatelessWidget {
                       fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 6),
-                  const Text(
+                  SizedBox(height: 6),
+                  Text(
                     'No reports generated',
                     style: TextStyle(fontWeight: FontWeight.w900),
                   ),
-                  const SizedBox(height: 4),
-                  const Text(
+                  SizedBox(height: 4),
+                  Text(
                     'Reports from your analyses will appear here.',
                     textAlign: TextAlign.center,
-                    style: TextStyle(color: Colors.black45),
+                    style: TextStyle(color: WebPortalColors.muted),
                   ),
                 ],
               ),
@@ -889,7 +825,7 @@ class _DashboardRecentReports extends StatelessWidget {
             ...reports.map(
               (r) => ListTile(
                 contentPadding: EdgeInsets.zero,
-                leading: const CircleAvatar(
+                leading: CircleAvatar(
                   backgroundColor: Color(0xFFFFE8E8),
                   child: Icon(
                     Icons.picture_as_pdf_rounded,
@@ -900,7 +836,7 @@ class _DashboardRecentReports extends StatelessWidget {
                   '${r['report_title'] ?? r['title'] ?? 'Analysis Report'}',
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: TextStyle(fontWeight: FontWeight.w800),
                 ),
                 subtitle: Text(
                   '${r['created_at'] ?? r['date'] ?? ''}'.split('T').first,
@@ -921,25 +857,25 @@ class _DashboardDidYouKnow extends StatelessWidget {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Did You Know?',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 14),
-        const Text(
+        SizedBox(height: 14),
+        Text(
           'GeoSustain combines satellite imagery, machine learning, live weather, soil indicators, and terrain data to support smarter agricultural planning.',
-          style: TextStyle(color: Colors.black54, height: 1.45),
+          style: TextStyle(color: WebPortalColors.muted, height: 1.45),
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: 22),
         Container(
           height: 120,
           width: double.infinity,
           decoration: BoxDecoration(
-            color: softGreen,
+            color: WebPortalColors.tint,
             borderRadius: BorderRadius.circular(20),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8),
             child: Image.asset(
               'assets/images/dashboard/agriculture_tip_illustration.png',
               fit: BoxFit.contain,
@@ -954,406 +890,93 @@ class _DashboardDidYouKnow extends StatelessWidget {
 class _WebRecommendedCropPanel extends StatelessWidget {
   final AnalysisState state;
   const _WebRecommendedCropPanel({required this.state});
-
-  String _fallbackCrop(Map<String, dynamic>? data, List<dynamic> recs) {
-    final direct =
-        data?['predicted_crop'] ??
-        data?['crop_recommendation'] ??
-        data?['recommended_crop'] ??
-        data?['crop'];
-    if (direct != null && '$direct'.trim().isNotEmpty && '$direct' != '--') {
-      return '$direct';
+  Future<void> _action(
+    BuildContext context,
+    Future<bool> Function() work,
+    String success,
+  ) async {
+    try {
+      final changed = await work();
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(changed ? success : 'Already in your library.'),
+          ),
+        );
+      }
+    } catch (error) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(friendlyErrorMessage(error))));
+      }
     }
-    if (recs.isNotEmpty && recs.first is Map<String, dynamic>) {
-      final top = recs.first as Map<String, dynamic>;
-      final name = top['crop'] ?? top['name'];
-      if (name != null && '$name'.trim().isNotEmpty) return '$name';
-    }
-    return 'No crop selected';
   }
 
   @override
   Widget build(BuildContext context) {
     final data = state.result;
-    final List<dynamic> recs = (data?['top_crop_recommendations'] is List)
-        ? data!['top_crop_recommendations'] as List
-        : const [];
-    final top = recs.isNotEmpty && recs.first is Map<String, dynamic>
-        ? recs.first as Map<String, dynamic>
-        : null;
-    final topScore = top == null
-        ? null
-        : (top['compatibility_pct'] ??
-              top['score'] ??
-              top['compatibility'] ??
-              top['suitability'] ??
-              top['suitability_pct']);
-    final rawCropFlag = data?['is_crop_recommended'];
-    final isCrop = rawCropFlag is bool
-        ? rawCropFlag
-        : !['false', '0'].contains('$rawCropFlag'.trim().toLowerCase()) &&
-              '${data?['land_type'] ?? 'arable'}'.trim().toLowerCase() ==
-                  'arable';
-    final crop = isCrop
-        ? _fallbackCrop(data, recs)
-        : '${data?['land_status'] ?? data?['recommendation_title'] ?? 'Non-arable area'}';
-    final pct =
-        data?['crop_compatibility_pct'] ??
-        data?['compatibility_pct'] ??
-        topScore;
-    final panelTitle = isCrop ? 'Recommended Crop' : 'Land Assessment';
     if (data == null) {
       return _WebCard(
-        child: SizedBox(
-          height: 340,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: const [
-              Icon(Icons.eco_outlined, size: 58, color: Color(0xFF79B98D)),
-              SizedBox(height: 14),
-              Text(
-                'No current analysis',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Draw or select an area, then run an analysis. Clearing the selection will also clear this result.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.black54, height: 1.4),
-              ),
-            ],
-          ),
+        child: Text(
+          'Select a point or draw a boundary, then analyze the area.',
         ),
       );
     }
     return _WebCard(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
+          Text(
+            WebAnalysisMetrics.preliminary(data)
+                ? 'Preliminary environmental screening'
+                : 'Recorded analysis',
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+          ),
+          WebAnalysisEvidence(state: state, record: data),
+          SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
             children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF1CC),
-                  borderRadius: BorderRadius.circular(16),
+              OutlinedButton.icon(
+                onPressed: () => _action(
+                  context,
+                  () =>
+                      state.saveAnalysisRecord(Map<String, dynamic>.from(data)),
+                  'Analysis saved.',
                 ),
-                child: Icon(
-                  isCrop
-                      ? Icons.emoji_events_rounded
-                      : Icons.landscape_outlined,
-                  color: const Color(0xFFE9A829),
-                ),
+                icon: Icon(Icons.bookmark_border),
+                label: Text('Save'),
               ),
-              const SizedBox(width: 14),
-              Text(
-                panelTitle,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w900,
+              OutlinedButton.icon(
+                onPressed: () => _action(
+                  context,
+                  () =>
+                      state.createReportRecord(Map<String, dynamic>.from(data)),
+                  'Report generated.',
                 ),
+                icon: Icon(Icons.picture_as_pdf),
+                label: Text('Report'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: Text('Analysis History')),
+                      body: SingleChildScrollView(
+                        padding: EdgeInsets.all(20),
+                        child: WebHistoryScreen(state: state),
+                      ),
+                    ),
+                  ),
+                ),
+                icon: Icon(Icons.history),
+                label: Text('History'),
               ),
             ],
           ),
-          const SizedBox(height: 22),
-          Row(
-            children: [
-              Container(
-                width: 120,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: softGreen,
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: const Icon(Icons.eco_rounded, color: green, size: 58),
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      crop,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    _SmallBadge(
-                      isCrop
-                          ? (pct == null ? '-' : '${state.numText(pct)}% final')
-                          : 'Not recommended',
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      isCrop
-                          ? displaySuitability(data).toLowerCase()
-                          : '${data['recommendation_title'] ?? 'Land-use advisory'}',
-                      style: const TextStyle(color: Colors.black54),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          if (isCrop) ...[
-            const SizedBox(height: 12),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: const Color(0xFFF7FAF7),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFDDE9DF)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.calendar_month_rounded,
-                        size: 18,
-                        color: green,
-                      ),
-                      const SizedBox(width: 7),
-                      Expanded(
-                        child: Text(
-                          '${(data['season_label'] == null || '${data['season_label']}'.trim().isEmpty) ? 'Season calendar unavailable' : data['season_label']}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w900,
-                            color: darkGreen,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        '${data['intended_planting_month_name'] ?? state.intendedPlantingMonthName}',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 7),
-                  Wrap(
-                    spacing: 18,
-                    runSpacing: 6,
-                    children: [
-                      Text(
-                        'Environmental: ${state.numText(data['environmental_suitability_pct'] ?? pct)}%',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      Text(
-                        'Final: ${state.numText(data['season_adjusted_score'] ?? pct)}%',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w900,
-                          color: green,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    '${data['season_note'] ?? data['season_advice'] ?? ''}',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Suggested window: ${(data['recommended_planting_window'] == null || '${data['recommended_planting_window']}'.trim().isEmpty || '${data['recommended_planting_window']}'.toLowerCase() == 'null') ? 'Local calendar not configured for this crop' : data['recommended_planting_window']}',
-                    style: const TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final ok = await state.saveAnalysisRecord(
-                      Map<String, dynamic>.from(data),
-                    );
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            ok
-                                ? 'Saved to analysis library.'
-                                : 'Already saved.',
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.bookmark_border_rounded),
-                  label: const Text('Save'),
-                  style: OutlinedButton.styleFrom(foregroundColor: green),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    final ok = await state.createReportRecord(
-                      Map<String, dynamic>.from(data),
-                    );
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            ok ? 'Report generated.' : 'Report already exists.',
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.picture_as_pdf_rounded),
-                  label: const Text('Report'),
-                  style: OutlinedButton.styleFrom(foregroundColor: green),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: () async {
-                    await state.refreshHistoryData();
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('History refreshed.')),
-                      );
-                    }
-                  },
-                  icon: const Icon(Icons.history_rounded),
-                  label: const Text('History'),
-                  style: OutlinedButton.styleFrom(foregroundColor: green),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          if (!isCrop)
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: softGreen,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Text(
-                '${data['recommendation'] ?? 'Crop recommendation was stopped for this location.'}',
-                style: const TextStyle(
-                  color: darkGreen,
-                  fontWeight: FontWeight.w800,
-                  height: 1.35,
-                ),
-              ),
-            )
-          else ...[
-            const Row(
-              children: [
-                SizedBox(
-                  width: 50,
-                  child: Text(
-                    'Rank',
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Text(
-                    'Crop',
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-                SizedBox(
-                  width: 110,
-                  child: Text(
-                    'Final score',
-                    textAlign: TextAlign.right,
-                    style: TextStyle(
-                      color: Colors.black54,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const Divider(),
-            if (recs.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 36),
-                child: Center(
-                  child: Text(
-                    'Run an area analysis to show crop ranking.',
-                    style: TextStyle(color: Colors.black45),
-                  ),
-                ),
-              )
-            else
-              ...recs.take(5).toList().asMap().entries.map((e) {
-                final item = e.value;
-                final name = item is Map
-                    ? '${item['crop'] ?? item['name'] ?? '--'}'
-                    : '$item';
-                final score = item is Map
-                    ? (item['compatibility_pct'] ??
-                          item['score'] ??
-                          item['compatibility'] ??
-                          item['suitability'] ??
-                          item['suitability_pct'])
-                    : null;
-                return Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 9),
-                  child: Row(
-                    children: [
-                      SizedBox(width: 50, child: Text('${e.key + 1}')),
-                      Expanded(
-                        child: Text(
-                          name,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 15,
-                          ),
-                        ),
-                      ),
-                      SizedBox(
-                        width: 110,
-                        child: Text(
-                          score == null ? '--' : '${state.numText(score)}%',
-                          textAlign: TextAlign.right,
-                          style: const TextStyle(fontWeight: FontWeight.w800),
-                        ),
-                      ),
-                    ],
-                  ),
-                );
-              }),
-          ],
         ],
       ),
     );

@@ -16,8 +16,33 @@ class WebHistoryScreen extends StatefulWidget {
 class _WebHistoryScreenState extends State<WebHistoryScreen> {
   AnalysisState get state => widget.state;
   bool get compact => widget.compact;
-  int _page = 0;
-  String _query = '';
+  late final _records = WebRecordController(
+    state.api,
+    '/api/web/history',
+    'history',
+    limit: 20,
+  );
+  int get _page => _records.offset ~/ 20;
+  String get _query => _records.query;
+  void _changed() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (!compact) {
+      _records.addListener(_changed);
+      _records.load();
+    }
+  }
+
+  @override
+  void dispose() {
+    _records.removeListener(_changed);
+    _records.dispose();
+    super.dispose();
+  }
 
   String _topCropFromRecord(Map<String, dynamic> r) {
     final direct =
@@ -39,75 +64,88 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final all = state.historyRecords
-        .where(
-          (r) =>
-              '${r['session_id']} ${r['farm_name']} ${r['place_name']} ${r['report_title']}'
-                  .toLowerCase()
-                  .contains(_query.toLowerCase()),
-        )
-        .toList();
-    final maxPage = all.isEmpty ? 0 : (all.length - 1) ~/ 20;
-    if (_page > maxPage) _page = maxPage;
     final rows = compact
-        ? all.take(5).toList()
-        : all.skip(_page * 20).take(20).toList();
+        ? state.historyRecords.take(5).toList()
+        : _records.rows;
     return _WebCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!compact) ...[
             TextField(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Search all records',
                 prefixIcon: Icon(Icons.search),
               ),
-              onChanged: (value) => setState(() {
-                _query = value;
-                _page = 0;
-              }),
+              onChanged: _records.search,
             ),
             Wrap(
               spacing: 12,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text('${all.length} records · Page ${_page + 1}'),
+                Text('${rows.length} records · Page ${_page + 1}'),
                 TextButton(
-                  onPressed: _page > 0 ? () => setState(() => _page--) : null,
-                  child: const Text('Previous'),
+                  onPressed: !_records.loading && _page > 0
+                      ? () => _records.load(offset: (_page - 1) * 20)
+                      : null,
+                  child: Text('Previous'),
                 ),
                 TextButton(
-                  onPressed: _page < maxPage
-                      ? () => setState(() => _page++)
+                  onPressed: !_records.loading && _records.more
+                      ? () => _records.load(offset: (_page + 1) * 20)
                       : null,
-                  child: const Text('Next'),
+                  child: Text('Next'),
                 ),
               ],
             ),
           ],
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Recent Analyses',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
                 ),
               ),
               if (compact)
-                const Text(
+                Text(
                   'View All',
-                  style: TextStyle(color: green, fontWeight: FontWeight.w900),
+                  style: TextStyle(
+                    color: WebPortalColors.accent,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
-          if (rows.isEmpty)
-            const Padding(
+          SizedBox(height: 16),
+          if (!compact) ...[
+            if (_records.loading)
+              LinearProgressIndicator(semanticsLabel: 'Loading records'),
+            if (_records.error != null)
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  '${_records.error} ${rows.isEmpty ? '' : 'Previously loaded records may be out of date.'}',
+                ),
+              ),
+            TextButton.icon(
+              onPressed: _records.loading ? null : () => _records.load(),
+              icon: Icon(Icons.refresh),
+              label: Text(
+                _records.error == null ? 'Refresh records' : 'Retry records',
+              ),
+            ),
+          ],
+          if (rows.isEmpty &&
+              (compact || (!_records.loading && _records.error == null)))
+            Padding(
               padding: EdgeInsets.all(28),
               child: Center(
                 child: Text(
-                  'No analysis history yet.',
-                  style: TextStyle(color: Colors.black45),
+                  _query.isNotEmpty
+                      ? 'No records match your search.'
+                      : 'No analysis history yet.',
+                  style: TextStyle(color: WebPortalColors.muted),
                 ),
               ),
             )
@@ -125,10 +163,7 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
                   final sessionId = rawId is num
                       ? rawId.toInt()
                       : int.tryParse('$rawId');
-                  if (state.isPlanner && sessionId != null) {
-                    await openPlannerAnalysisReview(context, state, sessionId);
-                    return;
-                  }
+                  if (sessionId == null) return;
                   await showDialog<void>(
                     context: context,
                     builder: (_) => _WebHistoryDetailDialog(
@@ -142,12 +177,12 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
                   );
                 },
                 child: Container(
-                  margin: const EdgeInsets.only(bottom: 12),
-                  padding: const EdgeInsets.all(16),
+                  margin: EdgeInsets.only(bottom: 12),
+                  padding: EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: WebPortalColors.surface,
                     borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: const Color(0xFFE3ECE5)),
+                    border: Border.all(color: Color(0xFFE3ECE5)),
                   ),
                   child: Row(
                     children: [
@@ -155,12 +190,15 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
                         width: 44,
                         height: 44,
                         decoration: BoxDecoration(
-                          color: softGreen,
+                          color: WebPortalColors.tint,
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Icon(Icons.eco_rounded, color: green),
+                        child: Icon(
+                          Icons.eco_rounded,
+                          color: WebPortalColors.accent,
+                        ),
                       ),
-                      const SizedBox(width: 12),
+                      SizedBox(width: 12),
                       Expanded(
                         flex: 22,
                         child: Column(
@@ -170,18 +208,18 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
                               '${r['place_name'] ?? r['location'] ?? 'Analyzed Area'}',
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 15,
                                 fontWeight: FontWeight.w900,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               '${r['date'] ?? r['analyzed_at'] ?? ''}'
                                   .split('T')
                                   .first,
-                              style: const TextStyle(
-                                color: Colors.black45,
+                              style: TextStyle(
+                                color: WebPortalColors.muted,
                                 fontSize: 12,
                               ),
                             ),
@@ -193,22 +231,20 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const Text(
+                            Text(
                               'RECOMMENDED CROP',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: Colors.black45,
+                                color: WebPortalColors.muted,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               _topCropFromRecord(r),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                              ),
+                              style: TextStyle(fontWeight: FontWeight.w900),
                             ),
                           ],
                         ),
@@ -218,19 +254,19 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
-                            const Text(
+                            Text(
                               'SUITABILITY',
                               style: TextStyle(
                                 fontSize: 10,
-                                color: Colors.black45,
+                                color: WebPortalColors.muted,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            const SizedBox(height: 4),
+                            SizedBox(height: 4),
                             Text(
                               pct == null ? '--' : '${pct.toStringAsFixed(1)}%',
-                              style: const TextStyle(
-                                color: green,
+                              style: TextStyle(
+                                color: WebPortalColors.accent,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -238,8 +274,11 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 10),
-                      const Icon(Icons.arrow_forward_rounded, color: green),
+                      SizedBox(width: 10),
+                      Icon(
+                        Icons.arrow_forward_rounded,
+                        color: WebPortalColors.accent,
+                      ),
                     ],
                   ),
                 ),
@@ -267,8 +306,33 @@ class WebReportsScreen extends StatefulWidget {
 class _WebReportsScreenState extends State<WebReportsScreen> {
   AnalysisState get state => widget.state;
   bool get compact => widget.compact;
-  int _page = 0;
-  String _query = '';
+  late final _records = WebRecordController(
+    state.api,
+    '/api/mobile/reports',
+    'reports',
+    limit: 50,
+  );
+  int get _page => _records.offset ~/ 50;
+  String get _query => _records.query;
+  void _changed() {
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    if (!compact) {
+      _records.addListener(_changed);
+      _records.load();
+    }
+  }
+
+  @override
+  void dispose() {
+    _records.removeListener(_changed);
+    _records.dispose();
+    super.dispose();
+  }
 
   Future<void> _downloadReport(
     BuildContext context,
@@ -287,75 +351,88 @@ class _WebReportsScreenState extends State<WebReportsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final all = state.generatedReports
-        .where(
-          (r) =>
-              '${r['session_id']} ${r['farm_name']} ${r['place_name']} ${r['report_title']}'
-                  .toLowerCase()
-                  .contains(_query.toLowerCase()),
-        )
-        .toList();
-    final maxPage = all.isEmpty ? 0 : (all.length - 1) ~/ 50;
-    if (_page > maxPage) _page = maxPage;
     final rows = compact
-        ? all.take(4).toList()
-        : all.skip(_page * 50).take(50).toList();
+        ? state.generatedReports.take(4).toList()
+        : _records.rows;
     return _WebCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (!compact) ...[
             TextField(
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Search all records',
                 prefixIcon: Icon(Icons.search),
               ),
-              onChanged: (value) => setState(() {
-                _query = value;
-                _page = 0;
-              }),
+              onChanged: _records.search,
             ),
             Wrap(
               spacing: 12,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
-                Text('${all.length} records · Page ${_page + 1}'),
+                Text('${rows.length} records · Page ${_page + 1}'),
                 TextButton(
-                  onPressed: _page > 0 ? () => setState(() => _page--) : null,
-                  child: const Text('Previous'),
+                  onPressed: !_records.loading && _page > 0
+                      ? () => _records.load(offset: (_page - 1) * 50)
+                      : null,
+                  child: Text('Previous'),
                 ),
                 TextButton(
-                  onPressed: _page < maxPage
-                      ? () => setState(() => _page++)
+                  onPressed: !_records.loading && _records.more
+                      ? () => _records.load(offset: (_page + 1) * 50)
                       : null,
-                  child: const Text('Next'),
+                  child: Text('Next'),
                 ),
               ],
             ),
           ],
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Text(
                   'Recent Reports',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
                 ),
               ),
               if (compact)
-                const Text(
+                Text(
                   'View All',
-                  style: TextStyle(color: green, fontWeight: FontWeight.w900),
+                  style: TextStyle(
+                    color: WebPortalColors.accent,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
             ],
           ),
-          const SizedBox(height: 16),
-          if (rows.isEmpty)
-            const Padding(
+          SizedBox(height: 16),
+          if (!compact) ...[
+            if (_records.loading)
+              LinearProgressIndicator(semanticsLabel: 'Loading records'),
+            if (_records.error != null)
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  '${_records.error} ${rows.isEmpty ? '' : 'Previously loaded records may be out of date.'}',
+                ),
+              ),
+            TextButton.icon(
+              onPressed: _records.loading ? null : () => _records.load(),
+              icon: Icon(Icons.refresh),
+              label: Text(
+                _records.error == null ? 'Refresh records' : 'Retry records',
+              ),
+            ),
+          ],
+          if (rows.isEmpty &&
+              (compact || (!_records.loading && _records.error == null)))
+            Padding(
               padding: EdgeInsets.all(28),
               child: Center(
                 child: Text(
-                  'No reports generated yet.',
-                  style: TextStyle(color: Colors.black45),
+                  _query.isNotEmpty
+                      ? 'No records match your search.'
+                      : 'No reports generated yet.',
+                  style: TextStyle(color: WebPortalColors.muted),
                 ),
               ),
             )
@@ -367,20 +444,23 @@ class _WebReportsScreenState extends State<WebReportsScreen> {
               final date =
                   '${r['report_created_at'] ?? r['created_at'] ?? r['date'] ?? 'Recently generated'}';
               return ListTile(
-                leading: const CircleAvatar(
+                leading: CircleAvatar(
                   backgroundColor: Color(0xFFFFEBEB),
                   child: Icon(Icons.picture_as_pdf_rounded, color: Colors.red),
                 ),
                 title: Text(
                   title,
-                  style: const TextStyle(fontWeight: FontWeight.w800),
+                  style: TextStyle(fontWeight: FontWeight.w800),
                 ),
                 subtitle: Text(
                   '${item['predicted_crop'] ?? 'Land analysis'} · $date',
                 ),
                 trailing: IconButton(
                   tooltip: 'Download PDF',
-                  icon: const Icon(Icons.download_rounded, color: green),
+                  icon: Icon(
+                    Icons.download_rounded,
+                    color: WebPortalColors.accent,
+                  ),
                   onPressed: () => _downloadReport(context, r),
                 ),
                 onTap: () => _downloadReport(context, r),
@@ -478,14 +558,16 @@ class _WebHistoryDetailDialogState extends State<_WebHistoryDetailDialog> {
     final place = record['title'] ?? record['place_name'] ?? 'Analyzed Area';
     final lat = record['center_lat'] ?? record['lat'];
     final lon = record['center_lon'] ?? record['lon'];
-    final compatibility = record['compatibility_pct'] ?? widget.suitabilityPct;
-    final suitability = suitabilityLabel(compatibility);
+    final compatibility = WebAnalysisMetrics.modelScore(record);
+    final suitability = WebAnalysisMetrics.preliminary(record)
+        ? 'Preliminary screening ? model score not assessed'
+        : 'Model score';
     final infraData = <String, dynamic>{...record};
 
     final maxHeight = MediaQuery.sizeOf(context).height * 0.88;
 
     return AlertDialog(
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      insetPadding: EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       contentPadding: EdgeInsets.zero,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
       content: ConstrainedBox(
@@ -494,9 +576,7 @@ class _WebHistoryDetailDialogState extends State<_WebHistoryDetailDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(18),
-              ),
+              borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
               child: SizedBox(
                 height: 200,
                 width: double.infinity,
@@ -505,37 +585,37 @@ class _WebHistoryDetailDialogState extends State<_WebHistoryDetailDialog> {
             ),
             Flexible(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.fromLTRB(22, 18, 22, 8),
+                padding: EdgeInsets.fromLTRB(22, 18, 22, 8),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       '$place',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.w900,
-                        color: green,
+                        color: WebPortalColors.accent,
                       ),
                     ),
-                    const SizedBox(height: 6),
+                    SizedBox(height: 6),
                     Text(
                       state.recommendationText(record),
-                      style: const TextStyle(
-                        color: Colors.black54,
+                      style: TextStyle(
+                        color: WebPortalColors.muted,
                         height: 1.35,
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       topCrop,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 17,
                         fontWeight: FontWeight.w800,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     Container(
-                      padding: const EdgeInsets.symmetric(
+                      padding: EdgeInsets.symmetric(
                         horizontal: 10,
                         vertical: 6,
                       ),
@@ -544,41 +624,42 @@ class _WebHistoryDetailDialogState extends State<_WebHistoryDetailDialog> {
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
-                        '$suitability · ${compatibility == null ? '--' : '${(compatibility is num ? compatibility : num.tryParse('$compatibility'))?.toStringAsFixed(1) ?? compatibility}%'}',
-                        style: const TextStyle(
+                        '$suitability · ${compatibility == null ? 'Not assessed' : '${compatibility.toStringAsFixed(1)}%'}',
+                        style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    SizedBox(height: 8),
                     Text(
                       'Coordinates: $lat, $lon',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 13,
-                        color: Colors.black54,
+                        color: WebPortalColors.muted,
                       ),
                     ),
                     if (record['date'] != null) ...[
-                      const SizedBox(height: 4),
+                      SizedBox(height: 4),
                       Text(
                         'Analyzed: ${record['date']}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
-                          color: Colors.black54,
+                          color: WebPortalColors.muted,
                         ),
                       ),
                     ],
-                    const Divider(height: 28),
-                    const Text(
+                    Divider(height: 28),
+                    WebAnalysisEvidence(state: state, record: record),
+                    Text(
                       'ENVIRONMENTAL DATA',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color: green,
+                        color: WebPortalColors.accent,
                         letterSpacing: 0.4,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     DetailLine(
                       label: 'NDVI',
                       value: _num(record['ndvi'], decimals: 3),
@@ -626,19 +707,19 @@ class _WebHistoryDetailDialogState extends State<_WebHistoryDetailDialog> {
                         label: 'Land Status',
                         value: '${record['land_status']}',
                       ),
-                    const Divider(height: 28),
-                    const Text(
+                    Divider(height: 28),
+                    Text(
                       'INFRASTRUCTURE REPORT',
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        color: green,
+                        color: WebPortalColors.accent,
                         letterSpacing: 0.4,
                       ),
                     ),
-                    const SizedBox(height: 10),
+                    SizedBox(height: 10),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(14),
+                      padding: EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: infrastructureColor(
                           infraData,
@@ -661,22 +742,22 @@ class _WebHistoryDetailDialogState extends State<_WebHistoryDetailDialog> {
                               fontSize: 17,
                             ),
                           ),
-                          const SizedBox(height: 6),
+                          SizedBox(height: 6),
                           Text(
                             '${record['infrastructure_status'] ?? 'No infrastructure status recorded for this analysis.'}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w700,
                               height: 1.35,
                             ),
                           ),
                           if (record['infrastructure_recommendation'] !=
                               null) ...[
-                            const SizedBox(height: 6),
+                            SizedBox(height: 6),
                             Text(
                               '${record['infrastructure_recommendation']}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 12,
-                                color: Colors.black54,
+                                color: WebPortalColors.muted,
                                 height: 1.35,
                               ),
                             ),
@@ -684,7 +765,7 @@ class _WebHistoryDetailDialogState extends State<_WebHistoryDetailDialog> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     DetailLine(
                       label: 'Infrastructure Score',
                       value: '${record['infrastructure_score'] ?? '--'}',
@@ -704,28 +785,28 @@ class _WebHistoryDetailDialogState extends State<_WebHistoryDetailDialog> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              padding: EdgeInsets.fromLTRB(16, 8, 16, 12),
               child: Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
                       onPressed: _saving ? null : _save,
                       icon: _saving
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(strokeWidth: 2),
                             )
-                          : const Icon(Icons.bookmark_border_rounded, size: 18),
-                      label: const Text('Save'),
+                          : Icon(Icons.bookmark_border_rounded, size: 18),
+                      label: Text('Save'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: FilledButton.icon(
                       onPressed: _reporting ? null : _addToReports,
                       icon: _reporting
-                          ? const SizedBox(
+                          ? SizedBox(
                               width: 16,
                               height: 16,
                               child: CircularProgressIndicator(
@@ -733,14 +814,14 @@ class _WebHistoryDetailDialogState extends State<_WebHistoryDetailDialog> {
                                 color: Colors.white,
                               ),
                             )
-                          : const Icon(Icons.description_outlined, size: 18),
-                      label: const Text('Report'),
+                          : Icon(Icons.description_outlined, size: 18),
+                      label: Text('Report'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
+                    child: Text('Close'),
                   ),
                 ],
               ),

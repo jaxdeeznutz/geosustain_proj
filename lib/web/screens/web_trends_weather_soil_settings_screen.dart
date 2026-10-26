@@ -22,16 +22,8 @@ class WebCropTrendsScreen extends StatelessWidget {
     return 'Unknown';
   }
 
-  double _scoreFromRecord(Map<String, dynamic> r) {
-    final raw =
-        r['suitability_score'] ??
-        r['crop_compatibility_pct'] ??
-        r['compatibility_pct'] ??
-        r['suitability'] ??
-        r['score'];
-    if (raw is num) return raw.toDouble();
-    return double.tryParse('$raw'.replaceAll('%', '')) ?? 0;
-  }
+  double? _scoreFromRecord(Map<String, dynamic> r) =>
+      WebAnalysisMetrics.modelScore(r);
 
   DateTime? _dateFromRecord(Map<String, dynamic> r) {
     final raw =
@@ -53,12 +45,14 @@ class WebCropTrendsScreen extends StatelessWidget {
     int scored = 0;
     int high = 0, medium = 0, low = 0, veryLow = 0;
 
-    final trendRecords = state.officialTrendRecords;
+    final trendRecords = WebAnalysisMetrics(
+      state.officialTrendRecords,
+    ).records.where(WebAnalysisMetrics.isCrop).toList();
     for (final r in trendRecords) {
       final crop = _topCropFromRecord(r);
       counts[crop] = (counts[crop] ?? 0) + 1;
       final score = _scoreFromRecord(r);
-      if (score > 0) {
+      if (score != null && score >= 0 && score.isFinite) {
         totalScore += score;
         scored++;
         if (score >= 75) {
@@ -78,13 +72,35 @@ class WebCropTrendsScreen extends StatelessWidget {
       }
     }
 
+    final summary = state.webSummary;
+    if (summary != null) {
+      counts.clear();
+      monthly.clear();
+      for (final raw in analysisListValue(summary['frequencies'])) {
+        final row = analysisMapValue(raw);
+        counts['${row['crop']}'] = (row['count'] as num).toInt();
+      }
+      for (final raw in analysisListValue(summary['monthly'])) {
+        final row = analysisMapValue(raw);
+        final date = DateTime.tryParse('${row['month']}-01');
+        if (date != null) monthly[date] = (row['count'] as num).toInt();
+      }
+      scored = (summary['scored_count'] as num?)?.toInt() ?? 0;
+      totalScore =
+          (analysisNumber(summary['average_model_score']) ?? 0) * scored;
+      high = (summary['high_count'] as num?)?.toInt() ?? 0;
+      medium = (summary['medium_count'] as num?)?.toInt() ?? 0;
+      low = (summary['low_count'] as num?)?.toInt() ?? 0;
+      veryLow = (summary['very_low_count'] as num?)?.toInt() ?? 0;
+    }
     final entries = counts.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
     final topCrop = entries.isEmpty ? 'No data' : entries.first.key;
     final topCount = entries.isEmpty ? 0 : entries.first.value;
     final average = scored == 0 ? 0.0 : totalScore / scored;
     final distribution = [high, medium, low, veryLow];
-    final total = trendRecords.length;
+    final total =
+        (summary?['analysis_count'] as num?)?.toInt() ?? trendRecords.length;
     final monthEntries = monthly.entries.toList()
       ..sort((a, b) => a.key.compareTo(b.key));
     final recentMonths = monthEntries.length <= 6
@@ -95,7 +111,7 @@ class WebCropTrendsScreen extends StatelessWidget {
       builder: (context, constraints) {
         final narrow = constraints.maxWidth < 1050;
         return SingleChildScrollView(
-          padding: const EdgeInsets.only(bottom: 28),
+          padding: EdgeInsets.only(bottom: 28),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -107,7 +123,9 @@ class WebCropTrendsScreen extends StatelessWidget {
                     icon: Icons.article_rounded,
                     label: 'Total Saved Analyses',
                     value: '$total',
-                    caption: 'Across all analyzed areas',
+                    caption: summary == null
+                        ? 'Loaded recommendations only'
+                        : 'All analyses owned by this account',
                     width: narrow
                         ? constraints.maxWidth
                         : (constraints.maxWidth - 36) / 3,
@@ -125,8 +143,10 @@ class WebCropTrendsScreen extends StatelessWidget {
                   ),
                   _TrendSummaryCard(
                     icon: Icons.speed_rounded,
-                    label: 'Average Suitability',
-                    value: '${average.toStringAsFixed(average == 0 ? 0 : 1)}%',
+                    label: 'Average Model Score',
+                    value: scored == 0
+                        ? 'Not assessed'
+                        : '${average.toStringAsFixed(1)}%',
                     caption: 'Across all crop recommendations',
                     width: narrow
                         ? constraints.maxWidth
@@ -134,10 +154,10 @@ class WebCropTrendsScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               if (narrow) ...[
                 _CropFrequencyCard(entries: entries),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 _SuitabilityDistributionCard(
                   values: distribution,
                   total: scored,
@@ -150,7 +170,7 @@ class WebCropTrendsScreen extends StatelessWidget {
                       flex: 3,
                       child: _CropFrequencyCard(entries: entries),
                     ),
-                    const SizedBox(width: 18),
+                    SizedBox(width: 18),
                     Expanded(
                       flex: 2,
                       child: _SuitabilityDistributionCard(
@@ -160,10 +180,10 @@ class WebCropTrendsScreen extends StatelessWidget {
                     ),
                   ],
                 ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               if (narrow) ...[
                 _RecentTrendCard(entries: recentMonths),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 _TrendInsightsCard(
                   topCrop: topCrop,
                   topCount: topCount,
@@ -179,7 +199,7 @@ class WebCropTrendsScreen extends StatelessWidget {
                       flex: 3,
                       child: _RecentTrendCard(entries: recentMonths),
                     ),
-                    const SizedBox(width: 18),
+                    SizedBox(width: 18),
                     Expanded(
                       flex: 2,
                       child: _TrendInsightsCard(
@@ -224,42 +244,42 @@ class _TrendSummaryCard extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: softGreen,
+              color: WebPortalColors.tint,
               borderRadius: BorderRadius.circular(18),
             ),
-            child: Icon(icon, color: green, size: 31),
+            child: Icon(icon, color: WebPortalColors.accent, size: 31),
           ),
-          const SizedBox(width: 18),
+          SizedBox(width: 18),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
-                    color: Colors.black54,
+                    color: WebPortalColors.muted,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 5),
+                SizedBox(height: 5),
                 Text(
                   value,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 25,
-                    color: green,
+                    color: WebPortalColors.accent,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(height: 5),
+                SizedBox(height: 5),
                 Text(
                   caption,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: Colors.black45,
+                  style: TextStyle(
+                    color: WebPortalColors.muted,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -285,7 +305,7 @@ class _CropFrequencyCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -299,24 +319,25 @@ class _CropFrequencyCard extends StatelessWidget {
                     SizedBox(height: 5),
                     Text(
                       'Frequency of recommended crops from saved analyses',
-                      style: TextStyle(color: Colors.black54),
+                      style: TextStyle(color: WebPortalColors.muted),
                     ),
                   ],
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
-                ),
+                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFDCE7DF)),
+                  border: Border.all(color: Color(0xFFDCE7DF)),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(Icons.calendar_today_outlined, color: green, size: 16),
+                    Icon(
+                      Icons.calendar_today_outlined,
+                      color: WebPortalColors.accent,
+                      size: 16,
+                    ),
                     SizedBox(width: 7),
                     Text(
                       'All Time',
@@ -329,14 +350,14 @@ class _CropFrequencyCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           if (shown.isEmpty)
-            const SizedBox(
+            SizedBox(
               height: 210,
               child: Center(
                 child: Text(
                   'Run analyses to populate crop trends.',
-                  style: TextStyle(color: Colors.black45),
+                  style: TextStyle(color: WebPortalColors.muted),
                 ),
               ),
             )
@@ -346,7 +367,7 @@ class _CropFrequencyCard extends StatelessWidget {
               final opacity = (1.0 - (row.key * 0.1).clamp(0.0, 0.45))
                   .toDouble();
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: EdgeInsets.only(bottom: 16),
                 child: Row(
                   children: [
                     SizedBox(
@@ -355,28 +376,30 @@ class _CropFrequencyCard extends StatelessWidget {
                         e.key,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
+                        style: TextStyle(fontWeight: FontWeight.w800),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     Expanded(
                       child: ClipRRect(
                         borderRadius: BorderRadius.circular(99),
                         child: LinearProgressIndicator(
                           value: e.value / maxValue,
                           minHeight: 15,
-                          color: green.withValues(alpha: opacity),
-                          backgroundColor: softGreen,
+                          color: WebPortalColors.accent.withValues(
+                            alpha: opacity,
+                          ),
+                          backgroundColor: WebPortalColors.tint,
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    SizedBox(width: 12),
                     SizedBox(
                       width: 28,
                       child: Text(
                         '${e.value}',
                         textAlign: TextAlign.right,
-                        style: const TextStyle(fontWeight: FontWeight.w900),
+                        style: TextStyle(fontWeight: FontWeight.w900),
                       ),
                     ),
                   ],
@@ -384,11 +407,11 @@ class _CropFrequencyCard extends StatelessWidget {
               );
             }),
           if (shown.isNotEmpty)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(left: 202, top: 2),
               child: Text(
                 'Number of Recommendations',
-                style: TextStyle(fontSize: 12, color: Colors.black45),
+                style: TextStyle(fontSize: 12, color: WebPortalColors.muted),
               ),
             ),
         ],
@@ -406,13 +429,13 @@ class _SuitabilityDistributionCard extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
-    const labels = [
+    final labels = [
       'High (75% - 100%)',
       'Medium (50% - 75%)',
       'Low (25% - 50%)',
       'Very Low (0% - 25%)',
     ];
-    const colors = [
+    final colors = [
       Color(0xFF067A3C),
       Color(0xFF36A65C),
       Color(0xFF79BF8D),
@@ -422,16 +445,16 @@ class _SuitabilityDistributionCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Suitability Distribution',
+          Text(
+            'Model Score Distribution',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
           ),
-          const SizedBox(height: 5),
-          const Text(
-            'Distribution of suitability levels',
-            style: TextStyle(color: Colors.black54),
+          SizedBox(height: 5),
+          Text(
+            'Recorded model score bands, not agronomic grades',
+            style: TextStyle(color: WebPortalColors.muted),
           ),
-          const SizedBox(height: 20),
+          SizedBox(height: 20),
           LayoutBuilder(
             builder: (context, box) {
               final stack = box.maxWidth < 470;
@@ -446,15 +469,15 @@ class _SuitabilityDistributionCard extends StatelessWidget {
                       children: [
                         Text(
                           '$total',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
-                        const Text(
+                        Text(
                           'Total',
                           style: TextStyle(
-                            color: Colors.black54,
+                            color: WebPortalColors.muted,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
@@ -469,7 +492,7 @@ class _SuitabilityDistributionCard extends StatelessWidget {
                       ? 0
                       : (values[i] * 100 / total).round();
                   return Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    padding: EdgeInsets.symmetric(vertical: 8),
                     child: Row(
                       children: [
                         Container(
@@ -480,17 +503,17 @@ class _SuitabilityDistributionCard extends StatelessWidget {
                             shape: BoxShape.circle,
                           ),
                         ),
-                        const SizedBox(width: 9),
+                        SizedBox(width: 9),
                         Expanded(
                           child: Text(
                             labels[i],
-                            style: const TextStyle(fontWeight: FontWeight.w700),
+                            style: TextStyle(fontWeight: FontWeight.w700),
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
                           '$pct% (${values[i]})',
-                          style: const TextStyle(fontWeight: FontWeight.w900),
+                          style: TextStyle(fontWeight: FontWeight.w900),
                         ),
                       ],
                     ),
@@ -501,7 +524,7 @@ class _SuitabilityDistributionCard extends StatelessWidget {
                 return Column(
                   children: [
                     Center(child: chart),
-                    const SizedBox(height: 14),
+                    SizedBox(height: 14),
                     legend,
                   ],
                 );
@@ -509,7 +532,7 @@ class _SuitabilityDistributionCard extends StatelessWidget {
               return Row(
                 children: [
                   chart,
-                  const SizedBox(width: 18),
+                  SizedBox(width: 18),
                   Expanded(child: legend),
                 ],
               );
@@ -531,7 +554,7 @@ class _RecentTrendCard extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Expanded(
+            Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -542,21 +565,25 @@ class _RecentTrendCard extends StatelessWidget {
                   SizedBox(height: 5),
                   Text(
                     'Number of recommendations over time',
-                    style: TextStyle(color: Colors.black54),
+                    style: TextStyle(color: WebPortalColors.muted),
                   ),
                 ],
               ),
             ),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0xFFDCE7DF)),
+                border: Border.all(color: Color(0xFFDCE7DF)),
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.date_range_rounded, color: green, size: 16),
+                  Icon(
+                    Icons.date_range_rounded,
+                    color: WebPortalColors.accent,
+                    size: 16,
+                  ),
                   SizedBox(width: 7),
                   Text(
                     'Last 6 Months',
@@ -569,14 +596,14 @@ class _RecentTrendCard extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         SizedBox(
           height: 190,
           child: entries.isEmpty
-              ? const Center(
+              ? Center(
                   child: Text(
                     'No dated analyses yet.',
-                    style: TextStyle(color: Colors.black45),
+                    style: TextStyle(color: WebPortalColors.muted),
                   ),
                 )
               : CustomPaint(painter: _TrendLinePainter(entries)),
@@ -608,11 +635,11 @@ class _TrendInsightsCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Key Insights',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
           ),
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           _InsightRow(
             icon: Icons.eco_rounded,
             title: topCount == 0
@@ -622,13 +649,13 @@ class _TrendInsightsCard extends StatelessWidget {
                 ? 'Run analyses to generate insights.'
                 : 'appearing in $topCount ${topCount == 1 ? 'analysis' : 'analyses'}.',
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _InsightRow(
             icon: Icons.bar_chart_rounded,
-            title: 'High suitability areas account for $highPct%',
+            title: 'High model-score records account for $highPct%',
             subtitle: 'of all scored recommendations.',
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: 16),
           _InsightRow(
             icon: Icons.trending_up_rounded,
             title: increasing
@@ -658,19 +685,22 @@ class _InsightRow extends StatelessWidget {
       Container(
         width: 48,
         height: 48,
-        decoration: BoxDecoration(color: softGreen, shape: BoxShape.circle),
-        child: Icon(icon, color: green, size: 24),
+        decoration: BoxDecoration(
+          color: WebPortalColors.tint,
+          shape: BoxShape.circle,
+        ),
+        child: Icon(icon, color: WebPortalColors.accent, size: 24),
       ),
-      const SizedBox(width: 13),
+      SizedBox(width: 13),
       Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w900)),
-            const SizedBox(height: 3),
+            Text(title, style: TextStyle(fontWeight: FontWeight.w900)),
+            SizedBox(height: 3),
             Text(
               subtitle,
-              style: const TextStyle(color: Colors.black54, height: 1.35),
+              style: TextStyle(color: WebPortalColors.muted, height: 1.35),
             ),
           ],
         ),
@@ -693,7 +723,7 @@ class _DonutPainter extends CustomPainter {
       ..strokeWidth = stroke
       ..strokeCap = StrokeCap.butt;
     if (total == 0) {
-      paint.color = const Color(0xFFE7EFE9);
+      paint.color = Color(0xFFE7EFE9);
       canvas.drawArc(rect.deflate(stroke / 2), -1.5708, 6.2832, false, paint);
       return;
     }
@@ -715,7 +745,7 @@ class _TrendLinePainter extends CustomPainter {
   final List<MapEntry<DateTime, int>> entries;
   _TrendLinePainter(this.entries);
   String _month(DateTime d) {
-    const names = [
+    final names = [
       'Jan',
       'Feb',
       'Mar',
@@ -734,7 +764,7 @@ class _TrendLinePainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    const left = 34.0, right = 12.0, top = 10.0, bottom = 30.0;
+    final left = 34.0, right = 12.0, top = 10.0, bottom = 30.0;
     final chart = Rect.fromLTRB(
       left,
       top,
@@ -746,7 +776,7 @@ class _TrendLinePainter extends CustomPainter {
         .fold<int>(1, (a, b) => a > b ? a : b)
         .clamp(3, 999);
     final grid = Paint()
-      ..color = const Color(0xFFE6ECE8)
+      ..color = Color(0xFFE6ECE8)
       ..strokeWidth = 1;
     final label = TextPainter(textDirection: TextDirection.ltr);
     for (var i = 0; i <= maxY; i++) {
@@ -754,7 +784,7 @@ class _TrendLinePainter extends CustomPainter {
       canvas.drawLine(Offset(chart.left, y), Offset(chart.right, y), grid);
       label.text = TextSpan(
         text: '$i',
-        style: const TextStyle(fontSize: 10, color: Colors.black45),
+        style: TextStyle(fontSize: 10, color: WebPortalColors.muted),
       );
       label.layout();
       label.paint(canvas, Offset(4, y - 6));
@@ -768,7 +798,7 @@ class _TrendLinePainter extends CustomPainter {
       points.add(Offset(x, y));
       label.text = TextSpan(
         text: _month(entries[i].key),
-        style: const TextStyle(fontSize: 10, color: Colors.black54),
+        style: TextStyle(fontSize: 10, color: WebPortalColors.muted),
       );
       label.layout();
       label.paint(canvas, Offset(x - label.width / 2, chart.bottom + 9));
@@ -851,7 +881,7 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -865,7 +895,7 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
                         SizedBox(height: 6),
                         Text(
                           'Uses the same live weather source as the mobile app.',
-                          style: TextStyle(color: Colors.black54),
+                          style: TextStyle(color: WebPortalColors.muted),
                         ),
                       ],
                     ),
@@ -877,17 +907,19 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
                             final err = await state.refreshLiveWeather();
                             if (err != null) message(err);
                           },
-                    icon: const Icon(Icons.refresh_rounded),
+                    icon: Icon(Icons.refresh_rounded),
                     label: Text(
                       state.weatherLoading
                           ? 'Refreshing...'
                           : 'Refresh Live Weather',
                     ),
-                    style: OutlinedButton.styleFrom(foregroundColor: green),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: WebPortalColors.accent,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               Wrap(
                 spacing: 14,
                 runSpacing: 14,
@@ -928,32 +960,32 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 14),
+              SizedBox(height: 14),
               Text(
                 'Source: $weatherSource • ${state.selectedPlaceName}',
-                style: const TextStyle(
-                  color: Colors.black45,
+                style: TextStyle(
+                  color: WebPortalColors.muted,
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ],
           ),
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         _WebCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Soil & Environmental Indicators',
                 style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
               ),
-              const SizedBox(height: 8),
-              const Text(
+              SizedBox(height: 8),
+              Text(
                 'Environmental factors are filled after running an area analysis.',
-                style: TextStyle(color: Colors.black54),
+                style: TextStyle(color: WebPortalColors.muted),
               ),
-              const SizedBox(height: 18),
+              SizedBox(height: 18),
               Row(
                 children: [
                   Expanded(
@@ -965,7 +997,7 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
                           '${state.numText(d['rainfall_30d'] ?? d['rainfall_mm'] ?? w['rainfall_mm'])} mm',
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: _MetricTile(
                       compact: true,
@@ -975,7 +1007,7 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
                           '${state.numText(d['elevation_m'] ?? d['elevation'])} m',
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: _MetricTile(
                       compact: true,
@@ -984,7 +1016,7 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
                       value: '${state.numText(d['slope_pct'] ?? d['slope'])}%',
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: _MetricTile(
                       compact: true,
@@ -998,7 +1030,7 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
                       })(),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: _MetricTile(
                       compact: true,
@@ -1007,7 +1039,7 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
                       value: '${d['soil_ph'] ?? d['ph'] ?? '--'}',
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  SizedBox(width: 10),
                   Expanded(
                     child: _MetricTile(
                       compact: true,
@@ -1021,7 +1053,7 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         _WebDistributionPanel(state: state),
       ],
     );
@@ -1040,6 +1072,10 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
   late final TextEditingController _nameController;
   late final TextEditingController _locationController;
   bool _saving = false;
+  bool _pushEnabled = false;
+  bool _pushBusy = false;
+  bool _accountBusy = false;
+  String? _pushError;
 
   AnalysisState get state => widget.state;
 
@@ -1052,6 +1088,9 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
     _locationController = TextEditingController(
       text: '${state.currentUser?['location'] ?? state.selectedPlaceName}',
     );
+    PushNotifications.enabled().then((value) {
+      if (mounted) setState(() => _pushEnabled = value);
+    });
   }
 
   @override
@@ -1077,7 +1116,7 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
       if (mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Profile updated.')));
+        ).showSnackBar(SnackBar(content: Text('Profile updated.')));
       }
     } catch (e) {
       if (mounted) {
@@ -1094,27 +1133,81 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
     }
   }
 
-  Future<void> _deactivate() async {
-    await state.api.deactivateAccount();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'Account deactivated. Please sign in again when reactivated.',
+  Future<void> _accountAction(bool delete) async {
+    if (_accountBusy) return;
+    final password = TextEditingController();
+    bool? google;
+    try {
+      google = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(
+            delete ? 'Delete your account?' : 'Deactivate your account?',
           ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  delete
+                      ? 'This permanently removes your farms, boundaries, coordinates, analyses, photos and reports. Anonymized audit decisions are retained. This cannot be undone.'
+                      : 'You will be signed out and lose access until an administrator reactivates the account.',
+                ),
+                SizedBox(height: 16),
+                TextField(
+                  controller: password,
+                  obscureText: true,
+                  autofillHints: [AutofillHints.password],
+                  decoration: InputDecoration(labelText: 'Current password'),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text('Cancel'),
+            ),
+            if (state.currentUser?['google_linked'] == true &&
+                FirebaseIdentity.googleConfigured)
+              TextButton(
+                onPressed: () => Navigator.pop(dialogContext, true),
+                child: Text('Confirm with linked Google'),
+              ),
+            FilledButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: Text(delete ? 'Confirm deletion' : 'Confirm deactivation'),
+            ),
+          ],
         ),
       );
-    }
-  }
-
-  Future<void> _deleteAccount() async {
-    await state.api.deleteAccount();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Account deleted. Please reload the app.'),
-        ),
+      if (google == null || !mounted) return;
+      setState(() => _accountBusy = true);
+      final proof = google ? await FirebaseIdentity.googleProof() : null;
+      await state.api.closeWebAccount(
+        delete: delete,
+        password: google ? null : password.text,
+        googleProof: proof,
       );
+      await PushNotifications.stop();
+      state.clearUserData();
+      PortalRoutes.go('/');
+      if (!mounted) return;
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginPage()),
+        (_) => false,
+      );
+    } catch (error) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(friendlyErrorMessage(error))));
+      }
+    } finally {
+      password.dispose();
+      if (mounted) setState(() => _accountBusy = false);
     }
   }
 
@@ -1123,43 +1216,43 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Settings',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Text(
           'Signed in as ${state.currentUser?['email'] ?? '--'}',
-          style: const TextStyle(color: Colors.black54),
+          style: TextStyle(color: WebPortalColors.muted),
         ),
-        const SizedBox(height: 18),
-        const Text(
+        SizedBox(height: 18),
+        Text(
           'Edit Profile',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         TextField(
           controller: _nameController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Display Name',
             prefixIcon: Icon(Icons.person_outline),
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         TextField(
           controller: _locationController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Location',
             prefixIcon: Icon(Icons.location_on_outlined),
           ),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: 14),
         SizedBox(
           width: 210,
           child: FilledButton.icon(
             onPressed: _saving ? null : _saveProfile,
             icon: _saving
-                ? const SizedBox(
+                ? SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(
@@ -1167,32 +1260,67 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
                       color: Colors.white,
                     ),
                   )
-                : const Icon(Icons.save_outlined),
+                : Icon(Icons.save_outlined),
             label: Text(_saving ? 'Saving...' : 'Save Profile'),
           ),
         ),
-        const SizedBox(height: 24),
-        const Text(
+        SizedBox(height: 24),
+        IdentityProfileSection(
+          key: ValueKey('web-identity-${state.currentUser?['id']}'),
+          state: state,
+        ),
+        SizedBox(height: 24),
+        SwitchListTile(
+          contentPadding: EdgeInsets.zero,
+          title: Text('Analysis and review push alerts'),
+          subtitle: Text(
+            _pushError ??
+                (PushNotifications.configured
+                    ? 'Receive analysis and review alerts with browser permission. Weather advisories remain in the app.'
+                    : 'Background alerts are currently unavailable. Activity remains available in the app.'),
+          ),
+          value: _pushEnabled,
+          onChanged: !PushNotifications.configured || _pushBusy
+              ? null
+              : (value) async {
+                  setState(() {
+                    _pushBusy = true;
+                    _pushError = null;
+                  });
+                  try {
+                    await PushNotifications.setEnabled(state.api, value);
+                    if (mounted) setState(() => _pushEnabled = value);
+                  } catch (error) {
+                    if (mounted) {
+                      setState(() => _pushError = friendlyErrorMessage(error));
+                    }
+                  } finally {
+                    if (mounted) setState(() => _pushBusy = false);
+                  }
+                },
+        ),
+        SizedBox(height: 24),
+        Text(
           'Account Actions',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         Row(
           children: [
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: _deactivate,
-                icon: const Icon(Icons.pause_circle_outline),
-                label: const Text('Deactivate Account'),
+                onPressed: _accountBusy ? null : () => _accountAction(false),
+                icon: Icon(Icons.pause_circle_outline),
+                label: Text('Deactivate Account'),
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.orange),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: OutlinedButton.icon(
-                onPressed: _deleteAccount,
-                icon: const Icon(Icons.delete_outline),
-                label: const Text('Delete Account'),
+                onPressed: _accountBusy ? null : () => _accountAction(true),
+                icon: Icon(Icons.delete_outline),
+                label: Text('Delete Account'),
                 style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
               ),
             ),
@@ -1219,20 +1347,23 @@ class _MetricTile extends StatelessWidget {
     width: compact ? null : 180,
     padding: EdgeInsets.all(compact ? 10 : 16),
     decoration: BoxDecoration(
-      color: const Color(0xFFF7FAF7),
+      color: WebPortalColors.canvas,
       borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: const Color(0xFFE4ECE6)),
+      border: Border.all(color: Color(0xFFE4ECE6)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: green, size: compact ? 16 : 24),
+        Icon(icon, color: WebPortalColors.accent, size: compact ? 16 : 24),
         SizedBox(height: compact ? 6 : 10),
         Text(
           label,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(color: Colors.black54, fontSize: compact ? 11 : 14),
+          style: TextStyle(
+            color: WebPortalColors.muted,
+            fontSize: compact ? 11 : 14,
+          ),
         ),
         SizedBox(height: compact ? 4 : 6),
         Text(
@@ -1263,17 +1394,13 @@ class _WebEnvironmentPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final d = state.result ?? {};
     final rainfall =
-        d['rainfall_monthly_mm'] ??
-        d['monthly_rainfall_mm'] ??
-        d['rainfall_30d_mm'] ??
-        d['rainfall_30d'] ??
-        d['rainfall_mm'];
+        d['rainfall_30d_mm'] ?? d['rainfall_30d'];
     final slope = d['slope_pct'] ?? d['slope'];
     final elevation = d['elevation_m'] ?? d['elevation'];
     final ndviText = _num3(d['ndvi']);
     final hasData = d.isNotEmpty;
     return _WebCard(
-      padding: compact ? const EdgeInsets.all(14) : const EdgeInsets.all(22),
+      padding: compact ? EdgeInsets.all(14) : EdgeInsets.all(22),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1288,7 +1415,7 @@ class _WebEnvironmentPanel extends StatelessWidget {
           Text(
             'Key environmental factors for the selected area',
             style: TextStyle(
-              color: Colors.black54,
+              color: WebPortalColors.muted,
               fontSize: compact ? 12 : 14,
             ),
           ),
@@ -1327,60 +1454,7 @@ class _WebDistributionPanel extends StatelessWidget {
   const _WebDistributionPanel({required this.state, this.compact = false});
   @override
   Widget build(BuildContext context) => _WebCard(
-    padding: compact ? const EdgeInsets.all(14) : const EdgeInsets.all(22),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Suitability Distribution',
-          style: TextStyle(
-            fontSize: compact ? 16 : 20,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
-        SizedBox(height: compact ? 8 : 10),
-        Text(
-          'Distribution of suitability levels based on history records.',
-          style: TextStyle(color: Colors.black54, fontSize: compact ? 12 : 14),
-        ),
-        SizedBox(height: compact ? 8 : 12),
-        Center(
-          child: SizedBox(
-            width: compact ? 108 : 148,
-            height: compact ? 108 : 148,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularProgressIndicator(
-                  value: state.historyRecords.isEmpty ? .05 : .72,
-                  strokeWidth: compact ? 11 : 16,
-                  color: green,
-                  backgroundColor: softGreen,
-                ),
-                Text(
-                  '${state.historyRecords.length}\nTotal',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontWeight: FontWeight.w900,
-                    fontSize: compact ? 14 : 22,
-                    height: 1.05,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        SizedBox(height: compact ? 6 : 10),
-        const _LegendDot(color: Color(0xFF1FA463), label: 'Highly Suitable'),
-        const _LegendDot(
-          color: Color(0xFF8BDD75),
-          label: 'Moderately Suitable',
-        ),
-        const _LegendDot(
-          color: Color(0xFFE9A829),
-          label: 'Marginally Suitable',
-        ),
-      ],
-    ),
+    padding: EdgeInsets.all(compact ? 14 : 22),
+    child: WebModelScoreDistribution(records: state.historyRecords),
   );
 }

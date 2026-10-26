@@ -529,6 +529,7 @@ def user_public_dict(user) -> Dict[str, Any]:
         "profile_photo": user.get('profile_photo'),
         "email_verified": bool(user.get('email_verified')),
         "auth_provider": user.get('auth_provider', 'email'),
+        "google_linked": bool(user.get('google_sub')),
         "phone_number": user.get('phone_number'),
         "phone_verified": user.get('phone_verified_at') is not None,
     }
@@ -1532,6 +1533,25 @@ def mobile_deactivate_me(user=Depends(get_api_user)):
     return {"ok": True, "message": "Account deactivated."}
 
 
+class WebAccountActionBody(BaseModel):
+    action: str = Field(pattern='^(delete|deactivate)$')
+    current_password: Optional[str] = Field(None, max_length=128)
+    firebase_id_token: Optional[str] = Field(None, max_length=8192)
+
+
+@app.post('/api/web/account-action')
+def web_account_action(body: WebAccountActionBody, user=Depends(get_api_user)):
+    qa_closure.enforce_quota(user['id'], 'account_action', 5)
+    if body.firebase_id_token:
+        import federated_identity
+        claims, _ = federated_identity.google_identity(body.firebase_id_token)
+        if not user.get('google_sub') or claims['sub'] != user['google_sub']:
+            raise HTTPException(403, 'Confirm using the Google account linked to this profile.')
+    elif not body.current_password or not verify_password(body.current_password, user.get('password_hash')):
+        raise HTTPException(401, 'Confirm your current password before changing account access.')
+    return mobile_delete_me(user=user) if body.action == 'delete' else mobile_deactivate_me(user=user)
+
+
 @app.delete("/api/mobile/me")
 def mobile_delete_me(user=Depends(get_api_user)):
     try:
@@ -1631,6 +1651,18 @@ def mobile_history(user=Depends(get_api_user), offset: int = Query(0, ge=0), lim
         raise HTTPException(status_code=404, detail='Farm not found.')
     rows = get_user_history(user["id"], limit=limit+1, offset=offset, farm_id=farm_id)
     return {"history": [dict(row) for row in rows[:limit]], "has_more": len(rows)>limit}
+
+
+@app.get('/api/web/history')
+def web_history(user=Depends(get_api_user), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query('', max_length=160)):
+    rows = get_user_history(user['id'], limit=limit+1, offset=offset, q=q)
+    return {'history': [dict(row) for row in rows[:limit]], 'has_more':len(rows)>limit}
+
+
+@app.get('/api/web/summary')
+def web_history_summary(user=Depends(get_api_user)):
+    from web_summary import summary
+    return summary(user['id'])
 
 
 @app.get('/api/mobile/analyses/{session_id}')
