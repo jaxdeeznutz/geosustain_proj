@@ -8,22 +8,27 @@ class _WebCard extends StatelessWidget {
     this.padding = const EdgeInsets.all(22),
   });
   @override
-  Widget build(BuildContext context) => Container(
-    padding: padding,
-    decoration: BoxDecoration(
-      color: WebPortalColors.surface,
-      borderRadius: BorderRadius.circular(22),
-      border: Border.all(color: Color(0xFFE4ECE6)),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: .035),
-          blurRadius: 18,
-          offset: Offset(0, 8),
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return Container(
+      padding: padding,
+      decoration: BoxDecoration(
+        color: WebPortalColors.surface,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(
+          color: WebPortalColors.dark ? Color(0xFF384C3F) : Color(0xFFE4ECE6),
         ),
-      ],
-    ),
-    child: child,
-  );
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: .035),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: child,
+    );
+  }
 }
 
 class _SmallBadge extends StatelessWidget {
@@ -63,14 +68,17 @@ class _WebHeader extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Semantics(header: true, child: Text(
-              title,
-              style: TextStyle(
-                fontSize: 32,
-                fontWeight: FontWeight.w900,
-                color: WebPortalColors.ink,
+            Semantics(
+              header: true,
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: WebPortalColors.ink,
+                ),
               ),
-            )),
+            ),
             SizedBox(height: 4),
             Text(
               subtitle,

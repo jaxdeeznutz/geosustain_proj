@@ -272,55 +272,63 @@ class _DashboardKpi extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => _WebCard(
-    padding: EdgeInsets.all(20),
-    child: Row(
-      children: [
-        Container(
-          width: 56,
-          height: 56,
-          decoration: BoxDecoration(
-            color: WebPortalColors.tint,
-            borderRadius: BorderRadius.circular(17),
+  Widget build(BuildContext context) {
+    // Explicit palette values must update even when this widget is const.
+    Theme.of(context);
+    return _WebCard(
+      padding: EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Container(
+            width: 56,
+            height: 56,
+            decoration: BoxDecoration(
+              color: WebPortalColors.tint,
+              borderRadius: BorderRadius.circular(17),
+            ),
+            child: Icon(icon, color: WebPortalColors.accent, size: 28),
           ),
-          child: Icon(icon, color: WebPortalColors.accent, size: 28),
-        ),
-        SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: TextStyle(
-                  color: WebPortalColors.muted,
-                  fontWeight: FontWeight.w700,
+          SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: WebPortalColors.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
-              ),
-              SizedBox(height: 5),
-              Text(
-                value,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 23, fontWeight: FontWeight.w900),
-              ),
-              SizedBox(height: 4),
-              Text(
-                subtitle,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: warning ? Color(0xFFE09B20) : green,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w800,
+                SizedBox(height: 5),
+                Text(
+                  value,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(fontSize: 23, fontWeight: FontWeight.w900),
                 ),
-              ),
-            ],
+                SizedBox(height: 4),
+                Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: warning
+                        ? (WebPortalColors.dark
+                              ? Color(0xFFF2CA6E)
+                              : Color(0xFF805400))
+                        : WebPortalColors.accent,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
-    ),
-  );
+        ],
+      ),
+    );
+  }
 }
 
 class _DashboardGettingStarted extends StatelessWidget {
@@ -424,33 +432,37 @@ class _DashboardStep extends StatelessWidget {
     required this.subtitle,
   });
   @override
-  Widget build(BuildContext context) => Column(
-    children: [
-      Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: WebPortalColors.tint,
-          borderRadius: BorderRadius.circular(15),
+  Widget build(BuildContext context) {
+    // Explicit palette values must update even when this widget is const.
+    Theme.of(context);
+    return Column(
+      children: [
+        Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: WebPortalColors.tint,
+            borderRadius: BorderRadius.circular(15),
+          ),
+          child: Icon(icon, color: WebPortalColors.accent),
         ),
-        child: Icon(icon, color: WebPortalColors.accent),
-      ),
-      SizedBox(height: 9),
-      Text(
-        title,
-        textAlign: TextAlign.center,
-        style: TextStyle(fontWeight: FontWeight.w900),
-      ),
-      SizedBox(height: 4),
-      Text(
-        subtitle,
-        textAlign: TextAlign.center,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(color: WebPortalColors.muted, fontSize: 11),
-      ),
-    ],
-  );
+        SizedBox(height: 9),
+        Text(
+          title,
+          textAlign: TextAlign.center,
+          style: TextStyle(fontWeight: FontWeight.w900),
+        ),
+        SizedBox(height: 4),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: TextStyle(color: WebPortalColors.muted, fontSize: 11),
+        ),
+      ],
+    );
+  }
 }
 
 class _DashboardQuickActions extends StatelessWidget {

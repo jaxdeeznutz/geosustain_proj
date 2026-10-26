@@ -187,6 +187,17 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
+      appThemeMode.value = ThemeMode.dark;
+      await tester.pumpAndSettle();
+      final caption = tester.widget<Text>(
+        find.text('Choose a point or draw a polygon'),
+      );
+      expect(caption.style?.color, WebPortalColors.muted);
+      final kpi = tester.widget<Text>(
+        find.text('Start your first crop analysis'),
+      );
+      expect(kpi.style?.color, WebPortalColors.accent);
+      expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       state.dispose();
     });
