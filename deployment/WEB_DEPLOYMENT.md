@@ -1,8 +1,10 @@
 # Web release and rollback
 
 Use the repository root as the Vercel project root. Root `vercel.json` runs
-`bash deployment/vercel_build.sh` and publishes `build/web`; the bootstrap pins
-Flutter 3.41.9 when no SDK is installed. For a local build:
+`bash deployment/vercel_build.sh` and publishes `build/web`; the bootstrap uses
+its own pinned Flutter 3.41.9. Root `installCommand: true` overrides the prior
+host install command that cloned an unpinned SDK. First-run setup output is
+handled before reading machine metadata. For a local build:
 
 ```powershell
 $env:FLUTTER_BIN='C:/flutter/bin/flutter.bat'

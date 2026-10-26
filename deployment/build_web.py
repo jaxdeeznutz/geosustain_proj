@@ -37,6 +37,22 @@ def identity():
             digest.update(name.encode());digest.update(b'\0');digest.update(path.read_bytes())
     return commit,digest.hexdigest()
 
+
+def machine_sdk_version(output):
+    """Flutter can print first-run setup progress before its machine JSON."""
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(output):
+        if char != '{':
+            continue
+        try:
+            value, _ = decoder.raw_decode(output[index:])
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict) and isinstance(value.get('frameworkVersion'), str):
+            return value
+    raise ValueError('Flutter did not return recognizable SDK version metadata')
+
+
 def main():
     parser=argparse.ArgumentParser();parser.add_argument('--output',default='build/web');parser.add_argument('--check',action='store_true')
     args=parser.parse_args()
@@ -46,7 +62,7 @@ def main():
         print(json.dumps({'valid':True,'source_commit':commit,'source_fingerprint':fingerprint,'build_id':build_id,'api_origin':api,'public_config_keys':sorted(public)}));return
     flutter=os.getenv('FLUTTER_BIN') or shutil.which('flutter')
     if not flutter: raise SystemExit('Flutter SDK is required; use the Vercel bootstrap or set FLUTTER_BIN')
-    sdk=json.loads(subprocess.check_output([flutter,'--version','--machine'],cwd=ROOT,text=True))
+    sdk=machine_sdk_version(subprocess.check_output([flutter,'--version','--machine'],cwd=ROOT,text=True))
     defines={'API_BASE_URL':api,'WEB_BUILD_ID':build_id,**public}
     subprocess.run([flutter,'pub','get'],cwd=ROOT,check=True)
     subprocess.run([flutter,'build','web','--release','--pwa-strategy=none','--output='+args.output,*['--dart-define='+k+'='+v for k,v in defines.items()]],cwd=ROOT,check=True)
