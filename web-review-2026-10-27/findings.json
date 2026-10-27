@@ -1,0 +1,275 @@
+{
+  "review_date": "2026-10-27",
+  "source_commit": "e03c7a1504ceb56840cb007bc83605e7d3f6d832",
+  "scope_excluded": [
+    "NPK changes",
+    "soil pH changes",
+    "new dataset integration",
+    "model retraining"
+  ],
+  "implementation_changed": false,
+  "findings": [
+    {
+      "id": "AP-01",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "title": "Operator dashboard measures personal analysis activity, not review workload",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_dashboard_screen.dart",
+          "line": 32
+        },
+        {
+          "path": "backend/web_summary.py",
+          "line": 18
+        },
+        {
+          "path": "backend/database.py",
+          "line": 1448
+        }
+      ],
+      "observation": "The dashboard uses owned history and the owner-scoped summary endpoint. Review counts are a separate queue resource. This is valid personal activity reporting, but it does not answer how many farmer submissions need attention.",
+      "recommendation": "Add a Review overview with pending cases, oldest submitted age, information requests, reviewed this period and unavailable/partial evidence. Keep My analyses as a separately named scope.",
+      "acceptance": "An operator with zero personal analyses and several pending farmer submissions sees the pending workload accurately."
+    },
+    {
+      "id": "AP-02",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "title": "Planner queue still calls a model score SUITABILITY",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_planner_queue_screen.dart",
+          "line": 497
+        }
+      ],
+      "observation": "The queue card reads compatibility_pct directly and labels it SUITABILITY. New shared detail sections call ranking values model scores, so the two views still disagree.",
+      "recommendation": "Use Model score only where a valid scored crop result exists. Show preliminary/unassessed explicitly and keep review decisions in a separate badge.",
+      "acceptance": "The same session has consistent score meaning in inbox, detail, map and export; a missing score remains unassessed."
+    },
+    {
+      "id": "AP-03",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "title": "Heatmap color semantics use local min/max for every displayed layer",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_planner_queue_screen.dart",
+          "line": 659
+        }
+      ],
+      "observation": "The review heatColor function scales each layer by the values in that record and maps higher relative values to green. Equal values use t=.75, also producing green. This displays relative magnitude, not a demonstrated favorable condition.",
+      "recommendation": "Give each non-soil layer its own units and numerical legend. Use a neutral sequential palette for measured magnitude and a separately documented assessment palette only when a valid grading rule exists. Preserve missing cells. NPK and soil pH remain outside this work.",
+      "acceptance": "A uniform-value grid cannot imply universally favorable conditions. Different parcels using a shared legend remain comparable."
+    },
+    {
+      "id": "AP-04",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "title": "Legacy fallback text infers limited vegetation/non-arable surface from any NDVI value",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_planner_queue_screen.dart",
+          "line": 759
+        }
+      ],
+      "observation": "When the non-crop fallback has any numeric NDVI and no explanation bullets, it inserts the same limited-vegetation/non-arable wording without inspecting the NDVI magnitude or why the result is incomplete.",
+      "recommendation": "Show the recorded value, its period and available coverage. Explain the actual reason a crop result is unavailable. Keep land-use or field confirmation separate.",
+      "acceptance": "A partial result with a positive numeric NDVI does not receive a conclusion triggered only by the presence of that number."
+    },
+    {
+      "id": "AP-05",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "title": "Rejection reason is required by the UI but not by the review API",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_planner_queue_screen.dart",
+          "line": 667
+        },
+        {
+          "path": "backend/fastapi_app.py",
+          "line": 1841
+        },
+        {
+          "path": "backend/database.py",
+          "line": 1398
+        }
+      ],
+      "observation": "The dialog requires a nonempty rejection note. VerifySessionBody accepts optional notes, and the endpoint/database decision path does not enforce the same note requirement. The existing pending-only database update is a useful safety guard.",
+      "recommendation": "Enforce decision reason and note constraints server-side, matching the UI maximum. Return an explicit conflict for an already-decided case and preserve the first decision.",
+      "acceptance": "A direct authenticated API rejection with a blank note is refused. Two reviewers cannot overwrite one another; the second sees the current decision."
+    },
+    {
+      "id": "AP-06",
+      "priority": "P1",
+      "basis": "WORKFLOW_GAP_CONFIRMED",
+      "title": "No explicit information-request and revision-linked resubmission flow",
+      "sources": [
+        {
+          "path": "backend/fastapi_app.py",
+          "line": 1841
+        },
+        {
+          "path": "backend/database.py",
+          "line": 1135
+        }
+      ],
+      "observation": "The inspected review endpoint offers verified/rejected. Reposting an already rejected session returns its existing decision rather than reopening it. Retaining decisions is correct, but there is no explicit needs-information case lifecycle in these endpoints.",
+      "recommendation": "Add Request information with required correction items, a farmer response and a linked new revision. Preserve the reviewed analysis snapshot and decision history.",
+      "acceptance": "A farmer can address a requested correction and submit a new linked revision without erasing the previous reviewer decision."
+    },
+    {
+      "id": "AP-07",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "title": "Review inbox pagination still downloads all pages first",
+      "sources": [
+        {
+          "path": "lib/api_service.dart",
+          "line": 1480
+        },
+        {
+          "path": "lib/api_service.dart",
+          "line": 1167
+        },
+        {
+          "path": "lib/web/screens/web_planner_queue_screen.dart",
+          "line": 171
+        }
+      ],
+      "observation": "The server supports bounded queue pages and q search, but getPlannerQueue calls the shared _pagedList loop until has_more is false. The screen then searches and paginates the complete loaded list. Queue responses also include heavy snapshot/grid detail.",
+      "recommendation": "Reuse a bounded query controller for queue status/search/page. Request lightweight listing fields and load full snapshot/grid only through the existing detail endpoint.",
+      "acceptance": "Opening 500 controlled submissions fetches one listing page, searching reaches the server, and opening one case fetches its full detail."
+    },
+    {
+      "id": "AP-08",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "title": "Map and inbox share mutable queue/filter state without a query generation guard",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_map_screen.dart",
+          "line": 135
+        },
+        {
+          "path": "lib/main.dart",
+          "line": 1786
+        }
+      ],
+      "observation": "Opening Map Analysis requests status=all through loadPlannerQueue, which changes the same plannerQueueStatus and rows used by the inbox. Competing status/search requests are not guarded by a queue generation token.",
+      "recommendation": "Separate PlanningMapController and ReviewQueueController. Guard responses by owner, filter and request generation; visiting the map must not change inbox filters.",
+      "acceptance": "Pending -> map -> inbox preserves the selected inbox filter. Delayed older filter responses cannot replace the current view."
+    },
+    {
+      "id": "AP-09",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "title": "Queue failure and search-no-match states remain ambiguous",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_planner_queue_screen.dart",
+          "line": 206
+        },
+        {
+          "path": "lib/web/screens/web_planner_queue_screen.dart",
+          "line": 171
+        },
+        {
+          "path": "lib/main.dart",
+          "line": 1786
+        }
+      ],
+      "observation": "The empty branch checks the unfiltered queue rather than the searched result. Initial fetch failures can end at No submissions found after a transient snackbar; count failures are swallowed and zero/stale values have no clear state.",
+      "recommendation": "Persist resource errors, retain labeled stale data, offer retry, and separate loading/valid empty/no-match/error. Counters need independent loading/error states.",
+      "acceptance": "Searching a nonempty queue with no matching name shows No matching submissions. An HTTP failure never certifies an empty workload or a zero count."
+    },
+    {
+      "id": "AP-10",
+      "priority": "P1",
+      "basis": "SOURCE_AND_CONTROL_FLOW_REVIEW",
+      "title": "Review detail loading and URL reentry need a coherent route lifecycle",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_planner_queue_screen.dart",
+          "line": 11
+        },
+        {
+          "path": "lib/web/web_analyst_shell.dart",
+          "line": 73
+        }
+      ],
+      "observation": "Detail is awaited before opening the dialog, so a slow fetch has no immediate detail loading view. The linked-record guard retains _openedRecord and skips the same ID on reentry; route Back/Forward, retry and dialog close need explicit regression coverage. These browser scenarios were not reproduced in this review.",
+      "recommendation": "Use a full-page review route with a loading/error/retry state keyed to the case/revision ID. Preserve inbox filters and scroll on return. Keep a small confirmation dialog only for the final decision.",
+      "acceptance": "A direct link, refresh, failed-load retry and Back/Forward can reopen the same case reliably; repeated clicks cannot stack stale record dialogs."
+    },
+    {
+      "id": "AP-11",
+      "priority": "P2",
+      "basis": "LAYOUT_RISK_FROM_SOURCE_NOT_BROWSER_REPRODUCED",
+      "title": "Queue and detail retain rigid desktop layouts",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_planner_queue_screen.dart",
+          "line": 219
+        }
+      ],
+      "observation": "Queue cards always use two columns; filter controls and KPI/header rows are ordinary Rows. The review dialog also contains fixed-height two-column sections. This is a source-observed overflow risk, not a newly reproduced device failure.",
+      "recommendation": "Use adaptive table/cards, wrapping filters, a collapsible map and a full-page detail layout at narrow/zoomed widths. Keep the decision action accessible while scrolling evidence.",
+      "acceptance": "Test 480x700, 1000x500 and 1280x900 plus 200% browser zoom on inbox and full review, with no unreachable actions."
+    },
+    {
+      "id": "AP-12",
+      "priority": "P2",
+      "basis": "SOURCE_CONFIRMED",
+      "title": "Planning-map summary mixes record scope and fixed overlay readiness",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_map_screen.dart",
+          "line": 366
+        },
+        {
+          "path": "lib/web/screens/web_map_screen.dart",
+          "line": 135
+        }
+      ],
+      "observation": "The map merges loaded owned history and submitted farmer analyses, includes a useful loaded-record badge, but its summary says Total Analyzed Lands/Across all saved analyses and Infrastructure Overlays Ready unconditionally. This is not a complete Panabo land inventory.",
+      "recommendation": "Label the dataset, filters, record count, distinct farm count and last refresh. Derive overlay availability from actual record/capability state and keep missing coverage visible.",
+      "acceptance": "An unavailable overlay is not labeled Ready. A displayed count is identified as records or distinct farms, with the exact authorized scope."
+    },
+    {
+      "id": "AP-13",
+      "priority": "P2",
+      "basis": "EXISTING_FOUNDATION_WITH_PRESENTATION_GAP",
+      "title": "Existing snapshot/version data needs visible review context",
+      "sources": [
+        {
+          "path": "backend/database.py",
+          "line": 1398
+        },
+        {
+          "path": "backend/database.py",
+          "line": 1769
+        }
+      ],
+      "observation": "Sessions already store result snapshots, farm/boundary versions and review timestamps. The inspected review UI does not provide a clear version-comparison header/timeline. The farm boundary_version currently increments even for metadata edits, so a simple version mismatch must not automatically claim geometry changed.",
+      "recommendation": "Show the analyzed geometry/version/date, current geometry fingerprint where available, and decision timeline. Distinguish a geometry change from a rename or archive action.",
+      "acceptance": "A historical review remains tied to its original analysis; a farm rename does not falsely label the boundary as changed."
+    },
+    {
+      "id": "AP-14",
+      "priority": "P2",
+      "basis": "SOURCE_CONFIRMED",
+      "title": "Inbox ordering and cards emphasize analysis date instead of waiting time",
+      "sources": [
+        {
+          "path": "backend/database.py",
+          "line": 1345
+        }
+      ],
+      "observation": "The queue is ordered by analyzed_at descending and cards display the analysis date. submitted_at exists, but the default queue does not prioritize elapsed review waiting time.",
+      "recommendation": "Default Pending to oldest submitted first, offer explicit sort, and display submitted date plus waiting age. Add lightweight follow-up tasks or assignments only when operationally needed.",
+      "acceptance": "An older pending submission can be found first even when its underlying analysis is older than a newly submitted case."
+    }
+  ]
+}

@@ -1,0 +1,1030 @@
+{
+  "name": "GeoSustain web issue remediation",
+  "created_date": "2026-10-27",
+  "scope": "Web only; implementation has not started; previous mobile work remains deferred",
+  "baseline_commit": "7f4c81e7b0d9441127e32fedffab101af84559b7",
+  "review_path": "defense-evidence/web-live-2026-10-26/web-review-findings.json",
+  "review_sha256": "6bab1aba994e2243faab38e52b608832f48cb81b68d03980b2982e58ca0c80d6",
+  "findings": [
+    {
+      "id": "WEB-01",
+      "priority": "P0",
+      "basis": "LIVE_CONFIRMED",
+      "area": "Deployment and authentication",
+      "title": "Required email service is not configured on Render",
+      "detail": "The live /ready response is HTTP 503: database=ready, model=ready, email_configuration=unavailable. /health is 200 on revision 7f4c81e7b0d9441127e32fedffab101af84559b7. This is a specific provider configuration gap, not evidence that the database or entire API is down.",
+      "impact": "Required signup email verification and self-service email recovery cannot be accepted. Existing-account login may still work and needs its own check.",
+      "fix": "Configure the owned Resend sender/API credential or supported TLS SMTP privately in Render. Preserve the required verification setting. Test receipt, expiry, incorrect code, resend limits and recovery session revocation using an authorized test account.",
+      "acceptance": "Live /ready returns 200 and real verification/recovery messages arrive; a configuration-only pass does not count as delivery proof.",
+      "sources": [
+        {
+          "path": "backend/fastapi_app.py",
+          "line": 2076
+        },
+        {
+          "path": "deployment/IDENTITY_AND_DELIVERY_SETUP.md",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "id": "WEB-02",
+      "priority": "P1",
+      "basis": "LIVE_CONFIRMED",
+      "area": "Web hosting",
+      "title": "Prepared Vercel security headers are absent from the checked live responses",
+      "detail": "The website HTML and main.dart.js responses have HSTS, but no Content-Security-Policy, X-Frame-Options, X-Content-Type-Options or Referrer-Policy. Those headers exist in deployment/vercel.json. The backend does return them. The default static-asset CORS wildcard is not, by itself, an authenticated API leak.",
+      "impact": "The prepared frame restriction and other browser policies are not enforced on the actual frontend response.",
+      "fix": "Ensure deployment/vercel.json is actually applied by the selected Vercel project/output setup; inspect the real project root/build settings. Do not assume its presence in a subfolder activates it. Validate any additional script policy with Flutter/Firebase before tightening it.",
+      "acceptance": "Fetch the deployed frontend responses and confirm intended headers; verify normal login, maps, PDF export and configured Firebase still work.",
+      "sources": [
+        {
+          "path": "deployment/vercel.json",
+          "line": 2
+        }
+      ]
+    },
+    {
+      "id": "WEB-03",
+      "priority": "P1",
+      "basis": "LIVE_CONFIRMED",
+      "area": "Release identity",
+      "title": "The live frontend has no verified link to the reviewed source revision",
+      "detail": "The fetched main.dart.js SHA-256 is acb0cbea6bd98ea75b004906c2cfa5d58c6ec3398229a9074383a9f6c87e1b33. It differs from the previously delivered local web candidate. Different SDKs/build flags can also change a hash: this does not prove the live frontend is old. The backend revision is explicitly verified, but frontend commit identity is not.",
+      "impact": "A screenshot or successful backend deployment cannot prove that fixes in the local Flutter web source are live on Vercel.",
+      "fix": "Record the actual Vercel deployment commit, Flutter version, build flags and artifact hash. Publish a non-secret version/build identifier and test cache upgrades against the matching backend.",
+      "acceptance": "The deployed frontend commit/build identity is visible and matches the intended candidate; a returning browser loads the new candidate without mixed assets.",
+      "sources": [
+        {
+          "path": "web/index.html",
+          "line": 18
+        },
+        {
+          "path": "deployment/RELEASE_HANDOVER.md",
+          "line": 20
+        }
+      ]
+    },
+    {
+      "id": "WEB-04",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Analysis results",
+      "title": "The analysis distribution graphic uses a fixed percentage",
+      "detail": "_WebDistributionPanel paints 5% for empty history and 72% for every non-empty history, while saying the distribution is based on history. It is used on Analyze Area. Its legends do not make that fixed arc a real distribution. The separate Crop Trends distribution has a different implementation and must not be confused with this panel.",
+      "impact": "The graphic can communicate invented analytical evidence during a defense.",
+      "fix": "Replace the fixed value with calculated counts from a documented record set and grade definition, or remove it until meaningful data exists. Represent empty, unknown and preliminary separately.",
+      "acceptance": "Empty history shows no fabricated segment; deliberately different fixture distributions produce matching segment values and visible counts.",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_trends_weather_soil_settings_screen.dart",
+          "line": 1355
+        },
+        {
+          "path": "lib/web/screens/web_analyze_screen.dart",
+          "line": 124
+        }
+      ]
+    },
+    {
+      "id": "WEB-05",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Responsive access",
+      "title": "Operator access changes when the browser becomes narrow or short",
+      "detail": "ShellPage defines the desktop portal as width >=900 and height >=600, then returns AccessDeniedPage for analyst/admin roles below that threshold. Browser resizing or zoom can therefore switch an authenticated operator from a portal to access denied. The sidebar is also fixed at 280 logical pixels.",
+      "impact": "Smaller laptops, split-screen windows and accessibility zoom can lose access to the same authorized work. Role permission and viewport presentation are coupled.",
+      "fix": "Keep role access independent of viewport size. Adapt the operator layout with a drawer/rail, wrapping toolbars and scrollable tables while preserving selection and unsaved work.",
+      "acceptance": "The same operator remains on a usable screen at desktop, narrow and short sizes and at agreed 200/400% zoom. No role changes or lost work occur solely from resizing.",
+      "sources": [
+        {
+          "path": "lib/main.dart",
+          "line": 2551
+        },
+        {
+          "path": "lib/main.dart",
+          "line": 2572
+        },
+        {
+          "path": "lib/web/web_analyst_shell.dart",
+          "line": 98
+        }
+      ]
+    },
+    {
+      "id": "WEB-06",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Account lifecycle",
+      "title": "Web account deletion and deactivation execute directly",
+      "detail": "WebSettingsScreen wires its buttons directly to _deleteAccount and _deactivate. These methods call the API immediately, have no confirmation dialog or busy/error guard, and show reload/sign-in guidance instead of explicitly transitioning the shell. Delete and deactivate APIs have server-side effects. No destructive live check was performed.",
+      "impact": "An accidental click can cause an account/data lifecycle operation. Network failures may escape without a useful recoverable UI.",
+      "fix": "Add an explicit consequence/confirmation step, appropriate reauthentication, one in-flight operation, friendly error handling and a completed sign-out/navigation transition. Preserve the approved owned-data deletion and anonymized audit rule.",
+      "acceptance": "Cancel sends no request; confirm sends one; failure retains a usable view; successful deletion/deactivation clears client state and leaves the protected portal. Use disposable staging accounts.",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_trends_weather_soil_settings_screen.dart",
+          "line": 1097
+        },
+        {
+          "path": "lib/web/screens/web_trends_weather_soil_settings_screen.dart",
+          "line": 1110
+        }
+      ]
+    },
+    {
+      "id": "WEB-07",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Scientific communication",
+      "title": "The main web results still mix model scores and suitability language",
+      "detail": "The main recommendation panel labels a score '% final', falls back between environmental and final score fields, and the shared map popup calls compatibility '% suitability'. The planner review already includes shared coverage/CAGRO/model explanation/factor cards, so the newer contract is not consistently presented across all desktop result surfaces.",
+      "impact": "A model ranking score can be read as a validated land suitability percentage. Unknown/preliminary conditions can be described as non-arable/not recommended instead of not assessed.",
+      "fix": "Use the shared analysis contract in the main analysis panel, map popup, history and reports. Keep AI model score, documented factor grade, preliminary status, missing evidence and actual non-arable evidence distinct. Use Suitable, Limited, Not suitable and Not assessed with text as well as color.",
+      "acceptance": "The same saved record has consistent meaning on every surface. Missing satellite/NPK evidence never becomes a negative soil/land diagnosis or a complete recommendation.",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_dashboard_screen.dart",
+          "line": 1004
+        },
+        {
+          "path": "lib/web/screens/web_dashboard_screen.dart",
+          "line": 1088
+        },
+        {
+          "path": "lib/web/widgets/web_common.dart",
+          "line": 379
+        },
+        {
+          "path": "lib/web/screens/web_planner_queue_screen.dart",
+          "line": 845
+        }
+      ]
+    },
+    {
+      "id": "WEB-08",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Dashboard and trends",
+      "title": "Some KPI names and denominators do not match their calculations",
+      "detail": "The dashboard calls a score average 'Verified crop recommendations' without filtering verification_status. 'Most Suitable Crop' is selected by recommendation frequency, not the highest suitability measure. Zero scores are excluded with v>0. Total area sums analysis rows and can count the same farm multiple times. Crop Trends also excludes score=0, and officialTrendRecords merges owned history with verified queue records.",
+      "impact": "Statistics can overstate scores, verified coverage or physical area and can mix personal and reviewed datasets under ambiguous labels.",
+      "fix": "Define each metric and dataset: recommendation frequency versus suitability, owned versus verified records, valid zero versus missing, unique farm area versus cumulative analysis area. Compute it from that definition and show the record scope/filter.",
+      "acceptance": "Fixtures containing zero, missing, duplicate-farm, preliminary, pending, rejected and verified rows produce documented totals and labels.",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_dashboard_screen.dart",
+          "line": 74
+        },
+        {
+          "path": "lib/web/screens/web_dashboard_screen.dart",
+          "line": 122
+        },
+        {
+          "path": "lib/web/screens/web_dashboard_screen.dart",
+          "line": 129
+        },
+        {
+          "path": "lib/main.dart",
+          "line": 1507
+        },
+        {
+          "path": "lib/web/screens/web_trends_weather_soil_settings_screen.dart",
+          "line": 61
+        }
+      ]
+    },
+    {
+      "id": "WEB-09",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Data refresh and errors",
+      "title": "Desktop history/report empty states can hide loading or fetch failures",
+      "detail": "AnalysisState has historyLoading/historyError, but the reviewed lib/web screens do not consume those states. Shared refresh silently catches saved-analysis/report/count/verified-trend failures. The common 'Refresh Data' header refreshes weather only; a 'History' button in the result panel refreshes history rather than navigating to it.",
+      "impact": "A failed request may look like no records, a stale list may look current, and refresh/navigation labels can surprise the user.",
+      "fix": "Render initial-loading, empty, no-match, stale-data and error/retry states separately per resource. Make refresh act on the current page or label it 'Refresh weather'. Give navigation buttons navigation callbacks.",
+      "acceptance": "Simulate first-load failure and refresh failure independently: no false empty success, previous data is marked stale, and retry recovers the intended resource.",
+      "sources": [
+        {
+          "path": "lib/main.dart",
+          "line": 1598
+        },
+        {
+          "path": "lib/web/widgets/web_common.dart",
+          "line": 88
+        },
+        {
+          "path": "lib/web/screens/web_dashboard_screen.dart",
+          "line": 1240
+        },
+        {
+          "path": "lib/web/screens/web_history_reports_screen.dart",
+          "line": 109
+        }
+      ]
+    },
+    {
+      "id": "WEB-10",
+      "priority": "P1",
+      "basis": "LIVE_CONFIRMED",
+      "area": "Identity and notification providers",
+      "title": "Google sign-in and web background push are not configured",
+      "detail": "The live firebase-config.js explicitly sets GEOSUSTAIN_FIREBASE=null, and the supplied screenshot shows disabled Google sign-in. Flutter public identity defines, authorized domain/client, VAPID and backend credentials still need separate verification; the null service-worker config alone proves web push is not enrolled by that configuration.",
+      "impact": "Google authentication and real background web push cannot be represented as complete. In-app activity and push receipt are different capabilities.",
+      "fix": "Use an owned Firebase project, correct web OAuth client/domain, public web app configuration, VAPID key and private backend FCM credentials. Preserve explicit linking and role restrictions. Test permission denial and real foreground/background/tap routing with authorized accounts.",
+      "acceptance": "Google sign-in and explicit linking complete; browser subscription exists; a real authorized event produces a received background notification that opens the correct permitted record.",
+      "sources": [
+        {
+          "path": "web/firebase-config.js",
+          "line": 3
+        },
+        {
+          "path": "web/firebase-messaging-sw.js",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "id": "WEB-11",
+      "priority": "P1",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Desktop profile",
+      "title": "Desktop settings do not expose the implemented identity controls",
+      "detail": "WebSettingsScreen offers name and location plus account actions. The separate IdentityProfileSection contains phone editing, SMS verification and explicit Google linking, but is not mounted in the reviewed desktop settings. Configuring providers alone will not make those controls appear there.",
+      "impact": "An analyst using the desktop portal cannot finish the required profile phone/verification/linking flow through this settings screen.",
+      "fix": "Integrate the shared identity section into web settings with clear verified/pending/unavailable states and appropriate security fields. Keep role assignment admin-controlled.",
+      "acceptance": "On the desktop portal, edit a number, request/verify OTP, reject wrong/expired proof and explicitly link an owned Google account. Unconfigured services have a clear explanation.",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_trends_weather_soil_settings_screen.dart",
+          "line": 1031
+        },
+        {
+          "path": "lib/screens/identity_settings.dart",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "id": "WEB-12",
+      "priority": "P1",
+      "basis": "SOURCE_RISK",
+      "area": "Theme and accessibility",
+      "title": "Desktop surfaces bypass the shared theme",
+      "detail": "The app supports a global dark theme, but WebAuthLoginShell, _WebCard, the analyst shell and many desktop text styles hard-code white/light surfaces and black text. Other text inherits the active theme. Web settings provide no local theme control. This pattern can reproduce the earlier light-surface/light-text problem; the current hosted dark rendering has not been interactively verified.",
+      "impact": "A persisted dark preference can produce mixed contrast, and desktop visual consistency is fragile.",
+      "fix": "Use paired theme colorScheme surfaces/onSurface values or an explicit consistently applied portal theme. Check auth, dashboard, maps, dialogs, history, settings and logout together.",
+      "acceptance": "Measure actual painted text/surface contrast and inspect all required states in light and dark; keyboard focus remains visible in both.",
+      "sources": [
+        {
+          "path": "lib/web/auth/web_auth_login.dart",
+          "line": 27
+        },
+        {
+          "path": "lib/web/widgets/web_common.dart",
+          "line": 14
+        },
+        {
+          "path": "lib/main.dart",
+          "line": 171
+        }
+      ]
+    },
+    {
+      "id": "WEB-13",
+      "priority": "P2",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Navigation and notifications",
+      "title": "The shared desktop header contains inactive menu and bell icons",
+      "detail": "_WebHeader paints Icons.menu_rounded and Icons.notifications_none_rounded as plain Icons, not actionable controls. The menu does not collapse/open the sidebar and the bell does not open activity. No unread count or activity destination is provided by these icons.",
+      "impact": "Controls that look interactive do not complete the expected navigation; important review/analysis events are not discoverable from the desktop header.",
+      "fix": "Implement a real responsive menu and a unified activity destination with meaningful labels/count/read state, or remove decorative control affordances. Keep weather advisories and account review events clearly named.",
+      "acceptance": "Keyboard and pointer can open/close navigation and activity, mark permitted events read and return to the prior work without losing state.",
+      "sources": [
+        {
+          "path": "lib/web/widgets/web_common.dart",
+          "line": 62
+        },
+        {
+          "path": "lib/web/widgets/web_common.dart",
+          "line": 104
+        }
+      ]
+    },
+    {
+      "id": "WEB-14",
+      "priority": "P2",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Dashboard help",
+      "title": "How It Works is an enabled button with an empty callback",
+      "detail": "The dashboard onboarding card has onPressed: () {} for How It Works.",
+      "impact": "A first-time analyst gets no explanation of selection, preliminary results, CAGRO evidence or review.",
+      "fix": "Add a short task-oriented guide with the real workflow and limitations, or remove/disable the button with a clear state until the guide exists.",
+      "acceptance": "The button opens usable help and returns to the same screen; every promised step corresponds to an implemented action.",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_dashboard_screen.dart",
+          "line": 440
+        }
+      ]
+    },
+    {
+      "id": "WEB-15",
+      "priority": "P2",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Web navigation",
+      "title": "Portal pages are index state rather than browser routes",
+      "detail": "The analyst and admin shells switch page integers. There is no URL mapping in those shells for their selected page, selected analysis or search state. Reload/back/deep-link behavior is therefore not defined by those selections.",
+      "impact": "A refresh can return to the dashboard; browser Back and shared report/review URLs may not match user expectations. Actual browser behavior still needs a journey test.",
+      "fix": "Define role-aware browser routes for key destinations and record IDs, configure Vercel SPA fallback as needed, and preserve safe search/selection state. Keep server authorization on every detail fetch.",
+      "acceptance": "Direct authorized URLs, refresh, Back/Forward, copied links and unauthorized IDs all have documented correct outcomes.",
+      "sources": [
+        {
+          "path": "lib/web/web_analyst_shell.dart",
+          "line": 19
+        },
+        {
+          "path": "lib/web/web_admin_shell.dart",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "id": "WEB-16",
+      "priority": "P2",
+      "basis": "SOURCE_CONFIRMED",
+      "area": "Large record sets",
+      "title": "History pagination limits rendered rows after downloading the entire history",
+      "detail": "ApiService._history loops through every backend 50-row page before returning; WebHistoryScreen then searches and paginates that in-memory collection in 20-row display pages. The admin uses a different bounded server-page/search implementation. Backend SQL read tests do not measure this browser fetch/render path.",
+      "impact": "Accounts with long histories incur more sequential requests, memory and startup time than the displayed page suggests.",
+      "fix": "Use server-side query/filter/page for desktop history/reports where practical. Keep totals and analytics as separate aggregate requests with explicit scope rather than deriving everything from a loaded page.",
+      "acceptance": "With a representative large account, first-page request count and bytes stay bounded, search covers the full intended dataset and the recorded browser latency/memory budget passes.",
+      "sources": [
+        {
+          "path": "lib/api_service.dart",
+          "line": 1088
+        },
+        {
+          "path": "lib/web/screens/web_history_reports_screen.dart",
+          "line": 54
+        }
+      ]
+    },
+    {
+      "id": "WEB-17",
+      "priority": "P2",
+      "basis": "SOURCE_RISK",
+      "area": "Browser session storage",
+      "title": "The web bearer token is stored in JavaScript-accessible preferences",
+      "detail": "SessionTokenStore uses SharedPreferences for non-Android clients, including web. This is not an HttpOnly cookie design. Existing server session revocation is useful, but a successful same-origin script compromise could access browser-stored tokens. No XSS exploit was attempted or demonstrated.",
+      "impact": "Browser script security and token lifetime matter to the security boundary; Android protected storage does not establish equivalent web protection.",
+      "fix": "Document the web session threat model, expiry and revocation. Assess a secure HttpOnly session approach with correct cross-site cookie/CORS/CSRF behavior, or explicitly harden and accept the bearer-storage tradeoff. Avoid a rushed cookie migration without compatibility tests.",
+      "acceptance": "A reviewed session design has tested logout, expiry, cross-account isolation and relevant script/cookie controls on the actual domains.",
+      "sources": [
+        {
+          "path": "lib/session_token_store.dart",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "id": "WEB-18",
+      "priority": "P1",
+      "basis": "REQUIRES_BROWSER",
+      "area": "Keyboard, reflow and maps",
+      "title": "A full accessible desktop journey is still unproven",
+      "detail": "The fixed sidebar, non-wrapping analysis action Row, compact 340px panels and icon-only map InkWells create concrete reflow/label/focus risks. _MapToolButton has no explicit tooltip or semantic action label. Source semantics and widget tests do not prove a usable human screen-reader or keyboard map-selection workflow.",
+      "impact": "Keyboard-only or zoomed users may be unable to reach or understand essential actions even if a wide screenshot looks correct.",
+      "fix": "Run actual Tab/Shift+Tab/Enter/Space/Escape and screen-reader journeys. Add semantic names, focus/return handling, reflow and coordinate/polygon alternatives where needed. Separate inherently two-dimensional maps from ordinary text/control reflow.",
+      "acceptance": "The supported browsers complete login, map selection, analysis, review and PDF without an invisible focus/trap or clipped action at the agreed zoom levels; record browser versions and human outcomes.",
+      "sources": [
+        {
+          "path": "lib/web/screens/web_analyze_screen.dart",
+          "line": 103
+        },
+        {
+          "path": "lib/web/widgets/web_common.dart",
+          "line": 471
+        }
+      ]
+    }
+  ],
+  "phases": [
+    {
+      "id": "00",
+      "title": "Verify the deployed web baseline and hosting",
+      "slug": "Web_Baseline_and_Hosting",
+      "issues": [
+        "WEB-02",
+        "WEB-03"
+      ],
+      "depends": [],
+      "skill": "geosustain-web-baseline",
+      "purpose": "Identify the actual frontend/backend candidate and make intended hosting policies effective before accepting subsequent live fixes.",
+      "files": [
+        "web/index.html",
+        "deployment/vercel.json",
+        "deployment/RELEASE_HANDOVER.md",
+        ".github/workflows/render-health-check.yml"
+      ],
+      "external": "Vercel project/build/root settings and Render configuration must be available through owned access. A missing connector does not justify guessing deployment identity.",
+      "tasks": [
+        {
+          "title": "Record the actual frontend and backend candidate",
+          "work": "Capture source commit, GitHub main, Vercel deployment commit, Flutter SDK/build flags, API origin, public JS hash and backend /health revision. Compare to the dated review. A hash mismatch alone is not proof of an old build. Add a small non-secret build/version identifier if the deployed frontend has none.",
+          "acceptance": "A tester can identify the exact web and API versions without secrets, and evidence distinguishes reviewed source from deployed behavior.",
+          "evidence": "baseline.json; frontend/backend identity screenshots or API metadata",
+          "kind": "CONFIG_AND_CODE",
+          "id": "W00-01",
+          "status": "COMPLETE",
+          "phase": "00"
+        },
+        {
+          "title": "Apply the frontend response policies",
+          "work": "Inspect Vercel root/build/output settings and ensure the prepared header rules actually reach the deployed site. Retain Flutter/Firebase/map/report compatibility; avoid introducing a blanket script policy without testing required resources. Check HTML, bootstrap, JS, worker and public Firebase configuration cache behavior.",
+          "acceptance": "Intended frame, MIME and referrer policies are present on the checked live responses, assets have deliberate cache rules, and sign-in/maps/report loading still work.",
+          "evidence": "before/after public response headers and functional smoke",
+          "kind": "HOST_CONFIGURATION",
+          "id": "W00-02",
+          "status": "CODE_COMPLETE",
+          "phase": "00"
+        },
+        {
+          "title": "Publish a matching testable candidate and upgrade path",
+          "work": "Use a matching frontend/API candidate after source changes are reviewed. Record the previous compatible release, configuration ownership, backup/recovery procedure and data reconciliation window before schema changes. Test a fresh browser and a browser with the prior cached build. Never publish credentials or historical personal evidence.",
+          "acceptance": "Fresh and returning browsers load the intended complete candidate; no mixed web assets/API are credited as a pass; the previous release is identified.",
+          "evidence": "deployment manifest, cache upgrade observations, rollback preparation",
+          "kind": "LIVE_RELEASE_CHECK",
+          "id": "W00-03",
+          "status": "PENDING_EXTERNAL",
+          "phase": "00"
+        },
+        {
+          "title": "Separate liveness, readiness and browser availability",
+          "work": "Record /health and /ready independently, including the known email_configuration gap. Define useful monitoring/receipt ownership without treating the ten-minute health workflow as uptime or real delivery proof. Record one warm and one naturally cold startup when observable; do not manufacture production outages.",
+          "acceptance": "Monitoring notes distinguish healthy process, configured required services, actual browser workflow and recipient delivery. Email setup can remain pending while independent code phases continue.",
+          "evidence": "readiness snapshot, startup observations and monitor ownership",
+          "kind": "OPERATIONS_CHECK",
+          "id": "W00-04",
+          "status": "PENDING_EXTERNAL",
+          "phase": "00"
+        }
+      ],
+      "file": "PHASE_00_Web_Baseline_and_Hosting.md",
+      "status": "PARTIAL",
+      "skill_path": "skills/geosustain-web-baseline/SKILL.md"
+    },
+    {
+      "id": "01",
+      "title": "Complete web authentication and delivery setup",
+      "slug": "Web_Identity_and_Delivery",
+      "issues": [
+        "WEB-01",
+        "WEB-10",
+        "WEB-11"
+      ],
+      "depends": [
+        "00"
+      ],
+      "skill": "geosustain-web-identity",
+      "purpose": "Make required email, Google, profile phone and web push capabilities usable with clear configuration and real receipt evidence.",
+      "files": [
+        "lib/web/auth/web_auth_login.dart",
+        "lib/web/screens/web_trends_weather_soil_settings_screen.dart",
+        "lib/screens/identity_settings.dart",
+        "lib/firebase_runtime.dart",
+        "lib/federated_identity.dart",
+        "lib/push_notifications.dart",
+        "web/firebase-config.js",
+        "web/firebase-messaging-sw.js",
+        "backend/mail_delivery.py",
+        "backend/email_verification.py",
+        "backend/password_reset.py",
+        "backend/federated_identity.py",
+        "deployment/IDENTITY_AND_DELIVERY_SETUP.md"
+      ],
+      "external": "No owned Firebase project was supplied. A real sender/domain, private provider configuration and authorized test recipients are also needed. Work on UI and controlled tests can continue while these remain pending.",
+      "tasks": [
+        {
+          "title": "Resolve the required email readiness failure",
+          "work": "Use the existing mail transport integration with an owned sender and supported delivery configuration on Render. Keep secrets on the host and preserve required email verification. Do not disable a required flag to obtain a green readiness result.",
+          "acceptance": "Live /ready reports required email configuration ready; configuration presence is recorded separately from message receipt.",
+          "evidence": "sanitized configuration-presence/readiness results",
+          "kind": "PROVIDER_CONFIGURATION",
+          "id": "W01-01",
+          "status": "PENDING_EXTERNAL",
+          "phase": "01"
+        },
+        {
+          "title": "Accept real signup and recovery journeys",
+          "work": "With authorized disposable accounts, verify actual email receipt, valid/wrong/expired code, resend/guess limits, one-use behavior, duplicate email and readable field errors. Test recovery separately and confirm older sessions are invalidated while existing accounts still sign in.",
+          "acceptance": "Both delivered signup verification and recovery complete with bounded invalid attempts and no account enumeration or automatic privilege grant.",
+          "evidence": "redacted receipt metadata, case results and session revocation checks",
+          "kind": "LIVE_PROVIDER_TEST",
+          "id": "W01-02",
+          "status": "PENDING_EXTERNAL",
+          "phase": "01"
+        },
+        {
+          "title": "Configure owned Google and web push identities",
+          "work": "Create or select the owner-controlled project through available authorized access, configure actual Vercel domain/OAuth web client and public Flutter identifiers, and align service-worker config/VAPID with backend project credentials. Keep service-account keys out of web assets. State any SMS billing/quota or provider dependency as an owner input rather than promising a free service.",
+          "acceptance": "All client/server public project identifiers match, required backend checks are honest, and unconfigured features have clear UI explanations.",
+          "evidence": "public configuration identity manifest without private values",
+          "kind": "PROVIDER_CONFIGURATION",
+          "id": "W01-03",
+          "status": "PENDING_EXTERNAL",
+          "phase": "01"
+        },
+        {
+          "title": "Expose complete desktop identity settings",
+          "work": "Mount or adapt IdentityProfileSection in desktop settings: phone edit/verified state, OTP request/verify and explicit Google linking. Keep verification bound to the current owner and exact normalized number; show inline invalid/pending/unavailable feedback. Preserve admin-only role assignment.",
+          "acceptance": "A desktop operator can reach and complete the intended controls without switching to a farmer/mobile layout. Wrong/expired/replayed proof and changed-number invalidation behave correctly.",
+          "evidence": "desktop integration tests and redacted browser case evidence",
+          "kind": "CODE_AND_TEST",
+          "id": "W01-04",
+          "status": "VERIFIED_LOCAL",
+          "phase": "01"
+        },
+        {
+          "title": "Verify actual Google, SMS and background push",
+          "work": "Use authorized test accounts/recipients only. Test Google login versus explicit linking, the current phone challenge and real SMS receipt, browser permission grant/deny, foreground/background web push, notification click and reauthentication. A mocked accepted delivery or visible inbox is not background receipt.",
+          "acceptance": "Real provider outcomes are recorded separately for acceptance, receipt and authorized target opening. Unsupported or unavailable states remain pending with reasons.",
+          "evidence": "provider/browser outcome matrix with no codes, tokens or private payloads",
+          "kind": "LIVE_PROVIDER_TEST",
+          "id": "W01-05",
+          "status": "PENDING_EXTERNAL",
+          "phase": "01"
+        },
+        {
+          "title": "Handle sign-in and recovery errors consistently",
+          "work": "Keep field errors and corrected input readable across desktop auth pages, add a labelled password-visibility control where missing, and preserve retry/draft behavior during a cold backend or expired session. Add no new login mechanism beyond the existing project requirements.",
+          "acceptance": "Invalid input, incorrect password, expired session, provider unavailable and network failure give distinct recoverable feedback without leaking account data.",
+          "evidence": "focused widget regressions plus live error-state observations",
+          "kind": "CODE_AND_TEST",
+          "id": "W01-06",
+          "status": "VERIFIED_LOCAL",
+          "phase": "01"
+        }
+      ],
+      "file": "PHASE_01_Web_Identity_and_Delivery.md",
+      "status": "PARTIAL",
+      "skill_path": "skills/geosustain-web-identity/SKILL.md"
+    },
+    {
+      "id": "02",
+      "title": "Correct analytical results, charts and statistics",
+      "slug": "Analysis_Grades_Charts_and_Statistics",
+      "issues": [
+        "WEB-04",
+        "WEB-07",
+        "WEB-08"
+      ],
+      "depends": [
+        "00"
+      ],
+      "skill": "geosustain-web-analysis",
+      "purpose": "Ensure every web result and statistic expresses the evidence actually available, without fabricated distribution values or unsupported nutrient conclusions.",
+      "files": [
+        "lib/web/screens/web_dashboard_screen.dart",
+        "lib/web/screens/web_analyze_screen.dart",
+        "lib/web/widgets/web_common.dart",
+        "lib/web/screens/web_history_reports_screen.dart",
+        "lib/web/screens/web_planner_queue_screen.dart",
+        "lib/web/screens/web_trends_weather_soil_settings_screen.dart",
+        "lib/main.dart",
+        "lib/widgets/analysis_coverage.dart",
+        "lib/screens/reference_analysis.dart",
+        "backend/soil_nutrient_screening.py"
+      ],
+      "external": "Complete CAGRO-based nutrient grades still need compatible units/methods, an accepted sample-to-farm rule and documented crop criteria or validated model evidence. These are not replaced by code or analyst approval.",
+      "tasks": [
+        {
+          "title": "Define one web analysis presentation contract",
+          "work": "Inventory live analysis, map popup, historical detail, planner review and PDF fields. Document AI model score versus factor grade, full versus preliminary, unknown land cover versus non-arable evidence, and raw observations versus estimates. Reuse shared factor/coverage/CAGRO components where appropriate.",
+          "acceptance": "All result surfaces use the same definitions and retain source, period, units and missing-value meaning. Suitable/Limited/Not suitable/Not assessed are text labels, not just colors.",
+          "evidence": "field/label contract and representative fixtures",
+          "kind": "CONTRACT_AND_CODE",
+          "id": "W02-01",
+          "status": "CODE_COMPLETE",
+          "phase": "02"
+        },
+        {
+          "title": "Remove invented distribution graphics",
+          "work": "Replace the 5%/72% constant in _WebDistributionPanel with actual categories/counts from an explicitly scoped eligible dataset, or remove the panel until meaningful. Treat missing, zero, preliminary and not assessed distinctly. Do not treat the separate Crop Trends implementation as already fixed by this repair.",
+          "acceptance": "Empty data displays no invented segment. Different documented fixture distributions change the chart and visible counts correctly.",
+          "evidence": "dataset-to-chart assertions and before/after screenshots",
+          "kind": "CODE_AND_TEST",
+          "id": "W02-02",
+          "status": "VERIFIED_LOCAL",
+          "phase": "02"
+        },
+        {
+          "title": "Repair KPI and trend definitions",
+          "work": "Choose labels and denominators that match calculations: recommendation frequency is not most suitable crop, verified requires status filtering, zero is not missing, and unique farm area is not the sum of repeated analysis areas. Make personal history versus reviewed submissions explicit; document tie and duplicate behavior.",
+          "acceptance": "Zero/missing/duplicate-farm/preliminary/pending/rejected/verified fixtures yield the documented totals, percentages and labels.",
+          "evidence": "metric definitions, calculation regressions and fixture outputs",
+          "kind": "CODE_AND_TEST",
+          "id": "W02-03",
+          "status": "VERIFIED_LOCAL",
+          "phase": "02"
+        },
+        {
+          "title": "Apply truthful factors and CAGRO states everywhere",
+          "work": "Replace legacy '% final'/'% suitability' fallbacks that misrepresent model rank. Surface the shared coverage, factor status, source and uncertainty in the main workspace and historical detail as well as planner review. Keep unavailable NPK and unknown satellite states useful without labelling them complete or non-arable by default.",
+          "acceptance": "The same record has consistent scientific meaning in map, analysis, history, planner detail and export. No unsupported CAGRO substitution, unit conversion or score-to-grade invention is introduced.",
+          "evidence": "cross-screen fixture matrix and actual partial-result screenshots",
+          "kind": "CODE_AND_TEST",
+          "id": "W02-04",
+          "status": "CODE_COMPLETE",
+          "phase": "02"
+        },
+        {
+          "title": "Verify report provenance and analytic regressions",
+          "work": "Check PDF output from the exact saved record, including original model/rule/source versions and partial outcomes. If PDF layout changes, use the installed PDF skill and render every affected page for visual inspection. Retest point/polygon admission and stale-score suppression using existing regression coverage.",
+          "acceptance": "Saved/exported content does not silently recompute history under current rules or upgrade a partial result; actual PDF pages are readable and claims match the screen.",
+          "evidence": "PDF/source identity, rendered affected pages and focused test logs",
+          "kind": "REGRESSION_AND_EXPORT",
+          "id": "W02-05",
+          "status": "VERIFIED_LOCAL",
+          "phase": "02"
+        }
+      ],
+      "file": "PHASE_02_Analysis_Grades_Charts_and_Statistics.md",
+      "status": "PARTIAL",
+      "skill_path": "skills/geosustain-web-analysis/SKILL.md"
+    },
+    {
+      "id": "03",
+      "title": "Repair the responsive web shell and navigation",
+      "slug": "Responsive_Shell_Theme_and_Navigation",
+      "issues": [
+        "WEB-05",
+        "WEB-12",
+        "WEB-13",
+        "WEB-14",
+        "WEB-15"
+      ],
+      "depends": [
+        "00"
+      ],
+      "skill": "geosustain-web-shell",
+      "purpose": "Keep authorized operators working across window sizes and provide consistent theme, usable navigation, activity and help.",
+      "files": [
+        "lib/main.dart",
+        "lib/web/web_analyst_shell.dart",
+        "lib/web/web_admin_shell.dart",
+        "lib/web/widgets/web_common.dart",
+        "lib/web/auth/web_auth_login.dart",
+        "lib/web/screens/web_dashboard_screen.dart",
+        "lib/web/screens/web_analyze_screen.dart",
+        "lib/web/screens/web_trends_weather_soil_settings_screen.dart",
+        "web/index.html",
+        "deployment/vercel.json"
+      ],
+      "external": "Exact browser/OS and supported zoom evidence requires a real compiled browser. New routes must match the deployed Vercel SPA setup.",
+      "tasks": [
+        {
+          "title": "Separate role permission from viewport layout",
+          "work": "Remove analyst/admin access denial caused solely by width/height. Keep backend authorization and unknown-role denial intact. Add a responsive drawer/rail/sidebar transition and reflow dashboard, analysis toolbars, settings and admin tables while preserving selected record, form input and analysis state.",
+          "acceptance": "Resizing or zoom does not change the authorized role or discard work. Narrow/short windows remain operable without ordinary controls being clipped.",
+          "evidence": "responsive widget checks and real resize/zoom observations",
+          "kind": "CODE_AND_TEST",
+          "id": "W03-01",
+          "status": "CODE_COMPLETE",
+          "phase": "03"
+        },
+        {
+          "title": "Make theme colors coherent across desktop screens",
+          "work": "Replace incompatible hard-coded surfaces/text with paired theme values, or explicitly apply a consistent supported portal theme. Cover auth/logout/register, dashboard, map overlays, results, history, planner/admin dialogs and settings. Preserve the requested GeoSustain branding; do not redesign unrelated mobile screens.",
+          "acceptance": "The supported light/dark choices persist and text/selection/focus/errors remain readable on actual painted surfaces.",
+          "evidence": "paired screenshots and measured contrast samples",
+          "kind": "CODE_AND_TEST",
+          "id": "W03-02",
+          "status": "CODE_COMPLETE",
+          "phase": "03"
+        },
+        {
+          "title": "Wire menu, activity and useful help",
+          "work": "Make the menu icon open/collapse real navigation; connect the bell to a unified permission-aware activity destination with unread/read state. Implement How It Works as a short selection\u2192analysis\u2192save/report\u2192review guide that explains partial results. Weather advisories remain clearly separated from review/activity events.",
+          "acceptance": "Pointer and keyboard activate each offered control and return to preserved work; no enabled no-op remains in the reviewed shell.",
+          "evidence": "navigation/action inventory and interaction case results",
+          "kind": "CODE_AND_TEST",
+          "id": "W03-03",
+          "status": "CODE_COMPLETE",
+          "phase": "03"
+        },
+        {
+          "title": "Add browser routes with safe return state",
+          "work": "Define stable role-aware routes for dashboard, analysis, history, reports, queue, settings and appropriate record detail. Decide which harmless filters/selection belong in URLs versus local state. Configure SPA fallback only as necessary and fetch authorized details after login; do not trust record IDs or notification payloads as permission.",
+          "acceptance": "Direct links, reload and Back/Forward work for permitted targets. Unauthorized or missing IDs have a useful safe destination and do not expose cached foreign records.",
+          "evidence": "route matrix, browser history observations and negative ID checks",
+          "kind": "CODE_AND_TEST",
+          "id": "W03-04",
+          "status": "CODE_COMPLETE",
+          "phase": "03"
+        },
+        {
+          "title": "Preserve auth and pending-work transitions",
+          "work": "Verify layout changes, tab changes, login/logout and route transitions do not resurrect old users, old results or abandoned polygons. Keep in-flight work truthful and provide a recoverable pending/error state rather than silently hiding it.",
+          "acceptance": "Account switching and viewport/route changes retain only the correct owner's intended state; returning to an analysis does not duplicate submission.",
+          "evidence": "state-transition regressions and matching browser cases",
+          "kind": "CODE_AND_TEST",
+          "id": "W03-05",
+          "status": "CODE_COMPLETE",
+          "phase": "03"
+        }
+      ],
+      "file": "PHASE_03_Responsive_Shell_Theme_and_Navigation.md",
+      "status": "PARTIAL",
+      "skill_path": "skills/geosustain-web-shell/SKILL.md"
+    },
+    {
+      "id": "04",
+      "title": "Fix resource states, refresh and large-record loading",
+      "slug": "Data_States_Refresh_and_Pagination",
+      "issues": [
+        "WEB-09",
+        "WEB-16"
+      ],
+      "depends": [
+        "00"
+      ],
+      "skill": "geosustain-web-data",
+      "purpose": "Make loading, failure, empty, no-match and stale data visible and keep first-page fetching bounded.",
+      "files": [
+        "lib/main.dart",
+        "lib/api_service.dart",
+        "lib/web/widgets/web_common.dart",
+        "lib/web/screens/web_history_reports_screen.dart",
+        "lib/web/screens/web_dashboard_screen.dart",
+        "lib/web/screens/web_planner_queue_screen.dart",
+        "lib/web/web_admin_shell.dart",
+        "backend/fastapi_app.py"
+      ],
+      "external": "Actual compiled-browser network/memory measurements require a representative owned staging dataset and browser. Do not stress shared production or providers to create evidence.",
+      "tasks": [
+        {
+          "title": "Give each resource explicit display state",
+          "work": "Track and display first-load progress, valid empty, no search matches, refresh failure with stale rows and retry for history, saved analyses, reports, counts and trends. Replace swallowed errors with resource-specific state while preserving valid panels. Do not present an unavailable count as verified zero.",
+          "acceptance": "Controlled initial and refresh failures never look like successful empty lists. A retry recovers only the intended resources and retains valid data where appropriate.",
+          "evidence": "failure/empty/stale fixture cases and UI observations",
+          "kind": "CODE_AND_TEST",
+          "id": "W04-01",
+          "status": "VERIFIED_LOCAL",
+          "phase": "04"
+        },
+        {
+          "title": "Make refresh and navigation labels match actions",
+          "work": "Make Refresh Data refresh the current resource or label it explicitly as weather refresh. Make History navigate when offered as navigation. Coalesce duplicate refreshes and guard stale responses when the owner, route or query changes.",
+          "acceptance": "Each control has one predictable action; old responses cannot overwrite a new query or account; success feedback corresponds to the request that actually succeeded.",
+          "evidence": "control/action matrix and delayed-response tests",
+          "kind": "CODE_AND_TEST",
+          "id": "W04-02",
+          "status": "CODE_COMPLETE",
+          "phase": "04"
+        },
+        {
+          "title": "Fetch desktop pages and searches from the server",
+          "work": "Replace all-history bootstrap for the affected desktop list flows with bounded server query/filter/page requests. Keep total counts and analytic aggregates explicit and consistently scoped rather than calculating whole-account claims from one loaded page. Retain the already bounded admin implementation unless changed behavior is justified.",
+          "acceptance": "First page loads without retrieving every history page; full-dataset search remains correct; next/previous and changed queries have stable boundaries with no missing/duplicate rows.",
+          "evidence": "request-count/bytes evidence and server pagination/search regressions",
+          "kind": "CODE_AND_TEST",
+          "id": "W04-03",
+          "status": "VERIFIED_LOCAL",
+          "phase": "04"
+        },
+        {
+          "title": "Measure a realistic browser dataset and recovery",
+          "work": "Agree the staging dataset, browser/network/host conditions and response budget before measurement. Exercise a large account, rapid query changes, empty results, offline/reconnect and expired token; record startup and first-page requests/bytes/latency rather than extrapolating SQL benchmarks.",
+          "acceptance": "The recorded first-page budget passes with bounded fetches and useful recovery; failures and unfinished runs remain visible instead of being counted as passes.",
+          "evidence": "browser network/latency/memory notes, dataset identity and outcomes",
+          "kind": "BROWSER_PERFORMANCE_CHECK",
+          "id": "W04-04",
+          "status": "REQUIRES_MANUAL",
+          "phase": "04"
+        }
+      ],
+      "file": "PHASE_04_Data_States_Refresh_and_Pagination.md",
+      "status": "PARTIAL",
+      "skill_path": "skills/geosustain-web-data/SKILL.md"
+    },
+    {
+      "id": "05",
+      "title": "Protect account actions and the browser session",
+      "slug": "Account_Actions_and_Web_Session_Security",
+      "issues": [
+        "WEB-06",
+        "WEB-17"
+      ],
+      "depends": [
+        "00"
+      ],
+      "skill": "geosustain-web-account-safety",
+      "purpose": "Prevent accidental destructive account actions and establish an explicit, tested web session design without breaking shared clients.",
+      "files": [
+        "lib/web/screens/web_trends_weather_soil_settings_screen.dart",
+        "lib/session_token_store.dart",
+        "lib/api_service.dart",
+        "lib/screens/session_gate.dart",
+        "lib/main.dart",
+        "backend/fastapi_app.py",
+        "deployment/vercel.json"
+      ],
+      "external": "Destructive acceptance uses isolated disposable accounts/data. Cookie/session decisions require the actual Vercel/Render domain behavior and an explicit compatibility design; no production user is deleted for testing.",
+      "tasks": [
+        {
+          "title": "Add deliberate account-action confirmation",
+          "work": "Show clear consequences and cancellation before delete/deactivate, with appropriate recent authentication for the chosen design. Disable repeated actions while pending and catch server/network errors. Preserve the approved deletion rule for owned farms/coordinates/analyses/photos/reports and anonymized audits.",
+          "acceptance": "Cancel sends no request. Confirmation sends one request. Failure leaves a useful retry state and does not falsely claim deletion.",
+          "evidence": "controlled API/UI tests with disposable identity fixtures",
+          "kind": "CODE_AND_TEST",
+          "id": "W05-01",
+          "status": "VERIFIED_LOCAL",
+          "phase": "05"
+        },
+        {
+          "title": "Complete post-action logout and state cleanup",
+          "work": "After confirmed server success, revoke/clear the correct session, remove owner-bound client caches/subscriptions as required and leave the protected portal. Avoid clearing user work before an unsuccessful server action. Test account switch and stale asynchronous results.",
+          "acceptance": "Deleted/deactivated accounts cannot remain in a usable protected shell; Back/reload cannot expose prior-owner data; failed actions do not lose unrelated valid data.",
+          "evidence": "session/lifecycle regression results and disposable browser case",
+          "kind": "CODE_AND_TEST",
+          "id": "W05-02",
+          "status": "VERIFIED_LOCAL",
+          "phase": "05"
+        },
+        {
+          "title": "Choose and document the web session boundary",
+          "work": "Review the existing JavaScript-accessible bearer preference store, expiry and revocation against actual domains and script exposure. Compare a secure HttpOnly session design with a deliberately hardened bearer approach; document the selected tradeoff. A cookie migration needs intentional SameSite/CORS/CSRF and shared API compatibility, not a local storage rename.",
+          "acceptance": "A clear design decision identifies token/cookie lifetime, logout, recovery, account isolation and browser script assumptions. Android protected storage is not cited as web protection.",
+          "evidence": "WEB_SESSION_DECISION.md and compatibility/threat cases",
+          "kind": "DESIGN_AND_SECURITY_CHECK",
+          "id": "W05-03",
+          "status": "COMPLETE",
+          "phase": "05"
+        },
+        {
+          "title": "Implement the selected session hardening and retest roles",
+          "work": "Apply only the selected design, aligning frontend response policies and server checks. Retest expired/revoked sessions, logout, password reset/version changes, cross-account caches, role/owner denial and required CSRF/cookie behavior. Preserve mobile transport compatibility even though mobile testing is deferred; record any affected mobile cases for later.",
+          "acceptance": "The changed session design passes the relevant browser/API security cases and a normal authorized role journey without weakening backend role/owner checks.",
+          "evidence": "focused security regressions and live/staging role/session outcomes",
+          "kind": "CODE_AND_TEST",
+          "id": "W05-04",
+          "status": "VERIFIED_LOCAL",
+          "phase": "05"
+        }
+      ],
+      "file": "PHASE_05_Account_Actions_and_Web_Session_Security.md",
+      "status": "PARTIAL",
+      "skill_path": "skills/geosustain-web-account-safety/SKILL.md"
+    },
+    {
+      "id": "06",
+      "title": "Validate keyboard, accessibility and browser behavior",
+      "slug": "Accessibility_and_Browser_Acceptance",
+      "issues": [
+        "WEB-18"
+      ],
+      "depends": [
+        "02",
+        "03",
+        "04",
+        "05"
+      ],
+      "skill": "geosustain-web-accessibility",
+      "purpose": "Turn source reflow/focus risks into actual tested browser behavior on the corrected candidate.",
+      "files": [
+        "lib/web/widgets/web_common.dart",
+        "lib/web/screens/web_analyze_screen.dart",
+        "lib/web/web_analyst_shell.dart",
+        "lib/web/web_admin_shell.dart",
+        "lib/web/auth/web_auth_login.dart",
+        "web/index.html"
+      ],
+      "external": "A controllable actual browser or the user's manual participation is required. If no browser surface is exposed, keep dependent cases pending and give concise user steps; do not call widget tests browser passes.",
+      "tasks": [
+        {
+          "title": "Define the supported browser and viewport matrix",
+          "work": "Record browser/OS versions, viewport dimensions, actual browser zoom and relevant assistive technology. Cover the user's desktop browser and agreed Chrome/Edge/Firefox plus any required Safari target. Preserve previously required but deferred platforms as deferred rather than inventing passes.",
+          "acceptance": "The matrix lists actual targets and explicitly pending/unavailable targets, with no assumption that simulated width proves a real engine/device pass.",
+          "evidence": "BROWSER_MATRIX.csv with candidate identities",
+          "kind": "MANUAL_ACCEPTANCE",
+          "id": "W06-01",
+          "status": "REQUIRES_MANUAL",
+          "phase": "06"
+        },
+        {
+          "title": "Complete keyboard and dialog navigation",
+          "work": "Run Tab/Shift+Tab/Enter/Space/Escape through auth, navigation, selection, analysis, review, settings and report actions. Give map controls meaningful names/tooltips, visible focus and usable non-pointer alternatives; ensure dialogs announce errors/status and return focus after close.",
+          "acceptance": "Required journeys complete without pointer-only traps or unnamed essential controls. Focus remains visible and lands sensibly after navigation and dialogs.",
+          "evidence": "keyboard case steps, semantic observations and human outcomes",
+          "kind": "BROWSER_ACCESSIBILITY",
+          "id": "W06-02",
+          "status": "CODE_COMPLETE",
+          "phase": "06"
+        },
+        {
+          "title": "Check zoom, contrast, text reflow and status meaning",
+          "work": "Use actual 200/400% browser zoom and narrow/short windows on agreed targets. Measure text/surface pairs for applicable 4.5:1 normal-text and other agreed contrast criteria, including theme/focus/errors/disabled states. Keep maps' two-dimensional nature distinct from clipped ordinary controls and test non-color grade labels.",
+          "acceptance": "No authorized access loss or clipped primary action; text and statuses remain understandable in both themes and the agreed reflow cases.",
+          "evidence": "contrast measurements, viewport/zoom screenshots and issue retests",
+          "kind": "BROWSER_ACCESSIBILITY",
+          "id": "W06-03",
+          "status": "REQUIRES_MANUAL",
+          "phase": "06"
+        },
+        {
+          "title": "Verify maps, downloads, history and permission recovery",
+          "work": "Test point/polygon editing, incomplete/invalid boundaries, map tile failure, geolocation grant/deny, browser Back/Forward, direct URLs, PDF download/print, popup restrictions and cache upgrades. Test the chosen theme and restored session in private/restricted storage modes where supported.",
+          "acceptance": "Each required browser operation works or explains a real permission/storage limitation with recovery; failures are recorded on the exact target rather than generalized away.",
+          "evidence": "browser feature matrix and redacted screenshots",
+          "kind": "MANUAL_ACCEPTANCE",
+          "id": "W06-04",
+          "status": "REQUIRES_MANUAL",
+          "phase": "06"
+        }
+      ],
+      "file": "PHASE_06_Accessibility_and_Browser_Acceptance.md",
+      "status": "PARTIAL",
+      "skill_path": "skills/geosustain-web-accessibility/SKILL.md"
+    },
+    {
+      "id": "07",
+      "title": "Deploy the matched fixes and reconcile web QA",
+      "slug": "Live_Web_Regression_and_Handover",
+      "issues": [],
+      "depends": [
+        "00",
+        "01",
+        "02",
+        "03",
+        "04",
+        "05",
+        "06"
+      ],
+      "skill": "geosustain-web-final-qa",
+      "purpose": "Close only evidence-supported findings on a matched deployed release and deliver a truthful web-only acceptance decision.",
+      "files": [
+        "deployment/RELEASE_HANDOVER.md",
+        "defense-evidence/web-live-2026-10-26/WEB_REVIEW.md",
+        "defense-evidence/readiness-execution/checklist-results.json",
+        "defense-evidence/readiness-execution/QA_CURRENT.html"
+      ],
+      "external": "Real provider receipt, actual browser journeys, owned deployment/backup access, independent review where required and adviser acceptance of scientific claims remain external gates. Web acceptance does not complete deferred mobile criteria.",
+      "tasks": [
+        {
+          "title": "Freeze the final tested candidate and run appropriate regression",
+          "work": "Record source/frontend/API/model/rule/schema/config identities. Run the relevant Flutter and backend tests, analysis/lints and web build after changes, with the completed counts and command exit status. Repeat only affected checks after later changes and retain the seven-test review baseline as historical evidence.",
+          "acceptance": "The test results and delivered artifacts match the final candidate; build/local fixtures are not substituted for provider/browser acceptance.",
+          "evidence": "final manifest, test logs and build identity",
+          "kind": "REGRESSION_CHECK",
+          "id": "W07-01",
+          "status": "VERIFIED_LOCAL",
+          "phase": "07"
+        },
+        {
+          "title": "Deploy and execute full real role journeys",
+          "work": "Publish the matching frontend/backend through the existing authorized workflow. On controlled test identities, execute signup/recovery, analyst selection/analysis/save/report, planner decision/activity and admin users/audits. Include partial results, authorization denial and session/route/cache recovery. Capture a failed or unavailable step honestly.",
+          "acceptance": "Each required web journey finishes on the same candidate with correct permissions, truthful analysis and actual configured provider receipt; unmet dependencies remain open.",
+          "evidence": "end-to-end web case matrix with redacted live evidence",
+          "kind": "LIVE_ACCEPTANCE",
+          "id": "W07-02",
+          "status": "PENDING_EXTERNAL",
+          "phase": "07"
+        },
+        {
+          "title": "Rehearse staging rollback and verify operations",
+          "work": "Use the named previous compatible release and backup to rehearse staging rollback/forward recovery including intervening writes and queued work. Verify actual monitor/alert receipt with authorized recipients and record operational ownership. Do not roll production backward merely to generate a test.",
+          "acceptance": "Timed recovery reconciles the documented data window and retains owned records; monitoring evidence distinguishes /health from /ready and actual action completion.",
+          "evidence": "staging rollback/forward recovery record and monitor receipt",
+          "kind": "STAGING_OPERATIONS",
+          "id": "W07-03",
+          "status": "PENDING_EXTERNAL",
+          "phase": "07"
+        },
+        {
+          "title": "Reconcile every web finding without rewriting history",
+          "work": "For WEB-01 through WEB-18, record before/after, exact change, artifact and retest outcome. Compare affected original QA criteria before promoting any row; preserve all 191 IDs/instructions and history. A source fix may be complete while its live gate remains pending. Do not alter scientific FAILs or mark mobile checks passed because this web plan finished.",
+          "acceptance": "All 18 issues have traceable evidence or a precise open reason; original QA counts recompute from actual records with no unsupported status changes.",
+          "evidence": "finding closure register and scoped QA delta",
+          "kind": "QA_RECONCILIATION",
+          "id": "W07-04",
+          "status": "COMPLETE",
+          "phase": "07"
+        },
+        {
+          "title": "Deliver the web handover and real acceptance decision",
+          "work": "Provide web URL/build, role-specific operating steps, configuration ownership, known limits, rollback path and actual reviewer decisions. Preserve provider/scientific/browser/mobile scope distinctions. Keep evidence free of credentials, OTPs, device tokens and private farm payloads.",
+          "acceptance": "The owner can reproduce the offered web workflow and understands outstanding gates. No final sign-off or independent reviewer is invented.",
+          "evidence": "web handover, remaining-gates register and dated actual decisions",
+          "kind": "HANDOVER",
+          "id": "W07-05",
+          "status": "CODE_COMPLETE",
+          "phase": "07"
+        }
+      ],
+      "file": "PHASE_07_Live_Web_Regression_and_Handover.md",
+      "status": "PARTIAL",
+      "skill_path": "skills/geosustain-web-final-qa/SKILL.md"
+    }
+  ]
+}

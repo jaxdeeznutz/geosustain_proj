@@ -1841,7 +1841,7 @@ def require_planner(user=Depends(get_api_user)):
 class VerifySessionBody(BaseModel):
     session_id: int
     status: str  # 'verified' or 'rejected'
-    notes: Optional[str] = None
+    notes: Optional[str] = Field(None,max_length=500)
 
 
 @app.get("/api/planner/queue")
@@ -1876,6 +1876,8 @@ def planner_verify(body: VerifySessionBody, planner=Depends(require_planner)):
     """Approve or reject a farmer's analyzed land submission."""
     if body.status not in ("verified", "rejected"):
         raise HTTPException(status_code=400, detail="status must be 'verified' or 'rejected'.")
+    if body.status == 'rejected' and not (body.notes or '').strip():
+        raise HTTPException(422, 'Add a rejection reason.')
     session = verify_analysis_session(body.session_id, planner["id"], body.status, body.notes)
     if not session:
         raise HTTPException(
@@ -2015,7 +2017,7 @@ def notifications(user=Depends(get_api_user), offset: int = Query(0, ge=0), limi
 
 @app.get('/api/mobile/activity')
 def activity_inbox(user=Depends(get_api_user), offset: int=Query(0,ge=0), limit: int=Query(50,ge=1,le=100),
-                   unread_only: bool=False, event_type: Optional[str]=Query(None,pattern='^(analysis_ready|analysis_partial|analysis_failed|submitted|review|submission_received)$')):
+                   unread_only: bool=False, event_type: Optional[str]=Query(None,pattern='^(analysis_ready|analysis_partial|analysis_failed|submitted|review|submission_received|needs_information|resubmitted|advisory_note|followup_created|followup_completed|followup_due)$')):
     import activity_notifications as activity
     return activity.inbox(user['id'],offset,limit,unread_only,event_type)
 
@@ -2147,3 +2149,8 @@ def readiness():
     ready = all(value == 'ready' for value in checks.values())
     return JSONResponse({'status': 'ready' if ready else 'not_ready', 'checks': checks},
         status_code=200 if ready else 503, headers={'Cache-Control': 'no-store'})
+
+
+# Submitted-case workflow: separate web queues and owned farmer responses.
+from operator_routes import install as install_operator_routes
+install_operator_routes(app, get_api_user, require_planner)

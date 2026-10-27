@@ -1,0 +1,12 @@
+{
+  "valid": true,
+  "findings": 14,
+  "source_references_valid": true,
+  "markdown_links_valid": true,
+  "application_changes": false,
+  "held_scope": [
+    "NPK",
+    "soil pH"
+  ],
+  "note": "Document structure/source reference validation only; no workflow acceptance inferred"
+}

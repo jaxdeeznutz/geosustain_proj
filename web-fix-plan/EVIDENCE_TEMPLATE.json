@@ -1,0 +1,40 @@
+{
+  "phase": "",
+  "task_ids": [],
+  "finding_ids": [],
+  "observed_at_utc": "",
+  "source_commit": "",
+  "frontend": {
+    "url": "",
+    "deployment_commit": "",
+    "build_id": "",
+    "asset_sha256": ""
+  },
+  "backend": {
+    "url": "",
+    "revision": "",
+    "ready_status": null
+  },
+  "test_target": {
+    "environment": "",
+    "disposable_dataset_id": "",
+    "browser_version": "",
+    "os_version": "",
+    "viewport": "",
+    "zoom": ""
+  },
+  "cases": [
+    {
+      "case_id": "",
+      "expected": "",
+      "actual": "",
+      "evidence_scope": "source/local/browser/user-confirmed/provider-receipt",
+      "outcome": "NOT_RUN",
+      "evidence_files": []
+    }
+  ],
+  "required_external_gates": [],
+  "private_data_excluded": true,
+  "actual_reviewer": "",
+  "remaining_work": []
+}

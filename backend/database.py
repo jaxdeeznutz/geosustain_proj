@@ -477,6 +477,8 @@ def init_db():
             migrate_reset(cur)
             from qa_closure import migrate
             migrate(cur)
+            from operator_workflow import migrate as migrate_operator
+            migrate_operator(cur)
             from analysis_jobs import migrate as migrate_jobs
             migrate_jobs(cur)
             cur.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs (created_at DESC)")
@@ -1159,6 +1161,8 @@ def submit_analysis_to_planner(user_id: int, session_id: int):
             if row:
                 from activity_notifications import submitted
                 submitted(cur,user_id,session_id)
+                from operator_workflow import ensure_case
+                ensure_case(cur,session_id)
         conn.commit()
         return dict(row) if row else None
     finally:
@@ -1409,9 +1413,15 @@ def verify_analysis_session(session_id: int, planner_id: int, status: str, notes
     """
     if status not in ("verified", "rejected", "pending"):
         raise ValueError("status must be 'verified', 'rejected', or 'pending'")
+    if status == 'rejected' and not (notes or '').strip():
+        raise ValueError('Add a rejection reason.')
+    if len(notes or '') > 500:
+        raise ValueError('Review notes must be at most 500 characters.')
     conn = get_conn()
     try:
         with conn.cursor() as cur:
+            from operator_workflow import ensure_case, legacy_decided
+            ensure_case(cur,session_id,lock=True)
             cur.execute(
                 """
                 UPDATE analysis_sessions AS s
@@ -1430,6 +1440,7 @@ def verify_analysis_session(session_id: int, planner_id: int, status: str, notes
             )
             row = cur.fetchone()
             if row:
+                legacy_decided(cur,session_id,planner_id,status,notes)
                 audit_in_transaction(cur, planner_id, 'agricultural_planning_analyst',
                     'verification_decision', 'analysis_session', session_id,
                     {'decision': status, 'has_notes': bool(notes)})

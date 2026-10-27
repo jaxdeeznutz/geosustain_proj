@@ -2,7 +2,7 @@
 import database as db
 from contextlib import closing
 
-EVENT_TYPES = ('analysis_ready', 'analysis_partial', 'analysis_failed', 'submitted', 'review', 'submission_received')
+EVENT_TYPES = ('analysis_ready', 'analysis_partial', 'analysis_failed', 'submitted', 'review', 'submission_received', 'needs_information', 'resubmitted', 'advisory_note', 'followup_created', 'followup_completed', 'followup_due')
 
 def migrate(cur):
     cur.execute('''CREATE TABLE IF NOT EXISTS activity_notifications (
@@ -49,9 +49,9 @@ def submitted(cur, user_id, session_id):
         ON CONFLICT(user_id,event_key) DO NOTHING''', (session_id,user_id))
 
 def reviewed(cur, session_id):
-    cur.execute('''INSERT INTO activity_notifications(user_id,event_key,event_type,session_id,farm_id,message,decision)
-        SELECT user_id,'review:'||id,'review',id,farm_id,'An analyst reviewed your analysis.',verification_status
-        FROM analysis_sessions WHERE id=%s AND verification_status IN ('verified','rejected')
+    cur.execute('''INSERT INTO activity_notifications(user_id,event_key,event_type,session_id,farm_id,message,decision,case_id)
+        SELECT s.user_id,'review:'||s.id,'review',s.id,s.farm_id,'An analyst reviewed your analysis.',s.verification_status,c.id
+        FROM analysis_sessions s LEFT JOIN review_cases c ON c.current_session_id=s.id WHERE s.id=%s AND s.verification_status IN ('verified','rejected')
         ON CONFLICT(user_id,event_key) DO NOTHING''', (session_id,))
 
 def failed(cur, user_id, request_key, farm_id, code):
@@ -72,6 +72,8 @@ def inbox(user_id, offset=0, limit=50, unread_only=False, event_type=None):
     conn = db.get_conn()
     try:
         with conn.cursor() as cur:
+            due_followups(cur,user_id)
+            conn.commit()
             cur.execute('SELECT COUNT(*) AS unread FROM activity_notifications WHERE user_id=%s AND read_at IS NULL', (user_id,))
             unread = cur.fetchone()['unread']
             cur.execute(f'''SELECT n.*,f.farm_name FROM activity_notifications n
@@ -101,3 +103,45 @@ def mark_all(user_id):
             count = cur.rowcount
             cur.execute('UPDATE review_notifications SET read_at=COALESCE(read_at,NOW()) WHERE user_id=%s AND read_at IS NULL', (user_id,))
         return {'marked_read':count}
+
+
+def case_event(cur, case, event_id, kind):
+    if kind in ('verified','rejected'):
+        return  # The legacy-compatible review event is already queued transactionally.
+    messages={
+        'needs_information':'Your reviewer requested information. Open the case to see correction items.',
+        'resubmitted':'A corrected analysis revision is ready for review.',
+        'advisory_note':'An analyst added a note to your review case.',
+        'followup_created':'A follow-up task was assigned to you.',
+        'followup_completed':'Your follow-up task was completed.'}
+    if kind not in messages:return
+    if kind=='resubmitted':
+        cur.execute("SELECT id FROM users WHERE is_active=TRUE AND role='agricultural_planning_analyst'")
+        recipients=[r['id'] for r in cur.fetchall()]
+    elif kind.startswith('followup_'):
+        cur.execute('SELECT actor_id FROM review_case_events WHERE id=%s',(event_id,))
+        recipients=[cur.fetchone()['actor_id']]
+    else:recipients=[case['owner_id']]
+    for uid in recipients:
+        if uid is None:continue
+        cur.execute("""INSERT INTO activity_notifications(user_id,event_key,event_type,session_id,farm_id,case_id,message)
+            VALUES(%s,%s,%s,%s,%s,%s,%s) ON CONFLICT(user_id,event_key) DO NOTHING""",
+            (uid,'case-event:'+str(event_id),kind,case['current_session_id'],case['farm_id'],case['id'],messages[kind]))
+    queue_activity_push(cur)
+
+
+def queue_activity_push(cur):
+    cur.execute("""INSERT INTO activity_push_deliveries(token,activity_id)
+        SELECT p.token,n.id FROM activity_notifications n JOIN push_subscriptions p ON p.user_id=n.user_id
+        JOIN users u ON u.id=n.user_id WHERE n.created_at>=NOW()-INTERVAL '1 day'
+        AND n.case_id IS NOT NULL AND u.is_active=TRUE AND u.password_version=p.password_version
+        ON CONFLICT(token,activity_id) DO NOTHING""")
+
+
+def due_followups(cur,user_id):
+    cur.execute("""INSERT INTO activity_notifications(user_id,event_key,event_type,session_id,farm_id,case_id,message)
+        SELECT f.assigned_to,'followup-due:'||f.id,'followup_due',c.current_session_id,c.farm_id,c.id,
+          'A review follow-up is due. Open the case to complete it.' FROM review_followups f
+        JOIN review_cases c ON c.id=f.case_id WHERE f.assigned_to=%s AND f.completed_at IS NULL
+        AND f.due_on<=CURRENT_DATE ON CONFLICT(user_id,event_key) DO NOTHING""",(user_id,))
+    queue_activity_push(cur)

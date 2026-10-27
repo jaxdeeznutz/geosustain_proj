@@ -5,6 +5,10 @@ Future<void> openPlannerAnalysisReview(
   AnalysisState state,
   int sessionId,
 ) async {
+  if (kIsWeb && state.isPlanner) {
+    PortalRoutes.go('/operator/queue?session=$sessionId');
+    return;
+  }
   try {
     // Load the complete record before opening the route. This avoids the
     // zero-size temporary dialog that previously left only the dark barrier.
@@ -494,7 +498,7 @@ class _PlannerQueueCard extends StatelessWidget {
                   ),
                   Expanded(
                     child: _CardFact(
-                      label: 'SUITABILITY',
+                      label: 'MODEL SCORE',
                       value: score == null
                           ? '--'
                           : '${score.toStringAsFixed(1)}%',
@@ -653,6 +657,17 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
     'Slope': 'slope',
   }[layer]!;
   Color heatColor(double value, List<double> values) {
+    if (layer != 'Soil pH') {
+      if (!value.isFinite || values.isEmpty) return Colors.grey;
+      final finite = values.where((v) => v.isFinite).toList();
+      if (finite.isEmpty) return Colors.grey;
+      final low = finite.reduce(math.min), high = finite.reduce(math.max);
+      return Color.lerp(
+        const Color(0xffd9e5f3),
+        const Color(0xff294a82),
+        high == low ? .5 : ((value - low) / (high - low)).clamp(0, 1),
+      )!;
+    }
     if (values.isEmpty) return green;
     final minV = values.reduce((a, b) => a < b ? a : b),
         maxV = values.reduce((a, b) => a > b ? a : b);
@@ -756,7 +771,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
       );
       if (ndvi != null) {
         bullets.add(
-          'The measured NDVI is ${ndvi.toStringAsFixed(3)}, indicating limited vegetation or a non-arable surface.',
+          'Recorded NDVI: ${ndvi.toStringAsFixed(3)}. This value alone does not establish agricultural land use or crop suitability. Review the saved coverage and limitations.',
         );
       }
       final infra = '${r['infrastructure_recommendation'] ?? ''}'.trim();

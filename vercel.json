@@ -3,6 +3,10 @@
   "framework": null,
   "buildCommand": "bash deployment/vercel_build.sh",
   "outputDirectory": "build/web",
+  "rewrites": [
+    {"source": "/operator/:path*", "destination": "/index.html"},
+    {"source": "/admin/:path*", "destination": "/index.html"}
+  ],
   "headers": [
     {
       "source": "/(.*)",

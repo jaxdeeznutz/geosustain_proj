@@ -242,6 +242,7 @@ String analysisProcessingLabel(Map<String, dynamic> record) {
 }
 
 String analysisReviewLabel(String status) => switch (status.toLowerCase()) {
+  'needs_information' => 'Information Requested',
   'draft' => 'Not Submitted',
   'pending' => 'Pending Review',
   'verified' => 'Approved',

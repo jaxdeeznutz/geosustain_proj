@@ -1,0 +1,94 @@
+{
+  "dashboard": {
+    "path": "lib/web/screens/web_dashboard_screen.dart",
+    "line": 32
+  },
+  "summary": {
+    "path": "backend/web_summary.py",
+    "line": 18
+  },
+  "queue_score": {
+    "path": "lib/web/screens/web_planner_queue_screen.dart",
+    "line": 497
+  },
+  "heatmap": {
+    "path": "lib/web/screens/web_planner_queue_screen.dart",
+    "line": 659
+  },
+  "ndvi_copy": {
+    "path": "lib/web/screens/web_planner_queue_screen.dart",
+    "line": 759
+  },
+  "queue_fetch": {
+    "path": "lib/api_service.dart",
+    "line": 1480
+  },
+  "fetch_loop": {
+    "path": "lib/api_service.dart",
+    "line": 1167
+  },
+  "queue_state": {
+    "path": "lib/main.dart",
+    "line": 1786
+  },
+  "map_shared": {
+    "path": "lib/web/screens/web_map_screen.dart",
+    "line": 135
+  },
+  "queue_empty": {
+    "path": "lib/web/screens/web_planner_queue_screen.dart",
+    "line": 206
+  },
+  "queue_search": {
+    "path": "lib/web/screens/web_planner_queue_screen.dart",
+    "line": 171
+  },
+  "queue_layout": {
+    "path": "lib/web/screens/web_planner_queue_screen.dart",
+    "line": 219
+  },
+  "review_api": {
+    "path": "backend/fastapi_app.py",
+    "line": 1841
+  },
+  "reject_client": {
+    "path": "lib/web/screens/web_planner_queue_screen.dart",
+    "line": 667
+  },
+  "review_guard": {
+    "path": "backend/database.py",
+    "line": 1398
+  },
+  "submit": {
+    "path": "backend/database.py",
+    "line": 1135
+  },
+  "route": {
+    "path": "lib/web/web_analyst_shell.dart",
+    "line": 73
+  },
+  "overlay_ready": {
+    "path": "lib/web/screens/web_map_screen.dart",
+    "line": 366
+  },
+  "review_load": {
+    "path": "lib/web/screens/web_planner_queue_screen.dart",
+    "line": 11
+  },
+  "versions": {
+    "path": "backend/database.py",
+    "line": 1769
+  },
+  "queue_order": {
+    "path": "backend/database.py",
+    "line": 1345
+  },
+  "role": {
+    "path": "lib/main.dart",
+    "line": 1852
+  },
+  "counts": {
+    "path": "backend/database.py",
+    "line": 1448
+  }
+}

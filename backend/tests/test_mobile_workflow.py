@@ -271,7 +271,7 @@ def test_farm_retry_does_not_insert_another_farm(monkeypatch):
 
 def test_submission_retry_preserves_decision(monkeypatch):
     conn, cur = connection(
-        monkeypatch, [None, {"id": 42, "verification_status": "verified"}]
+        monkeypatch, [None, {"id": 42, "verification_status": "verified"}, None]
     )
     assert db.submit_analysis_to_planner(10, 42)["verification_status"] == "verified"
     assert "verification_status = 'draft'" in cur.queries[0][0]

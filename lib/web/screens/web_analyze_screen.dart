@@ -3,10 +3,12 @@ part of '../../main.dart';
 class WebAnalyzeScreen extends StatelessWidget {
   final AnalysisState state;
   final Future<void> Function() onAnalyze;
+  final Map<String, dynamic>? previousAnalysis;
   const WebAnalyzeScreen({
     super.key,
     required this.state,
     required this.onAnalyze,
+    this.previousAnalysis,
   });
 
   @override
@@ -14,6 +16,38 @@ class WebAnalyzeScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (state.loading) ...[
+          const LinearProgressIndicator(
+            semanticsLabel: 'Analysis request is running',
+          ),
+          Padding(
+            padding: const EdgeInsets.all(12),
+            child: Semantics(
+              liveRegion: true,
+              child: Text(state.loadingMessage),
+            ),
+          ),
+          const Text(
+            'Your current request is running. You can visit another workspace; return here for the result or check My Analyses after reconnecting.',
+          ),
+        ],
+        if (state.analysisError != null)
+          _WebCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  state.analysisError!,
+                  style: const TextStyle(color: Colors.red),
+                ),
+                Text(
+                  state.analysisPending
+                      ? 'The server has not confirmed completion. Check My Analyses before retrying; the saved selection remains available.'
+                      : 'The selection is retained. Check the connection or coverage, then retry.',
+                ),
+              ],
+            ),
+          ),
         _WebCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -34,7 +68,7 @@ class WebAnalyzeScreen extends StatelessWidget {
                         ),
                         SizedBox(height: 4),
                         Text(
-                          'Use the same analysis engine as mobile: select a point, draw a polygon, then run crop and environmental suitability.',
+                          'Select a point for preliminary location screening, or complete a farm boundary for an area assessment. Review coverage and unavailable measurements before using the result.',
                           style: TextStyle(color: WebPortalColors.muted),
                         ),
                       ],
@@ -123,18 +157,6 @@ class WebAnalyzeScreen extends StatelessWidget {
                                 ),
                               ),
                             ),
-                            SizedBox(width: 12),
-                            Expanded(
-                              child: SizedBox(
-                                height: 340,
-                                child: SingleChildScrollView(
-                                  child: _WebDistributionPanel(
-                                    state: state,
-                                    compact: true,
-                                  ),
-                                ),
-                              ),
-                            ),
                           ],
                         ),
                       ],
@@ -159,6 +181,15 @@ class WebAnalyzeScreen extends StatelessWidget {
             ],
           ),
         ),
+        if (state.result == null && previousAnalysis != null) ...[
+          const SizedBox(height: 20),
+          _WebCard(
+            child: Text(
+              'Previous saved result #${previousAnalysis!['session_id']} · ${analysisDateText(previousAnalysis!['analyzed_at'])}. This is retained reference evidence and does not describe the current selection.',
+            ),
+          ),
+          WebAnalysisEvidence(state: state, record: previousAnalysis!),
+        ],
       ],
     );
   }

@@ -29,6 +29,8 @@ import 'web_build_identity.dart';
 import 'web/analysis_metrics.dart';
 import 'web/portal_routes.dart';
 import 'web/web_record_controller.dart';
+import 'web/operator_report.dart';
+import 'web/operator_metrics.dart';
 
 part 'screens/mobile_visuals.dart';
 part 'screens/reference_visuals.dart';
@@ -70,6 +72,7 @@ part 'web/screens/web_analyze_screen.dart';
 part 'web/screens/web_history_reports_screen.dart';
 part 'web/screens/web_trends_weather_soil_settings_screen.dart';
 part 'web/screens/web_planner_queue_screen.dart';
+part 'web/screens/web_operator_workflow.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -89,6 +92,7 @@ final lowBandwidthMode = ValueNotifier<bool>(true);
 final webSemanticsHandles = <SemanticsHandle>[];
 
 final appThemeMode = ValueNotifier<ThemeMode>(ThemeMode.light);
+final webNavigatorKey = GlobalKey<NavigatorState>();
 
 const green = GeoDesign.green;
 const darkGreen = GeoDesign.darkGreen;
@@ -179,6 +183,19 @@ class GeoSustainApp extends StatelessWidget {
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: appThemeMode,
       builder: (context, mode, _) => MaterialApp(
+        // Portal URLs have their own browser history controller. Keep imperative
+        // authentication/dialog navigation from rewriting those URLs to '/'.
+        builder: kIsWeb
+            ? (context, child) => Navigator(
+                key: webNavigatorKey,
+                initialRoute: '/',
+                reportsRouteUpdateToEngine: false,
+                onGenerateRoute: (settings) => MaterialPageRoute<void>(
+                  settings: const RouteSettings(name: '/'),
+                  builder: (_) => home ?? const SessionGate(),
+                ),
+              )
+            : null,
         themeMode: mode,
         darkTheme: ThemeData.dark(useMaterial3: true).copyWith(
           textTheme: ThemeData.dark(
@@ -1933,6 +1950,7 @@ class AnalysisState extends ChangeNotifier {
           'pending',
           'verified',
           'rejected',
+          'needs_information',
         ].contains(submitted['verification_status'])) {
       throw const FormatException(
         'The review response did not match this assessment.',

@@ -18,6 +18,21 @@ class WebAnalystDashboard extends StatefulWidget {
 class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
   int page = 0;
   bool popupVisible = true;
+  Map<String, dynamic>? previousAnalysis;
+  int? previousAnalysisOwner;
+  late final reviewInbox = WebRecordController(
+    widget.state.api,
+    '/api/operator/inbox',
+    'queue',
+  );
+  String _lastInboxFilter = '';
+  late final reviewMap = WebRecordController(
+    widget.state.api,
+    '/api/operator/map',
+    'queue',
+    limit: 50,
+  )..parameters = {'status': 'all'};
+  final planningMap = MapController();
 
   AnalysisState get state => widget.state;
 
@@ -28,11 +43,22 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
       );
       return;
     }
+    final epoch = state._sessionEpoch;
+    final previous = state.result == null
+        ? previousAnalysis
+        : Map<String, dynamic>.from(state.result!);
+    final owner = state.currentUser?['id'];
     final err = state.polygonPoints.length >= 3
         ? await state.analyzePolygon()
         : await state.analyzePoint();
     if (err != null) widget.message(err);
-    if (mounted) setState(() => popupVisible = true);
+    if (mounted && epoch == state._sessionEpoch) {
+      setState(() {
+        popupVisible = true;
+        previousAnalysis = err == null ? null : previous;
+        previousAnalysisOwner = owner is int ? owner : null;
+      });
+    }
   }
 
   List<String> get routePages => [
@@ -52,36 +78,80 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
     PortalRoutes.start();
     page = PortalRoutes.pageFor(routePages, 'operator');
     PortalRoutes.current.addListener(_routeChanged);
+    if (state.isPlanner) _loadInboxRoute();
     WidgetsBinding.instance.addPostFrameCallback((_) => _openLinkedRecord());
   }
 
   void _routeChanged() {
     if (!mounted) return;
+    final previousPage = page;
     setState(() => page = PortalRoutes.pageFor(routePages, 'operator'));
+    if (state.isPlanner) _loadInboxRoute();
     _openLinkedRecord();
+    if (state.isPlanner &&
+        previousPage == routePages.indexOf('queue') &&
+        page == previousPage &&
+        !PortalRoutes.current.value.queryParameters.containsKey('case') &&
+        !PortalRoutes.current.value.queryParameters.containsKey('session') &&
+        !reviewInbox.loading) {
+      reviewInbox.load();
+    }
   }
 
   void _navigate(int index) {
     PortalRoutes.go('/operator/${routePages[index]}');
   }
 
+  void _loadInboxRoute() {
+    final uri = PortalRoutes.current.value;
+    if (uri.queryParameters.containsKey('case') ||
+        uri.queryParameters.containsKey('session')) {
+      return;
+    }
+    // Returning from a case keeps the inbox page and applied filters.
+    if (uri.path.endsWith('/queue') &&
+        uri.queryParameters.containsKey('status')) {
+      final signature = uri.query;
+      if (signature != _lastInboxFilter) {
+        _lastInboxFilter = signature;
+        reviewInbox.filter({
+          'status': uri.queryParameters['status']!,
+          'place': uri.queryParameters['place'] ?? '',
+          'view': uri.queryParameters['view'] ?? 'all',
+        });
+      }
+    } else if (!reviewInbox.loaded && !reviewInbox.loading) {
+      reviewInbox.filter({'status': 'pending'});
+    }
+  }
+
   int? _openedRecord;
+  int _recordGeneration = 0;
   Future<void> _openLinkedRecord() async {
+    final request = ++_recordGeneration;
+    if (page != routePages.indexOf('history')) {
+      _openedRecord = null;
+      return;
+    }
     final id = int.tryParse(
       PortalRoutes.current.value.queryParameters['session'] ?? '',
     );
-    if (id == null || id <= 0 || id == _openedRecord) return;
+    if (id == null) {
+      _openedRecord = null;
+      return;
+    }
+    if (id <= 0 || id == _openedRecord) return;
     _openedRecord = id;
     if (page == routePages.indexOf('queue') && state.isPlanner) {
-      await openPlannerAnalysisReview(context, state, id);
+      return; // The routed workbench owns its loading, errors and evidence.
     } else if (page == routePages.indexOf('history')) {
       try {
         final record = await state.api.getAnalysis(id);
-        if (!mounted) return;
+        if (!mounted || request != _recordGeneration) return;
         await showDialog<void>(
           context: context,
           builder: (_) => AlertDialog(
-            title: Text('Recorded analysis'),
+            title: Text('Recorded analysis #$id'),
             content: SizedBox(
               width: 680,
               child: SingleChildScrollView(
@@ -105,6 +175,9 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
   @override
   void dispose() {
     PortalRoutes.current.removeListener(_routeChanged);
+    reviewInbox.dispose();
+    reviewMap.dispose();
+    planningMap.dispose();
     super.dispose();
   }
 
@@ -126,6 +199,12 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
         onAnalyze: runWebAnalysis,
         message: widget.message,
         onNavigate: _navigate,
+        reviewInbox: reviewInbox,
+        reviewMap: reviewMap,
+        planningMap: planningMap,
+        previousAnalysis: previousAnalysisOwner == state.currentUser?['id']
+            ? previousAnalysis
+            : null,
       ),
     ),
   );
@@ -144,14 +223,14 @@ class _WebSidebar extends StatelessWidget {
   });
 
   static final _baseItems = [
-    (Icons.dashboard_rounded, 'Dashboard'),
-    (Icons.map_rounded, 'Map Analysis'),
-    (Icons.center_focus_strong_rounded, 'Analyze Area'),
-    (Icons.history_rounded, 'Analysis History'),
+    (Icons.dashboard_rounded, 'Overview'),
+    (Icons.map_rounded, 'Planning Map'),
+    (Icons.center_focus_strong_rounded, 'Analysis Workspace'),
+    (Icons.history_rounded, 'My Analyses'),
     (Icons.picture_as_pdf_rounded, 'Reports'),
-    (Icons.show_chart_rounded, 'Crop Trends'),
+    (Icons.show_chart_rounded, 'Recommendation Patterns'),
   ];
-  static final _plannerItem = (Icons.fact_check_rounded, 'Verification Queue');
+  static final _plannerItem = (Icons.fact_check_rounded, 'Review Inbox');
   static final _settingsItem = (Icons.settings_rounded, 'Settings');
   static final _activityItem = (Icons.notifications_outlined, 'Activity');
 
@@ -311,6 +390,10 @@ class _WebSidebar extends StatelessWidget {
 }
 
 class _WebPageFrame extends StatelessWidget {
+  final Map<String, dynamic>? previousAnalysis;
+  final WebRecordController reviewInbox;
+  final WebRecordController reviewMap;
+  final MapController planningMap;
   final int page;
   final AnalysisState state;
   final bool popupVisible;
@@ -326,19 +409,23 @@ class _WebPageFrame extends StatelessWidget {
     required this.onAnalyze,
     required this.message,
     required this.onNavigate,
+    required this.reviewInbox,
+    required this.reviewMap,
+    required this.planningMap,
+    required this.previousAnalysis,
   });
 
   @override
   Widget build(BuildContext context) {
     final isPlanner = state.isPlanner;
     final titles = [
-      'Dashboard',
-      'Map Analysis',
-      'Analyze Area',
-      'Analysis History',
+      'Overview',
+      'Planning Map',
+      'Analysis Workspace',
+      'My Analyses',
       'Reports',
-      'Crop Trends',
-      if (isPlanner) 'Verification Queue',
+      'Recommendation Patterns',
+      if (isPlanner) 'Review Inbox',
       'Settings',
       'Activity',
     ];
@@ -350,7 +437,7 @@ class _WebPageFrame extends StatelessWidget {
       'Open and export generated suitability reports',
       'Compare crop recommendation frequencies and suitability patterns',
       if (isPlanner)
-        'Review farmer-submitted land analyses and approve or reject them',
+        'Review saved evidence, request information and record decisions',
       'Manage dashboard preferences and account settings',
       'Analysis, review and account activity',
     ];
@@ -366,14 +453,24 @@ class _WebPageFrame extends StatelessWidget {
         onOpenReports: () => onNavigate(4),
       );
     } else if (page == 1) {
-      body = WebMapScreen(
-        state: state,
-        popupVisible: popupVisible,
-        onClosePopup: onClosePopup,
-        onGoToAnalyzeArea: () => onNavigate(2),
-      );
+      body = isPlanner
+          ? WebOperatorMap(
+              state: state,
+              controller: reviewMap,
+              mapController: planningMap,
+            )
+          : WebMapScreen(
+              state: state,
+              popupVisible: popupVisible,
+              onClosePopup: onClosePopup,
+              onGoToAnalyzeArea: () => onNavigate(2),
+            );
     } else if (page == 2) {
-      body = WebAnalyzeScreen(state: state, onAnalyze: onAnalyze);
+      body = WebAnalyzeScreen(
+        state: state,
+        onAnalyze: onAnalyze,
+        previousAnalysis: previousAnalysis,
+      );
     } else if (page == 3) {
       body = WebHistoryScreen(state: state);
     } else if (page == 4) {
@@ -381,7 +478,16 @@ class _WebPageFrame extends StatelessWidget {
     } else if (page == 5) {
       body = WebCropTrendsScreen(state: state);
     } else if (isPlanner && page == 6) {
-      body = WebPlannerQueueScreen(state: state);
+      final query = PortalRoutes.current.value.queryParameters;
+      final reference = query['case'] ?? query['session'];
+      body = reference == null
+          ? WebOperatorInbox(controller: reviewInbox)
+          : WebReviewWorkbench(
+              key: ValueKey('case-${query['case']}-${query['session']}'),
+              state: state,
+              reference: reference,
+              bySession: !query.containsKey('case'),
+            );
     } else if (page == (isPlanner ? 8 : 7)) {
       body = NotificationsPage(state: state);
     } else {
@@ -390,7 +496,9 @@ class _WebPageFrame extends StatelessWidget {
 
     return SizedBox.expand(
       child: CustomScrollView(
-        key: ValueKey('web_page_$index'),
+        key: PageStorageKey(
+          'web_page_${index}_${PortalRoutes.current.value.queryParameters['case'] ?? PortalRoutes.current.value.queryParameters['session'] ?? 'list'}',
+        ),
         slivers: [
           SliverPadding(
             padding: EdgeInsets.fromLTRB(32, 28, 32, 40),

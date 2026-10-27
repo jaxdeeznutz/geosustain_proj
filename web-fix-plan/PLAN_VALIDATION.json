@@ -1,0 +1,30 @@
+{
+  "valid": true,
+  "phases": 8,
+  "tasks": 37,
+  "findings": 18,
+  "exactly_one_owner_per_finding": true,
+  "dependency_graph_acyclic": true,
+  "original_review_preserved": true,
+  "tracker_consistent": true,
+  "task_status_counts": {
+    "COMPLETE": 3,
+    "CODE_COMPLETE": 11,
+    "PENDING_EXTERNAL": 8,
+    "VERIFIED_LOCAL": 11,
+    "REQUIRES_MANUAL": 4
+  },
+  "local_markdown_links_checked": 189,
+  "broken_local_links": [],
+  "skills_validated": [
+    "geosustain-web-baseline",
+    "geosustain-web-identity",
+    "geosustain-web-analysis",
+    "geosustain-web-shell",
+    "geosustain-web-data",
+    "geosustain-web-account-safety",
+    "geosustain-web-accessibility",
+    "geosustain-web-final-qa"
+  ],
+  "scope": "Plan and skill structure only; no application implementation or acceptance inferred"
+}

@@ -1,0 +1,15 @@
+finding,implementation,evidence,acceptance
+AP-01,Workload overview precedes personal analysis statistics,overview SQL + WebOperatorOverview,Source implemented; local checks logged; final browser/live acceptance separate
+AP-02,Eligible model score is named explicitly; unavailable scores remain null,bounded projection + score client checks,Source implemented; local checks logged; final browser/live acceptance separate
+AP-03,Recorded layers use blue measured ranges with neutral equal values and gray unknown,observedPosition tests + OperatorEvidenceMap,Source implemented; local checks logged; final browser/live acceptance separate
+AP-04,NDVI fallback no longer infers agricultural land use from one value,legacy explanation repair + shared evidence,Source implemented; local checks logged; final browser/live acceptance separate
+AP-05,API and database require rejection explanation; new web API requires reason,real API rejection tests,Source implemented; local checks logged; final browser/live acceptance separate
+AP-06,Information request and owned linked revision preserve old snapshots,real SQL/API correction loop,Source implemented; local checks logged; final browser/live acceptance separate
+AP-07,Inbox fetches one bounded server page with search and filters,500-case SQL projection + controller tests,Source implemented; local checks logged; final browser/live acceptance separate
+AP-08,Map and inbox have independent requests and stale generation guards,independent-controller tests,Source implemented; local checks logged; final browser/live acceptance separate
+AP-09,"Loading, failure, stale records and no-match are distinct; unknown area remains unavailable",controller tests + unknown aggregation guard,Source implemented; local checks logged; final browser/live acceptance separate
+AP-10,Routed workbench opens with loading/retry; repeated same-case links have no sticky modal sentinel,widget loading/conflict tests + browser route checks,Source implemented; local checks logged; final browser/live acceptance separate
+AP-11,Flexible filters and single-column review body,390/768-pixel reflow tests,Source implemented; local checks logged; final browser/live acceptance separate
+AP-12,"Map contains submitted cases only, bounded centers and review-status legend",map API projection + explicit scope UI,Source implemented; local checks logged; final browser/live acceptance separate
+AP-13,Saved geometry is compared with current coordinates; metadata-only rename stays equal,real SQL rename versus changed polygon,Source implemented; local checks logged; final browser/live acceptance separate
+AP-14,Submission time and waiting age are primary; oldest/newest stable ordering,server ordering + map newest/oldest SQL tests,Source implemented; local checks logged; final browser/live acceptance separate

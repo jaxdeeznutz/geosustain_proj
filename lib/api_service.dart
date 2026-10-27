@@ -205,6 +205,11 @@ class ApiService {
     return data;
   }
 
+  Future<Map<String, dynamic>> operatorPost(
+    String path,
+    Map<String, dynamic> body,
+  ) => _identityPost(path, body);
+
   Future<Map<String, dynamic>> _identityPost(
     String path,
     Map<String, dynamic> body, {

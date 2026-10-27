@@ -30,6 +30,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
     'analysis_failed': 'Analysis problems',
     'submission_received': 'Review queue',
     'farm_synced': 'Farm sync',
+    'needs_information': 'Information requested',
+    'resubmitted': 'Resubmissions',
+    'advisory_note': 'Analyst advice',
+    'followup_created': 'New follow-ups',
+    'followup_completed': 'Completed follow-ups',
+    'followup_due': 'Due follow-ups',
   };
   @override
   void initState() {
@@ -184,6 +190,35 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   Future<void> _open(Map<String, dynamic> event, {bool device = false}) async {
     if (opening) return;
+    if (!device && event['case_id'] != null && widget.state != null) {
+      setState(() => opening = true);
+      try {
+        await api.markNotificationRead(
+          (event['id'] as num).toInt(),
+          activity: true,
+        );
+        if (!mounted) return;
+        if (kIsWeb && widget.state!.isPlanner) {
+          PortalRoutes.go('/operator/queue?case=${event['case_id']}');
+        } else {
+          await Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FarmerReviewResponsePage(
+                state: widget.state!,
+                caseId: (event['case_id'] as num).toInt(),
+              ),
+            ),
+          );
+        }
+        if (mounted) await _load();
+      } catch (failure) {
+        _message(failure);
+      } finally {
+        if (mounted) setState(() => opening = false);
+      }
+      return;
+    }
     if (!device &&
         (event['event_type'] == 'review' || event['event_type'] == null)) {
       return _openReview(
@@ -274,6 +309,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
     'analysis_failed' => 'Analysis could not complete',
     'submitted' => 'Submitted for review',
     'submission_received' => 'New submission for review',
+    'needs_information' => 'Information requested',
+    'resubmitted' => 'Corrected analysis resubmitted',
+    'advisory_note' => 'Analyst advisory note',
+    'followup_created' => 'Follow-up created',
+    'followup_completed' => 'Follow-up completed',
+    'followup_due' => 'Follow-up due',
     _ => 'Farm synced',
   };
   Widget tile(Map<String, dynamic> row, {bool device = false}) => Card(
@@ -309,6 +350,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
       child: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          if (widget.state != null && !widget.state!.isPlanner)
+            OutlinedButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FarmerReviewCasesPage(state: widget.state!),
+                ),
+              ),
+              child: const Text('My review cases and corrections'),
+            ),
           Semantics(
             liveRegion: true,
             child: Text(

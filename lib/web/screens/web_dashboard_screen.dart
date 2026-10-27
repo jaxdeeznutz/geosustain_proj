@@ -55,6 +55,18 @@ class WebDashboardScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (state.isPlanner) ...[
+          WebOperatorOverview(state: state),
+          const SizedBox(height: 24),
+          const Text(
+            'My analysis activity',
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          ),
+          const Text(
+            'The following statistics describe your own analysis records, separately from the submitted review workload.',
+          ),
+          const SizedBox(height: 12),
+        ],
         if (!summaryReady)
           Padding(
             padding: EdgeInsets.only(bottom: 12),

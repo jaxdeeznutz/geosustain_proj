@@ -13,7 +13,14 @@ class WebRecordController extends ChangeNotifier {
   bool loading = false, more = false, _disposed = false, loaded = false;
   String query = '', appliedQuery = '';
   String? error;
+  Map<String, String> parameters = {}, appliedParameters = {};
   Timer? _debounce;
+  Future<void> filter(Map<String, String> values) {
+    parameters = Map.of(values);
+    _debounce?.cancel();
+    return load(offset: 0);
+  }
+
   void search(String value) {
     query = value.trim();
     _generation++;
@@ -25,6 +32,7 @@ class WebRecordController extends ChangeNotifier {
     if (_disposed) return;
     final generation = ++_generation, target = offset ?? this.offset;
     final search = query;
+    final filters = Map<String, String>.of(parameters);
     loading = true;
     error = null;
     notifyListeners();
@@ -33,7 +41,7 @@ class WebRecordController extends ChangeNotifier {
         path,
         offset: target,
         search: search,
-        parameters: {'limit': '$limit'},
+        parameters: {'limit': '$limit', ...filters},
       );
       if (_disposed || generation != _generation) return;
       rows = (data[key] as List)
@@ -42,6 +50,7 @@ class WebRecordController extends ChangeNotifier {
       this.offset = target;
       more = data['has_more'] == true;
       appliedQuery = search;
+      appliedParameters = filters;
       loaded = true;
     } catch (failure) {
       if (!_disposed && generation == _generation) {

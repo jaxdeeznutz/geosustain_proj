@@ -1393,8 +1393,7 @@ class _WebEnvironmentPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final d = state.result ?? {};
-    final rainfall =
-        d['rainfall_30d_mm'] ?? d['rainfall_30d'];
+    final rainfall = d['rainfall_30d_mm'] ?? d['rainfall_30d'];
     final slope = d['slope_pct'] ?? d['slope'];
     final elevation = d['elevation_m'] ?? d['elevation'];
     final ndviText = _num3(d['ndvi']);
@@ -1450,11 +1449,10 @@ class _WebEnvironmentPanel extends StatelessWidget {
 
 class _WebDistributionPanel extends StatelessWidget {
   final AnalysisState state;
-  final bool compact;
-  const _WebDistributionPanel({required this.state, this.compact = false});
+  const _WebDistributionPanel({required this.state});
   @override
   Widget build(BuildContext context) => _WebCard(
-    padding: EdgeInsets.all(compact ? 14 : 22),
+    padding: EdgeInsets.all(22),
     child: WebModelScoreDistribution(records: state.historyRecords),
   );
 }

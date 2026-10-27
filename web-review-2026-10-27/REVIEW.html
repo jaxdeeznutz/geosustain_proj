@@ -1,0 +1,232 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>GeoSustain operator web review</title><style>body{font:16px/1.65 system-ui;max-width:1100px;margin:32px auto;padding:0 22px;color:#183528;background:#f5f9f6}a{color:#006c41}h1,h2,h3{line-height:1.25}h2{margin-top:42px}h3{margin-top:30px;padding-top:18px;border-top:1px solid #cedbd1}.notice{padding:18px;background:#fff1c9;border-radius:12px}nav{position:sticky;top:0;padding:12px;background:#e4f0e7}.flow{font:14px/1.5 monospace;white-space:pre-wrap;background:#e5eee8;padding:4px 14px}.tableline{font-size:14px;padding:7px;border-bottom:1px solid #cedbd1;overflow-wrap:anywhere}li{margin:8px 0}table{width:100%;border-collapse:collapse;background:white}th,td{border:1px solid #cbd9cf;padding:10px;text-align:left;vertical-align:top}th{background:#dceee1}.tablewrap{overflow-x:auto;margin:18px 0}</style><nav><a href="#review">Detailed review</a> ? <a href="#approach">Recommended workflow</a> ? <a href="findings.json">14 findings</a></nav><p class="notice">NPK and soil pH changes are on hold. This is a source/public-endpoint review and proposed design; new functionality and acceptance are not inferred.</p><section id="review"><h1>GeoSustain detailed web review</h1>
+<p>Date: 2026-10-27. Scope: web operator/analysis/planning workflow. NPK and soil pH changes, replacement dataset integration and retraining are on hold at the owner&#x27;s request while external dataset requests are pending.</p>
+<h2>Assessment</h2>
+<p>GeoSustain has a useful analysis-and-review foundation. The next release should prioritize a clear operational workflow: an analyst prepares and explains an analysis; a planner reviews the submitted evidence, records a decision and follows up. One Agricultural Planning Analyst account can perform both responsibilities through clearly separated workspaces.</p>
+<p>The current portal is stronger as an analysis viewer than as a day-to-day review inbox. Its personal dashboard, map, review queue and result detail still apply different scopes, state handling and terminology. The most useful next work is workflow and evidence consistency; the held soil datasets do not block that work.</p>
+<h2>What was actually checked</h2>
+<ul>
+<li>Read the current checkout, including operator navigation, analysis workspace, planning map, review queue/dialog, shared state, API pagination and server review transitions.</li>
+<li>Rechecked public frontend build identity, API revision and readiness; see <a href="public-deployment-check.json">the timestamped snapshot</a>.</li>
+<li>The checked live frontend and backend report e03c7a1. Frontend/API HTTP success does not establish real email delivery; readiness remains HTTP 503 specifically for email_configuration=unavailable, while database/model are ready.</li>
+<li>The earlier implementation run recorded 289 backend and 186 Flutter tests, followed by focused theme/host-builder checks. Those are historical test scopes; no full suite or authenticated live operator journey was rerun for this review.</li>
+<li>Source-confirmed observations, proposed workflow gaps and layout/control-flow risks are identified separately. Original 191-row QA statuses and prior evidence remain unchanged.</li>
+<li>This review adds documentation only. No application code, configuration, database or deployment was changed.</li>
+</ul>
+<h2>Foundations to retain</h2>
+<ul>
+<li>The frontend has a public build identity and the API identifies its revision, making reports traceable to a real release.</li>
+<li>The combined operator role is already explicit. Keep one canonical role and improve the workspaces before adding more account types.</li>
+<li>Shared coverage/explanation/factor components, model-score statistics and a whole-owned-history summary exist. Extend their consistent use to the remaining legacy queue/map sections.</li>
+<li>Server-side queue/detail access excludes never-submitted farmer drafts. Review decisions update currently pending farmer submissions only; an already-decided case cannot simply be flipped by another request.</li>
+<li>Review decisions already write audit activity and queue notification work transactionally. Extend the existing event path for information requests and revisions.</li>
+<li>Analysis snapshots, submitted timestamps and version fields already exist. They are useful building blocks for historical review evidence.</li>
+</ul>
+<h2>Priority findings</h2>
+<p>P1 means resolve before claiming a reliable analyst/planner acceptance workflow. P2 means the next usability/operational improvement. These priorities are review recommendations, not replacements for original QA statuses.</p>
+<h3>AP-01 ? Operator dashboard measures personal analysis activity, not review workload</h3>
+<p><strong>Priority:</strong> P1 ? <strong>Basis:</strong> SOURCE_CONFIRMED</p>
+<p>The dashboard uses owned history and the owner-scoped summary endpoint. Review counts are a separate queue resource. This is valid personal activity reporting, but it does not answer how many farmer submissions need attention.</p>
+<p><strong>Recommended change:</strong> Add a Review overview with pending cases, oldest submitted age, information requests, reviewed this period and unavailable/partial evidence. Keep My analyses as a separately named scope.</p>
+<p><strong>Acceptance:</strong> An operator with zero personal analyses and several pending farmer submissions sees the pending workload accurately.</p>
+<p><strong>Source:</strong> <a href="../lib/web/screens/web_dashboard_screen.dart">lib/web/screens/web_dashboard_screen.dart:32</a>, <a href="../backend/web_summary.py">backend/web_summary.py:18</a>, <a href="../backend/database.py">backend/database.py:1448</a>.</p>
+<h3>AP-02 ? Planner queue still calls a model score SUITABILITY</h3>
+<p><strong>Priority:</strong> P1 ? <strong>Basis:</strong> SOURCE_CONFIRMED</p>
+<p>The queue card reads compatibility_pct directly and labels it SUITABILITY. New shared detail sections call ranking values model scores, so the two views still disagree.</p>
+<p><strong>Recommended change:</strong> Use Model score only where a valid scored crop result exists. Show preliminary/unassessed explicitly and keep review decisions in a separate badge.</p>
+<p><strong>Acceptance:</strong> The same session has consistent score meaning in inbox, detail, map and export; a missing score remains unassessed.</p>
+<p><strong>Source:</strong> <a href="../lib/web/screens/web_planner_queue_screen.dart">lib/web/screens/web_planner_queue_screen.dart:497</a>.</p>
+<h3>AP-03 ? Heatmap color semantics use local min/max for every displayed layer</h3>
+<p><strong>Priority:</strong> P1 ? <strong>Basis:</strong> SOURCE_CONFIRMED</p>
+<p>The review heatColor function scales each layer by the values in that record and maps higher relative values to green. Equal values use t=.75, also producing green. This displays relative magnitude, not a demonstrated favorable condition.</p>
+<p><strong>Recommended change:</strong> Give each non-soil layer its own units and numerical legend. Use a neutral sequential palette for measured magnitude and a separately documented assessment palette only when a valid grading rule exists. Preserve missing cells. NPK and soil pH remain outside this work.</p>
+<p><strong>Acceptance:</strong> A uniform-value grid cannot imply universally favorable conditions. Different parcels using a shared legend remain comparable.</p>
+<p><strong>Source:</strong> <a href="../lib/web/screens/web_planner_queue_screen.dart">lib/web/screens/web_planner_queue_screen.dart:659</a>.</p>
+<h3>AP-04 ? Legacy fallback text infers limited vegetation/non-arable surface from any NDVI value</h3>
+<p><strong>Priority:</strong> P1 ? <strong>Basis:</strong> SOURCE_CONFIRMED</p>
+<p>When the non-crop fallback has any numeric NDVI and no explanation bullets, it inserts the same limited-vegetation/non-arable wording without inspecting the NDVI magnitude or why the result is incomplete.</p>
+<p><strong>Recommended change:</strong> Show the recorded value, its period and available coverage. Explain the actual reason a crop result is unavailable. Keep land-use or field confirmation separate.</p>
+<p><strong>Acceptance:</strong> A partial result with a positive numeric NDVI does not receive a conclusion triggered only by the presence of that number.</p>
+<p><strong>Source:</strong> <a href="../lib/web/screens/web_planner_queue_screen.dart">lib/web/screens/web_planner_queue_screen.dart:759</a>.</p>
+<h3>AP-05 ? Rejection reason is required by the UI but not by the review API</h3>
+<p><strong>Priority:</strong> P1 ? <strong>Basis:</strong> SOURCE_CONFIRMED</p>
+<p>The dialog requires a nonempty rejection note. VerifySessionBody accepts optional notes, and the endpoint/database decision path does not enforce the same note requirement. The existing pending-only database update is a useful safety guard.</p>
+<p><strong>Recommended change:</strong> Enforce decision reason and note constraints server-side, matching the UI maximum. Return an explicit conflict for an already-decided case and preserve the first decision.</p>
+<p><strong>Acceptance:</strong> A direct authenticated API rejection with a blank note is refused. Two reviewers cannot overwrite one another; the second sees the current decision.</p>
+<p><strong>Source:</strong> <a href="../lib/web/screens/web_planner_queue_screen.dart">lib/web/screens/web_planner_queue_screen.dart:667</a>, <a href="../backend/fastapi_app.py">backend/fastapi_app.py:1841</a>, <a href="../backend/database.py">backend/database.py:1398</a>.</p>
+<h3>AP-06 ? No explicit information-request and revision-linked resubmission flow</h3>
+<p><strong>Priority:</strong> P1 ? <strong>Basis:</strong> WORKFLOW_GAP_CONFIRMED</p>
+<p>The inspected review endpoint offers verified/rejected. Reposting an already rejected session returns its existing decision rather than reopening it. Retaining decisions is correct, but there is no explicit needs-information case lifecycle in these endpoints.</p>
+<p><strong>Recommended change:</strong> Add Request information with required correction items, a farmer response and a linked new revision. Preserve the reviewed analysis snapshot and decision history.</p>
+<p><strong>Acceptance:</strong> A farmer can address a requested correction and submit a new linked revision without erasing the previous reviewer decision.</p>
+<p><strong>Source:</strong> <a href="../backend/fastapi_app.py">backend/fastapi_app.py:1841</a>, <a href="../backend/database.py">backend/database.py:1135</a>.</p>
+<h3>AP-07 ? Review inbox pagination still downloads all pages first</h3>
+<p><strong>Priority:</strong> P1 ? <strong>Basis:</strong> SOURCE_CONFIRMED</p>
+<p>The server supports bounded queue pages and q search, but getPlannerQueue calls the shared _pagedList loop until has_more is false. The screen then searches and paginates the complete loaded list. Queue responses also include heavy snapshot/grid detail.</p>
+<p><strong>Recommended change:</strong> Reuse a bounded query controller for queue status/search/page. Request lightweight listing fields and load full snapshot/grid only through the existing detail endpoint.</p>
+<p><strong>Acceptance:</strong> Opening 500 controlled submissions fetches one listing page, searching reaches the server, and opening one case fetches its full detail.</p>
+<p><strong>Source:</strong> <a href="../lib/api_service.dart">lib/api_service.dart:1480</a>, <a href="../lib/api_service.dart">lib/api_service.dart:1167</a>, <a href="../lib/web/screens/web_planner_queue_screen.dart">lib/web/screens/web_planner_queue_screen.dart:171</a>.</p>
+<h3>AP-08 ? Map and inbox share mutable queue/filter state without a query generation guard</h3>
+<p><strong>Priority:</strong> P1 ? <strong>Basis:</strong> SOURCE_CONFIRMED</p>
+<p>Opening Map Analysis requests status=all through loadPlannerQueue, which changes the same plannerQueueStatus and rows used by the inbox. Competing status/search requests are not guarded by a queue generation token.</p>
+<p><strong>Recommended change:</strong> Separate PlanningMapController and ReviewQueueController. Guard responses by owner, filter and request generation; visiting the map must not change inbox filters.</p>
+<p><strong>Acceptance:</strong> Pending -&gt; map -&gt; inbox preserves the selected inbox filter. Delayed older filter responses cannot replace the current view.</p>
+<p><strong>Source:</strong> <a href="../lib/web/screens/web_map_screen.dart">lib/web/screens/web_map_screen.dart:135</a>, <a href="../lib/main.dart">lib/main.dart:1786</a>.</p>
+<h3>AP-09 ? Queue failure and search-no-match states remain ambiguous</h3>
+<p><strong>Priority:</strong> P1 ? <strong>Basis:</strong> SOURCE_CONFIRMED</p>
+<p>The empty branch checks the unfiltered queue rather than the searched result. Initial fetch failures can end at No submissions found after a transient snackbar; count failures are swallowed and zero/stale values have no clear state.</p>
+<p><strong>Recommended change:</strong> Persist resource errors, retain labeled stale data, offer retry, and separate loading/valid empty/no-match/error. Counters need independent loading/error states.</p>
+<p><strong>Acceptance:</strong> Searching a nonempty queue with no matching name shows No matching submissions. An HTTP failure never certifies an empty workload or a zero count.</p>
+<p><strong>Source:</strong> <a href="../lib/web/screens/web_planner_queue_screen.dart">lib/web/screens/web_planner_queue_screen.dart:206</a>, <a href="../lib/web/screens/web_planner_queue_screen.dart">lib/web/screens/web_planner_queue_screen.dart:171</a>, <a href="../lib/main.dart">lib/main.dart:1786</a>.</p>
+<h3>AP-10 ? Review detail loading and URL reentry need a coherent route lifecycle</h3>
+<p><strong>Priority:</strong> P1 ? <strong>Basis:</strong> SOURCE_AND_CONTROL_FLOW_REVIEW</p>
+<p>Detail is awaited before opening the dialog, so a slow fetch has no immediate detail loading view. The linked-record guard retains _openedRecord and skips the same ID on reentry; route Back/Forward, retry and dialog close need explicit regression coverage. These browser scenarios were not reproduced in this review.</p>
+<p><strong>Recommended change:</strong> Use a full-page review route with a loading/error/retry state keyed to the case/revision ID. Preserve inbox filters and scroll on return. Keep a small confirmation dialog only for the final decision.</p>
+<p><strong>Acceptance:</strong> A direct link, refresh, failed-load retry and Back/Forward can reopen the same case reliably; repeated clicks cannot stack stale record dialogs.</p>
+<p><strong>Source:</strong> <a href="../lib/web/screens/web_planner_queue_screen.dart">lib/web/screens/web_planner_queue_screen.dart:11</a>, <a href="../lib/web/web_analyst_shell.dart">lib/web/web_analyst_shell.dart:73</a>.</p>
+<h3>AP-11 ? Queue and detail retain rigid desktop layouts</h3>
+<p><strong>Priority:</strong> P2 ? <strong>Basis:</strong> LAYOUT_RISK_FROM_SOURCE_NOT_BROWSER_REPRODUCED</p>
+<p>Queue cards always use two columns; filter controls and KPI/header rows are ordinary Rows. The review dialog also contains fixed-height two-column sections. This is a source-observed overflow risk, not a newly reproduced device failure.</p>
+<p><strong>Recommended change:</strong> Use adaptive table/cards, wrapping filters, a collapsible map and a full-page detail layout at narrow/zoomed widths. Keep the decision action accessible while scrolling evidence.</p>
+<p><strong>Acceptance:</strong> Test 480x700, 1000x500 and 1280x900 plus 200% browser zoom on inbox and full review, with no unreachable actions.</p>
+<p><strong>Source:</strong> <a href="../lib/web/screens/web_planner_queue_screen.dart">lib/web/screens/web_planner_queue_screen.dart:219</a>.</p>
+<h3>AP-12 ? Planning-map summary mixes record scope and fixed overlay readiness</h3>
+<p><strong>Priority:</strong> P2 ? <strong>Basis:</strong> SOURCE_CONFIRMED</p>
+<p>The map merges loaded owned history and submitted farmer analyses, includes a useful loaded-record badge, but its summary says Total Analyzed Lands/Across all saved analyses and Infrastructure Overlays Ready unconditionally. This is not a complete Panabo land inventory.</p>
+<p><strong>Recommended change:</strong> Label the dataset, filters, record count, distinct farm count and last refresh. Derive overlay availability from actual record/capability state and keep missing coverage visible.</p>
+<p><strong>Acceptance:</strong> An unavailable overlay is not labeled Ready. A displayed count is identified as records or distinct farms, with the exact authorized scope.</p>
+<p><strong>Source:</strong> <a href="../lib/web/screens/web_map_screen.dart">lib/web/screens/web_map_screen.dart:366</a>, <a href="../lib/web/screens/web_map_screen.dart">lib/web/screens/web_map_screen.dart:135</a>.</p>
+<h3>AP-13 ? Existing snapshot/version data needs visible review context</h3>
+<p><strong>Priority:</strong> P2 ? <strong>Basis:</strong> EXISTING_FOUNDATION_WITH_PRESENTATION_GAP</p>
+<p>Sessions already store result snapshots, farm/boundary versions and review timestamps. The inspected review UI does not provide a clear version-comparison header/timeline. The farm boundary_version currently increments even for metadata edits, so a simple version mismatch must not automatically claim geometry changed.</p>
+<p><strong>Recommended change:</strong> Show the analyzed geometry/version/date, current geometry fingerprint where available, and decision timeline. Distinguish a geometry change from a rename or archive action.</p>
+<p><strong>Acceptance:</strong> A historical review remains tied to its original analysis; a farm rename does not falsely label the boundary as changed.</p>
+<p><strong>Source:</strong> <a href="../backend/database.py">backend/database.py:1398</a>, <a href="../backend/database.py">backend/database.py:1769</a>.</p>
+<h3>AP-14 ? Inbox ordering and cards emphasize analysis date instead of waiting time</h3>
+<p><strong>Priority:</strong> P2 ? <strong>Basis:</strong> SOURCE_CONFIRMED</p>
+<p>The queue is ordered by analyzed_at descending and cards display the analysis date. submitted_at exists, but the default queue does not prioritize elapsed review waiting time.</p>
+<p><strong>Recommended change:</strong> Default Pending to oldest submitted first, offer explicit sort, and display submitted date plus waiting age. Add lightweight follow-up tasks or assignments only when operationally needed.</p>
+<p><strong>Acceptance:</strong> An older pending submission can be found first even when its underlying analysis is older than a newly submitted case.</p>
+<p><strong>Source:</strong> <a href="../backend/database.py">backend/database.py:1345</a>.</p>
+<h2>Other web readiness observations</h2>
+<p>Identity and delivery remain a separate completion stream. Existing-account operation, signup/recovery email receipt, Google sign-in, SMS verification and background push must have their own evidence. Missing provider configuration should remain visible rather than being described as a general database outage.</p>
+<p>The browser-storage session architecture and its residual script-access risk remain documented in the existing session decision. A future authentication redesign should have its own scope and browser tests; the recommended operator workflow does not require changing it immediately.</p>
+<p>The review queue&#x27;s project-wide planner access is an existing authorized design, not automatically an authorization defect. Add per-barangay assignments/authorization only if the operating policy actually requires them, with server-side enforcement.</p>
+<h2>Decision</h2>
+<p>Proceed with an operator-workflow improvement release while NPK and soil pH remain on hold. First fix misleading evidence displays and API/UI decision consistency, then build a usable review-and-correction loop, then improve planning summaries and data loading. Use the linked acceptance scenarios to decide whether each increment is actually ready.</p>
+<p>See <a href="ANALYST_PLANNER_APPROACH.md">recommended analyst/planner approach</a>, <a href="findings.json">structured findings</a> and <a href="../defense-evidence/web-fix-execution/README.md">existing web execution evidence</a>.</p></section><section id="approach"><h1>Recommended analyst and planner approach</h1>
+<p>Date: 2026-10-27. This is a proposed product/workflow design, not a claim these new features are implemented. NPK and soil pH changes and new dataset integration remain on hold.</p>
+<h2>Core recommendation</h2>
+<p>Keep the existing Agricultural Planning Analyst account. Give it two explicit responsibilities: prepare an analysis and review a farmer submission. Use one shared evidence record and two clear workspaces, with a planning overview around them. This fits the existing role/API structure and supports an understandable defense demonstration.</p>
+<h3>Proposed navigation</h3>
+<div class="tablewrap"><table>
+<tr><th>Main destination</th><th>Purpose</th><th>Existing functionality to reuse</th></tr>
+<tr><td>Overview</td><td>Review workload, recent decisions, follow-ups and resource state</td><td>Dashboard, planner counts, activity</td></tr>
+<tr><td>Analysis Workspace</td><td>Select a farm/area, run analysis, explain and save a result</td><td>Analyze Area, history, shared result evidence</td></tr>
+<tr><td>Review Inbox</td><td>Receive, search, prioritize and review farmer submissions</td><td>Verification Queue and detail API</td></tr>
+<tr><td>Planning Map</td><td>Inspect authorized submitted parcels and patterns with explicit filters</td><td>Map Analysis and map/detail components</td></tr>
+<tr><td>Reports</td><td>Analysis reports, decision records and scoped planning summaries</td><td>Existing report/export pipeline</td></tr>
+<tr><td>Activity</td><td>Analysis completion, submissions, decisions, information requests and follow-up events</td><td>Existing activity and notification path</td></tr>
+<tr><td>Settings</td><td>Account, identity, delivery and display preferences</td><td>Existing settings</td></tr>
+</table></div>
+<p>Keep My analyses/history available inside the Analysis Workspace. Recommendation Patterns can sit under Overview or the Planning Map with a clear description of the records counted. Existing browser links should redirect to their new destination rather than silently breaking.</p>
+<h2>1. Analysis Workspace</h2>
+<h3>A. Identify what is being analyzed</h3>
+<p>Show farm reference, submitter/owner reference where authorized, selection type, mapped area for a polygon, recorded boundary/version and intended planting month. Farm review should start from the submitted parcel geometry. Point screening remains an explicitly named exploratory workflow; a point result should not imply a whole farm was assessed.</p>
+<p>Give the map and input controls a clear sequence: choose area -&gt; check selection -&gt; run -&gt; inspect results -&gt; save/export. Show the selected geometry before submitting the job. Reuse existing geometry validation rather than maintaining separate desktop and mobile rules.</p>
+<h3>B. Make analysis progress and recovery understandable</h3>
+<p>Display actual server job stages/request IDs where supported. During a synchronous request, show the real pending state and retry guidance. Background continuation should be offered only when the worker/job configuration actually supports it. Retrying should reuse the request identity where appropriate and avoid creating duplicate sessions.</p>
+<p>Retain useful selection and prior results after a network problem, with a visible stale/result timestamp. Verify recovery after browser refresh rather than assuming an in-memory result will survive it.</p>
+<h3>C. Organize the result around an understandable summary</h3>
+<p>Use these sections:</p>
+<ul>
+<li>Summary: farm/geometry, result type, candidate crops if available, major constraints, missing evidence and practical next action.</li>
+<li>Recorded conditions: environmental measurements, units, observation period and the applicable assessment rule where one exists. Held NPK/soil-pH logic is unchanged.</li>
+<li>Map and coverage: recorded boundary, available layers and missing/partial coverage with a numeric legend.</li>
+<li>Evidence and dates: source, measurement period, model/rule version and warnings.</li>
+<li>Analysis history: prior versions, run date and the relationship to the current farm geometry.</li>
+</ul>
+<p>A model score, factor assessment and source-availability flag should have different names. Show Suitable / Suitable with limitations / Not suitable / Not assessed for a non-soil factor only when its documented rule supports that label. A missing assessment is not a zero or an unsuitable grade. Do not average model scores and rule grades into a new overall percentage without an explicit validated definition.</p>
+<h3>D. Use a consistent analysis record</h3>
+<p>The stored snapshot should identify farm and geometry, analysis ID, source periods, model/rule versions, quality flags, optional ranking output and run timestamp. The same values should appear in workspace, history, review and exported analysis report. Existing snapshot fields are a useful starting point.</p>
+<p>When an operator writes advisory notes or chooses an alternative recommendation, record it as a human note/decision with a reason and author. Preserve the original computed result for traceability.</p>
+<h2>2. Review Inbox and workbench</h2>
+<h3>A. Make the inbox an operational list</h3>
+<p>Default to pending cases ordered by oldest submitted time. Offer search, status, place/validated barangay, submitted-date range, result completeness and explicit sort. Use a desktop table with a compact-card layout at narrow widths.</p>
+<p>Suggested columns: case/submission ID, farm, submitter, location, submitted time, waiting age, result type/evidence completeness, review status and Open review. A model score can be optional detail; it should not drive the review decision automatically.</p>
+<p>Use a lightweight server-paged response. Request the complete grid, explanations and source snapshot only when opening the detail. Keep all-record statistics in a separate aggregate endpoint.</p>
+<h3>B. Open a full-page review</h3>
+<p>Use a URL-addressable workbench, for example a hash route identifying a case and analysis revision. Preserve the inbox&#x27;s filters, page and scroll when returning.</p>
+<p>Suggested layout:</p>
+<ul>
+<li>Header: case/farm reference, submitter, submission date, current review status and analysis revision.</li>
+<li>Main evidence area: summary, parcel map, observed conditions, coverage/limitations and analysis history.</li>
+<li>Review panel: checklist, notes, reason/correction items and the decision controls.</li>
+<li>Timeline: submission, information request, farmer response, new analysis revision and final decision.</li>
+</ul>
+<p>A long evidence review should have its own loading/error/retry state immediately after navigation. Use a small confirmation dialog for the final action. At narrow widths the review panel moves below the evidence and the map can collapse.</p>
+<h3>C. Add one useful decision path: Request information</h3>
+<p>Proposed flow:</p>
+<div class="flow">Farmer submits -&gt; Review Inbox -&gt; Evidence workbench</div>
+<div class="flow">|-&gt; Review accepted</div>
+<div class="flow">|-&gt; Request information -&gt; Farmer responds/corrects</div>
+<div class="flow">|                         -&gt; New linked revision -&gt; Inbox</div>
+<div class="flow">|-&gt; Rejected with reason</div>
+<p>The minimum extension is an information-request state plus revision-linked resubmission and events. Persist an In review/assigned state later if several reviewers actually need case assignment.</p>
+<div class="tablewrap"><table>
+<tr><th>Action</th><th>Intended meaning</th><th>Required record</th></tr>
+<tr><td>Review accepted</td><td>Reviewer completed the defined review of the available submission</td><td>Analyst, timestamp, scope/checklist, analysis revision and relevant notes</td></tr>
+<tr><td>Request information</td><td>A specific correctable gap prevents completion</td><td>Correction items, explanation and a response path</td></tr>
+<tr><td>Rejected</td><td>Submission cannot proceed under the defined project review policy</td><td>Structured reason and mandatory explanatory note</td></tr>
+</table></div>
+<p>Show Reviewed ? preliminary when the reviewed analysis remains preliminary. Human review completion does not change a partial analysis into a complete scientific assessment. Avoid implying that an email/account check proves land ownership or that a reviewed result is a permit or laboratory certification.</p>
+<p>A missing provider response is usually a technical retry/information issue; it should not automatically reject the farmer&#x27;s land.</p>
+<h3>D. Make the checklist honest</h3>
+<p>A small checklist can cover: submitted farm/reference identified, boundary readable and selection type clear, analysis snapshot/current geometry relationship checked, coverage and periods reviewed, available constraints explained, and follow-up actions recorded.</p>
+<p>Record field visits, uploaded observations or additional confirmations only when they actually happened. A checked box should mean evidence was reviewed, not that an unperformed field investigation was completed.</p>
+<h3>E. Enforce decisions on the server</h3>
+<p>Keep the existing pending-only update protection and transactional audit/notification path. Add matching note/reason validation, bounded note length, an explicit review revision token and a conflict response showing that the case changed.</p>
+<p>For resubmission, keep old snapshots and decisions and link the next analysis/revision to the same case. Do not reset the old decision or replace its geometry. Keep notification events idempotent so retries do not generate duplicate action items.</p>
+<p>Separate geometry changes from metadata changes. The current boundary_version increments for general parcel edits; compare an actual geometry fingerprint or a dedicated geometry version before saying a boundary changed.</p>
+<h2>3. Planning overview and map</h2>
+<h3>Operational dashboard</h3>
+<p>Lead with actionable review metrics: pending cases, oldest waiting submission, information requests awaiting response, reviewed this period and partial/unavailable-evidence cases. Clicking a metric should open the matching inbox filter.</p>
+<p>Keep My analyses and their model statistics in a clearly named personal section. Label all counts with scope and time period. Resource failure should show unavailable/stale, not zero.</p>
+<h3>Planning map</h3>
+<p>Give the map its own query/controller so it cannot change the inbox&#x27;s filter. Filter by authorized dataset, review status, date, place and relevant result type. Show record count and distinct farm count separately.</p>
+<p>Choose one map meaning at a time: review status, crop candidate, measured layer, model score or evidence availability. Each has a matching legend. Missing cells/coverage remain visible. A relative high value in a measured layer should not automatically be painted as a favorable assessment.</p>
+<p>For larger controlled datasets, request records within the viewport with bounded fields, then add clustering if measurement shows it is needed. Avoid downloading complete analysis snapshots for every map marker.</p>
+<p>A map of available/submitted records is not a complete city land inventory. Label it as Submitted farms/Recorded analyses in Panabo with the selected scope. Use validated location fields for barangay filters rather than treating a display geocoder string as an authoritative boundary.</p>
+<h3>Aggregates and recommendation patterns</h3>
+<p>For planning summaries, use a documented latest-eligible-analysis rule per distinct farm. Keep case count, analysis-run count and farm count separate. Sum of parcel areas can include overlapping parcels; label that sum or compute an explicitly defined nonoverlapping geometry union when that is the required metric.</p>
+<p>Crop recommendation frequency describes this system&#x27;s recorded outputs. It does not establish actual planted area, yield, market demand or citywide crop suitability. Include date range, record count, preliminary/missing counts and review-status filters with every chart.</p>
+<h3>Follow-ups and reports</h3>
+<p>Add lightweight follow-up items for boundary clarification, an actual planned field visit or another reviewer-requested action, with owner, due date and status. Keep completion events traceable.</p>
+<p>Maintain separate outputs: analysis report tied to a snapshot, review-decision record tied to a reviewer/revision, and planning summary tied to a filter/date/aggregation definition. Reuse the current report pipeline and add missing context rather than generating unrelated figures.</p>
+<h2>4. Notifications that support this workflow</h2>
+<p>Use the existing activity/outbox path for submission received, information requested, farmer response/resubmission, analysis ready/partial/failed, review completed and follow-up due. Each notification should link to the exact authorized case/revision and explain the next action.</p>
+<p>Weather advisories can remain a separate category. In-app presence and external push/email/SMS delivery are separate evidence; required external delivery still needs owned provider configuration and receipt tests.</p>
+<h2>5. Practical implementation order</h2>
+<div class="tablewrap"><table>
+<tr><th>Increment</th><th>Deliverable</th><th>Acceptance evidence</th></tr>
+<tr><td>1. Correct decision/evidence meaning</td><td>Consistent score wording, layer legends, conditional availability, server note rules and clear conflict behavior</td><td>One record agrees across inbox/detail/map/report; direct blank-reason rejection is refused; uniform heatmap data is explained correctly</td></tr>
+<tr><td>2. Complete the review loop</td><td>Full-page review, information request, response/new revision and visible decision timeline</td><td>Farmer submits -&gt; reviewer requests correction -&gt; farmer resubmits -&gt; reviewer accepts; old snapshot and decision remain visible</td></tr>
+<tr><td>3. Make operator work reliable</td><td>Bounded inbox search/pages, independent map state, queue error/no-match/stale states, workload dashboard and waiting-age sort</td><td>One page fetched initially; delayed responses cannot change the active filter; no network error becomes a confirmed zero</td></tr>
+<tr><td>4. Verify planning and presentation</td><td>Scoped map/aggregates/reports, accessible layouts and the real role/browser journey</td><td>Repeated analysis of one farm does not become multiple farms; direct links/Back/refresh work; narrow/zoomed controls remain usable</td></tr>
+</table></div>
+<p>Introduce separate feature controllers incrementally around the existing APIs: AnalysisWorkspace, ReviewInbox, PlanningMap and Reports. The immediate benefit is independent query/loading/error state and fewer cross-screen side effects. Reuse the current combined role, permissions, snapshots and event infrastructure.</p>
+<h2>Acceptance scenarios for the next operator release</h2>
+<ul>
+<li>Operator with no personal analyses still sees the real pending farmer workload.</li>
+<li>Blank rejection notes fail through the API as well as the UI.</li>
+<li>Two reviewers opening one pending case cannot overwrite the first completed decision.</li>
+<li>Information request and resubmission preserve the prior revision and decision.</li>
+<li>Switching inbox status while an older request is delayed keeps the latest chosen filter.</li>
+<li>Visiting the planning map does not mutate inbox filters or pagination.</li>
+<li>Empty, no-match, initial failure and stale refresh failure have distinct displays.</li>
+<li>Direct links, same-case retry, browser refresh and Back/Forward reopen the correct review.</li>
+<li>Geometry changes and farm renames are distinguished in review history.</li>
+<li>Uniform/missing environmental grids and preliminary results retain accurate meanings.</li>
+<li>Large controlled queue data triggers bounded requests and a single detail fetch per opened case.</li>
+<li>Inbox, review decisions and reports remain usable at narrow widths, 200% zoom and with keyboard navigation.</li>
+</ul>
+<p>These scenarios are proposed acceptance work. They have not been converted into new QA passes by this document. Held NPK/soil-pH acceptance remains separate.</p></section></html>

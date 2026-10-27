@@ -78,7 +78,7 @@ def main():
     (out/'firebase-config.js').write_text('self.GEOSUSTAIN_FIREBASE = '+json.dumps(worker_config)+';\n',encoding='utf-8')
     # Allows safe manual deployment of the built output as its own Vercel root.
     rules=json.loads((ROOT/'vercel.json').read_text(encoding='utf-8'))
-    (out/'vercel.json').write_text(json.dumps({'headers':rules['headers']},indent=2),encoding='utf-8')
+    (out/'vercel.json').write_text(json.dumps({'headers':rules['headers'],'rewrites':rules.get('rewrites',[])},indent=2),encoding='utf-8')
     print(json.dumps(manifest))
 
 if __name__=='__main__': main()
