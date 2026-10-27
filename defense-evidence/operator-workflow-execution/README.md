@@ -17,6 +17,8 @@ Open [the workflow QA extension](QA_UPDATE.md) for individual test outcomes and 
 
 See [executed test results](TEST_RESULTS.md) for counts, source identities and the exact remaining acceptance targets.
 
+The web and API were published and observed on matched commit `6957ae5`. See [deployment verification](DEPLOYMENT.md). Required email configuration remains unavailable; hosted signed-in acceptance is separate from the completed local checks.
+
 ## Where to use it
 
 - **Overview:** review workload first; personal analysis activity below it. Apply a place filter, open the matching case view from a metric, or export the current planning summary.

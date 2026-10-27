@@ -1,11 +1,24 @@
 {
-  "status": "verified_local_publication_pending",
+  "status": "deployed_public_smoke_verified_local_role_checks",
   "baseline_commit": "e03c7a1504ceb56840cb007bc83605e7d3f6d832",
   "application_source_commit": "5ba2aca7146184337e1724e6c32c0e31d6fa2de0",
   "local_production_build_id": "5ba2aca71461-df58784d8c19",
-  "publication": "Local source and evidence ready; GitHub and hosted identity recorded after publication",
+  "publication": "GitHub main published; Vercel and Render observed live on the release commit",
   "local_browser": "PASS scoped direct inbox, saved case, Back, Forward, reload and independent map/inbox filtering in Brave",
   "remaining_acceptance": "Hosted authenticated roles; full browser/accessibility matrix; provider receipt; independent sign-off; physical mobile retest",
   "soil_changes": "Held by owner request",
-  "qa_register": "Original 191 rows and historical counts preserved"
+  "qa_register": "Original 191 rows and historical counts preserved",
+  "deployed_commit": "6957ae5a57efca0f0ba95e29e2ba7d6e2c96b296",
+  "frontend_build_id": "6957ae5a57ef-58c42e086dde",
+  "frontend_js_sha256": "39c4f3f5e3556c0f23c93fffc31015a7312224851bf04186111e4a9cc0da0759",
+  "frontend_js_matches_manifest": true,
+  "render_deploy_id": "dep-dbg7sk1srm7s73cpbqog",
+  "public_checked_at_utc": "2026-10-27T10:38:15.340008+00:00",
+  "live_health_http_status": 200,
+  "live_readiness_http_status": 503,
+  "live_readiness_gate": "Required email configuration unavailable; database and model ready",
+  "public_role_guard": "Anonymous operator inbox returns 401",
+  "hosted_authenticated_acceptance": "Not performed; local signed-in observations are separate",
+  "documentation_followup": "Subsequent evidence-only commits may rebuild Vercel; application/backend files are unchanged from this deployed candidate",
+  "source_equivalence": "git diff 5ba2aca..6957ae5 -- lib web assets pubspec.yaml pubspec.lock backend deployment vercel.json is empty"
 }

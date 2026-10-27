@@ -18,5 +18,6 @@ These checks supplement the original 191-row QA register; they do not replace or
 | OPS-12 Held soil/data contract | PASS for unchanged source | `SOURCE_SCOPE.json`; existing scientific definitions and data blobs unchanged |
 | OPS-13 Live provider receipt / adviser sign-off | PENDING_EXTERNAL | No Firebase project/sender/provider/scientific approval supplied; not inferred from software tests |
 | OPS-14 Deferred physical mobile retest | NEEDS_MANUAL | Shared activity/status components changed; web checks do not establish mobile acceptance |
+| OPS-15 Matched hosted release and public smoke | PASS for stated scope | Vercel/Render both report 6957ae5; hosted JS hash matches manifest; SPA deep links 200; anonymous operator inbox 401. Readiness remains 503 for required email configuration; authenticated live journeys remain open. |
 
 See `BROWSER_CHECKS.md` and `RELEASE.json` for browser and publication milestones.

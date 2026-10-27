@@ -1,0 +1,44 @@
+{
+  "checked_at_utc": "2026-10-27T10:37:26.114914+00:00",
+  "frontend_manifest": {
+    "source_commit": "6957ae5a57efca0f0ba95e29e2ba7d6e2c96b296",
+    "source_fingerprint": "58c42e086dde30d925e87af1233456bfeb94491ef3b1030c7cfceaa757ecf059",
+    "build_id": "6957ae5a57ef-58c42e086dde",
+    "api_origin": "https://geosustain.onrender.com",
+    "flutter_version": "3.41.9",
+    "built_at_utc": "2026-10-27T10:35:39.735838+00:00",
+    "main_js_sha256": "39c4f3f5e3556c0f23c93fffc31015a7312224851bf04186111e4a9cc0da0759",
+    "public_firebase_project": null,
+    "web_push_configured": false
+  },
+  "compiled_js_http_status": 200,
+  "compiled_js_sha256": "39c4f3f5e3556c0f23c93fffc31015a7312224851bf04186111e4a9cc0da0759",
+  "compiled_js_matches_manifest": true,
+  "routes": [
+    {
+      "path": "/operator/queue",
+      "http_status": 200,
+      "html": true,
+      "bootstrap_reference": true,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/operator/map",
+      "http_status": 200,
+      "html": true,
+      "bootstrap_reference": true,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate"
+    },
+    {
+      "path": "/admin/users",
+      "http_status": 200,
+      "html": true,
+      "bootstrap_reference": true,
+      "content_type": "text/html; charset=utf-8",
+      "cache_control": "public, max-age=0, must-revalidate"
+    }
+  ],
+  "anonymous_operator_inbox_status": 401
+}
