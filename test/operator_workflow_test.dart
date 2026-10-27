@@ -37,6 +37,19 @@ Map<String, dynamic> fixture() => {
   'current_farm_version': 1,
 };
 void main() {
+  test(
+    'browser history is acknowledged instead of undoing a case navigation',
+    () async {
+      final observer = PortalBrowserHistory(() => '/operator/queue?case=7');
+      expect(
+        await observer.didPushRouteInformation(
+          RouteInformation(uri: Uri(path: '/')),
+        ),
+        isTrue,
+      );
+      expect(PortalRoutes.current.value.queryParameters['case'], '7');
+    },
+  );
   test('direct routes and legacy hash routes preserve case references', () {
     expect(
       portalLocation('', '/operator/queue', '?case=7'),
