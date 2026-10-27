@@ -1,0 +1,33 @@
+									23527 group
+									23528 group
+									23529 group Collapse navigation GeoSustain Toggle dark mode Build information
+										23532 group ID: flt-semantic-node-2
+											23533 button Collapse navigation ID: flt-semantic-node-48
+											23534 heading GeoSustain ID: flt-semantic-node-49
+											23535 button Toggle dark mode ID: flt-semantic-node-50
+											23536 button Build information ID: flt-semantic-node-51
+											23537 group ID: flt-semantic-node-25
+												23538 text GeoSustain
+												23539 text L Local QA Analyst Agricultural Planning Analyst
+												23540 button Overview ID: flt-semantic-node-14
+												23541 button Planning Map ID: flt-semantic-node-15
+												23542 button Analysis Workspace ID: flt-semantic-node-16
+												23543 button My Analyses ID: flt-semantic-node-17
+												23544 button Reports ID: flt-semantic-node-18
+												23545 button Recommendation Patterns ID: flt-semantic-node-19
+												23546 button Review Inbox ID: flt-semantic-node-20
+												23547 button Settings ID: flt-semantic-node-21
+												23548 button Activity ID: flt-semantic-node-22
+												23549 button Logout ID: flt-semantic-node-24
+											23571 group ID: flt-semantic-node-62
+												23572 header Review Inbox Review saved evidence, request information and record decisions ID: flt-semantic-node-55
+													23573 button Refresh Weather ID: flt-semantic-node-56
+													23574 button Open activity ID: flt-semantic-node-57
+												23578 group Case #2 · Pending review Current analysis #4 · case version 1 · 4d since submission Recorded boundary vs current farm: same coordinates; farm metadata may have changed. Current farm version 1. Evidence below is the saved analysis snapshot. Acceptance does not replace a soil test or remove recorded limitations. Recorded boundary and sampled measurements Layer unavailable. The boundary remains visible; no measurement is inferred. Basemap is navigation context. Samples and boundary come from this saved analysis; current imagery is not a new measurement. EMULATOR TEST ONLY - workflow fixture Owner: Emulator farmer Oct 23, 2026 · 17:39 0.197 ha Land cover not verified TEST ONLY: synthetic missing-observation state. Land cover composition Incomplete satellite coverage. Mapped percentages do not establish that the remaining area is free of buildings or water. Confident satellite coverage: 0.0% Mapped buildings/roads: Unavailable Mapped water: Unavailable This is a partial assessment, not a crop recommendation. You can ask an analyst to review the available evidence or retry online when coverage is available. Data source Synthetic fixture, no satellite inference Review checklist and explanation Revisions and decision timeline Follow-up tasks New tasks are assigned to you. Due reminders appear when Activity is refreshed; background delivery requires a configured provider. ID: flt-semantic-node-59
+													23576 button Return to inbox ID: flt-semantic-node-60
+													23577 button Reload current case ID: flt-semantic-node-61
+													23579 button Export case report ID: flt-semantic-node-63
+													23580 button Recorded layer NDVI (index) ID: flt-semantic-node-64
+													23581 group flutter_map ID: flt-semantic-node-65
+														23582 button Attributions ID: flt-semantic-node-66
+													23583 text Analyzed Farm Location Farm center latitude: 7.3924 Farm center longitude: 125.6229 Approximate area: 0.197 ha Farm center is not a soil sample coordinate. CAGRO coverage: Not recorded under the current coverage policy (older analysis).

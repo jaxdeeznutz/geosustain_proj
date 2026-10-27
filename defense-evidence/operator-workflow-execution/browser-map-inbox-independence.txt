@@ -1,0 +1,41 @@
+									23882 group
+									23883 group
+									23884 group
+										23887 group ID: flt-semantic-node-2
+											23888 button Collapse navigation ID: flt-semantic-node-36
+											23889 heading GeoSustain ID: flt-semantic-node-37
+											23890 button Toggle dark mode ID: flt-semantic-node-38
+											23891 button Build information ID: flt-semantic-node-39
+											23892 group ID: flt-semantic-node-25
+												23893 text GeoSustain
+												23894 text L Local QA Analyst Agricultural Planning Analyst
+												23895 button Overview ID: flt-semantic-node-14
+												23896 button Planning Map ID: flt-semantic-node-15
+												23897 button Analysis Workspace ID: flt-semantic-node-16
+												23898 button My Analyses ID: flt-semantic-node-17
+												23899 button Reports ID: flt-semantic-node-18
+												23900 button Recommendation Patterns ID: flt-semantic-node-19
+												23901 button Review Inbox ID: flt-semantic-node-20
+												23902 button Settings ID: flt-semantic-node-21
+												23903 button Activity ID: flt-semantic-node-22
+												23904 button Logout ID: flt-semantic-node-24
+											23941 group ID: flt-semantic-node-123
+												23942 header Review Inbox Review saved evidence, request information and record decisions ID: flt-semantic-node-103
+													23943 button Refresh Weather ID: flt-semantic-node-104
+													23944 button Open activity ID: flt-semantic-node-105
+												23945 group Submitted cases Oldest submissions first. Acceptance records an analyst decision; it does not certify an unmeasured soil value. 2 review cases on page 1. Applied search: none. Status: Pending review. ID: flt-semantic-node-107
+													23946 edit (settable, string) Search case, farmer or farm
+													23947 button Review status Pending review ID: flt-semantic-node-109
+													23948 button Submission order Oldest first ID: flt-semantic-node-110
+													23949 edit (settable, string) Place contains
+													23950 text Press Enter to apply
+													23951 button Workload view All cases ID: flt-semantic-node-113
+													23952 edit (settable, string) From submission date
+													23953 text YYYY-MM-DD; Enter applies
+													23954 edit (settable, string) Through submission date
+													23955 text YYYY-MM-DD; Enter applies
+													23956 button Refresh ID: flt-semantic-node-118
+													23957 button Case #2 · EMULATOR TEST ONLY - workflow fixture Emulator farmer · Pending review Submitted Oct 23, 2026 · 17:49 · 4d since submission Model score: unavailable · analyzed Oct 23, 2026 · 17:39 ID: flt-semantic-node-119
+													23958 button Case #1 · EMULATOR TEST ONLY - workflow fixture Emulator farmer · Pending review Submitted Oct 24, 2026 · 23:28 · 2d since submission Model score: unavailable · analyzed Oct 24, 2026 · 23:15 ID: flt-semantic-node-120
+													23959 button (disabled) Previous page ID: flt-semantic-node-121
+													23960 button (disabled) Next page ID: flt-semantic-node-122

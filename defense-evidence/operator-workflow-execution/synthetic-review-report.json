@@ -1,0 +1,154 @@
+{
+  "case": {
+    "id": 1,
+    "owner_id": 0,
+    "farm_id": 1,
+    "current_session_id": 2,
+    "status": "verified",
+    "version": 4,
+    "submitted_at": "2026-10-27T17:42:25.846178+08:00",
+    "updated_at": "2026-10-27T17:42:26.563479+08:00"
+  },
+  "analysis": {
+    "analysis_mode": "preliminary_environmental",
+    "selected_polygon": [
+      {
+        "lat": 7.29,
+        "lng": 125.62
+      },
+      {
+        "lat": 7.29,
+        "lng": 125.621
+      },
+      {
+        "lat": 7.291,
+        "lng": 125.621
+      }
+    ],
+    "session_id": 2,
+    "owner_id": 1,
+    "owner_display_name": "Synthetic farmer",
+    "farm_id": 1,
+    "boundary_version": 1,
+    "submitted_at": "2026-10-27T17:42:25.846178+08:00",
+    "verification_status": "verified",
+    "verified_by": 3,
+    "verified_at": "2026-10-27T17:42:26.563479+08:00",
+    "planner_notes": "Reviewed available preliminary evidence.",
+    "center_lat": 7.29,
+    "center_lon": 125.62,
+    "place_name": null,
+    "analysis_source": null,
+    "season_name": null,
+    "season_advice": null,
+    "intended_planting_month": null,
+    "season_status": null,
+    "season_adjusted_score": null,
+    "environmental_suitability_pct": null,
+    "recommended_planting_window": null,
+    "analyzed_at": "2026-10-27T17:42:25.177150+08:00",
+    "heatmap_grid": null,
+    "area_m2": null,
+    "area_hectares": 1.0,
+    "analysis_summary": null,
+    "ndvi": null,
+    "rainfall_mm": null,
+    "temperature_c": null,
+    "elevation_m": null,
+    "soil_ph": null,
+    "live_humidity": null,
+    "weather_description": null,
+    "infrastructure_suitability": null,
+    "infrastructure_score": null,
+    "infrastructure_status": null,
+    "infrastructure_recommendation": null,
+    "infrastructure_risk": null,
+    "slope_pct": null,
+    "data_quality": null,
+    "nitrogen": null,
+    "phosphorus": null,
+    "potassium": null,
+    "predicted_crop": null,
+    "compatibility_pct": null,
+    "suitability_level": null,
+    "is_crop_recommended": null,
+    "land_status": null,
+    "recommendation_title": null,
+    "recommendation": null,
+    "crop_label": null,
+    "crop_growth_cycle": null,
+    "crop_est_yield": null,
+    "alternative_crops": null,
+    "xai_explanation": null,
+    "farm_name": "Synthetic parcel",
+    "analysis_status": "completed",
+    "lat": 7.29,
+    "lon": 125.62,
+    "crop_compatibility_pct": null
+  },
+  "events": [
+    {
+      "id": 1,
+      "kind": "submitted",
+      "notes": null,
+      "reason": null,
+      "checklist": null,
+      "session_id": 1,
+      "created_at": "2026-10-27T17:42:22.879914+08:00",
+      "actor_name": "Synthetic farmer"
+    },
+    {
+      "id": 2,
+      "kind": "needs_information",
+      "notes": "Confirm the parcel outline.",
+      "reason": "boundary_issue",
+      "checklist": {},
+      "session_id": 1,
+      "created_at": "2026-10-27T17:42:24.704805+08:00",
+      "actor_name": "Synthetic reviewer 1"
+    },
+    {
+      "id": 3,
+      "kind": "resubmitted",
+      "notes": "Corrected outline, new analysis.",
+      "reason": null,
+      "checklist": {},
+      "session_id": 2,
+      "created_at": "2026-10-27T17:42:25.846178+08:00",
+      "actor_name": "Synthetic farmer"
+    },
+    {
+      "id": 4,
+      "kind": "verified",
+      "notes": "Reviewed available preliminary evidence.",
+      "reason": "",
+      "checklist": {
+        "coverage": true,
+        "geometry": true,
+        "reference": true,
+        "limitations": true
+      },
+      "session_id": 2,
+      "created_at": "2026-10-27T17:42:26.563479+08:00",
+      "actor_name": "Synthetic reviewer 1"
+    }
+  ],
+  "revisions": [
+    {
+      "revision": 1,
+      "session_id": 1,
+      "analyzed_at": "2026-10-27T17:42:22.775441+08:00",
+      "boundary_version": 1
+    },
+    {
+      "revision": 2,
+      "session_id": 2,
+      "analyzed_at": "2026-10-27T17:42:25.177150+08:00",
+      "boundary_version": 1
+    }
+  ],
+  "followups": [],
+  "geometry_matches_current": true,
+  "current_farm_version": 1,
+  "recorded_geometry_hash": "744d22e2617c7cd866ec73386149bc54bf0de1b63886c9f7e16051e4986b0e84"
+}

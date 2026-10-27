@@ -1,0 +1,11 @@
+{
+  "source_commit": "5ba2aca7146184337e1724e6c32c0e31d6fa2de0",
+  "source_fingerprint": "df58784d8c19d8069dc90cfe5b2788787bac9eaac3bf579300802770eb665fb6",
+  "build_id": "5ba2aca71461-df58784d8c19",
+  "api_origin": "https://geosustain.onrender.com",
+  "flutter_version": "3.41.9",
+  "built_at_utc": "2026-10-27T10:23:31.439716+00:00",
+  "main_js_sha256": "42788060656ac29e6e2298ca36c728b15f8a0959e2d939a6d8791f7c1ef5fbf5",
+  "public_firebase_project": null,
+  "web_push_configured": false
+}

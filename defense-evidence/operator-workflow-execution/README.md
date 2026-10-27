@@ -13,6 +13,10 @@
 
 Source-fixed, local-tested, deployed, live-tested and owner-accepted are separate milestones. See [validation](VALIDATION.md) for exact scope and [release evidence](RELEASE.json) for publication status.
 
+Open [the workflow QA extension](QA_UPDATE.md) for individual test outcomes and limits.
+
+See [executed test results](TEST_RESULTS.md) for counts, source identities and the exact remaining acceptance targets.
+
 ## Where to use it
 
 - **Overview:** review workload first; personal analysis activity below it. Apply a place filter, open the matching case view from a metric, or export the current planning summary.

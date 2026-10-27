@@ -1,0 +1,296 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.60 (1.3.79 available)
+  archive 4.0.9 (4.5.2 available)
+  clock 1.1.2 (1.1.3 available)
+  cross_file 0.3.5+2 (0.4.0 available)
+  crypto 3.0.7 (3.0.8 available)
+  cupertino_icons 1.0.9 (2.0.0 available)
+  file_selector_linux 0.9.4 (0.9.4+1 available)
+  file_selector_macos 0.9.5 (0.9.5+2 available)
+  file_selector_windows 0.9.3+5 (0.9.3+6 available)
+  firebase_auth 6.0.0 (7.0.1 available)
+  firebase_auth_platform_interface 8.1.0 (9.1.2 available)
+  firebase_auth_web 6.0.1 (6.3.2 available)
+  firebase_core 4.0.0 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 3.6.0 (4.1.0 available)
+  firebase_messaging 16.0.0 (17.0.1 available)
+  firebase_messaging_platform_interface 4.7.0 (4.11.1 available)
+  firebase_messaging_web 4.0.0 (4.3.1 available)
+  flutter_map 7.0.2 (8.3.2 available)
+  flutter_plugin_android_lifecycle 2.0.34 (2.0.35 available)
+  geolocator 13.0.4 (14.1.2 available)
+  geolocator_android 4.6.2 (5.2.1 available)
+  geolocator_apple 2.3.13 (2.4.3 available)
+  geolocator_platform_interface 4.2.6 (4.4.1 available)
+  geolocator_web 4.1.3 (4.1.4 available)
+  google_sign_in_android 7.2.11 (7.2.18 available)
+  image 4.8.0 (4.12.0 available)
+  image_picker 1.2.2 (1.2.4 available)
+  image_picker_android 0.8.13+17 (0.8.13+25 available)
+  image_picker_ios 0.8.13+6 (0.8.13+13 available)
+  image_picker_platform_interface 2.11.1 (2.11.2 available)
+  intl 0.20.2 (0.20.3 available)
+  latlong2 0.9.1 (0.10.1 available)
+  logger 2.7.0 (2.8.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.17.0 (1.19.0 available)
+  mgrs_dart 2.0.0 (3.0.0 available)
+  mime 2.0.0 (2.1.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  pdf 3.12.0 (3.13.1 available)
+  petitparser 7.0.2 (7.1.0 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.5.0 (6.5.3 available)
+  printing 5.14.3 (5.15.1 available)
+  proj4dart 2.1.0 (3.0.0 available)
+  qr 3.0.2 (4.0.0 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.23 (2.5.4 available)
+  shared_preferences_foundation 2.5.6 (2.6.0 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  test_api 0.7.10 (0.7.15 available)
+  unicode 0.3.1 (1.1.9 available)
+  uuid 4.5.3 (4.6.0 available)
+  vector_math 2.2.0 (2.4.3 available)
+  vm_service 15.2.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+  xml 6.6.1 (7.1.0 available)
+Got dependencies!
+59 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart
+00:00 +0: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart: centroid is independent of extra edge vertices and closing point
+00:00 +1: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart: shared Farmer/Analyst coverage card supported=true
+00:00 +2: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart: shared Farmer/Analyst coverage card supported=true
+00:00 +3: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart: shared Farmer/Analyst coverage card supported=true
+00:00 +4: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart: shared Farmer/Analyst coverage card supported=true
+00:00 +4: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: analysis double tap is blocked and failure keeps farm without result
+Land analysis failed: ClientException
+00:00 +5: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart: shared Farmer/Analyst coverage card supported=true
+00:00 +6: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart: shared Farmer/Analyst coverage card supported=true
+00:00 +6: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: lost POST response recovers saved analysis with no duplicate POST
+Analysis completed elapsed_ms=63
+00:00 +7: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart: shared Farmer/Analyst coverage card supported=true
+00:01 +7: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: retry key survives switching farms and restarting the client
+Analysis failed type=ApiException status=503 elapsed_ms=16
+Analysis failed type=ApiException status=503 elapsed_ms=6
+Analysis failed type=ApiException status=503 elapsed_ms=5
+00:01 +8: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart: shared Farmer/Analyst coverage card supported=true
+00:01 +8: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: wrong-farm response and malformed status are never accepted
+Analysis failed type=FormatException status=transport_or_parse elapsed_ms=9
+00:01 +9: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_coverage_test.dart: shared Farmer/Analyst coverage card supported=true
+00:01 +10: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:01 +11: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:01 +12: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:01 +13: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:01 +14: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +15: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +16: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +17: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +18: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +19: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +20: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +21: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +22: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +23: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +24: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:02 +24: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/api_service_test.dart: analysis sends polygon, season and farm once without altering backend rainfall
+Analysis completed elapsed_ms=20
+00:02 +25: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:03 +26: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:03 +27: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:03 +28: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:03 +29: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:03 +30: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:03 +31: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:03 +32: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:03 +33: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/analysis_scope_test.dart: unanalyzed farm hides old results at 402.0 px
+00:05 +34: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/app_smoke_test.dart: app renders the farmer sign-in screen
+00:06 +35: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/app_smoke_test.dart: app renders the farmer sign-in screen
+00:07 +36: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/app_smoke_test.dart: app renders the farmer sign-in screen
+00:07 +37: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/app_smoke_test.dart: app renders the farmer sign-in screen
+00:07 +38: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/app_smoke_test.dart: app renders the farmer sign-in screen
+00:07 +39: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/cagro_soil_card_test.dart: historical values retain units and approximate provenance
+00:07 +40: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/cagro_soil_card_test.dart: historical values retain units and approximate provenance
+00:07 +41: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/cagro_soil_card_test.dart: historical values retain units and approximate provenance
+00:07 +42: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/cagro_soil_card_test.dart: historical values retain units and approximate provenance
+00:07 +43: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/cagro_soil_card_test.dart: historical values retain units and approximate provenance
+00:07 +44: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/cagro_soil_card_test.dart: historical values retain units and approximate provenance
+00:08 +45: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/cagro_soil_card_test.dart: historical values retain units and approximate provenance
+00:08 +46: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/cagro_soil_card_test.dart: unmatched locality does not display zero nutrient readings
+00:09 +47: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/crop_details_sheet_test.dart: model class score is not labeled as poor agronomic suitability
+00:10 +48: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/crop_details_sheet_test.dart: model class score is not labeled as poor agronomic suitability
+00:10 +49: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/crop_details_sheet_test.dart: model class score is not labeled as poor agronomic suitability
+00:12 +50: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/defense_admin_test.dart: one failed admin panel preserves valid totals and names the failure
+00:12 +51: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/defense_admin_test.dart: one failed admin panel preserves valid totals and names the failure
+00:12 +52: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/defense_admin_test.dart: one failed admin panel preserves valid totals and names the failure
+00:13 +53: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/defense_admin_test.dart: one failed admin panel preserves valid totals and names the failure
+00:13 +54: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/defense_workflows_test.dart: polygon draft offers resume without creating a duplicate farm
+00:13 +55: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/defense_workflows_test.dart: polygon draft offers resume without creating a duplicate farm
+00:14 +56: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/defense_workflows_test.dart: polygon draft offers resume without creating a duplicate farm
+00:14 +57: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/defense_workflows_test.dart: polygon draft offers resume without creating a duplicate farm
+00:17 +58: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/design_system_test.dart: shared rows align at 320.0 px / 1.0 text
+00:18 +59: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/design_system_test.dart: shared rows align at 320.0 px / 1.0 text
+00:18 +60: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/design_system_test.dart: shared rows align at 320.0 px / 1.0 text
+00:18 +61: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/design_system_test.dart: shared rows align at 320.0 px / 1.0 text
+00:18 +62: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/design_system_test.dart: shared rows align at 320.0 px / 1.0 text
+00:18 +63: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/design_system_test.dart: shared rows align at 320.0 px / 1.0 text
+00:18 +64: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:18 +65: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:19 +66: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:19 +67: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:20 +68: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:20 +69: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:21 +70: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:21 +71: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:22 +72: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:22 +73: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:22 +74: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:23 +75: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:23 +76: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(402.0, 874.0)
+00:23 +77: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/environmental_factor_display_test.dart: model input without a compatible criterion is explicitly not assessed
+00:24 +78: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/environmental_factor_display_test.dart: model input without a compatible criterion is explicitly not assessed
+00:24 +79: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/environmental_factor_display_test.dart: model input without a compatible criterion is explicitly not assessed
+00:24 +80: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/environmental_factor_display_test.dart: model input without a compatible criterion is explicitly not assessed
+00:24 +81: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/environmental_factor_display_test.dart: model input without a compatible criterion is explicitly not assessed
+00:24 +82: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/environmental_factor_display_test.dart: model input without a compatible criterion is explicitly not assessed
+00:24 +83: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/environmental_factor_display_test.dart: model input without a compatible criterion is explicitly not assessed
+00:24 +84: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/environmental_factor_display_test.dart: model input without a compatible criterion is explicitly not assessed
+00:24 +85: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(874.0, 402.0)
+00:24 +86: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(874.0, 402.0)
+00:24 +87: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(874.0, 402.0)
+00:24 +88: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(874.0, 402.0)
+00:24 +89: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(874.0, 402.0)
+00:24 +90: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(874.0, 402.0)
+00:24 +91: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(874.0, 402.0)
+00:24 +92: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(874.0, 402.0)
+00:24 +93: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/device_theme_regression_test.dart: reported surfaces retain readable contrast dark=false size=Size(874.0, 402.0)
+00:25 +94: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/grouped_phone_fixes_test.dart: CAGRO scroll remount and unavailable expansion use independent storage
+00:27 +95: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/grouped_phone_fixes_test.dart: CAGRO scroll remount and unavailable expansion use independent storage
+00:28 +96: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: denied GPS permission gives guidance without starting a stream
+00:28 +97: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: denied GPS permission gives guidance without starting a stream
+00:28 +98: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: denied GPS permission gives guidance without starting a stream
+00:29 +99: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: denied GPS permission gives guidance without starting a stream
+00:29 +100: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: denied GPS permission gives guidance without starting a stream
+00:29 +101: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: denied GPS permission gives guidance without starting a stream
+00:29 +102: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: denied GPS permission gives guidance without starting a stream
+00:30 +103: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:30 +104: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:31 +105: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:32 +105: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: GPS backgrounding pauses and never resumes without a user action
+GPS timestamp=2026-10-27T18:12:37.296912 age_ms=11 accuracy_m=5.0 distance_m=null accepted=true reason=accepted
+00:32 +106: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:32 +107: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:34 +108: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:34 +109: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:35 +110: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:36 +111: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:36 +112: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:36 +113: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:37 +114: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:37 +115: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:37 +115: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: GPS perimeter closes and saves once without automatically requesting review
+GPS timestamp=2026-10-27T18:12:28.528182 age_ms=12000 accuracy_m=5.0 distance_m=null accepted=true reason=accepted
+GPS timestamp=2026-10-27T18:12:31.528182 age_ms=9253 accuracy_m=5.0 distance_m=11.1 accepted=true reason=accepted
+GPS timestamp=2026-10-27T18:12:34.528182 age_ms=6479 accuracy_m=5.0 distance_m=11.0 accepted=true reason=accepted
+GPS timestamp=2026-10-27T18:12:37.528182 age_ms=3678 accuracy_m=5.0 distance_m=11.1 accepted=true reason=accepted
+00:37 +116: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:38 +117: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:38 +118: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:38 +119: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:38 +120: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:38 +121: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:39 +122: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:39 +123: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:39 +124: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:39 +125: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:39 +126: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:40 +127: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:41 +127: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: fresh GPS marker, boundary filter, camera and pause remain independent
+GPS timestamp=2026-10-27T18:12:33.501948 age_ms=12001 accuracy_m=5.0 distance_m=null accepted=true reason=accepted
+GPS timestamp=2026-10-27T18:12:36.501948 age_ms=9239 accuracy_m=60.0 distance_m=5.6 accepted=false reason=Accuracy is outside ±20 m. Live position updated; boundary point not recorded.
+GPS timestamp=2026-10-27T18:12:39.501948 age_ms=6417 accuracy_m=0.0 distance_m=6.7 accepted=false reason=GPS accuracy is unavailable. Waiting before recording a point.
+GPS timestamp=2026-10-27T18:12:42.501948 age_ms=3544 accuracy_m=5.0 distance_m=11.1 accepted=true reason=accepted
+GPS timestamp=2026-10-27T18:12:43.501948 age_ms=2718 accuracy_m=5.0 distance_m=null accepted=false reason=invalid_coordinate
+GPS timestamp=2026-10-27T18:11:53.501948 age_ms=52864 accuracy_m=5.0 distance_m=11.1 accepted=false reason=stale_or_nonmonotonic
+00:41 +128: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:42 +129: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:42 +130: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:42 +131: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:43 +131: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: pause before first fix stays paused and Resume restarts exactly once
+GPS timestamp=2026-10-27T18:12:48.100781 age_ms=0 accuracy_m=5.0 distance_m=null accepted=true reason=accepted
+00:43 +132: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:44 +132: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mapping_flow_test.dart: recording pulse stops for pause and reduced motion
+GPS timestamp=2026-10-27T18:12:49.252625 age_ms=3 accuracy_m=5.0 distance_m=null accepted=true reason=accepted
+00:44 +133: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:45 +134: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:45 +135: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:45 +136: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:45 +137: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:46 +138: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:46 +139: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:46 +140: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:46 +141: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:46 +142: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:46 +143: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:46 +144: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:46 +145: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+GPS timestamp=2026-10-27T18:12:39.258961 age_ms=12011 accuracy_m=8.0 distance_m=null accepted=true reason=accepted
+GPS timestamp=2026-10-27T18:12:42.258961 age_ms=9270 accuracy_m=8.0 distance_m=11.1 accepted=true reason=accepted
+GPS timestamp=2026-10-27T18:12:45.258961 age_ms=6572 accuracy_m=8.0 distance_m=11.1 accepted=true reason=accepted
+00:48 +146: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:48 +147: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:48 +148: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:48 +149: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:48 +150: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:48 +151: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:48 +152: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:49 +153: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:49 +154: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:50 +155: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:50 +156: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 402.0 px
+00:51 +157: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_shell_test.dart: five labelled tabs, method selection, back, role readonly and logout
+00:51 +158: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_shell_test.dart: five labelled tabs, method selection, back, role readonly and logout
+00:54 +159: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_shell_test.dart: five labelled tabs, method selection, back, role readonly and logout
+00:54 +160: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_shell_test.dart: five labelled tabs, method selection, back, role readonly and logout
+00:54 +161: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_shell_test.dart: five labelled tabs, method selection, back, role readonly and logout
+00:55 +162: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: review opens with loading and retains notes after stale decision; cancel sends no write
+00:55 +163: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 360.0 px
+00:55 +164: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 360.0 px
+00:56 +165: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 360.0 px
+00:56 +166: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 360.0 px
+00:56 +167: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 360.0 px
+GPS timestamp=2026-10-27T18:12:51.197425 age_ms=12000 accuracy_m=8.0 distance_m=null accepted=true reason=accepted
+GPS timestamp=2026-10-27T18:12:54.197425 age_ms=9247 accuracy_m=8.0 distance_m=11.1 accepted=true reason=accepted
+GPS timestamp=2026-10-27T18:12:57.197425 age_ms=6359 accuracy_m=8.0 distance_m=11.1 accepted=true reason=accepted
+00:59 +168: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 360.0 px
+01:00 +169: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 360.0 px
+01:00 +170: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 360.0 px
+01:00 +171: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/mobile_design_test.dart: affected screens render at 360.0 px
+01:01 +172: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/qa_closure_test.dart: login gives field-specific missing/format errors at 360.0
+01:03 +173: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/readiness_identity_test.dart: profile phone saves without claiming verification when provider is unavailable
+01:03 +174: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/readiness_identity_test.dart: profile phone saves without claiming verification when provider is unavailable
+01:03 +175: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/session_gate_test.dart: restoration handles HTTP 401 without confusing outage with logout
+01:04 +176: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/session_gate_test.dart: restoration handles HTTP 401 without confusing outage with logout
+01:04 +177: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/session_gate_test.dart: restoration handles HTTP 401 without confusing outage with logout
+01:05 +178: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/readiness_identity_test.dart: email recovery resets password without creating a login session
+01:05 +179: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/readiness_identity_test.dart: email recovery resets password without creating a login session
+01:05 +180: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/qa_closure_test.dart: notification read persists across reload; paging remains bounded
+01:05 +181: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/qa_closure_test.dart: notification read persists across reload; paging remains bounded
+01:06 +182: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/session_gate_test.dart: restoration handles HTTP 503 without confusing outage with logout
+01:06 +183: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/session_gate_test.dart: restoration handles HTTP 503 without confusing outage with logout
+01:06 +184: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: desktop account deletion cancellation sends no request and identity is visible
+01:06 +185: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: desktop account deletion cancellation sends no request and identity is visible
+01:07 +186: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: desktop account deletion cancellation sends no request and identity is visible
+01:09 +187: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: operator shell stays usable at Size(1000.0, 500.0)
+01:10 +188: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: operator shell stays usable at Size(480.0, 700.0)
+01:11 +189: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: operator shell stays usable at Size(1280.0, 900.0)
+01:12 +190: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: real score distribution includes zero and never invents a segment
+01:12 +191: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: dashboard reflows without clipped panels at Size(480.0, 700.0)
+01:14 +192: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: dashboard reflows without clipped panels at Size(1280.0, 900.0)
+01:14 +193: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: chosen portal text/surface pairs retain normal text contrast
+01:14 +194: All tests passed!

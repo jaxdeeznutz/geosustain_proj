@@ -1,0 +1,41 @@
+{
+  "baseline": "e03c7a1504ceb56840cb007bc83605e7d3f6d832",
+  "source_commit": "f2ea7e3e7e5f409e52606dfaabfc3e017343778e",
+  "existing_definition_comparison": {
+    "backend/fastapi_app.py": {
+      "unchanged_existing_definitions": 128,
+      "explicit_workflow_definitions": [
+        "VerifySessionBody",
+        "activity_inbox",
+        "planner_verify"
+      ]
+    },
+    "backend/database.py": {
+      "unchanged_existing_definitions": 57,
+      "explicit_workflow_definitions": [
+        "init_db",
+        "submit_analysis_to_planner",
+        "verify_analysis_session"
+      ]
+    }
+  },
+  "held_scientific_files": [
+    "backend/cagro_soil.py",
+    "backend/crop_model.pkl",
+    "backend/crop_model_features.pkl",
+    "backend/crop_model_metadata.json",
+    "backend/data/PANABO_BOUNDARY_SOURCE.md",
+    "backend/data/cagro_locations.json",
+    "backend/data/cagro_observations.json",
+    "backend/data/panabo_boundary.geojson",
+    "backend/nutrient_contract.py",
+    "backend/soil_nutrient_screening.py",
+    "backend/tests/test_cagro_soil.py",
+    "backend/tests/test_nutrient_contract.py",
+    "backend/tests/test_panabo_preliminary.py",
+    "backend/tests/test_soil_nutrient_screening.py"
+  ],
+  "comparison": "AST for existing definitions; Git blobs for unchanged science/data, independent of checkout line endings",
+  "status": "PASS - held data and science definitions unchanged",
+  "validated_through_commit": "5ba2aca7146184337e1724e6c32c0e31d6fa2de0"
+}

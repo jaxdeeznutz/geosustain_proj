@@ -1,0 +1,86 @@
+Resolving dependencies...
+Downloading packages...
+  _flutterfire_internals 1.3.60 (1.3.79 available)
+  archive 4.0.9 (4.5.2 available)
+  clock 1.1.2 (1.1.3 available)
+  cross_file 0.3.5+2 (0.4.0 available)
+  crypto 3.0.7 (3.0.8 available)
+  cupertino_icons 1.0.9 (2.0.0 available)
+  file_selector_linux 0.9.4 (0.9.4+1 available)
+  file_selector_macos 0.9.5 (0.9.5+2 available)
+  file_selector_windows 0.9.3+5 (0.9.3+6 available)
+  firebase_auth 6.0.0 (7.0.1 available)
+  firebase_auth_platform_interface 8.1.0 (9.1.2 available)
+  firebase_auth_web 6.0.1 (6.3.2 available)
+  firebase_core 4.0.0 (5.1.0 available)
+  firebase_core_platform_interface 6.0.3 (8.1.1 available)
+  firebase_core_web 3.6.0 (4.1.0 available)
+  firebase_messaging 16.0.0 (17.0.1 available)
+  firebase_messaging_platform_interface 4.7.0 (4.11.1 available)
+  firebase_messaging_web 4.0.0 (4.3.1 available)
+  flutter_map 7.0.2 (8.3.2 available)
+  flutter_plugin_android_lifecycle 2.0.34 (2.0.35 available)
+  geolocator 13.0.4 (14.1.2 available)
+  geolocator_android 4.6.2 (5.2.1 available)
+  geolocator_apple 2.3.13 (2.4.3 available)
+  geolocator_platform_interface 4.2.6 (4.4.1 available)
+  geolocator_web 4.1.3 (4.1.4 available)
+  google_sign_in_android 7.2.11 (7.2.18 available)
+  image 4.8.0 (4.12.0 available)
+  image_picker 1.2.2 (1.2.4 available)
+  image_picker_android 0.8.13+17 (0.8.13+25 available)
+  image_picker_ios 0.8.13+6 (0.8.13+13 available)
+  image_picker_platform_interface 2.11.1 (2.11.2 available)
+  intl 0.20.2 (0.20.3 available)
+  latlong2 0.9.1 (0.10.1 available)
+  logger 2.7.0 (2.8.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  meta 1.17.0 (1.19.0 available)
+  mgrs_dart 2.0.0 (3.0.0 available)
+  mime 2.0.0 (2.1.0 available)
+  path_provider_linux 2.2.1 (2.2.2 available)
+  path_provider_platform_interface 2.1.2 (2.1.3 available)
+  pdf 3.12.0 (3.13.1 available)
+  petitparser 7.0.2 (7.1.0 available)
+  platform 3.1.6 (3.2.0 available)
+  posix 6.5.0 (6.5.3 available)
+  printing 5.14.3 (5.15.1 available)
+  proj4dart 2.1.0 (3.0.0 available)
+  qr 3.0.2 (4.0.0 available)
+  shared_preferences 2.5.5 (2.5.6 available)
+  shared_preferences_android 2.4.23 (2.5.4 available)
+  shared_preferences_foundation 2.5.6 (2.6.0 available)
+  stack_trace 1.12.1 (1.12.2 available)
+  test_api 0.7.10 (0.7.15 available)
+  unicode 0.3.1 (1.1.9 available)
+  uuid 4.5.3 (4.6.0 available)
+  vector_math 2.2.0 (2.4.3 available)
+  vm_service 15.2.0 (15.4.0 available)
+  web 1.1.1 (1.1.2 available)
+  xml 6.6.1 (7.1.0 available)
+Got dependencies!
+59 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart
+00:00 +0: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: portal writes use Flutter multi-entry history metadata
+00:00 +1: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: browser history is acknowledged instead of undoing a case navigation
+00:00 +2: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: direct routes and legacy hash routes preserve case references
+00:00 +3: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: constant recorded layer is neutral, missing is unknown, and zero is retained
+00:00 +4: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: inbox and map filters are independent and stale filtered responses cannot overwrite
+00:00 +5: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: review opens with loading and retains notes after stale decision; cancel sends no write
+00:00 +6: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: review opens with loading and retains notes after stale decision; cancel sends no write
+00:03 +7: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: review opens with loading and retains notes after stale decision; cancel sends no write
+00:04 +8: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: review opens with loading and retains notes after stale decision; cancel sends no write
+00:04 +9: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: review opens with loading and retains notes after stale decision; cancel sends no write
+00:05 +10: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: operator shell stays usable at Size(1000.0, 500.0)
+00:05 +11: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: inbox reflows at 390.0 without downloading all pages
+00:05 +12: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: operator shell stays usable at Size(480.0, 700.0)
+00:06 +13: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: operator shell stays usable at Size(480.0, 700.0)
+00:06 +14: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/operator_workflow_test.dart: case and planning PDFs retain decision timeline and scoped totals
+00:06 +15: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: operator shell stays usable at Size(1280.0, 900.0)
+00:07 +16: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: real score distribution includes zero and never invents a segment
+00:07 +17: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: dashboard reflows without clipped panels at Size(480.0, 700.0)
+00:08 +18: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: dashboard reflows without clipped panels at Size(1280.0, 900.0)
+00:09 +19: D:/GeoSustain-defense-temp-2026-10-23/operator-workflow-build/test/web_remediation_test.dart: chosen portal text/surface pairs retain normal text contrast
+00:09 +20: All tests passed!

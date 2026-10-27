@@ -1,0 +1,42 @@
+ Value: http://127.0.0.1:18080/operator/queue ID: RootWebArea
+									23527 group
+									23528 group
+									23529 group Connecting to GeoSustain. The server may need about a minute to wake up. Open saved farms offline
+										23532 group ID: flt-semantic-node-2
+											23533 button Collapse navigation ID: flt-semantic-node-48
+											23534 heading GeoSustain ID: flt-semantic-node-49
+											23535 button Toggle dark mode ID: flt-semantic-node-50
+											23536 button Build information ID: flt-semantic-node-51
+											23537 group ID: flt-semantic-node-25
+												23538 text GeoSustain
+												23539 text L Local QA Analyst Agricultural Planning Analyst
+												23540 button Overview ID: flt-semantic-node-14
+												23541 button Planning Map ID: flt-semantic-node-15
+												23542 button Analysis Workspace ID: flt-semantic-node-16
+												23543 button My Analyses ID: flt-semantic-node-17
+												23544 button Reports ID: flt-semantic-node-18
+												23545 button Recommendation Patterns ID: flt-semantic-node-19
+												23546 button Review Inbox ID: flt-semantic-node-20
+												23547 button Settings ID: flt-semantic-node-21
+												23548 button Activity ID: flt-semantic-node-22
+												23549 button Logout ID: flt-semantic-node-24
+											23550 group ID: flt-semantic-node-46
+												23551 header Review Inbox Review saved evidence, request information and record decisions ID: flt-semantic-node-27
+													23552 button Refresh Weather ID: flt-semantic-node-28
+													23553 button Open activity ID: flt-semantic-node-29
+												23554 group Submitted cases Oldest submissions first. Acceptance records an analyst decision; it does not certify an unmeasured soil value. 2 review cases on page 1. Applied search: none. Status: Pending review. ID: flt-semantic-node-31
+													23555 edit (settable, string) Search case, farmer or farm
+													23556 button Review status Pending review ID: flt-semantic-node-33
+													23557 button Submission order Oldest first ID: flt-semantic-node-34
+													23558 edit (settable, string) Place contains
+													23559 text Press Enter to apply
+													23560 button Workload view All cases ID: flt-semantic-node-37
+													23561 edit (settable, string) From submission date
+													23562 text YYYY-MM-DD; Enter applies
+													23563 edit (settable, string) Through submission date
+													23564 text YYYY-MM-DD; Enter applies
+													23565 button Refresh ID: flt-semantic-node-42
+													23569 button Case #2 · EMULATOR TEST ONLY - workflow fixture Emulator farmer · Pending review Submitted Oct 23, 2026 · 17:49 · 4d since submission Model score: unavailable · analyzed Oct 23, 2026 · 17:39 ID: flt-semantic-node-52
+													23570 button Case #1 · EMULATOR TEST ONLY - workflow fixture Emulator farmer · Pending review Submitted Oct 24, 2026 · 23:28 · 2d since submission Model score: unavailable · analyzed Oct 24, 2026 · 23:15 ID: flt-semantic-node-53
+													23567 button (disabled) Previous page ID: flt-semantic-node-44
+													23568 button (disabled) Next page ID: flt-semantic-node-45
