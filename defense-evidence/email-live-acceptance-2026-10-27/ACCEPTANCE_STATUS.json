@@ -1,0 +1,45 @@
+{
+  "frontend_commit": "1bf3e5c17c1eea89adfb790d15c62ddef063dbb2",
+  "backend_commit": "6957ae5a57efca0f0ba95e29e2ba7d6e2c96b296",
+  "application_config_diff": [],
+  "same_application_source": true,
+  "email_configuration": "unavailable on live /ready",
+  "recipient_receipt": "not tested; sender and authorized test inbox not supplied",
+  "browser_retry": "Recovered; live sign-in page loaded in Brave. No authentication automated.",
+  "signed_in_acceptance": "User signed in; live inbox, saved case, browser Back/Forward, refresh/session and report print-preview observed. Remaining screens and write/provider journeys pending.",
+  "performed_public_checks": {
+    "health": "HTTP 200",
+    "protected_operator_inbox_map_overview": "HTTP 401 without authentication",
+    "protected_admin_dashboard": "HTTP 401 without authentication",
+    "me": "HTTP 401 without authentication"
+  },
+  "writes": "No account password, existing farm decision or scientific data changed. Provider calls in automated tests were mocked. No real mail sent.",
+  "email_integration": "Brevo HTTPS implemented; 29 focused and 297 complete backend regressions passed. Private provider account/sender/key setup and real receipt pending.",
+  "browser_results": [
+    {
+      "check": "Live analyst inbox",
+      "result": "PASS",
+      "actual": "Submitted cases loaded with filters and paging"
+    },
+    {
+      "check": "Saved case workbench",
+      "result": "PASS",
+      "actual": "Existing saved evidence loaded; legacy missing measurement and farm states stayed unavailable"
+    },
+    {
+      "check": "Browser Back and Forward",
+      "result": "PASS",
+      "actual": "Inbox restored on Back; selected case restored stably on Forward"
+    },
+    {
+      "check": "Refresh and signed-in case restoration",
+      "result": "PASS",
+      "actual": "Same selected case and analyst session returned after reload"
+    },
+    {
+      "check": "Case PDF export preview",
+      "result": "PASS for preview only",
+      "actual": "One-page report opened in browser print preview; canceled without a print job or public artifact"
+    }
+  ]
+}

@@ -18,7 +18,26 @@ Official setup: [Google/Flutter](https://firebase.google.com/docs/auth/flutter/f
 
 ## Email verification and recovery
 
-Render Free blocks SMTP ports 25, 465 and 587. The backend now supports Resend over HTTPS as well as TLS SMTP for hosts that support it. [Render limits](https://render.com/docs/free), [Resend endpoint](https://resend.com/docs/api-reference/emails/send-email).
+Render Free blocks SMTP ports 25, 465 and 587. The backend supports Brevo and Resend over HTTPS as well as TLS SMTP for hosts that support it. [Render limits](https://render.com/docs/free), [Resend endpoint](https://resend.com/docs/api-reference/emails/send-email), [Brevo endpoint](https://developers.brevo.com/docs/send-a-transactional-email).
+
+### Gmail-only setup with Brevo
+
+1. Create/sign into your owned Brevo account. In Settings -> Senders, Domains, IPs -> Senders, add the name `GeoSustain` and your Gmail address. Complete the verification email yourself. [Sender setup](https://help.brevo.com/hc/en-us/articles/208836149-Create-a-new-sender-From-name-and-From-email).
+2. Confirm transactional sending is activated. New accounts may require approval from Brevo; an API key alone does not establish sending permission. [Activation troubleshooting](https://help.brevo.com/hc/en-us/articles/115000188150-Troubleshooting-Issues-with-Brevo-SMTP).
+3. Generate a private Brevo API key and enter it directly in the existing GeoSustain Render service's Environment page. Do not paste it into chat, Git, evidence or frontend configuration.
+
+```text
+EMAIL_TRANSPORT=brevo
+MAIL_FROM=GeoSustain <your-verified-gmail-address@gmail.com>
+BREVO_API_KEY=<private Brevo API key, not an SMTP key>
+EMAIL_VERIFICATION_REQUIRED=1
+```
+
+4. Save/redeploy the Render environment. Configuration presence should make the email configuration check ready, but does not prove key validity, sender/account approval or receipt. Perform real signup and recovery on an explicitly authorized disposable test inbox, recording receipt without publishing addresses or codes.
+
+Gmail is a free domain you cannot authenticate in Brevo. The provider may replace the visible From domain with its own sending domain. This is an interim capstone option; the actual sender presentation and delivery must be tested. An owned authenticated domain improves sender identity/deliverability later. [Provider explanation](https://help.brevo.com/hc/en-us/articles/16045394674066-Troubleshooting-Domain-authentication). Do not claim that verifying a Gmail address authenticates gmail.com.
+
+### Owned domain with Resend
 
 Configure a verified owned sender/domain privately:
 

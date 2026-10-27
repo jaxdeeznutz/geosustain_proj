@@ -1,0 +1,179 @@
+{
+  "checked_at_utc": "2026-10-27T10:54:12.297226+00:00",
+  "source_head": "1bf3e5c17c1eea89adfb790d15c62ddef063dbb2",
+  "scope": "Unauthenticated live HTTP checks; no mail sent, accounts created or existing records changed",
+  "checks": [
+    {
+      "url": "https://geosustain.vercel.app/build-info.json",
+      "http_status": 200,
+      "body": {
+        "source_commit": "1bf3e5c17c1eea89adfb790d15c62ddef063dbb2",
+        "source_fingerprint": "58c42e086dde30d925e87af1233456bfeb94491ef3b1030c7cfceaa757ecf059",
+        "build_id": "1bf3e5c17c1e-58c42e086dde",
+        "api_origin": "https://geosustain.onrender.com",
+        "flutter_version": "3.41.9",
+        "built_at_utc": "2026-10-27T10:42:02.825452+00:00",
+        "main_js_sha256": "9c2427060bd7efdecb5e0e8099b95de35a09436f5d90d2ed6a6ff969cee300ff",
+        "public_firebase_project": null,
+        "web_push_configured": false
+      },
+      "cors_origin": "*"
+    },
+    {
+      "url": "https://geosustain.onrender.com/health",
+      "http_status": 200,
+      "body": {
+        "status": "ok",
+        "service": "GeoSustain API",
+        "revision": "6957ae5a57efca0f0ba95e29e2ba7d6e2c96b296",
+        "model": {
+          "status": "loaded",
+          "model_type": "RandomForestClassifier",
+          "model_version": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+          "artifact_version_on_disk": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+          "restart_required": false,
+          "metadata_status": "legacy_unverified",
+          "feature_contract": {
+            "names": [
+              "N",
+              "P",
+              "K",
+              "temperature",
+              "humidity",
+              "ph",
+              "rainfall",
+              "ndvi",
+              "elevation",
+              "slope"
+            ],
+            "count": 10,
+            "order_required": true
+          },
+          "classes": [
+            "abaca",
+            "banana",
+            "blackgram",
+            "cacao",
+            "cassava",
+            "coconut",
+            "durian",
+            "maize",
+            "mango",
+            "mungbean",
+            "papaya",
+            "pigeonpeas",
+            "pomelo",
+            "rice",
+            "rubber",
+            "sweet potato",
+            "watermelon"
+          ],
+          "supported_classes": [
+            "abaca",
+            "banana",
+            "cacao",
+            "cassava",
+            "coconut",
+            "durian",
+            "maize",
+            "papaya",
+            "pomelo",
+            "rice",
+            "rubber",
+            "sweet potato",
+            "watermelon"
+          ],
+          "approved_classes": [
+            "abaca",
+            "banana",
+            "cacao",
+            "cassava",
+            "coconut",
+            "durian",
+            "maize",
+            "papaya",
+            "pomelo",
+            "rice",
+            "rubber",
+            "sweet potato",
+            "watermelon"
+          ],
+          "training": {
+            "status": "legacy_unverified",
+            "timestamp_utc": null,
+            "random_seed": 42,
+            "script_sha256": null,
+            "dataset_sha256": null,
+            "provenance": {
+              "basis": "Audit of existing pickle attributes and repository code, not a retraining record.",
+              "documented_pipeline": "Repository describes Kaggle Crop_recommendation.csv plus synthetic GIS proxies and LOCAL_CROP_PROFILES; linkage of these exact sources to this artifact is unverified.",
+              "climate_compatibility": "Base CSV periods undocumented; local rainfall rolling_30_days, local temperature/humidity periods unspecified. Existing training guard blocks retraining.",
+              "nutrient_compatibility": "Physical units/method compatibility unverified; CAGRO historical reference data is not an approved model input.",
+              "class_mismatch": "17 artifact classes versus 13 current approved training labels. Existing ranking filters unapproved labels.",
+              "field_validation": "No Panabo field validation established."
+            },
+            "evaluation": null
+          },
+          "warnings": [
+            "Legacy training timestamp, script identity and evaluation are unverified.",
+            "Legacy artifact classes differ from the current approved training list; ranking still filters to approved catalog crops."
+          ]
+        }
+      },
+      "cors_origin": "https://geosustain.vercel.app"
+    },
+    {
+      "url": "https://geosustain.onrender.com/ready",
+      "http_status": 503,
+      "body": {
+        "status": "not_ready",
+        "checks": {
+          "database": "ready",
+          "model": "ready",
+          "email_configuration": "unavailable"
+        }
+      },
+      "cors_origin": "https://geosustain.vercel.app"
+    },
+    {
+      "url": "https://geosustain.onrender.com/api/operator/inbox",
+      "http_status": 401,
+      "body": {
+        "detail": "Unauthorized. Please log in again."
+      },
+      "cors_origin": "https://geosustain.vercel.app"
+    },
+    {
+      "url": "https://geosustain.onrender.com/api/operator/map",
+      "http_status": 401,
+      "body": {
+        "detail": "Unauthorized. Please log in again."
+      },
+      "cors_origin": "https://geosustain.vercel.app"
+    },
+    {
+      "url": "https://geosustain.onrender.com/api/operator/overview",
+      "http_status": 401,
+      "body": {
+        "detail": "Unauthorized. Please log in again."
+      },
+      "cors_origin": "https://geosustain.vercel.app"
+    },
+    {
+      "url": "https://geosustain.onrender.com/api/admin/dashboard",
+      "http_status": 401,
+      "body": {
+        "detail": "Unauthorized. Please log in again."
+      },
+      "cors_origin": "https://geosustain.vercel.app"
+    },
+    {
+      "url": "https://geosustain.onrender.com/api/mobile/me",
+      "http_status": 401,
+      "body": {
+        "detail": "Unauthorized. Please log in again."
+      },
+      "cors_origin": "https://geosustain.vercel.app"
+    }
+  ]
+}

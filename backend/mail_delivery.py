@@ -3,19 +3,33 @@ import os
 import smtplib
 import ssl
 from email.message import EmailMessage
+from email.utils import parseaddr
+from uuid import NAMESPACE_URL, uuid5
 import requests
 from fastapi import HTTPException
 
 
 def transport():
     selected = os.getenv('EMAIL_TRANSPORT', '').lower()
-    return selected or ('resend' if os.getenv('RESEND_API_KEY') else 'smtp')
+    return selected or ('resend' if os.getenv('RESEND_API_KEY') else
+                        'brevo' if os.getenv('BREVO_API_KEY') else 'smtp')
+
+
+def brevo_sender(sender):
+    if not sender or '\r' in sender or '\n' in sender:
+        return None
+    name, address = parseaddr(sender)
+    if '@' not in address or any(not part for part in address.rsplit('@', 1)):
+        return None
+    return {'name': name or 'GeoSustain', 'email': address}
 
 
 def configured():
     sender = os.getenv('MAIL_FROM') or os.getenv('SMTP_FROM')
     if transport() == 'resend':
         return bool(sender and os.getenv('RESEND_API_KEY'))
+    if transport() == 'brevo':
+        return bool(brevo_sender(sender) and os.getenv('BREVO_API_KEY'))
     if transport() != 'smtp' or not sender or not os.getenv('SMTP_HOST'):
         return False
     try:
@@ -32,6 +46,20 @@ def send(email, subject, text, *, idempotency_key=None):
         raise HTTPException(503, 'Email delivery is not configured for this host. Please try again later.')
     sender = os.getenv('MAIL_FROM') or os.getenv('SMTP_FROM')
     try:
+        if transport() == 'brevo':
+            payload = {'sender': brevo_sender(sender), 'to': [{'email': email}],
+                       'subject': subject, 'textContent': text}
+            if idempotency_key:
+                # Brevo requires a UUID; keep retry identity stable without
+                # including the raw challenge/recipient in the custom header.
+                payload['headers'] = {'IdempotencyKey': str(uuid5(
+                    NAMESPACE_URL, 'geosustain-email:' + idempotency_key))}
+            response = requests.post('https://api.brevo.com/v3/smtp/email',
+                headers={'api-key': os.environ['BREVO_API_KEY'], 'Accept': 'application/json'},
+                json=payload, timeout=(5, 15), allow_redirects=False)
+            if response.status_code not in (200, 201) or not response.json().get('messageId'):
+                raise ValueError('Provider did not accept the message')
+            return
         if transport() == 'resend':
             headers = {'Authorization': 'Bearer ' + os.environ['RESEND_API_KEY']}
             if idempotency_key:
