@@ -13,10 +13,11 @@ class PortalRoutes {
   static void start() {
     if (_started) return;
     _started = true;
-    if (kIsWeb)
+    if (kIsWeb) {
       WidgetsBinding.instance.addObserver(
         PortalBrowserHistory(location.currentLocation),
       );
+    }
     location.observeLocation((value) {
       current.value = Uri.tryParse(value) ?? Uri(path: '/');
     });
