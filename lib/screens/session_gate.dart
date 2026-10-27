@@ -116,10 +116,11 @@ class _SessionGateState extends State<SessionGate> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 8),
-              TextButton(
-                onPressed: enterOffline,
-                child: const Text('Open saved farms offline'),
-              ),
+              if (!kIsWeb)
+                TextButton(
+                  onPressed: enterOffline,
+                  child: const Text('Open saved farms offline'),
+                ),
             ],
           ),
         ),
@@ -147,10 +148,11 @@ class _SessionGateState extends State<SessionGate> {
                     onPressed: restore,
                     child: const Text('Try again'),
                   ),
-                  TextButton(
-                    onPressed: enterOffline,
-                    child: const Text('Open saved farms offline'),
-                  ),
+                  if (!kIsWeb)
+                    TextButton(
+                      onPressed: enterOffline,
+                      child: const Text('Open saved farms offline'),
+                    ),
                   TextButton(
                     onPressed: () async {
                       try {

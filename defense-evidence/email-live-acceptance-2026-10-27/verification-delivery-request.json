@@ -1,0 +1,13 @@
+{
+  "checked_at_utc": "2026-10-27T11:56:34.768757+00:00",
+  "endpoint": "POST /api/mobile/register",
+  "recipient": "Owner-authorized capstone Gmail inbox; address omitted",
+  "http_status": 503,
+  "requires_verification": false,
+  "verification_ticket_returned": false,
+  "account_created": false,
+  "receipt": "NOT PASSED: request failed; no transport acceptance established",
+  "secrets": "Password and challenge ticket stored outside repository; no code or token published",
+  "outcome": "Verification send did not complete; inspect provider activation/configuration without publishing secrets",
+  "diagnosis": "Owned provider API-key page showed an empty key list. Owner was directed to create an API key in API keys & MCP and replace the SMTP credential privately."
+}

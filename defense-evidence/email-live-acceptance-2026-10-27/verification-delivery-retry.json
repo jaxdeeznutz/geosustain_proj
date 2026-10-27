@@ -1,0 +1,15 @@
+{
+  "attempt_label": "api-key-corrected-retry",
+  "checked_at_utc": "2026-10-27T12:35:01.553241+00:00",
+  "endpoint": "POST /api/mobile/register",
+  "recipient": "Owner-authorized capstone Gmail inbox; address omitted",
+  "http_status": 201,
+  "requires_verification": true,
+  "verification_ticket_returned": true,
+  "transport_acceptance": "PASS: signup challenge returned after provider acceptance",
+  "recipient_receipt": "PASS: owner explicitly confirmed received in the authorized capstone Gmail inbox",
+  "account_created": false,
+  "secrets": "Password and challenge ticket stored outside repository; no code or token published",
+  "receipt_confirmed_at_utc": "2026-10-27T12:36:46.241425+00:00",
+  "signup_completion": "PENDING: account creation after verification has not been exercised"
+}

@@ -537,9 +537,7 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
-    if (kIsWeb ||
-        (MediaQuery.sizeOf(context).width >= 900 &&
-            MediaQuery.sizeOf(context).height >= 600)) {
+    if (kIsWeb) {
       return WebAuthLoginShell(
         emailController: emailController,
         passwordController: passwordController,
@@ -548,10 +546,6 @@ class _LoginPageState extends State<LoginPage> {
         loading: loading,
         onLogin: login,
         onGoogle: FirebaseIdentity.googleConfigured ? googleLogin : null,
-        onCreate: () => Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const RegisterPage()),
-        ),
       );
     }
     return FarmerAuthScaffold(
@@ -822,6 +816,21 @@ class _RegisterPageState extends State<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    if (kIsWeb) {
+      return AccessDeniedPage(
+        desktopAttempt: true,
+        customTitle: 'Register in the mobile app',
+        customMessage:
+            'Farmer accounts are created in the GeoSustain mobile app. This website is for authorized analysts and administrators.',
+        logout: () async {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const LoginPage()),
+            (_) => false,
+          );
+        },
+      );
+    }
     return FarmerAuthScaffold(
       onBack: () => Navigator.pop(context),
       child: Column(
@@ -1321,6 +1330,8 @@ class AnalysisState extends ChangeNotifier {
   Map<String, dynamic>? webSummary;
   final resourceErrors = <String, String>{};
   bool get webOperator => kIsWeb && (isAnalystRole || isSuperAdmin);
+  bool get hasWorkspaceAccess =>
+      kIsWeb ? isAnalystRole || isSuperAdmin : accountRole == 'farmer';
   bool userLoaded = false;
   Uint8List? profilePhotoBytes;
   Map<String, dynamic> profileCounts = {
@@ -1563,7 +1574,6 @@ class AnalysisState extends ChangeNotifier {
     notifyListeners();
     try {
       final user = await api.getMe();
-      unawaited(PushNotifications.restore(api));
       if (_disposed || epoch != _sessionEpoch) return;
       if (currentUser?['id'] != null && currentUser?['id'] != user['id']) {
         clearUserData();
@@ -1586,7 +1596,10 @@ class AnalysisState extends ChangeNotifier {
     if (_disposed) return;
     userLoaded = true;
     notifyListeners();
-    await refreshHistoryData();
+    if (hasWorkspaceAccess) {
+      unawaited(PushNotifications.restore(api));
+      await refreshHistoryData();
+    }
     // Selection is explicit. Account-wide history must not become a farm result.
   }
 
@@ -1858,17 +1871,20 @@ class AnalysisState extends ChangeNotifier {
   String userProfilePhotoBase64() => '${currentUser?['profile_photo'] ?? ''}';
   String get accountRole =>
       '${currentUser?['role'] ?? currentUser?['account_type'] ?? 'unknown'}'
+          .trim()
           .toLowerCase();
   String userRole() =>
       isAnalystRole ? 'Agricultural Planning Analyst' : 'Farmer Account';
 
   bool get isSuperAdmin =>
       accountRole == 'super_admin' || accountRole == 'admin';
-  bool get isAnalystRole =>
-      accountRole.contains('analyst') || accountRole.contains('planner');
+  bool get isAnalystRole => const {
+    'analyst',
+    'planner',
+    'agricultural_planning_analyst',
+  }.contains(accountRole);
   // In GeoSustain, the Analyst also performs the Planner verification role.
-  bool get isPlanner =>
-      accountRole.contains('analyst') || accountRole.contains('planner');
+  bool get isPlanner => isAnalystRole;
 
   String get roleDashboardTitle =>
       isAnalystRole ? 'Planning Workspace' : 'Farmer Tools';
@@ -2543,18 +2559,22 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
     _syncAnalysisDialog();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final linkedReview = kIsWeb
-          ? int.tryParse(Uri.base.queryParameters['review'] ?? '')
-          : null;
-      if (linkedReview != null && linkedReview > 0) _openReview(linkedReview);
-      if (!state.userLoaded) {
-        state.loadUserData().then((_) {
-          if (mounted) state.refreshFarms();
-        });
+      void startWorkspace() {
+        if (!mounted || !state.hasWorkspaceAccess) return;
+        final linkedReview = kIsWeb
+            ? int.tryParse(Uri.base.queryParameters['review'] ?? '')
+            : null;
+        if (linkedReview != null && linkedReview > 0) _openReview(linkedReview);
+        state.refreshLiveWeather();
+        state.startWeatherAutoRefresh();
+        state.refreshFarms();
       }
-      state.refreshLiveWeather();
-      state.startWeatherAutoRefresh();
-      if (state.userLoaded) state.refreshFarms();
+
+      if (!state.userLoaded) {
+        state.loadUserData().then((_) => startWorkspace());
+      } else {
+        startWorkspace();
+      }
     });
   }
 
@@ -2587,7 +2607,7 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState lifecycle) {
-    if (lifecycle == AppLifecycleState.resumed) {
+    if (lifecycle == AppLifecycleState.resumed && state.hasWorkspaceAccess) {
       state.refreshHistoryData();
       state.refreshFarms();
     }
@@ -2638,10 +2658,6 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
     Widget tab(Widget Function() builder) =>
         ListenableBuilder(listenable: state, builder: (_, _) => builder());
 
-    final isDesktopWeb =
-        MediaQuery.sizeOf(context).width >= 900 &&
-        MediaQuery.sizeOf(context).height >= 600;
-
     if (!state.userLoaded) {
       return const Scaffold(
         backgroundColor: bg,
@@ -2651,7 +2667,7 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
 
     if (state.accountRole.contains('unknown')) {
       return AccessDeniedPage(
-        desktopAttempt: isDesktopWeb,
+        desktopAttempt: kIsWeb,
         logout: logout,
         customTitle: 'Unable to verify account access',
         customMessage:
@@ -2659,17 +2675,15 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
       );
     }
 
-    if (!kIsWeb &&
-        !isDesktopWeb &&
-        (state.isAnalystRole || state.isSuperAdmin)) {
-      return AccessDeniedPage(desktopAttempt: false, logout: logout);
+    if (!state.hasWorkspaceAccess) {
+      return AccessDeniedPage(desktopAttempt: kIsWeb, logout: logout);
     }
 
-    if ((kIsWeb || isDesktopWeb) && state.isSuperAdmin) {
+    if (kIsWeb && state.isSuperAdmin) {
       return WebAdminDashboard(logout: logout, message: message);
     }
 
-    if ((kIsWeb || isDesktopWeb) && state.isAnalystRole) {
+    if (kIsWeb && state.isAnalystRole) {
       return Scaffold(
         body: Stack(
           children: [

@@ -1,0 +1,21 @@
+{
+  "checked_at_utc": "2026-10-27T11:52:55.333674+00:00",
+  "private_values": "not recorded",
+  "non_secret_settings": {
+    "EMAIL_TRANSPORT": "brevo",
+    "MAIL_FROM": "verified owner sender; address omitted",
+    "EMAIL_VERIFICATION_REQUIRED": "1"
+  },
+  "checks": [
+    {
+      "path": "/health",
+      "http_status": 200,
+      "revision": "5f3a9bf2be6e1e0b2aaf44f2a3ae2e9fa9956bf9",
+      "checks": null
+    },
+    {
+      "path": "/ready",
+      "error": "TimeoutError"
+    }
+  ]
+}

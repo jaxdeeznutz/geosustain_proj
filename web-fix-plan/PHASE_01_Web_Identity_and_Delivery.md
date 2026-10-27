@@ -110,7 +110,7 @@ The phase is complete only when its full acceptance is supported. Source-only fi
 
 | Task | Current state | Evidence | Remaining gate |
 | --- | --- | --- | --- |
-| W01-01 | PENDING_EXTERNAL | Current execution below | Live /ready reports required email configuration ready; configuration presence is recorded separately from message receipt. |
+| W01-01 | VERIFIED_LIVE | [Email acceptance](../defense-evidence/email-live-acceptance-2026-10-27/verification-delivery-retry.json) | Live readiness and verification-email receipt confirmed; full signup and recovery remain W01-02 gates. |
 | W01-02 | PENDING_EXTERNAL | Current execution below | Both delivered signup verification and recovery complete with bounded invalid attempts and no account enumeration or automatic privilege grant. |
 | W01-03 | PENDING_EXTERNAL | Current execution below | All client/server public project identifiers match, required backend checks are honest, and unconfigured features have clear UI explanations. |
 | W01-04 | VERIFIED_LOCAL | Current execution below | A desktop operator can reach and complete the intended controls without switching to a farmer/mobile layout. Wrong/expired/replayed proof and changed-number invalidation behave correctly. |
@@ -124,3 +124,9 @@ Desktop identity/profile and push controls integrated, Google-unavailable guidan
 **Remaining:** Owned email sender and Firebase Auth/FCM project configuration; Real email/SMS/Google/background push receipt and target-opening cases
 
 [Execution evidence](../defense-evidence/web-fix-execution/phase-01/README.md).
+
+### 2026-10-27 owned email acceptance and account surfaces
+
+Brevo HTTPS is deployed; the owner corrected the API credential, live `/ready` returned HTTP 200, signup-verification delivery returned HTTP 201 and the owner confirmed inbox receipt. The original failed HTTP 503 attempt is preserved in the email acceptance evidence. Completed signup/recovery and other provider journeys are separate gates.
+
+The owner confirmed that the website is the analyst/administrator portal and farmer registration belongs in the installed mobile app. A phone browser uses the analyst website too. The current routing repair removes web farmer signup, guards saved farmer sessions against opening a web workspace, and keeps native farmer sign-in independent of screen width. Validation and deployment are recorded in the account-surface evidence.

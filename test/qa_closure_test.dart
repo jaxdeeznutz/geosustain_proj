@@ -19,10 +19,7 @@ void main() {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       await tester.pumpWidget(const GeoSustainApp(home: LoginPage()));
-      final button = find.widgetWithText(
-        FilledButton,
-        width < 900 ? 'Sign In' : 'Sign In to Dashboard',
-      );
+      final button = find.widgetWithText(FilledButton, 'Sign In');
       await tester.ensureVisible(button);
       await tester.tap(button);
       await tester.pumpAndSettle();

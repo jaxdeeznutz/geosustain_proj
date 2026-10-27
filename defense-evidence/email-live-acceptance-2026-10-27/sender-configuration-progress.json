@@ -1,0 +1,24 @@
+{
+  "checked_at_utc": "2026-10-27T11:40:26.112189+00:00",
+  "sender_status": "Verified observed in owner-provided Brevo screenshot",
+  "sender_address": "Omitted from published evidence",
+  "private_key_status": "Awaiting private entry in Render",
+  "checks": [
+    {
+      "url": "https://geosustain.onrender.com/health",
+      "http_status": 200,
+      "revision": "6957ae5a57efca0f0ba95e29e2ba7d6e2c96b296",
+      "checks": null
+    },
+    {
+      "url": "https://geosustain.onrender.com/ready",
+      "http_status": 503,
+      "revision": null,
+      "checks": {
+        "database": "ready",
+        "model": "ready",
+        "email_configuration": "unavailable"
+      }
+    }
+  ]
+}

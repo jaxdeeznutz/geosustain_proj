@@ -47,10 +47,7 @@ void main() {
           child: const GeoSustainApp(home: LoginPage()),
         ),
       );
-      final submit = find.widgetWithText(
-        FilledButton,
-        width < 900 ? 'Sign In' : 'Sign In to Dashboard',
-      );
+      final submit = find.widgetWithText(FilledButton, 'Sign In');
       await tester.ensureVisible(submit);
       await tester.tap(submit);
       await tester.pumpAndSettle();

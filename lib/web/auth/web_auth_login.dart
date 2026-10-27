@@ -7,7 +7,6 @@ class WebAuthLoginShell extends StatelessWidget {
   final String? emailError;
   final String? passwordError;
   final VoidCallback onLogin;
-  final VoidCallback onCreate;
   final VoidCallback? onGoogle;
   const WebAuthLoginShell({
     super.key,
@@ -17,7 +16,6 @@ class WebAuthLoginShell extends StatelessWidget {
     this.emailError,
     this.passwordError,
     required this.onLogin,
-    required this.onCreate,
     this.onGoogle,
   });
 
@@ -229,9 +227,10 @@ class WebAuthLoginShell extends StatelessWidget {
                           ),
                         ),
                       SizedBox(height: 18),
-                      TextButton(
-                        onPressed: loading ? null : onCreate,
-                        child: Text('Create Farmer Account'),
+                      Text(
+                        'Analyst access is assigned by your administrator. Farmers register and sign in through the GeoSustain mobile app.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: WebPortalColors.muted),
                       ),
                       SizedBox(height: 12),
                       SelectableText(

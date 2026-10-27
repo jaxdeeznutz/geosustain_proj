@@ -3,8 +3,8 @@
   "backend_commit": "6957ae5a57efca0f0ba95e29e2ba7d6e2c96b296",
   "application_config_diff": [],
   "same_application_source": true,
-  "email_configuration": "unavailable on live /ready",
-  "recipient_receipt": "not tested; sender and authorized test inbox not supplied",
+  "email_configuration": "Live /ready HTTP 200; required email configuration ready on revision 5f3a9bf",
+  "recipient_receipt": "PASS for signup-verification email: owner explicitly confirmed received in the authorized capstone Gmail inbox",
   "browser_retry": "Recovered; live sign-in page loaded in Brave. No authentication automated.",
   "signed_in_acceptance": "User signed in; live inbox, saved case, browser Back/Forward, refresh/session and report print-preview observed. Remaining screens and write/provider journeys pending.",
   "performed_public_checks": {
@@ -13,8 +13,8 @@
     "protected_admin_dashboard": "HTTP 401 without authentication",
     "me": "HTTP 401 without authentication"
   },
-  "writes": "No account password, existing farm decision or scientific data changed. Provider calls in automated tests were mocked. No real mail sent.",
-  "email_integration": "Brevo HTTPS implemented; 29 focused and 297 complete backend regressions passed. Private provider account/sender/key setup and real receipt pending.",
+  "writes": "One point-screening analysis requested on the authorized analyst account. Two authorized signup-verification delivery attempts: first HTTP 503, corrected-key retry HTTP 201. No password or existing farm decision changed; signup account not created until verification.",
+  "email_integration": "Brevo HTTPS deployed; 29 focused and 297 complete backend regressions passed. Live signup-verification send accepted and recipient receipt confirmed. Completed signup and password recovery remain pending.",
   "browser_results": [
     {
       "check": "Live analyst inbox",
@@ -40,6 +40,32 @@
       "check": "Case PDF export preview",
       "result": "PASS for preview only",
       "actual": "One-page report opened in browser print preview; canceled without a print job or public artifact"
+    },
+    {
+      "check": "Live submitted-case map",
+      "result": "PASS",
+      "actual": "Map and review status legend loaded with five existing cases; explicit submitted-record scope shown"
+    },
+    {
+      "check": "Map no-match query and independent inbox",
+      "result": "PASS",
+      "actual": "Synthetic unmatched map query yielded zero; inbox retained three pending cases and no applied search"
+    },
+    {
+      "check": "Analysis workspace selection",
+      "result": "PASS for selection display",
+      "actual": "Default city point and intended month displayed; one live point-screening run started"
+    },
+    {
+      "check": "Live point-screening result",
+      "result": "PASS for preliminary/missing-coverage handling only",
+      "actual": "One point run completed and displayed preliminary environmental mode, unavailable CAGRO NPK and insufficient satellite coverage. No crop/soil suitability or complete environmental-observation pass is claimed."
     }
-  ]
+  ],
+  "email_provider_progress": "Corrected API-key retry returned HTTP 201 and owner confirmed actual verification-email receipt. Original HTTP 503 preserved. Signup verification/account creation and recovery remain pending.",
+  "browser_zoom": "Original zoom 75% observed; 100% and 125% reflow observed. Interrupted before 200%; restoration to original 75% remains to do.",
+  "email_runtime_revision": "5f3a9bf2be6e1e0b2aaf44f2a3ae2e9fa9956bf9",
+  "last_updated_at_utc": "2026-10-27T12:53:15.996804+00:00",
+  "signup_user_report": "Owner reported receiving a code and completing signup with a different email in the phone browser; return to analyst login reproduced by source routing. Full sign-in of that farmer account not accepted. Address omitted.",
+  "web_farmer_registration": "Removed from analyst website in current candidate; farmer registration retained in native app. Browser role/surface guard and validation pending."
 }

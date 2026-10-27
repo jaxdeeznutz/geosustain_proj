@@ -2,17 +2,19 @@ part of '../main.dart';
 
 class EmailVerificationPage extends StatefulWidget {
   final String email, ticket;
+  final ApiService? api;
   const EmailVerificationPage({
     super.key,
     required this.email,
     required this.ticket,
+    this.api,
   });
   @override
   State<EmailVerificationPage> createState() => _EmailVerificationPageState();
 }
 
 class _EmailVerificationPageState extends State<EmailVerificationPage> {
-  final api = ApiService();
+  late final api = widget.api ?? ApiService();
   final code = TextEditingController();
   bool busy = false;
   String? error;
@@ -48,7 +50,9 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
       } else {
         showAuthFeedback(
           context,
-          'Email verified. Sign in with your password.',
+          kIsWeb
+              ? 'Farmer account verified. Sign in through the GeoSustain mobile app.'
+              : 'Email verified. Sign in with your password.',
           success: true,
         );
         Navigator.pushReplacement(
@@ -66,7 +70,7 @@ class _EmailVerificationPageState extends State<EmailVerificationPage> {
   @override
   void dispose() {
     code.dispose();
-    api.close();
+    if (widget.api == null) api.close();
     super.dispose();
   }
 
