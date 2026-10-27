@@ -243,8 +243,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
             (event['id'] as num).toInt(),
             activity: true,
           );
-          if (mounted)
+          if (mounted) {
             PortalRoutes.go('/operator/queue?session=${event['session_id']}');
+          }
           return;
         }
         final detail = await api.getPlannerSessionDetail(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -37,6 +38,24 @@ Map<String, dynamic> fixture() => {
   'current_farm_version': 1,
 };
 void main() {
+  test('portal writes use Flutter multi-entry history metadata', () async {
+    final calls = <MethodCall>[];
+    final messenger =
+        TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger;
+    messenger.setMockMethodCallHandler(SystemChannels.navigation, (call) async {
+      calls.add(call);
+      return null;
+    });
+    addTearDown(
+      () => messenger.setMockMethodCallHandler(SystemChannels.navigation, null),
+    );
+    await publishPortalRoute(Uri.parse('/operator/queue?case=7'));
+    expect(calls.map((c) => c.method), [
+      'selectMultiEntryHistory',
+      'routeInformationUpdated',
+    ]);
+    expect((calls.last.arguments as Map)['uri'], '/operator/queue?case=7');
+  });
   test(
     'browser history is acknowledged instead of undoing a case navigation',
     () async {

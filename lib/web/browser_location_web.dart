@@ -17,8 +17,3 @@ void observeLocation(void Function(String) listener) {
     ((web.Event _) => listener(currentLocation())).toJS,
   );
 }
-
-void changeLocation(String path) {
-  // pushState avoids a second hash navigation event for an in-app transition.
-  web.window.history.pushState(null, '', '#$path');
-}

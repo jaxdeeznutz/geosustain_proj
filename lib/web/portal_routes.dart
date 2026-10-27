@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import 'dart:async';
+import 'package:flutter/services.dart' show SystemNavigator;
 import 'package:flutter/widgets.dart'
     show WidgetsBinding, WidgetsBindingObserver, RouteInformation;
 import 'browser_location_stub.dart'
@@ -14,6 +16,7 @@ class PortalRoutes {
     if (_started) return;
     _started = true;
     if (kIsWeb) {
+      unawaited(SystemNavigator.selectMultiEntryHistory());
       WidgetsBinding.instance.addObserver(
         PortalBrowserHistory(location.currentLocation),
       );
@@ -25,7 +28,7 @@ class PortalRoutes {
 
   static void go(String path) {
     current.value = Uri.parse(path);
-    if (kIsWeb) location.changeLocation(path);
+    if (kIsWeb) unawaited(publishPortalRoute(Uri.parse(path)));
   }
 
   static int pageFor(List<String> pages, String role) {
@@ -34,6 +37,12 @@ class PortalRoutes {
     final index = pages.indexOf(uri.path.split('/').last);
     return index < 0 ? 0 : index;
   }
+}
+
+/// Keep Flutter's engine and the browser's history metadata in agreement.
+Future<void> publishPortalRoute(Uri route) async {
+  await SystemNavigator.selectMultiEntryHistory();
+  await SystemNavigator.routeInformationUpdated(uri: route);
 }
 
 /// The portal handles its own URL history; acknowledge browser route messages
