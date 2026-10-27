@@ -1671,22 +1671,38 @@ class _PlannerMapPreview extends StatelessWidget {
                   color: WebPortalColors.surface.withValues(alpha: .95),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    CircleAvatar(radius: 5, backgroundColor: Color(0xFFE95B55)),
-                    SizedBox(width: 5),
-                    Text('Low', style: TextStyle(fontSize: 11)),
-                    SizedBox(width: 12),
-                    CircleAvatar(radius: 5, backgroundColor: Color(0xFFF0AA20)),
-                    SizedBox(width: 5),
-                    Text('Moderate', style: TextStyle(fontSize: 11)),
-                    SizedBox(width: 12),
-                    CircleAvatar(radius: 5, backgroundColor: Color(0xFF16A765)),
-                    SizedBox(width: 5),
-                    Text('High', style: TextStyle(fontSize: 11)),
-                  ],
-                ),
+                child: selectedLayer != 'Soil pH'
+                    ? Text(
+                        values.where((v) => v.isFinite).isEmpty
+                            ? 'Recorded values unavailable'
+                            : 'Recorded range: ${values.where((v) => v.isFinite).reduce(math.min).toStringAsFixed(2)} - ${values.where((v) => v.isFinite).reduce(math.max).toStringAsFixed(2)}; relative blue scale',
+                        style: const TextStyle(fontSize: 11),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircleAvatar(
+                            radius: 5,
+                            backgroundColor: Color(0xFFE95B55),
+                          ),
+                          SizedBox(width: 5),
+                          Text('Low', style: TextStyle(fontSize: 11)),
+                          SizedBox(width: 12),
+                          CircleAvatar(
+                            radius: 5,
+                            backgroundColor: Color(0xFFF0AA20),
+                          ),
+                          SizedBox(width: 5),
+                          Text('Moderate', style: TextStyle(fontSize: 11)),
+                          SizedBox(width: 12),
+                          CircleAvatar(
+                            radius: 5,
+                            backgroundColor: Color(0xFF16A765),
+                          ),
+                          SizedBox(width: 5),
+                          Text('High', style: TextStyle(fontSize: 11)),
+                        ],
+                      ),
               ),
             ),
             if (grid.isEmpty)
@@ -1793,7 +1809,7 @@ class _PlannerParcelPainter extends CustomPainter {
           ? null
           : values.reduce((a, b) => a + b) / values.length;
       final fill = average == null
-          ? green.withValues(alpha: .22)
+          ? (valueKey == 'soil_ph' ? green : Colors.grey).withValues(alpha: .22)
           : heatColor(average, values).withValues(alpha: .46);
       canvas.drawPath(path, Paint()..color = fill);
       canvas.drawPath(

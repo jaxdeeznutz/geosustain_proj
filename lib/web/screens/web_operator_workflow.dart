@@ -962,11 +962,17 @@ class _OperatorEvidenceMapState extends State<OperatorEvidenceMap> {
     'ndvi': 'NDVI (index)',
     'rainfall': 'Recorded rainfall (mm; see source period)',
     'elevation': 'Elevation (m)',
-    'slope': 'Slope (degrees)',
+    'slope': 'Slope',
     'crop_suitability': 'Stored grid index (not an agronomic grade)',
   };
   @override
   Widget build(BuildContext context) {
+    final labels = <String, String>{
+      ..._OperatorEvidenceMapState.labels,
+      'slope': analysisNumber(widget.record['slope_pct']) != null
+          ? 'Slope (%)'
+          : 'Slope (unit not recorded)',
+    };
     final grid = analysisListValue(
       widget.record['heatmap_grid'],
     ).map(analysisMapValue).toList();

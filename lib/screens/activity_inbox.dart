@@ -238,6 +238,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
       }
       Widget page;
       if (event['event_type'] == 'submission_received') {
+        if (kIsWeb && state.isPlanner) {
+          await api.markNotificationRead(
+            (event['id'] as num).toInt(),
+            activity: true,
+          );
+          if (mounted)
+            PortalRoutes.go('/operator/queue?session=${event['session_id']}');
+          return;
+        }
         final detail = await api.getPlannerSessionDetail(
           (event['session_id'] as num).toInt(),
         );
