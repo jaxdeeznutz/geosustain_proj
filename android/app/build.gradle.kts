@@ -1,4 +1,5 @@
 import java.util.Properties
+import java.io.File
 
 plugins {
     id("com.android.application")
@@ -10,6 +11,10 @@ plugins {
 val releasePropertiesFile = rootProject.file("key.properties")
 val releaseProperties = Properties().apply {
     if (releasePropertiesFile.exists()) releasePropertiesFile.inputStream().use { load(it) }
+}
+val localAndroidProperties = Properties().apply {
+    val propertiesFile = rootProject.file("local.properties")
+    if (propertiesFile.exists()) propertiesFile.inputStream().use { load(it) }
 }
 val verifyReleaseSigning = tasks.register("verifyReleaseSigning") {
     doLast {
@@ -65,6 +70,24 @@ android {
         release {
             signingConfig = if (releasePropertiesFile.exists()) signingConfigs.getByName("release") else null
         }
+    }
+
+    // Flutter adds an empty CMake project solely to provision the NDK. On
+    // Windows its generated metadata can remain locked during configureCMake.
+    // With that exact NDK already installed, the empty project is unnecessary.
+    // Keep real app CMake projects and first-time NDK provisioning untouched.
+    val sdkDirectory = localAndroidProperties.getProperty("sdk.dir")
+    val installedNdk = sdkDirectory?.let {
+        File(it, "ndk/$ndkVersion/source.properties").isFile
+    } == true
+    val cmakeProject = externalNativeBuild.cmake.path
+    if (System.getProperty("os.name").startsWith("Windows", ignoreCase = true) &&
+        installedNdk &&
+        cmakeProject?.invariantSeparatorsPath?.endsWith(
+            "/flutter_tools/gradle/src/main/scripts/CMakeLists.txt"
+        ) == true
+    ) {
+        externalNativeBuild.cmake.path = null
     }
 }
 
