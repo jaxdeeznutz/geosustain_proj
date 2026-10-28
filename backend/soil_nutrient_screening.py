@@ -64,6 +64,10 @@ def assess_nutrient(nutrient, observed, rule):
 
 def screen_soil_nutrients(soil, requirements=None):
     """Consume only server-matched observations, keeping every source row intact."""
+    if soil.get('status') == 'disabled':
+        return {'schema_version': 1, 'assessment_type': TYPE, 'status': 'disabled',
+                'used_for_model_prediction': False, 'crops': {},
+                'message': 'Historical local soil reference is temporarily disabled.'}
     requirements = NUTRIENT_REQUIREMENTS if requirements is None else requirements
     rows = soil.get('observations', []) if soil.get('status') == 'matched' else []
     # A saved/partial row without matching provenance cannot establish association.

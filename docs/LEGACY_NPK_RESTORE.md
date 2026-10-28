@@ -9,6 +9,18 @@ forces preliminary screening. Point and polygon analysis run the existing model
 when its required environmental inputs are available. Missing required model
 inputs and water/built-up restrictions still prevent a crop recommendation.
 
+CAGRO reference is now temporarily disabled by default. New requests skip its
+locality matching and catalogue reads, return `cagro_reference_enabled=false`,
+and hide the reference/unavailable cards. The original observations and older
+saved snapshots are preserved. Set backend `CAGRO_REFERENCE_ENABLED=1` and restart
+only when the separate historical reference should be enabled again.
+
+Incomplete or unavailable land-cover observations no longer stop the model.
+They retain an unverified status, nullable/missing observations, and an explicit
+warning alongside the result and in reports. A model estimate is not proof that
+the parcel is agricultural. Positive mapped water/buildings/mixed-area exclusions
+are retained, as are the city boundary and required model input checks.
+
 - N: the existing SoilGrids/OpenLandMap adapter; its existing regional fallback
   is 80 and remains labelled `fallback_default`.
 - P/K: the existing NDVI/pH/elevation heuristic, including configured fallback

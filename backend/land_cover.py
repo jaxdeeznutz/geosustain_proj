@@ -1,9 +1,27 @@
 """Whole-boundary land-cover screening, separate from crop model ranking."""
 from datetime import datetime, timedelta, timezone
+from copy import deepcopy
 import math
 
 SOURCE = 'Google Dynamic World V1 (10 m), latest clear observations within 90 days'
 BANDS = ['water', 'trees', 'grass', 'flooded_vegetation', 'crops', 'shrub_and_scrub', 'built', 'bare', 'snow_and_ice']
+ESTIMATED_COVER_NOTICE = ('Land-cover observations are incomplete or unavailable. Model analysis continues '
+                        'with estimated soil and environmental inputs. Confirm the selected area is '
+                        'agricultural land; this result does not verify land cover or current soil conditions.')
+
+
+def allow_estimated_analysis(screen=None):
+    """Unknown cover is a warning; observed water/buildings remain exclusions."""
+    if screen is None:
+        screen = {'status': 'unknown', 'allow_crops': False, 'source': SOURCE,
+                  'water_fraction': None, 'built_fraction': None, 'observed_fraction': None,
+                  'message': ESTIMATED_COVER_NOTICE, 'limitation': ESTIMATED_COVER_NOTICE}
+    result = deepcopy(screen)
+    if result.get('status') in ('unknown', 'unavailable'):
+        result.update(allow_crops=True, verification_status='unverified',
+                      analysis_policy='estimated_with_land_cover_warning',
+                      analysis_warning=ESTIMATED_COVER_NOTICE)
+    return result
 
 
 def interpret_cover(stats):

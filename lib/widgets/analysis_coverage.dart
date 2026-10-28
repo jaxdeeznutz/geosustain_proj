@@ -10,11 +10,15 @@ bool farmCanAnalyze(Map<String, dynamic> farm) {
 const cagroHistoricalNotice =
     'CAGRO nutrient records provide locally available historical soil information for supported Panabo City locations. They may not represent the current exact soil condition of every point within the farm and should be supplemented by field or laboratory assessment when necessary.';
 const cagroCoverageNotice =
-    'Land analysis is available within the Panabo City reference boundary using estimated model NPK. CAGRO observations are optional historical reference information, shown separately where a locality match exists.';
+    'Land analysis is available within the Panabo City reference boundary using estimated nitrogen, phosphorus and potassium. These are model inputs, not a current farm soil test.';
 
 /// Shared Farmer, Analyst and report provenance; never reconstruct an old match.
 List<String> analysisCoverageLines(Map<String, dynamic> record) {
   final coverage = analysisMapValue(record['analysis_coverage']);
+  final cagroDisabled =
+      coverage['cagro_enabled'] == false ||
+      record['cagro_reference_enabled'] == false ||
+      analysisMapValue(record['cagro_soil'])['status'] == 'disabled';
   final estimated =
       record['nutrient_display_basis'] == 'legacy_model_estimates' ||
       coverage['analysis_mode'] == 'legacy_model_estimates';
@@ -24,21 +28,26 @@ List<String> analysisCoverageLines(Map<String, dynamic> record) {
     'Farm center longitude: ${record['center_lon'] ?? record['lon'] ?? 'Not recorded'}',
     'Approximate area: ${analysisAreaText(record)}',
     'Farm center is not a soil sample coordinate.',
-    'CAGRO coverage: ${coverage.isEmpty
-        ? 'Not recorded under the current coverage policy (older analysis).'
-        : coverage['supported'] == true
-        ? 'Supported'
-        : estimated && coverage['can_analyze'] == true
-        ? 'No matching historical record; model analysis uses estimated NPK'
-        : coverage['preliminary_supported'] == true
-        ? 'Preliminary screening; CAGRO NPK unavailable'
-        : coverage['can_analyze'] == false
-        ? 'Outside supported Panabo City boundary'
-        : 'Location not supported for formal analysis'}',
+    if (cagroDisabled)
+      'Analysis coverage: ${coverage['can_analyze'] == false ? 'Outside supported Panabo City boundary' : 'Estimated NPK analysis within Panabo City'}'
+    else
+      'CAGRO coverage: ${coverage.isEmpty
+          ? 'Not recorded under the current coverage policy (older analysis).'
+          : coverage['supported'] == true
+          ? 'Supported'
+          : estimated && coverage['can_analyze'] == true
+          ? 'No matching historical record; model analysis uses estimated NPK'
+          : coverage['preliminary_supported'] == true
+          ? 'Preliminary screening; CAGRO NPK unavailable'
+          : coverage['can_analyze'] == false
+          ? 'Outside supported Panabo City boundary'
+          : 'Location not supported for formal analysis'}',
   ];
   if (estimated) {
     lines.add(
-      'Model nutrient source: Estimated NPK inputs; historical CAGRO observations are separate.',
+      cagroDisabled
+          ? 'Model nutrient source: Recorded nitrogen, phosphorus and potassium estimates.'
+          : 'Model nutrient source: Estimated NPK inputs; historical CAGRO observations are separate.',
     );
     final count = analysisNumber(
       analysisMapValue(record['model_nutrient_aggregation'])['sample_count'],
@@ -49,6 +58,10 @@ List<String> analysisCoverageLines(Map<String, dynamic> record) {
       );
     }
   }
+  if (record['land_cover_notice'] != null) {
+    lines.add('Land-cover note: ${record['land_cover_notice']}');
+  }
+  if (cagroDisabled) return lines;
   if (coverage['supported'] == true) {
     lines.add(
       estimated
@@ -184,7 +197,7 @@ class _CoverageExplorerState extends State<CoverageExplorer> {
       if (mounted) {
         setState(
           () => _error =
-              'Coverage map unavailable. Formal analysis still requires a server coverage check.',
+              'Coverage map unavailable. Analysis still uses the server city-boundary check.',
         );
       }
     }
@@ -227,17 +240,15 @@ class _CoverageExplorerState extends State<CoverageExplorer> {
         OutlinedButton(
           onPressed: _busy || center == null ? null : _check,
           child: Text(
-            _busy ? 'Checking CAGRO coverage…' : 'Check CAGRO coverage',
+            _busy ? 'Checking analysis coverage…' : 'Check analysis coverage',
           ),
         ),
         if (_checked != null && _checkedFingerprint == _fingerprint)
           AnalysisCoverageCard(record: _checked!),
         if (_error != null) Text(_error!),
         ExpansionTile(
-          title: const Text('Panabo City screening and CAGRO coverage'),
-          subtitle: const Text(
-            'City reference boundary and historical soil locations',
-          ),
+          title: const Text('Panabo City analysis coverage'),
+          subtitle: const Text('Supported city reference boundary'),
           onExpansionChanged: (open) {
             if (open && _catalog == null) _load();
           },
@@ -300,8 +311,10 @@ class _CoverageExplorerState extends State<CoverageExplorer> {
                   ],
                 ),
               ),
-              const Text(
-                'Blue outline: Panabo City reference boundary (2020, geoBoundaries / NAMRIA / PSA / OCHA; CC BY 3.0 IGO). Green shading: reviewed CAGRO area. Purple marker: historical soil reference, not exact farm NPK.',
+              Text(
+                _catalog!['cagro_enabled'] == false
+                    ? 'Blue outline: Panabo City reference boundary (2020, geoBoundaries / NAMRIA / PSA / OCHA; CC BY 3.0 IGO).'
+                    : 'Blue outline: Panabo City reference boundary (2020, geoBoundaries / NAMRIA / PSA / OCHA; CC BY 3.0 IGO). Green shading: reviewed CAGRO area. Purple marker: historical soil reference, not exact farm NPK.',
               ),
               for (final raw in analysisListValue(
                 _catalog!['reference_locations'],

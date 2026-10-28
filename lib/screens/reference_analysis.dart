@@ -354,6 +354,14 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
               AnalysisReadableText(
                 '${best['explanation'] ?? r['analysis_summary'] ?? analysisMapValue(r['xai_explanation'])['summary'] ?? 'No summary was recorded.'}',
               ),
+              if (r['land_cover_notice'] != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '${r['land_cover_notice']}',
+                    style: const TextStyle(fontSize: 12),
+                  ),
+                ),
               if (modelRanked)
                 Text(
                   'Model class score, not a harvest probability. Nutrient inputs include estimates.',

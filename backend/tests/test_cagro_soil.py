@@ -109,6 +109,7 @@ def test_history_restores_provenance_without_rematching():
 
 def test_api_attaches_soil_without_overwriting_inference(monkeypatch):
     import fastapi_app as api
+    monkeypatch.setenv('CAGRO_REFERENCE_ENABLED', '1')
     polygon = square(7.39242,125.62293)
     model = {"scoring_version": "test", "nitrogen": 80, "phosphorus": 47, "potassium": 50,
              "soil_ph": 6.2, "model_explanation": {"samples": [{"inputs": {"N": 80, "P": 47, "K": 50}}]},
@@ -120,7 +121,7 @@ def test_api_attaches_soil_without_overwriting_inference(monkeypatch):
     monkeypatch.setattr(environmental_pipeline, "merge_results", lambda *a: deepcopy(model))
     result, _ = api.build_analysis_result({"polygon": polygon, "place_name": "Untrusted label"})
     assert result["cagro_soil"]["status"] == "matched"
-    assert result['analysis_schema_version'] == 'panabo-legacy-npk-v3'
+    assert result['analysis_schema_version'] == 'panabo-estimated-npk-v4'
     assert result['analysis_coverage']['supported'] is True
     assert result['analysis_coverage']['used_for_model_prediction'] is False
     assert len(result['soil_nutrients_observed']['records']) == 4

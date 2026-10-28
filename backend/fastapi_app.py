@@ -22,7 +22,7 @@ from fastapi import Request, Depends, HTTPException, status, Header, Query
 from http_config import CorsFastAPI
 from json_safe import json_safe
 from model_ranking import ModelRankingUnavailable
-from land_cover import screen_land_cover, advisory_result
+from land_cover import screen_land_cover, advisory_result, allow_estimated_analysis
 from cagro_soil import nutrient_layers
 from nutrient_contract import attach_display_estimates
 from analysis_coverage import (require_analysis_coverage, require_point_coverage, coverage_catalog,
@@ -960,10 +960,10 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
     active_crops = get_active_crop_keys()
 
     try:
-        cover = screen_land_cover(lat, lon, polygon)
+        cover = allow_estimated_analysis(screen_land_cover(lat, lon, polygon))
     except Exception as exc:
         logging.getLogger('uvicorn.error').warning('Land-cover screening unavailable type=%s', type(exc).__name__)
-        raise ModelRankingUnavailable('Land-cover verification is unavailable. Please retry; crop recommendations are withheld until water and built-up areas can be checked.') from exc
+        cover = allow_estimated_analysis()
 
     if not cover['allow_crops']:
         result = advisory_result(cover)
@@ -1023,13 +1023,18 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         result = analyze_location(lat, lon, active_crops, **({'preliminary': True} if preliminary else {}))
 
     result["land_cover"] = cover
+    if cover.get('analysis_warning'):
+        result['land_cover_notice'] = cover['analysis_warning']
+        result.setdefault('data_quality_warnings', []).append(cover['analysis_warning'])
     result["cagro_soil"] = matched_soil
+    result['cagro_reference_enabled'] = coverage['cagro_enabled']
     result['analysis_mode'] = coverage['analysis_mode']
     if preliminary:
         result['preliminary_notice'] = 'Preliminary environmental screening. CAGRO NPK unavailable for this farm; no complete soil suitability claim is made.'
     result.update(analysis_schema_version=COVERAGE_VERSION, analysis_coverage=coverage,
-                  nutrient_basis='Legacy model NPK estimates; CAGRO historical observations remain separate reference evidence',
-                  historical_soil_notice=HISTORICAL_NOTE,
+                  nutrient_basis=('Legacy model NPK estimates; CAGRO historical observations remain separate reference evidence'
+                                  if coverage['cagro_enabled'] else 'Legacy model NPK estimates; historical local soil reference disabled'),
+                  historical_soil_notice=HISTORICAL_NOTE if coverage['cagro_enabled'] else None,
                   centroid_method=('Area-weighted polygon centroid; not a soil sample coordinate' if polygon
                                    else 'Selected point; not a farm centroid or soil sample coordinate'))
     attach_display_estimates(result)

@@ -5,7 +5,7 @@ import os
 import cagro_soil as cagro
 from geometry import normalize_polygon, polygon_centroid, polygon_area_m2
 
-VERSION = 'panabo-legacy-npk-v3'
+VERSION = 'panabo-estimated-npk-v4'
 MESSAGE = 'Select an area inside the supported Panabo City reference boundary.'
 MODEL_NOTE = ('Model analysis is available using estimated NPK inputs. CAGRO historical '
               'soil observations are optional reference evidence, not model inputs or '
@@ -22,6 +22,18 @@ class CoverageUnavailable(ValueError):
         self.coverage = coverage
 
 
+def cagro_reference_enabled():
+    return os.getenv('CAGRO_REFERENCE_ENABLED', '0').strip().lower() in ('1', 'true', 'yes', 'on')
+
+
+def soil_reference(polygon):
+    if cagro_reference_enabled():
+        return cagro.lookup_soil_observations(polygon)
+    return {'version': cagro.VERSION, 'status': 'disabled', 'observations': [],
+            'used_for_prediction': False,
+            'message': 'Historical local soil reference is temporarily disabled. Analysis uses estimated model NPK.'}
+
+
 def coverage_from_soil(soil):
     rows = soil.get('observations', []) if soil.get('status') == 'matched' else []
     # Preserve all matches and their original addresses; never choose one row.
@@ -31,6 +43,7 @@ def coverage_from_soil(soil):
         'original_cagro_gps', 'coordinate_source', 'source', 'source_file', 'source_row', 'match')}
         for row in rows]
     return {'schema_version': VERSION, 'supported': bool(rows),
+            'cagro_enabled': soil.get('status') != 'disabled',
             'reason': 'CAGRO soil data available' if rows else 'No CAGRO soil data available for this farm location',
             'message': HISTORICAL_NOTE if rows else MESSAGE,
             'matches': matches, 'matching_policy': soil.get('matching_policy'),
@@ -40,7 +53,7 @@ def coverage_from_soil(soil):
 
 
 def check_coverage(polygon):
-    soil = cagro.lookup_soil_observations(polygon)
+    soil = soil_reference(polygon)
     coverage = coverage_from_soil(soil)
     from city_boundary import contains_polygon, VERSION as CITY_VERSION
     city_supported = contains_polygon(polygon)
@@ -48,7 +61,7 @@ def check_coverage(polygon):
         analysis_mode='legacy_model_estimates',
         city_boundary_version=CITY_VERSION)
     coverage.update(reason='Model analysis with estimated NPK' if city_supported else 'Outside supported Panabo City boundary',
-                    message=MODEL_NOTE if city_supported else MESSAGE)
+                    message=(MODEL_NOTE if coverage['cagro_enabled'] else soil['message']) if city_supported else MESSAGE)
     return coverage, soil
 
 
@@ -69,14 +82,14 @@ def require_analysis_coverage(polygon):
 def require_point_coverage(lat, lon):
     """A point permits estimated model inputs, never an invented CAGRO match."""
     from city_boundary import contains_point, VERSION as CITY_VERSION
-    soil = cagro.lookup_soil_observations([])
+    soil = soil_reference([])
     coverage = coverage_from_soil(soil)
     inside = contains_point(lat, lon)
     coverage.update(preliminary_supported=inside, can_analyze=inside,
         analysis_mode='legacy_model_estimates', geometry_type='Point',
         city_boundary_version=CITY_VERSION,
         reason='Point analysis with estimated NPK' if inside else 'Point outside Panabo City reference boundary',
-        message=(MODEL_NOTE
+        message=((MODEL_NOTE if coverage['cagro_enabled'] else soil['message'])
                  if inside else 'Select a point inside the Panabo City reference boundary.'))
     if not inside:
         raise CoverageUnavailable(coverage)
@@ -104,8 +117,12 @@ def farm_coverage(row):
 def coverage_catalog():
     """Only reviewed boundaries and existing mapped anchors; no invented circles."""
     result = {'schema_version': VERSION, 'reference_locations': [], 'boundaries': [],
+              'cagro_enabled': cagro_reference_enabled(),
               'city_boundary': __import__('city_boundary').reference(),
               'note': 'Reference markers are reconstructed locality anchors, not barangay boundaries or original sample GPS. Full farm geometry is checked by the server.'}
+    if not result['cagro_enabled']:
+        result['note'] = 'Panabo City analysis boundary. Soil nutrients use model estimates; historical local soil reference is temporarily disabled.'
+        return result
     try:
         rows = cagro._read(cagro.DATA / 'cagro_observations.json')
         locations = cagro._read(cagro.DATA / 'cagro_locations.json')

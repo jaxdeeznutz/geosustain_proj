@@ -18,7 +18,11 @@ class CagroSoilObservationsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final soil = analysisMapValue(record['cagro_soil']);
-    if (soil.isEmpty) return const SizedBox.shrink();
+    if (soil.isEmpty ||
+        soil['status'] == 'disabled' ||
+        record['cagro_reference_enabled'] == false) {
+      return const SizedBox.shrink();
+    }
     final scope =
         record['session_id'] ??
         record['id'] ??

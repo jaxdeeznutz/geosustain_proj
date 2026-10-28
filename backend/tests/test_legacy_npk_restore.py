@@ -42,7 +42,8 @@ def test_no_inference_does_not_create_npk():
 
 
 @pytest.mark.parametrize('polygon', [False, True])
-def test_unmatched_panabo_area_runs_real_forest_with_estimated_npk(monkeypatch, polygon):
+@pytest.mark.parametrize('cover_state', ['eligible', 'unknown', 'unavailable'])
+def test_unmatched_panabo_area_runs_real_forest_with_estimated_npk(monkeypatch, polygon, cover_state):
     import environmental_pipeline as pipeline
     import fastapi_app as api
     import rainfallDatasets as env
@@ -60,7 +61,13 @@ def test_unmatched_panabo_area_runs_real_forest_with_estimated_npk(monkeypatch, 
         'temperature': {'value': 27, 'unit': 'C', 'period': 'annual_mean', 'quality': 'modelled'},
         'rainfall': {'value': 2100, 'unit': 'mm/year', 'period': 'annual_mean_total', 'quality': 'modelled'}})
     monkeypatch.setattr(api, 'get_active_crop_keys', lambda: ['rice', 'banana'])
-    monkeypatch.setattr(api, 'screen_land_cover', lambda *a: {'allow_crops': True, 'status': 'eligible'})
+    monkeypatch.delenv('CAGRO_REFERENCE_ENABLED', raising=False)
+    def screen(*args):
+        if cover_state == 'unavailable':
+            raise RuntimeError('Controlled offline provider failure')
+        return {'allow_crops': cover_state == 'eligible', 'status': cover_state,
+                'observed_fraction': 1 if cover_state == 'eligible' else .2}
+    monkeypatch.setattr(api, 'screen_land_cover', screen)
     monkeypatch.setattr(api, 'reverse_geocode_place', lambda *a: 'Explicit fixture')
     body = {'lat': 7.29, 'lon': 125.62, 'place_name': 'Explicit fixture'}
     if polygon:
@@ -72,6 +79,8 @@ def test_unmatched_panabo_area_runs_real_forest_with_estimated_npk(monkeypatch, 
     assert not result['analysis_coverage']['supported']
     assert result['analysis_coverage']['matches'] == []
     assert result['cagro_soil']['observations'] == []
+    assert result['cagro_soil']['status'] == 'disabled'
+    assert result['cagro_reference_enabled'] is False
     assert result['soil_nutrients_observed']['used_for_prediction'] is False
     assert result['predicted_crop'] in ('Rice', 'Banana')
     assert result['recommendation_basis'] == 'model_probability'
@@ -84,6 +93,9 @@ def test_unmatched_panabo_area_runs_real_forest_with_estimated_npk(monkeypatch, 
     assert all(s['inputs']['N'] == 80 for s in samples)
     assert result['model_nutrient_aggregation']['sample_count'] == len(samples)
     assert result['model_nutrient_inputs']['status'] == 'recorded'
+    if cover_state != 'eligible':
+        assert result['land_cover_notice']
+        assert result['land_cover']['verification_status'] == 'unverified'
 
 
 def test_old_preliminary_snapshot_is_not_upgraded_or_rewritten():

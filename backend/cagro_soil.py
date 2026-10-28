@@ -254,5 +254,7 @@ def nutrient_layers(soil, analysis):
                         for i, sample in enumerate(samples)],
             "note": "Recorded inference inputs only; empty samples mean no recorded model inputs."
         },
-        "soil_model_warning": MODEL_WARNING,
+        "soil_model_warning": (MODEL_WARNING if soil.get('status') != 'disabled' else
+                               'N/P/K are recorded model estimates or labelled regional defaults, not laboratory measurements. '
+                               'Physical units and analytical-method compatibility with the training data are unverified.'),
     }

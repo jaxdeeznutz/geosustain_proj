@@ -1,7 +1,6 @@
 from unittest.mock import Mock
 import pytest
-from land_cover import interpret_cover, advisory_result
-from model_ranking import ModelRankingUnavailable
+from land_cover import interpret_cover, advisory_result, allow_estimated_analysis
 
 
 @pytest.mark.parametrize('water,built,observed,status', [
@@ -23,7 +22,7 @@ def test_no_coverage_is_not_treated_as_farmland():
     assert interpret_cover({})['allow_crops'] is False
 
 
-@pytest.mark.parametrize('status', ['water', 'built_up', 'mixed', 'unknown'])
+@pytest.mark.parametrize('status', ['water', 'built_up', 'mixed'])
 def test_api_preflight_prevents_model_calls_and_keeps_boundary(monkeypatch, status):
     import fastapi_app as api
     from test_cagro_soil import square
@@ -43,15 +42,34 @@ def test_api_preflight_prevents_model_calls_and_keeps_boundary(monkeypatch, stat
     infer.assert_not_called()
 
 
-def test_provider_failure_does_not_silently_enable_crops(monkeypatch):
+@pytest.mark.parametrize('provider_failed', [False, True])
+def test_unknown_cover_continues_model_with_explicit_warning(monkeypatch, provider_failed):
     import fastapi_app as api
-    monkeypatch.setattr(api, 'screen_land_cover', Mock(side_effect=RuntimeError('offline')))
+    unknown = interpret_cover({'total': 100, 'observed': 20})
+    monkeypatch.setattr(api, 'screen_land_cover',
+                        Mock(side_effect=RuntimeError('offline')) if provider_failed else Mock(return_value=unknown))
     monkeypatch.setattr(api, 'get_active_crop_keys', lambda: None)
-    infer = Mock()
+    infer = Mock(return_value={'scoring_version': 'fixture', 'is_crop_recommended': True,
+                              'predicted_crop': 'Rice', 'model_explanation': {'samples': [
+                                  {'inputs': {'N': 80, 'P': 47, 'K': 50}}]}})
     monkeypatch.setattr(api, 'analyze_location', infer)
-    with pytest.raises(ModelRankingUnavailable, match='Land-cover verification'):
-        api.build_analysis_result({'polygon': __import__('test_cagro_soil').square(7.39242,125.62293)})
-    infer.assert_not_called()
+    result, _ = api.build_analysis_result({'lat': 7.29, 'lon': 125.62, 'place_name': 'Test fixture'})
+    infer.assert_called_once()
+    assert result['predicted_crop'] == 'Rice'
+    assert result['land_cover']['status'] == 'unknown'
+    assert result['land_cover']['verification_status'] == 'unverified'
+    assert result['land_cover_notice'] in result['data_quality_warnings']
+    assert result['nitrogen'] == 80
+    assert result['land_cover']['observed_fraction'] == (None if provider_failed else .2)
+
+
+def test_warning_policy_does_not_mutate_original_or_invent_verified_land():
+    original = interpret_cover({})
+    result = allow_estimated_analysis(original)
+    assert original['allow_crops'] is False
+    assert result['allow_crops'] is True
+    assert result['status'] == 'unknown'
+    assert result['verification_status'] == 'unverified'
 
 
 @pytest.mark.parametrize('stats', [

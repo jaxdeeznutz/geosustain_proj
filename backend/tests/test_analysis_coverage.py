@@ -13,6 +13,7 @@ from geometry import polygon_centroid
 @pytest.fixture(autouse=True)
 def clean_boundary_config(monkeypatch):
     monkeypatch.delenv('CAGRO_LOCALITY_BOUNDARIES_PATH', raising=False)
+    monkeypatch.setenv('CAGRO_REFERENCE_ENABLED', '1')
 
 
 @pytest.mark.parametrize('lat,lon,supported', [(7.39242,125.62293,True), (7.29811,125.66111,True), (7.29,125.62,False), (7.39163,125.59919,False)])
