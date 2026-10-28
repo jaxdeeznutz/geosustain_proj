@@ -9,7 +9,7 @@ from city_boundary import reference
 def test_point_screening_does_not_create_a_farm_or_soil_match():
     coverage, soil = require_point_coverage(7.29, 125.62)
     assert coverage['can_analyze'] and coverage['geometry_type'] == 'Point'
-    assert coverage['analysis_mode'] == 'preliminary_environmental'
+    assert coverage['analysis_mode'] == 'legacy_model_estimates'
     assert not coverage['supported'] and coverage['matches'] == []
     assert not soil['observations'] and coverage['nutrient_source'] is None
 
@@ -30,7 +30,7 @@ def test_builder_accepts_inside_point_without_fabricating_polygon(monkeypatch, m
     monkeypatch.setattr(api, 'reverse_geocode_place', lambda *args: 'Explicit point fixture')
     params = {'lat': 7.29, 'lon': 125.62}
     result, source = api.build_analysis_result(**{('body' if mode == 'body' else 'query_args'): params})
-    infer.assert_called_once_with(7.29, 125.62, ['rice'], preliminary=True)
+    infer.assert_called_once_with(7.29, 125.62, ['rice'])
     assert source == 'query-point' and result['selected_polygon'] == []
     assert result['selection_type'] == 'Point location'
     assert 'area_hectares' not in result

@@ -75,3 +75,32 @@ def recorded_inputs(samples, model_version=None):
                     for i, s in enumerate(samples) if 'model_nutrient_inputs' in s],
         'status': 'recorded' if samples and all('model_nutrient_inputs' in s for s in samples) else 'not_recorded',
     }
+
+
+def attach_display_estimates(result):
+    """Expose actual inference inputs; parcel means never become soil measurements."""
+    samples = (result.get('model_explanation') or {}).get('samples', [])
+    if not samples:
+        return result
+    quality = result.setdefault('data_quality', {})
+    for key, alias in [('N', 'nitrogen'), ('P', 'phosphorus'), ('K', 'potassium')]:
+        values = [sample.get('inputs', {}).get(key) for sample in samples]
+        valid = all(isinstance(value, (int, float)) and not isinstance(value, bool)
+                    and math.isfinite(value) for value in values)
+        result[alias] = sum(values) / len(values) if valid else None
+        contracts = [sample.get('model_nutrient_inputs', {}).get(key, {}) for sample in samples]
+        quality[alias] = {
+            'quality': ('unavailable' if not valid else 'fallback_default'
+                        if any(c.get('quality') == 'fallback_default' for c in contracts)
+                        else 'estimated_proxy'),
+            'source': '; '.join(sorted({c['source'] for c in contracts if c.get('source')}))
+                      or 'Recorded Random Forest model input',
+            'unit': UNIT,
+        }
+    result['nutrient_display_basis'] = 'legacy_model_estimates'
+    result['model_nutrient_aggregation'] = {
+        'sample_count': len(samples),
+        'method': 'Arithmetic mean of recorded model N/P/K inputs across all analysis samples',
+        'limitation': 'Model estimates or regional defaults; not measured farm soil or fertilizer application rates',
+    }
+    return result

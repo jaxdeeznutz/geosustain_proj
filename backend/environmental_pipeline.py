@@ -1,4 +1,4 @@
-"""New analysis path. Existing providers and forest retained; fallback values excluded."""
+"""Environmental observations and the existing forest with legacy nutrient estimates."""
 import logging
 import math
 from provider_cache import retrieve
@@ -107,7 +107,7 @@ def analyze_location(lat, lon, active_crops=None, *, preliminary=False):
     for key, m in measurements.items():
         quality[key] = {'quality':m['quality'], 'source':m.get('source'), 'unit':m['unit'], 'period':m['period']}
     result = {'lat':lat,'lon':lon,'environmental_measurements':measurements,'data_quality':quality,
-        'data_quality_warnings':['Missing data is not replaced with regional defaults. Field verification is required.'],
+        'data_quality_warnings':['Missing environmental measurements remain unavailable. Model nutrient inputs are estimates and may use a labelled regional nitrogen default. Field verification is required.'],
         'soil_ph': measurements['soil_ph']['value'], 'elevation_m':measurements['elevation']['value'],
         'slope_pct':measurements['slope']['value'], 'ndvi':measurements['ndvi']['value'],
         'temperature_c':(measurements.get('temperature') or {}).get('value'),

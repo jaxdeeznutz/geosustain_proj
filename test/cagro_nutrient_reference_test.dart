@@ -46,6 +46,28 @@ Map<String, dynamic> referenceRecord({
 };
 
 void main() {
+  for (final multiple in [false, true]) {
+    test('restored model display keeps CAGRO separate, multiple=$multiple', () {
+      final input = referenceRecord(multiple: multiple)
+        ..['nutrient_display_basis'] = 'legacy_model_estimates';
+      final views = environmentalFactorViews({'crop': 'Rice'}, input);
+      for (final entry in {'N': 80, 'P': 47, 'K': 50}.entries) {
+        final view = views.firstWhere((f) => f.key == entry.key);
+        expect(view.value, entry.value);
+        expect(view.unit, '');
+        expect(view.referenceBased, isFalse);
+        expect(
+          view.interpretation,
+          'Existing model estimate; not a soil test.',
+        );
+      }
+      expect(
+        cagroReferenceRecords({'crop': 'Rice'}, input).length,
+        multiple ? 2 : 1,
+      );
+    });
+  }
+
   for (final status in [
     'Suitable',
     'Limited',

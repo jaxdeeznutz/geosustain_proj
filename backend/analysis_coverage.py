@@ -5,11 +5,11 @@ import os
 import cagro_soil as cagro
 from geometry import normalize_polygon, polygon_centroid, polygon_area_m2
 
-VERSION = 'panabo-preliminary-cagro-v2'
-MESSAGE = ('Location not supported for formal analysis. GeoSustain currently provides formal '
-           'crop analysis only for locations where available CAGRO soil information can support '
-           'the assessment. Additional areas can be supported when more validated CAGRO soil '
-           'records become available.')
+VERSION = 'panabo-legacy-npk-v3'
+MESSAGE = 'Select an area inside the supported Panabo City reference boundary.'
+MODEL_NOTE = ('Model analysis is available using estimated NPK inputs. CAGRO historical '
+              'soil observations are optional reference evidence, not model inputs or '
+              'a requirement for crop ranking. Estimates are not a current farm soil test.')
 HISTORICAL_NOTE = ('CAGRO nutrient records provide locally available historical soil information '
                    'for supported Panabo City locations. They may not represent the current exact '
                    'soil condition of every point within the farm and should be supplemented by '
@@ -45,11 +45,10 @@ def check_coverage(polygon):
     from city_boundary import contains_polygon, VERSION as CITY_VERSION
     city_supported = contains_polygon(polygon)
     coverage.update(preliminary_supported=city_supported, can_analyze=city_supported,
-        analysis_mode='cagro_supported' if coverage['supported'] else 'preliminary_environmental',
+        analysis_mode='legacy_model_estimates',
         city_boundary_version=CITY_VERSION)
-    if city_supported and not coverage['supported']:
-        coverage.update(reason='Preliminary screening available; CAGRO NPK unavailable',
-            message='Environmental screening is available within the Panabo City reference boundary. No matching CAGRO soil sample is available: NPK is not assessed for this farm.')
+    coverage.update(reason='Model analysis with estimated NPK' if city_supported else 'Outside supported Panabo City boundary',
+                    message=MODEL_NOTE if city_supported else MESSAGE)
     return coverage, soil
 
 
@@ -68,16 +67,16 @@ def require_analysis_coverage(polygon):
 
 
 def require_point_coverage(lat, lon):
-    """A point permits city screening, never an invented parcel/soil association."""
+    """A point permits estimated model inputs, never an invented CAGRO match."""
     from city_boundary import contains_point, VERSION as CITY_VERSION
     soil = cagro.lookup_soil_observations([])
     coverage = coverage_from_soil(soil)
     inside = contains_point(lat, lon)
     coverage.update(preliminary_supported=inside, can_analyze=inside,
-        analysis_mode='preliminary_environmental', geometry_type='Point',
+        analysis_mode='legacy_model_estimates', geometry_type='Point',
         city_boundary_version=CITY_VERSION,
-        reason='Point screening; CAGRO NPK unavailable' if inside else 'Point outside Panabo City reference boundary',
-        message=('Preliminary screening at the selected point. A farm boundary and reviewed soil association are required for CAGRO NPK.'
+        reason='Point analysis with estimated NPK' if inside else 'Point outside Panabo City reference boundary',
+        message=(MODEL_NOTE
                  if inside else 'Select a point inside the Panabo City reference boundary.'))
     if not inside:
         raise CoverageUnavailable(coverage)

@@ -24,6 +24,7 @@ from json_safe import json_safe
 from model_ranking import ModelRankingUnavailable
 from land_cover import screen_land_cover, advisory_result
 from cagro_soil import nutrient_layers
+from nutrient_contract import attach_display_estimates
 from analysis_coverage import (require_analysis_coverage, require_point_coverage, coverage_catalog,
                                farm_coverage, CoverageUnavailable, VERSION as COVERAGE_VERSION,
                                HISTORICAL_NOTE)
@@ -1027,10 +1028,11 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
     if preliminary:
         result['preliminary_notice'] = 'Preliminary environmental screening. CAGRO NPK unavailable for this farm; no complete soil suitability claim is made.'
     result.update(analysis_schema_version=COVERAGE_VERSION, analysis_coverage=coverage,
-                  nutrient_basis='CAGRO historical local evidence; legacy Random Forest nutrient proxies remain separate',
+                  nutrient_basis='Legacy model NPK estimates; CAGRO historical observations remain separate reference evidence',
                   historical_soil_notice=HISTORICAL_NOTE,
                   centroid_method=('Area-weighted polygon centroid; not a soil sample coordinate' if polygon
                                    else 'Selected point; not a farm centroid or soil sample coordinate'))
+    attach_display_estimates(result)
     result.update(nutrient_layers(result["cagro_soil"], result))
     planting_month = int((body or {}).get("intended_planting_month") or datetime.now().month)
     if not result.get('scoring_version'):

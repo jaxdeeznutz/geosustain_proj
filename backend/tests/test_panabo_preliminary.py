@@ -20,7 +20,7 @@ def test_city_boundary_covers_north_beyond_old_rectangle():
     coverage,soil=require_analysis_coverage(ring)
     assert coverage['preliminary_supported'] and coverage['can_analyze']
     assert not coverage['supported'] and not soil.get('observations')
-    assert coverage['analysis_mode']=='preliminary_environmental'
+    assert coverage['analysis_mode']=='legacy_model_estimates'
     assert coverage['nutrient_source'] is None
 
 

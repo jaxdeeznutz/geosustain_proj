@@ -1,5 +1,9 @@
 # CAGRO historical locality soil observations
 
+Current admission/display policy: [restored estimated NPK analysis](LEGACY_NPK_RESTORE.md).
+CAGRO matching remains a separate historical reference and is not required for
+new model analyses inside the supported city boundary.
+
 ## Scope and scientific meaning
 
 Nine reconstructed location anchors and 31 historical observation rows are stored

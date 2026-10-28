@@ -10,11 +10,14 @@ bool farmCanAnalyze(Map<String, dynamic> farm) {
 const cagroHistoricalNotice =
     'CAGRO nutrient records provide locally available historical soil information for supported Panabo City locations. They may not represent the current exact soil condition of every point within the farm and should be supplemented by field or laboratory assessment when necessary.';
 const cagroCoverageNotice =
-    'Preliminary environmental screening is available within the Panabo City reference boundary. CAGRO NPK is shown only where a matching historical soil record exists; elsewhere it is unavailable.';
+    'Land analysis is available within the Panabo City reference boundary using estimated model NPK. CAGRO observations are optional historical reference information, shown separately where a locality match exists.';
 
 /// Shared Farmer, Analyst and report provenance; never reconstruct an old match.
 List<String> analysisCoverageLines(Map<String, dynamic> record) {
   final coverage = analysisMapValue(record['analysis_coverage']);
+  final estimated =
+      record['nutrient_display_basis'] == 'legacy_model_estimates' ||
+      coverage['analysis_mode'] == 'legacy_model_estimates';
   final lines = <String>[
     'Analyzed Farm Location',
     'Farm center latitude: ${record['center_lat'] ?? record['lat'] ?? 'Not recorded'}',
@@ -25,14 +28,33 @@ List<String> analysisCoverageLines(Map<String, dynamic> record) {
         ? 'Not recorded under the current coverage policy (older analysis).'
         : coverage['supported'] == true
         ? 'Supported'
+        : estimated && coverage['can_analyze'] == true
+        ? 'No matching historical record; model analysis uses estimated NPK'
         : coverage['preliminary_supported'] == true
         ? 'Preliminary screening; CAGRO NPK unavailable'
         : coverage['can_analyze'] == false
         ? 'Outside supported Panabo City boundary'
         : 'Location not supported for formal analysis'}',
   ];
+  if (estimated) {
+    lines.add(
+      'Model nutrient source: Estimated NPK inputs; historical CAGRO observations are separate.',
+    );
+    final count = analysisNumber(
+      analysisMapValue(record['model_nutrient_aggregation'])['sample_count'],
+    );
+    if (count != null) {
+      lines.add(
+        'NPK display: ${count.toInt() == 1 ? 'Recorded model input values' : 'Average of recorded model inputs from ${count.toInt()} analysis samples'}. Estimates are not a soil test or fertilizer application rates.',
+      );
+    }
+  }
   if (coverage['supported'] == true) {
-    lines.add('Nutrient Source: Panabo City CAGRO historical soil record');
+    lines.add(
+      estimated
+          ? 'Historical reference source: Panabo City CAGRO soil records (not used for prediction)'
+          : 'Nutrient Source: Panabo City CAGRO historical soil record',
+    );
     final seen = <String>{};
     for (final item in analysisListValue(coverage['matches'])) {
       final match = analysisMapValue(item);
@@ -52,7 +74,11 @@ List<String> analysisCoverageLines(Map<String, dynamic> record) {
     );
   } else if (coverage.isNotEmpty) {
     lines.add('CAGRO soil data unavailable for this location.');
-    lines.add(cagroCoverageNotice);
+    lines.add(
+      estimated
+          ? cagroCoverageNotice
+          : 'Preliminary environmental screening is available within the Panabo City reference boundary. CAGRO NPK is shown only where a matching historical soil record exists; elsewhere it is unavailable.',
+    );
   }
   return lines;
 }

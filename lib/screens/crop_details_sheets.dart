@@ -460,7 +460,9 @@ List<CropFactorView> environmentalFactorViews(
   final soilRecords = cagroReferenceRecords(crop, record);
   return environmentalFactorDefinitions.map((definition) {
     final key = definition.$1;
-    if (['N', 'P', 'K'].contains(key) && soilRecords.isNotEmpty) {
+    if (['N', 'P', 'K'].contains(key) &&
+        soilRecords.isNotEmpty &&
+        record['nutrient_display_basis'] != 'legacy_model_estimates') {
       final nutrient = {
         'N': 'nitrogen',
         'P': 'phosphorus',

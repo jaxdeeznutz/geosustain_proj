@@ -585,7 +585,19 @@ class AnalysisIndicatorsCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(child: Text(item.$2)),
+                    Expanded(
+                      child: Text(
+                        record['nutrient_display_basis'] ==
+                                    'legacy_model_estimates' &&
+                                [
+                                  'nitrogen',
+                                  'phosphorus',
+                                  'potassium',
+                                ].contains(item.$1)
+                            ? '${item.$2} (estimated)'
+                            : item.$2,
+                      ),
+                    ),
                     const SizedBox(width: 12),
                     Flexible(
                       child: Text(

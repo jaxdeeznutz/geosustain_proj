@@ -1,5 +1,9 @@
 # CAGRO nutrient reference assessment
 
+Current behavior for new analyses is documented in [LEGACY_NPK_RESTORE.md](LEGACY_NPK_RESTORE.md):
+main NPK cards show recorded model estimates; historical CAGRO observations remain
+separate. The CAGRO-first display below remains applicable to older saved snapshots.
+
 ## Evidence audit and limits
 
 The existing crop reference schema contains temperature, annual rainfall, pH,

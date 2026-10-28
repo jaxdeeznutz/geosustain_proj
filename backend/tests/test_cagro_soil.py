@@ -120,7 +120,7 @@ def test_api_attaches_soil_without_overwriting_inference(monkeypatch):
     monkeypatch.setattr(environmental_pipeline, "merge_results", lambda *a: deepcopy(model))
     result, _ = api.build_analysis_result({"polygon": polygon, "place_name": "Untrusted label"})
     assert result["cagro_soil"]["status"] == "matched"
-    assert result['analysis_schema_version'] == 'panabo-preliminary-cagro-v2'
+    assert result['analysis_schema_version'] == 'panabo-legacy-npk-v3'
     assert result['analysis_coverage']['supported'] is True
     assert result['analysis_coverage']['used_for_model_prediction'] is False
     assert len(result['soil_nutrients_observed']['records']) == 4

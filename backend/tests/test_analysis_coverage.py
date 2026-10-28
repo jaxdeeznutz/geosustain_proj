@@ -63,7 +63,7 @@ def test_centroid_uses_area_not_vertex_average():
     assert row == before
 
 
-def test_preflight_distinguishes_preliminary_from_cagro_coverage(client, monkeypatch):
+def test_preflight_allows_model_estimates_independently_of_cagro_coverage(client, monkeypatch):
     infer = Mock(side_effect=AssertionError('No model/provider call allowed'))
     monkeypatch.setattr(api, 'analyze_location', infer)
     monkeypatch.setattr(api, 'screen_land_cover', infer)
@@ -72,6 +72,7 @@ def test_preflight_distinguishes_preliminary_from_cagro_coverage(client, monkeyp
     assert response.json()['analysis_coverage']['supported'] is False
     assert response.json()['analysis_coverage']['preliminary_supported'] is True
     assert response.json()['analysis_coverage']['can_analyze'] is True
+    assert response.json()['analysis_coverage']['analysis_mode'] == 'legacy_model_estimates'
     infer.assert_not_called()
     supported = client.post('/api/mobile/analysis-coverage', json={'polygon':square(7.39242,125.62293)}).json()
     assert supported['analysis_coverage']['supported']
