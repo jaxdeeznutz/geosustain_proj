@@ -56,10 +56,46 @@ class WebDashboardScreen extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         if (state.isPlanner) ...[
+          Text(
+            'Analyst workspace',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 12),
+          WebAdaptiveRow(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _AnalystWorkflowCard(
+                  icon: Icons.fact_check_rounded,
+                  title: 'Review farmer submissions',
+                  description:
+                      'Open a submitted case, inspect its saved boundary and evidence, then record your review decision.',
+                  steps:
+                      'Review Inbox → Inspect evidence → Verify, request information, or reject',
+                  action: 'Open Review Inbox',
+                  onPressed: () => PortalRoutes.go('/operator/queue'),
+                ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: _AnalystWorkflowCard(
+                  icon: Icons.add_location_alt_rounded,
+                  title: 'Analyze an area',
+                  description:
+                      'Create your own land assessment for planning. A farmer submission is not required.',
+                  steps:
+                      'Select point or boundary → Analyze → Inspect results → Save or report',
+                  action: 'Start analyst assessment',
+                  onPressed: onStartAnalyze,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
           WebOperatorOverview(state: state),
           const SizedBox(height: 24),
           const Text(
-            'My analysis activity',
+            'My assessment activity',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
           ),
           const Text(
@@ -142,6 +178,7 @@ class WebDashboardScreen extends StatelessWidget {
               child: Column(
                 children: [
                   _DashboardQuickActions(
+                    analyst: state.isPlanner,
                     onStartAnalyze: onStartAnalyze,
                     onOpenMapAnalysis: onOpenMapAnalysis,
                     onOpenHistory: onOpenHistory,
@@ -183,6 +220,41 @@ class WebDashboardScreen extends StatelessWidget {
       ],
     );
   }
+}
+
+class _AnalystWorkflowCard extends StatelessWidget {
+  final IconData icon;
+  final String title, description, steps, action;
+  final VoidCallback onPressed;
+  const _AnalystWorkflowCard({
+    required this.icon,
+    required this.title,
+    required this.description,
+    required this.steps,
+    required this.action,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) => _WebCard(
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Icon(icon, color: WebPortalColors.accent, size: 30),
+        const SizedBox(height: 12),
+        Text(
+          title,
+          style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 8),
+        Text(description),
+        const SizedBox(height: 12),
+        Text(steps, style: TextStyle(color: WebPortalColors.muted)),
+        const SizedBox(height: 16),
+        FilledButton(onPressed: onPressed, child: Text(action)),
+      ],
+    ),
+  );
 }
 
 class _DashboardWelcomeRow extends StatelessWidget {
@@ -478,11 +550,13 @@ class _DashboardStep extends StatelessWidget {
 }
 
 class _DashboardQuickActions extends StatelessWidget {
+  final bool analyst;
   final VoidCallback onStartAnalyze;
   final VoidCallback onOpenMapAnalysis;
   final VoidCallback onOpenHistory;
   final VoidCallback onOpenReports;
   const _DashboardQuickActions({
+    this.analyst = false,
     required this.onStartAnalyze,
     required this.onOpenMapAnalysis,
     required this.onOpenHistory,
@@ -524,7 +598,7 @@ class _DashboardQuickActions extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onOpenHistory,
             icon: Icon(Icons.history_rounded),
-            label: Text('Analysis History'),
+            label: Text(analyst ? 'Assessment Records' : 'Analysis History'),
             style: OutlinedButton.styleFrom(
               foregroundColor: WebPortalColors.accent,
             ),
@@ -952,11 +1026,22 @@ class _WebRecommendedCropPanel extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            WebAnalysisMetrics.preliminary(data)
+            state.isPlanner
+                ? 'Analyst assessment'
+                : WebAnalysisMetrics.preliminary(data)
                 ? 'Preliminary environmental screening'
                 : 'Recorded analysis',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
           ),
+          if (state.isPlanner) ...[
+            Text(
+              'Recorded result #${data['session_id'] ?? 'unavailable'} · ${analysisDateText(data['analyzed_at'])}',
+            ),
+            const Text(
+              'This independent assessment does not verify or replace a farmer submission. Review the saved evidence and limitations below.',
+            ),
+            const SizedBox(height: 12),
+          ],
           WebAnalysisEvidence(state: state, record: data),
           SizedBox(height: 12),
           Wrap(
@@ -971,7 +1056,7 @@ class _WebRecommendedCropPanel extends StatelessWidget {
                   'Analysis saved.',
                 ),
                 icon: Icon(Icons.bookmark_border),
-                label: Text('Save'),
+                label: Text(state.isPlanner ? 'Save assessment' : 'Save'),
               ),
               OutlinedButton.icon(
                 onPressed: () => _action(
@@ -981,23 +1066,25 @@ class _WebRecommendedCropPanel extends StatelessWidget {
                   'Report generated.',
                 ),
                 icon: Icon(Icons.picture_as_pdf),
-                label: Text('Report'),
+                label: Text(state.isPlanner ? 'Create report' : 'Report'),
               ),
               OutlinedButton.icon(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => Scaffold(
-                      appBar: AppBar(title: Text('Analysis History')),
-                      body: SingleChildScrollView(
-                        padding: EdgeInsets.all(20),
-                        child: WebHistoryScreen(state: state),
+                onPressed: state.isPlanner
+                    ? () => PortalRoutes.go('/operator/history')
+                    : () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => Scaffold(
+                            appBar: AppBar(title: Text('Analysis History')),
+                            body: SingleChildScrollView(
+                              padding: EdgeInsets.all(20),
+                              child: WebHistoryScreen(state: state),
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
-                  ),
-                ),
                 icon: Icon(Icons.history),
-                label: Text('History'),
+                label: Text(state.isPlanner ? 'Assessment Records' : 'History'),
               ),
             ],
           ),

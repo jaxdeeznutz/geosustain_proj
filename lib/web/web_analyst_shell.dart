@@ -222,23 +222,25 @@ class _WebSidebar extends StatelessWidget {
     required this.logout,
   });
 
-  static final _baseItems = [
-    (Icons.dashboard_rounded, 'Overview'),
-    (Icons.map_rounded, 'Planning Map'),
-    (Icons.center_focus_strong_rounded, 'Analysis Workspace'),
-    (Icons.history_rounded, 'My Analyses'),
-    (Icons.picture_as_pdf_rounded, 'Reports'),
-    (Icons.show_chart_rounded, 'Recommendation Patterns'),
-  ];
-  static final _plannerItem = (Icons.fact_check_rounded, 'Review Inbox');
-  static final _settingsItem = (Icons.settings_rounded, 'Settings');
-  static final _activityItem = (Icons.notifications_outlined, 'Activity');
-
-  static List<(IconData, String)> itemsFor(bool isPlanner) => [
-    ..._baseItems,
-    if (isPlanner) _plannerItem,
-    _settingsItem,
-    _activityItem,
+  // Keep existing route indices so saved links and browser history still work.
+  static List<(int, IconData, String)> itemsFor(bool isPlanner) => [
+    (0, Icons.dashboard_rounded, isPlanner ? 'Dashboard' : 'Overview'),
+    if (isPlanner) (6, Icons.fact_check_rounded, 'Review Inbox'),
+    (1, Icons.map_rounded, 'Planning Map'),
+    (
+      2,
+      Icons.center_focus_strong_rounded,
+      isPlanner ? 'Analyze Area' : 'Analysis Workspace',
+    ),
+    (
+      3,
+      Icons.history_rounded,
+      isPlanner ? 'Assessment Records' : 'My Analyses',
+    ),
+    (4, Icons.picture_as_pdf_rounded, 'Reports'),
+    if (!isPlanner) (5, Icons.show_chart_rounded, 'Recommendation Patterns'),
+    (isPlanner ? 7 : 6, Icons.settings_rounded, 'Settings'),
+    (isPlanner ? 8 : 7, Icons.notifications_outlined, 'Activity'),
   ];
 
   @override
@@ -324,17 +326,22 @@ class _WebSidebar extends StatelessWidget {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemCount: itemsFor(state.isPlanner).length,
-            separatorBuilder: (_, _) => SizedBox(height: 6),
+            separatorBuilder: (_, i) => i == 5
+                ? const Divider(color: Colors.white30, height: 28)
+                : const SizedBox(height: 6),
             itemBuilder: (_, i) {
               final rowItems = itemsFor(state.isPlanner);
-              final selected = selectedIndex == i;
+              final item = rowItems[i];
+              final selected =
+                  selectedIndex == item.$1 ||
+                  (selectedIndex == 5 && item.$1 == 4);
               return InkWell(
                 borderRadius: BorderRadius.circular(14),
                 onTap: () {
                   if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
                     Navigator.pop(context);
                   }
-                  onSelect(i);
+                  onSelect(item.$1);
                 },
                 child: Container(
                   padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -346,11 +353,11 @@ class _WebSidebar extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      Icon(rowItems[i].$1, color: Colors.white, size: 22),
+                      Icon(item.$2, color: Colors.white, size: 22),
                       SizedBox(width: 14),
                       Expanded(
                         child: Text(
-                          rowItems[i].$2,
+                          item.$3,
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w900,
@@ -419,10 +426,10 @@ class _WebPageFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPlanner = state.isPlanner;
     final titles = [
-      'Overview',
+      isPlanner ? 'Dashboard' : 'Overview',
       'Planning Map',
-      'Analysis Workspace',
-      'My Analyses',
+      isPlanner ? 'Analyze Area' : 'Analysis Workspace',
+      isPlanner ? 'Assessment Records' : 'My Analyses',
       'Reports',
       'Recommendation Patterns',
       if (isPlanner) 'Review Inbox',
@@ -432,8 +439,12 @@ class _WebPageFrame extends StatelessWidget {
     final subtitles = [
       'Overview of suitability results, live conditions, and quick actions',
       'Review analyzed areas, map markers, and saved field boundaries',
-      'Run point or polygon-based crop and land suitability analysis',
-      'Review previously analyzed land records with dates and recommendations',
+      isPlanner
+          ? 'Create an independent analyst assessment using a point or boundary'
+          : 'Run point or polygon-based crop and land suitability analysis',
+      isPlanner
+          ? 'Your analyst assessments; farmer submissions are in the Review Inbox'
+          : 'Review previously analyzed land records with dates and recommendations',
       'Open and export generated suitability reports',
       'Compare crop recommendation frequencies and suitability patterns',
       if (isPlanner)
@@ -454,10 +465,11 @@ class _WebPageFrame extends StatelessWidget {
       );
     } else if (page == 1) {
       body = isPlanner
-          ? WebOperatorMap(
+          ? WebAnalystPlanningMap(
               state: state,
               controller: reviewMap,
               mapController: planningMap,
+              onContinue: () => onNavigate(2),
             )
           : WebMapScreen(
               state: state,

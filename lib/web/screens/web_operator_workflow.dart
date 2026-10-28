@@ -279,7 +279,7 @@ class WebOperatorInbox extends StatelessWidget {
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               const Text(
-                'Oldest submissions first. Acceptance records an analyst decision; it does not certify an unmeasured soil value.',
+                'Open a case → Inspect its saved boundary and evidence → Record a decision. Oldest submissions appear first. Verification describes the assessment review, not guaranteed land suitability or crop success.',
               ),
               const SizedBox(height: 16),
               _OperatorFilters(controller),
@@ -512,6 +512,9 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
     'limitations': false,
   };
   Map<String, dynamic> get c => analysisMapValue(data?['case']);
+  bool get ownSubmission =>
+      widget.state.currentUser?['id'] != null &&
+      '${c['owner_id']}' == '${widget.state.currentUser?['id']}';
   String get base => '/api/operator/cases/${c['id']}';
   @override
   void initState() {
@@ -575,6 +578,7 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
   }
 
   Future<void> decide(String status) async {
+    if (ownSubmission) return;
     if (status != 'verified' && notes.text.trim().isEmpty) {
       setState(
         () => error =
@@ -585,7 +589,11 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
     final accepted = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('${reviewLabel(status)}?'),
+        title: Text(
+          status == 'verified'
+              ? 'Verify assessment?'
+              : '${reviewLabel(status)}?',
+        ),
         content: Text(
           'Case #${c['id']}, analysis #${c['current_session_id']}. ${status == 'needs_information' ? 'The farmer can respond with a new linked analysis.' : 'This records a final decision on this submission.'}\n${notes.text.trim()}',
         ),
@@ -700,8 +708,12 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
                     : 'current farm unavailable'}. Current farm version ${data!['current_farm_version'] ?? 'unavailable'}.',
               ),
               const Text(
-                'Evidence below is the saved analysis snapshot. Acceptance does not replace a soil test or remove recorded limitations.',
+                'Review the saved boundary, sources, dates, coverage and limitations before recording a decision. Accepting the assessment does not guarantee crop success or replace field and laboratory evidence.',
               ),
+              if (ownSubmission)
+                const Text(
+                  'You cannot verify or reject your own submission. Another analyst must review it.',
+                ),
               OutlinedButton.icon(
                 onPressed: loading || error != null
                     ? null
@@ -748,7 +760,11 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
               ])
                 CheckboxListTile(
                   value: checks[item.$1],
-                  onChanged: c['status'] != 'pending' || busy || loading
+                  onChanged:
+                      c['status'] != 'pending' ||
+                          busy ||
+                          loading ||
+                          ownSubmission
                       ? null
                       : (v) => setState(() => checks[item.$1] = v!),
                   title: Text(item.$2),
@@ -791,19 +807,22 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
                   if (c['status'] == 'pending') ...[
                     FilledButton(
                       onPressed:
-                          busy || loading || !checks.values.every((v) => v)
+                          busy ||
+                              loading ||
+                              ownSubmission ||
+                              !checks.values.every((v) => v)
                           ? null
                           : () => decide('verified'),
-                      child: const Text('Accept review'),
+                      child: const Text('Verify assessment'),
                     ),
                     OutlinedButton(
-                      onPressed: busy || loading
+                      onPressed: busy || loading || ownSubmission
                           ? null
                           : () => decide('needs_information'),
                       child: const Text('Request information'),
                     ),
                     OutlinedButton(
-                      onPressed: busy || loading
+                      onPressed: busy || loading || ownSubmission
                           ? null
                           : () => decide('rejected'),
                       child: const Text('Reject submission'),
@@ -1086,6 +1105,83 @@ class _OperatorEvidenceMapState extends State<OperatorEvidenceMap> {
       ),
     );
   }
+}
+
+class WebAnalystPlanningMap extends StatefulWidget {
+  final AnalysisState state;
+  final WebRecordController controller;
+  final MapController mapController;
+  final VoidCallback onContinue;
+  const WebAnalystPlanningMap({
+    super.key,
+    required this.state,
+    required this.controller,
+    required this.mapController,
+    required this.onContinue,
+  });
+
+  @override
+  State<WebAnalystPlanningMap> createState() => _WebAnalystPlanningMapState();
+}
+
+class _WebAnalystPlanningMapState extends State<WebAnalystPlanningMap> {
+  bool explore = false;
+
+  @override
+  Widget build(BuildContext context) => Column(
+    crossAxisAlignment: CrossAxisAlignment.stretch,
+    children: [
+      _WebCard(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Choose your map task',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                ChoiceChip(
+                  label: const Text('Submitted cases'),
+                  selected: !explore,
+                  onSelected: (_) => setState(() => explore = false),
+                ),
+                ChoiceChip(
+                  label: const Text('Select an area'),
+                  selected: explore,
+                  onSelected: (_) => setState(() => explore = true),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              explore
+                  ? 'Select a point or use the boundary drawing tool. Continue to Analyze Area to run your independent assessment; your selection is retained.'
+                  : 'Open a submitted case to review its saved evidence and record a decision.',
+            ),
+          ],
+        ),
+      ),
+      const SizedBox(height: 16),
+      if (explore)
+        _WebMapVisual(
+          state: widget.state,
+          showPopup: false,
+          onClosePopup: () {},
+          actionLabel: 'Continue to analysis',
+          onAnalyze: () async => widget.onContinue(),
+        )
+      else
+        WebOperatorMap(
+          state: widget.state,
+          controller: widget.controller,
+          mapController: widget.mapController,
+        ),
+    ],
+  );
 }
 
 class WebOperatorMap extends StatefulWidget {

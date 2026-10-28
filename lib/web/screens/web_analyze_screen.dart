@@ -27,8 +27,8 @@ class WebAnalyzeScreen extends StatelessWidget {
               child: Text(state.loadingMessage),
             ),
           ),
-          const Text(
-            'Your current request is running. You can visit another workspace; return here for the result or check My Analyses after reconnecting.',
+          Text(
+            'Your current request is running. You can visit another workspace; return here for the result or check ${state.isPlanner ? 'Assessment Records' : 'My Analyses'} after reconnecting.',
           ),
         ],
         if (state.analysisError != null)
@@ -42,7 +42,7 @@ class WebAnalyzeScreen extends StatelessWidget {
                 ),
                 Text(
                   state.analysisPending
-                      ? 'The server has not confirmed completion. Check My Analyses before retrying; the saved selection remains available.'
+                      ? 'The server has not confirmed completion. Check ${state.isPlanner ? 'Assessment Records' : 'My Analyses'} before retrying; the saved selection remains available.'
                       : 'The selection is retained. Check the connection or coverage, then retry.',
                 ),
               ],
@@ -60,7 +60,9 @@ class WebAnalyzeScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Analyze Area Workspace',
+                          state.isPlanner
+                              ? 'Independent analyst assessment'
+                              : 'Analyze Area Workspace',
                           style: TextStyle(
                             fontSize: 22,
                             fontWeight: FontWeight.w900,
@@ -117,6 +119,16 @@ class WebAnalyzeScreen extends StatelessWidget {
                 ],
               ),
               SizedBox(height: 16),
+              if (state.isPlanner) ...[
+                const Text(
+                  'Select an area → Run analysis → Review evidence → Save assessment or create report',
+                ),
+                const SizedBox(height: 8),
+                const Text(
+                  'Point selection provides preliminary location screening. A completed boundary describes an area assessment. Review coverage and missing measurements in either case.',
+                ),
+                const SizedBox(height: 16),
+              ],
               WebAdaptiveRow(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

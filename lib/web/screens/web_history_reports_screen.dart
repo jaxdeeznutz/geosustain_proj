@@ -71,6 +71,32 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (state.isPlanner && !compact) ...[
+            const Text(
+              'My analyst assessments',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const Text(
+              'These records belong to your account. Review farmer submissions and their decisions in the Review Inbox.',
+            ),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                TextButton.icon(
+                  onPressed: () => PortalRoutes.go('/operator/analyze'),
+                  icon: const Icon(Icons.add_location_alt),
+                  label: const Text('Analyze an area'),
+                ),
+                TextButton.icon(
+                  onPressed: () => PortalRoutes.go('/operator/queue'),
+                  icon: const Icon(Icons.fact_check),
+                  label: const Text('Open Review Inbox'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           if (!compact) ...[
             TextField(
               decoration: InputDecoration(
@@ -103,7 +129,9 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
             children: [
               Expanded(
                 child: Text(
-                  'Recent Analyses',
+                  state.isPlanner
+                      ? 'Recent analyst assessments'
+                      : 'Recent Analyses',
                   style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
                 ),
               ),
@@ -358,6 +386,35 @@ class _WebReportsScreenState extends State<WebReportsScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (state.isPlanner && !compact) ...[
+            const Text(
+              'Assessment and review reports',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            ),
+            const Text(
+              'Your generated assessment reports appear below. Export a review case from its workspace, or a planning summary from the Dashboard.',
+            ),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                TextButton(
+                  onPressed: () => PortalRoutes.go('/operator/queue'),
+                  child: const Text('Open review cases'),
+                ),
+                TextButton(
+                  onPressed: () => PortalRoutes.go('/operator/dashboard'),
+                  child: const Text('Open planning summary'),
+                ),
+                TextButton.icon(
+                  onPressed: () => PortalRoutes.go('/operator/trends'),
+                  icon: const Icon(Icons.show_chart),
+                  label: const Text('Recommendation Patterns'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+          ],
           if (!compact) ...[
             TextField(
               decoration: InputDecoration(
