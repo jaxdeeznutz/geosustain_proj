@@ -1,0 +1,30 @@
+{
+  "recorded_at_utc": "2026-10-29T14:01:10.172667+00:00",
+  "source_commit": "2eb82c725a2c50b64e3febfe610fe4958c11b75a",
+  "model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "files": {
+    "backend/local_attribution.py": "148c1ae64932fe5212f95a1883f86e15b6c4a1953e9372b5fe4be7f9a5778b4d",
+    "backend/model_explainability.py": "fe29716ccab10ee1243e9a2bbf0ced7a05d2f5042c512d4525e89091ff07255c",
+    "backend/tests/test_local_attribution.py": "3357187731959cb6fcf9d66c4a98bf5bf530869a4fb880a3bda06498e045d297",
+    "backend/tests/phase05_manual_host.py": "e6da5776b4b91820b84306935c4ceee9e717243ad67219e73f64f37f616b948c",
+    "backend/tests/phase05_explanation_integration.py": "f89a9ae1a0018d1b872e075cef982f530c6160bb0d0f7078428b81452cd3c593",
+    "lib/local_explanation.dart": "651b2ce8b70443935abbcfb6e97fb43b23ea20ff5cc1dc23b16e18b7545853d5",
+    "lib/local_explanation_pdf.dart": "aa9f38955abb5d0226fd5da80dc70e844dcb1604cd0dda561db169885839aa83",
+    "lib/widgets/local_explanation.dart": "26ab7e153a892097de35a19e3ff50093b1d46260ad588fdc71c1eb382b52879c",
+    "lib/main.dart": "34245269e1f3440831889094f867a6829b428bff6620d3e59010b016d6d93b18",
+    "lib/screens/analysis_explanation.dart": "c80f4f7ce5248f8a8e9154aea1fc5aed2b6ec30952843482d77392d92a017b68",
+    "lib/screens/crop_details_sheets.dart": "ad499663ea0cdc8be1f0b081c4d4d8939b4557b67d2bc3e032630fa4acbfde59",
+    "lib/screens/reference_analysis.dart": "ec29ac7b4ce4241d8e7d6f6dddeb99f476e0b0569799d13cecf49079a2df7680",
+    "lib/screens/history_screen.dart": "9dcc7f0376411007c156bcd0680b4cbb2eba7fc171a3b271c48681dd6653c803",
+    "lib/web/operator_report.dart": "9ade069115c7dd361eea5246537558287a2d4932f3fcab3a016bd6c408077b39",
+    "test/local_explanation_test.dart": "5e0b007f65489e20914012ce8c2faf8c84656f4e553c7c46770e01ffc6b28765",
+    "test/fixtures/local_analysis.json": "bc5a24e29d025557fb7e51ab64b525475d246aed40a8ad3aef03955aa87e65b7",
+    "pubspec.yaml": "bd73361fd8c1a6476e153cc3e16025fc9c3e3a1727893a042d7513234768e87d",
+    "pubspec.lock": "a76e8d97a619b7f2848249d1a64f73da83c6f91f0d75c841fc56e315d1ef2457",
+    "deployment/verify-phase-05.ps1": "1b98fd771725f5ca4b67005a83a70d67a0b471eb401ea3246f569e4492dc876d",
+    "docs/LOCAL_MODEL_EXPLANATIONS.md": "7006ff1a314537595dc37a1211bb63a317a4d18b7229e11c31d7ca52cdcea314",
+    "test/crop_details_sheet_test.dart": "328ad9c5545b10046db99fdd4183b1099c8a8732d1ecb97c4da20f609e2c345f"
+  },
+  "status": "Complete: local automated checks, rendered report checks and owner farmer/analyst/export acceptance passed. Wording/layout refinement deferred to Phase 7; active files match this manifest.",
+  "client_validation_recorded_at_utc": "2026-10-29T14:12:34.0373146Z"
+}

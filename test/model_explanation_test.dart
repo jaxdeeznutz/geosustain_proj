@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geosustain_clean_arranged/main.dart';
+import 'qa_support.dart';
 
 Map<String, dynamic> savedFixture() => Map<String, dynamic>.from(
   jsonDecode(File('test/fixtures/model_analysis.json').readAsStringSync()),
@@ -93,7 +94,18 @@ void main() {
             ),
             home: Scaffold(
               body: SingleChildScrollView(
-                child: ModelExplanationCard(record: savedFixture()),
+                child: ModelExplanationCard(
+                  record: savedFixture()
+                    ..addAll({
+                      'farm_id': 7,
+                      'boundary_version': 1,
+                      'selected_polygon': [
+                        {'lat': 7.29, 'lng': 125.62},
+                        {'lat': 7.29, 'lng': 125.621},
+                        {'lat': 7.291, 'lng': 125.621},
+                      ],
+                    }),
+                ),
               ),
             ),
           ),
@@ -149,6 +161,9 @@ void main() {
   testWidgets(
     'complete Analysis page supports doubled text and reachable final controls',
     (tester) async {
+      final previousHttpOverrides = HttpOverrides.current;
+      HttpOverrides.global = QaHttpOverrides();
+      addTearDown(() => HttpOverrides.global = previousHttpOverrides);
       tester.view.physicalSize = const Size(360, 880);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -165,7 +180,19 @@ void main() {
           ),
           home: Scaffold(
             body: SingleChildScrollView(
-              child: MobileAnalysisResult(state: state, record: savedFixture()),
+              child: MobileAnalysisResult(
+                state: state,
+                record: savedFixture()
+                  ..addAll({
+                    'farm_id': 7,
+                    'boundary_version': 1,
+                    'selected_polygon': [
+                      {'lat': 7.29, 'lng': 125.62},
+                      {'lat': 7.29, 'lng': 125.621},
+                      {'lat': 7.291, 'lng': 125.621},
+                    ],
+                  }),
+              ),
             ),
             bottomNavigationBar: NavigationBar(
               destinations: const [
@@ -273,7 +300,10 @@ void main() {
     await tester.tap(find.text('View details').first);
     await tester.pumpAndSettle();
     expect(find.text('Recommended'), findsOneWidget);
-    expect(find.text('Environmental & Soil Reference Assessment'), findsOneWidget);
+    expect(
+      find.text('Environmental & Soil Reference Assessment'),
+      findsOneWidget,
+    );
     await tester.tap(find.byTooltip('Close'));
     await tester.pumpAndSettle();
     expect(record['top_crop_recommendations']!.length, 2);

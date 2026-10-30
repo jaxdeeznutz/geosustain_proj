@@ -290,6 +290,8 @@ class ReportPage extends StatelessWidget {
                       ),
                     if (plantingMonth != null)
                       Text('Selected planting month: $plantingMonth'),
+                    for (final line in seasonalAssessmentLines(d ?? {}))
+                      Text(line),
                     const SizedBox(height: 6),
                     Text(
                       'Crop Recommendation: ${d?['predicted_crop'] ?? '--'}',

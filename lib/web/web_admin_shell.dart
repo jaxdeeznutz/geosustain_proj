@@ -840,6 +840,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         'Crop & Season Settings',
         'Manage which approved crops GeoSustain can currently recommend, and their reference info.',
       ),
+      const SizedBox(height: 16),
+      ControlledRecordsPanel(api: api),
       SizedBox(height: 20),
       _card(
         Column(
@@ -967,6 +969,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                 final actor =
                     log['actor_username'] ??
                     log['actor_email'] ??
+                    log['actor_reference'] ??
                     'Unknown actor';
                 final details = log['details'];
                 String detailText = '';
@@ -989,6 +992,12 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                   } else if (action == 'crop_reference_update') {
                     detailText =
                         'Crop: ${details['crop_key']} (active: ${details['is_active']})';
+                  } else if (action == 'controlled_record_revision') {
+                    detailText =
+                        '${details['kind']}: ${details['record_key']} - revision ${details['revision']}';
+                  } else if (action == 'controlled_record_activation') {
+                    detailText =
+                        '${details['kind']}: ${details['record_key']} - active record ${details['before_record_id'] ?? 'none'} to ${details['after_record_id'] ?? 'none'} (change ${details['generation']})';
                   }
                 }
                 IconData icon = Icons.history_rounded;
@@ -1002,6 +1011,38 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                   icon = Icons.grass_rounded;
                 }
                 return ListTile(
+                  onTap:
+                      action.startsWith('controlled_record_') && details is Map
+                      ? () => showDialog<void>(
+                          context: context,
+                          builder: (context) => AlertDialog(
+                            title: const Text('Reference change history'),
+                            content: SingleChildScrollView(
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('Actor: $actor'),
+                                  Text('Date: ${log['created_at']}'),
+                                  for (final entry in details.entries)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 8),
+                                      child: SelectableText(
+                                        '${entry.key.toString().replaceAll('_', ' ')}: ${entry.value}',
+                                      ),
+                                    ),
+                                ],
+                              ),
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text('Close'),
+                              ),
+                            ],
+                          ),
+                        )
+                      : null,
                   contentPadding: EdgeInsets.zero,
                   leading: Icon(icon, color: WebPortalColors.accent),
                   title: Text(

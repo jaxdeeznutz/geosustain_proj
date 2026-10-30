@@ -1,0 +1,33 @@
+{
+  "attempt": "20261028-091921-457",
+  "observed": {
+    "flutter_analyze": "PASS",
+    "flutter_tests_passed": 218,
+    "flutter_tests_failed": 3,
+    "web_build": "NOT_RUN_AFTER_TEST_FAILURE"
+  },
+  "failures": [
+    {
+      "test": "dashboard reflows at 480x700",
+      "cause": "Test selected removed independent-analysis caption.",
+      "fix": "Select the review-workflow caption; retain dark palette checks and assert independent-analysis controls absent."
+    },
+    {
+      "test": "dashboard reflows at 1280x900",
+      "cause": "Same obsolete caption selector.",
+      "fix": "Same coverage at desktop width; workflow card now explicitly tracks theme changes."
+    },
+    {
+      "test": "complete Analysis page with doubled text",
+      "cause": "New saved-farm fixture rendered map tiles without offline HTTP override; nine image codec exceptions, no layout overflow.",
+      "fix": "Use the existing deterministic tile fixture and restore prior HTTP overrides; keep doubled-text, submit reachability and no-exception assertions."
+    }
+  ],
+  "state": "FIXES_APPLIED_RERUN_REQUIRED",
+  "changed_files": {
+    "test/model_explanation_test.dart": "910fdc95b5b8a517ebff58a74cc1aae8a6bc7724cdb7045fd4a9c02a9311ba27",
+    "test/web_remediation_test.dart": "8837291909f472a509568cdd0a3e63d0ffbf38903c58e8572451743c0e67dd5a",
+    "lib/web/screens/web_dashboard_screen.dart": "f6d62528077cb6cc8b9086ea0d1efe684beacb8ec482d0ec09c542f07db2c974"
+  },
+  "validation": "Dart formatting and diff whitespace checks passed; final Flutter rerun pending normal-shell SDK access."
+}

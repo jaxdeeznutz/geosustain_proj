@@ -151,6 +151,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             ),
           ),
           CagroSoilObservationsCard(record: r),
+          SeasonalContextCard(record: r),
           const GeoResultCard(
             child: Text(
               'This is a partial assessment, not a crop recommendation. You can ask an analyst to review the available evidence or retry online when coverage is available.',
@@ -213,6 +214,14 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        SeasonalContextCard(record: r),
+        if (savedControlledRecords(r).isNotEmpty)
+          SavedReferenceVersions(record: r),
+        if (r['analysis_scope_notice'] != null)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Text('${r['analysis_scope_notice']}'),
+          ),
         if (r['preliminary_notice'] != null)
           GeoResultCard(
             color: const Color(0xFFFFF4D6),
@@ -352,7 +361,11 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                   ),
                 ),
               AnalysisReadableText(
-                '${best['explanation'] ?? r['analysis_summary'] ?? analysisMapValue(r['xai_explanation'])['summary'] ?? 'No summary was recorded.'}',
+                modelRanked &&
+                        recommendationSummary(r, '${best['crop']}')['status'] ==
+                            'available'
+                    ? '${recommendationSummary(r, '${best['crop']}')['ranking']}'
+                    : '${best['explanation'] ?? r['analysis_summary'] ?? analysisMapValue(r['xai_explanation'])['summary'] ?? 'No summary was recorded.'}',
               ),
               if (r['land_cover_notice'] != null)
                 Padding(
@@ -379,6 +392,8 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                 ),
             ],
           ),
+        if (tab == 0 && modelRanked && !preliminary)
+          LocalExplanationCard(record: r),
         if (tab == 0 || tab == 1)
           _AnalysisSection(
             title: preliminary
@@ -447,7 +462,16 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                               'Existing model estimate; not a soil test',
                               style: TextStyle(fontSize: 10),
                             ),
-                          if (factor.key == 'ndvi')
+                          if (factor.applicationScreening) ...[
+                            Text(
+                              'Application screening',
+                              style: TextStyle(fontSize: 10),
+                            ),
+                            const SizedBox(height: 4),
+                            MatchStatusBadge(state: factor.state),
+                          ],
+                          if (factor.key == 'ndvi' &&
+                              !factor.applicationScreening)
                             Text(
                               'Vegetation only; not crop suitability',
                               style: TextStyle(fontSize: 10),
@@ -473,12 +497,14 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
               ),
             ],
           ),
-          if (!modern || modelRanked)
+          if (tab == 2 && modelRanked && !preliminary)
+            LocalExplanationCard(record: r),
+          if (tab == 2 && (!modern || modelRanked))
             ModelExplanationCard(record: r)
-          else
+          else if (tab == 2)
             _LegacyModelSummary(record: r),
         ],
-        if (tab == 3) AnalysisBoundaryPreview(record: r),
+        if (tab == 3) SpatialRasterCard(record: r),
         if (tab == 0) ...[
           AnalysisReviewCard(state: widget.state, record: r),
           OutlinedButton.icon(

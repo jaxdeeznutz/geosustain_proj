@@ -1,0 +1,75 @@
+{
+  "state": "complete_local_owner_accepted",
+  "backend_suite": {
+    "passed": 405,
+    "warnings": 4,
+    "log": "backend-tests.log"
+  },
+  "targeted_after_provider_guard": {
+    "passed": 22,
+    "basis": "offline spatial and provider contract tests"
+  },
+  "sql_api": "sql-api-results.json",
+  "formal_workflow_regression": "phase01-regression/sql-api-results.json",
+  "vector_qa": {
+    "status": "inspected",
+    "files": [
+      "ndvi.png",
+      "soil_ph.png"
+    ],
+    "basis": "Saved pure Dart SVG rendered with PyMuPDF; subsequently confirmed in Android/analyst views and both report exports"
+  },
+  "client_checks": {
+    "status": "passed",
+    "attempt": "20261029-123149-022",
+    "evidence": "client-validation.json",
+    "analyzer": "passed",
+    "flutter_tests": "231 passed",
+    "web_build": "passed",
+    "candidate_hashes": "all captured file hashes match current source; model unchanged"
+  },
+  "actual_pdf_render_review": {
+    "status": "passed for automated fixture exports",
+    "basis": "pdf-qa/final-footer/inspection.json",
+    "farmer_pages": 9,
+    "analyst_pages": 8,
+    "checks": [
+      "all seven spatial layer sections present on separate pages",
+      "map headings and layers remain together",
+      "clipped L geometry, NDVI missing areas, constant pH and descriptive legends rendered",
+      "unavailable rainfall notice retained",
+      "no text outside page edges",
+      "farmer closing credit is a numbered footer, no credit-only page"
+    ],
+    "owner_actual_app_exports": "accepted with six screenshots; 13-page farmer and 9-page analyst previews"
+  },
+  "manual_journey": {
+    "farmer_maps": "passed, screenshot and owner-confirmed history/zoom/crop-access checks",
+    "analyst_maps": "passed, three matching layer screenshots and owner confirmation",
+    "actual_owner_exports": "passed; screenshots and explicit owner acceptance",
+    "basis": "manual-observations.json"
+  },
+  "live_provider_success": false,
+  "model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "deployed": false,
+  "agent_dart_analysis": {
+    "shared_pure_dart_helper": "passed",
+    "full_project": "blocked_by_unavailable_package_cache",
+    "log": "dart-analysis.log",
+    "basis": "Package URIs including existing http/shared_preferences/flutter_lints could not resolve in agent environment; not a valid full client verdict."
+  },
+  "manual_host_interpreter": {
+    "owner_venv": "Failed import: missing PIL/Pillow",
+    "corrected_command": ".\\.tools\\python\\python.exe backend\\tests\\phase03_manual_host.py",
+    "verification": "Same interpreter completed phase03_manual_host.py --help with exit 0; imports succeeded. This did not start the server or complete the manual journey."
+  },
+  "pdf_focused_test": {
+    "owner_report": "flutter test --no-pub test/spatial_context_test.dart: 5 passed",
+    "basis": "owner terminal output; regenerated PDFs inspected",
+    "analyst_render": "8 pages; each layer on its own page; no clipped text",
+    "farmer_render": "Initial credit-only-page finding resolved by final footer change; final fixture PDF has 9 readable content pages, including closing disclaimer, with numbered footer",
+    "followup": "Completed by final full verifier and final-footer PDF render review"
+  },
+  "closed_at_utc": "2026-10-29T12:42:31.500000+00:00",
+  "closure": "closure.json"
+}

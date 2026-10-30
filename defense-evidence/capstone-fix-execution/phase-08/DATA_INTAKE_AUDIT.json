@@ -1,0 +1,161 @@
+{
+  "recorded_at_utc": "2026-10-30T09:47:00.238139+00:00",
+  "status": "PAUSED_OWNER_REQUEST; PENDING_EXTERNAL_METADATA",
+  "files": [
+    {
+      "path": "data/cagro_pending/soil_table_2025.csv",
+      "sha256": "7a615361fb7b9f631e9ad73ddbc36cf10f4245a5983cecce7d104855e46d8686",
+      "rows": 11,
+      "fields": [
+        "row",
+        "address",
+        "year",
+        "ph",
+        "n_raw",
+        "p_raw",
+        "k_raw"
+      ],
+      "nitrogen_field_present": true,
+      "organic_is_not_assumed_to_be_nitrogen": false,
+      "ambiguous_numeric_values": [],
+      "runtime_use": "reference_only_not_loaded",
+      "missing_metadata": [
+        "N/P/K units and chemical/extraction basis",
+        "laboratory or estimation methods",
+        "soil sample depth",
+        "individual sample dates and IDs",
+        "coordinates or verified coverage/association",
+        "provider provenance and usage permission",
+        "uncertainty/quality and missing-value rules",
+        "compatible crop nutrient criteria"
+      ]
+    },
+    {
+      "path": "data/cagro_pending/soil_table_organic.csv",
+      "sha256": "7f367e19b403aa3bc77caf966a25a8d8015ca21d4f0396c9531337c71850d9e2",
+      "rows": 20,
+      "fields": [
+        "row",
+        "address",
+        "ph",
+        "organic_raw",
+        "p_raw",
+        "k_raw"
+      ],
+      "nitrogen_field_present": false,
+      "organic_is_not_assumed_to_be_nitrogen": true,
+      "ambiguous_numeric_values": [
+        {
+          "row": "1",
+          "field": "k_raw",
+          "raw_preserved": "1,337.20"
+        },
+        {
+          "row": "3",
+          "field": "k_raw",
+          "raw_preserved": "1.231.93"
+        },
+        {
+          "row": "4",
+          "field": "k_raw",
+          "raw_preserved": "1,578.85"
+        },
+        {
+          "row": "5",
+          "field": "k_raw",
+          "raw_preserved": "1,142.87"
+        },
+        {
+          "row": "6",
+          "field": "k_raw",
+          "raw_preserved": "1,436.22"
+        },
+        {
+          "row": "7",
+          "field": "k_raw",
+          "raw_preserved": "6,564.25"
+        },
+        {
+          "row": "8",
+          "field": "k_raw",
+          "raw_preserved": "1,417.90"
+        },
+        {
+          "row": "9",
+          "field": "k_raw",
+          "raw_preserved": "5,961.18"
+        },
+        {
+          "row": "10",
+          "field": "k_raw",
+          "raw_preserved": "1,883.94"
+        },
+        {
+          "row": "11",
+          "field": "k_raw",
+          "raw_preserved": "1,780.79"
+        },
+        {
+          "row": "12",
+          "field": "k_raw",
+          "raw_preserved": "2,423.36"
+        },
+        {
+          "row": "13",
+          "field": "k_raw",
+          "raw_preserved": "1,588.66"
+        },
+        {
+          "row": "14",
+          "field": "k_raw",
+          "raw_preserved": "1,685.34"
+        },
+        {
+          "row": "15",
+          "field": "k_raw",
+          "raw_preserved": "1,114.77"
+        },
+        {
+          "row": "16",
+          "field": "k_raw",
+          "raw_preserved": "1,533.30"
+        },
+        {
+          "row": "17",
+          "field": "k_raw",
+          "raw_preserved": "2,248.95"
+        },
+        {
+          "row": "18",
+          "field": "k_raw",
+          "raw_preserved": "2,115.89"
+        },
+        {
+          "row": "19",
+          "field": "k_raw",
+          "raw_preserved": "1,844.29"
+        },
+        {
+          "row": "20",
+          "field": "k_raw",
+          "raw_preserved": "1,934.97"
+        }
+      ],
+      "runtime_use": "reference_only_not_loaded",
+      "missing_metadata": [
+        "N/P/K units and chemical/extraction basis",
+        "laboratory or estimation methods",
+        "soil sample depth",
+        "individual sample dates and IDs",
+        "coordinates or verified coverage/association",
+        "provider provenance and usage permission",
+        "uncertainty/quality and missing-value rules",
+        "compatible crop nutrient criteria"
+      ]
+    }
+  ],
+  "source_limitations": "data/cagro_pending/README.md",
+  "changes_to_data_or_runtime": false,
+  "new_dataset_availability": "Owner states NPK is not available yet; no new dataset supplied.",
+  "paused_at_utc": "2026-10-30T10:11:45.936554+00:00"
+}

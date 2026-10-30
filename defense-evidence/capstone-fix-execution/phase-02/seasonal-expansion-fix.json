@@ -1,0 +1,30 @@
+{
+  "observed_utc": "2026-10-29T06:23:08.145447+00:00",
+  "trigger": "Owner expanded February, scrolled, analyzed/opened August and reopened February",
+  "symptom": "type double is not a subtype of type bool? in type cast, inside both seasonal details panels",
+  "data_observation": "Screenshots show August on the new result and February on reopened older result. Detailed numerical history comparison was interrupted by the UI exception.",
+  "cause": "Unkeyed ExpansionTile reused the surrounding PageStorageKey for a numeric list scroll offset; Flutter Expansible reads its state as bool.",
+  "local_framework_evidence": "C:/flutter/packages/flutter/lib/src/widgets/expansible.dart:361",
+  "documentation": "https://api.flutter.dev/flutter/material/ExpansionTile-class.html",
+  "fix": "Unique PageStorageKey for seasonal details using saved session/capture/month identity",
+  "regression": "Seeds numeric saved scroll state, expands February, scrolls/remounts August, expands August and returns to unchanged expanded February",
+  "validation": [
+    "Dart parse/format passed",
+    "Whitespace diff check pending below"
+  ],
+  "status": "automated_checks_passed_manual_journey_in_progress",
+  "source_hashes": {
+    "lib/widgets/seasonal_context.dart": "7f352244e3db4a5bb223d9a6bbc87120a43845b1fb339a15d94a02efd9b8eb05",
+    "test/seasonal_context_test.dart": "ed19bc44ce1656746bff5b4cd2db4c38cb35598fa5e2a0b364331f39f42715f0"
+  },
+  "verified_client_run": "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-02\\attempts\\20261029-062426-804",
+  "flutter_checks": {
+    "analyzer": "passed",
+    "tests": 226,
+    "web_build": "passed"
+  },
+  "emulator_august_expansion": "passed: owner 07:19 screenshot with original saved August values",
+  "pending": [
+    "Expanded February revisit and remaining Phase 2 manual checks"
+  ]
+}

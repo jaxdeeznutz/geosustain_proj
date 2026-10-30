@@ -33,6 +33,7 @@ class _WebHistoryScreenState extends State<WebHistoryScreen> {
     super.initState();
     if (!compact) {
       _records.addListener(_changed);
+      _records.query = PortalRoutes.current.value.queryParameters['q'] ?? '';
       _records.load();
     }
   }

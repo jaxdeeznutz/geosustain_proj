@@ -85,7 +85,10 @@ class ScopeApi extends ApiService {
     String? placeName,
     int? intendedPlantingMonth,
     int? farmId,
+    int? boundaryVersion,
+    bool independentAnalyst = false,
   }) async {
+    expect(independentAnalyst, isFalse);
     posts++;
     expect(farmId, 1);
     expect(polygon.first, boundary.first);
@@ -281,10 +284,15 @@ void main() {
       expect(find.text('Previous analyses'), findsNothing);
       expect(find.text('Latest results'), findsNothing);
       expect(find.text('Farm 2'), findsNothing);
-      await tester.scrollUntilVisible(
+      await revealInList(
+        tester,
         find.text('Analyze This Farm'),
-        300,
-        scrollable: find.byType(Scrollable).first,
+        list: find
+            .descendant(
+              of: find.byType(FarmDetailsPage),
+              matching: find.byType(ListView),
+            )
+            .first,
       );
       await Scrollable.ensureVisible(
         tester.element(find.text('Analyze This Farm')),

@@ -84,6 +84,12 @@ def test_unmatched_panabo_area_runs_real_forest_with_estimated_npk(monkeypatch, 
     assert result['soil_nutrients_observed']['used_for_prediction'] is False
     assert result['predicted_crop'] in ('Rice', 'Banana')
     assert result['recommendation_basis'] == 'model_probability'
+    screening = result['application_screening']
+    assert screening['used_for_ranking'] is False
+    for crop in screening['crops']:
+        assert crop['factors']['humidity']['status'] == 'suitable'
+        assert crop['factors']['ndvi']['status'] == 'suitable'
+        assert set(crop['factors']) == {'humidity', 'ndvi'}
     assert result['model_explanation']['model_version'] == env.MODEL_VERSION
     p, k = env.estimate_phosphorus_potassium(.65, 6, 100)
     assert (result['nitrogen'], result['phosphorus'], result['potassium']) == (80, p, k)

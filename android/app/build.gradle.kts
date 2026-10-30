@@ -67,6 +67,14 @@ android {
         }
     }
     buildTypes {
+        debug {
+            // Use an uppercase environment marker: Dart normalizes Windows
+            // environment keys before Flutter starts Gradle.
+            if (providers.environmentVariable("GEOSUSTAIN_PHASE01_QA").orNull == "true") {
+                applicationIdSuffix = ".phase01qa"
+                versionNameSuffix = "-phase01"
+            }
+        }
         release {
             signingConfig = if (releasePropertiesFile.exists()) signingConfigs.getByName("release") else null
         }

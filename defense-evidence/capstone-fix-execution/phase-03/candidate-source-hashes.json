@@ -1,0 +1,30 @@
+{
+  "recorded_utc": "2026-10-29T12:21:49.527613+00:00",
+  "model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "files": {
+    "backend/spatial_analysis.py": "3af6a259d3889b092de1fbb7ffc14ee01a36f438eec6b89dff9776252ee8fc58",
+    "backend/spatial_provider.py": "f0ac0431de8336a8369e02f738f945906b6fdc07a13455ebb7eb9fb09c47c6d4",
+    "backend/fastapi_app.py": "96df0b4b8ff49a49c728d4177db9793952b968478d7c531d9be99526e1761ab9",
+    "backend/tests/conftest.py": "f48585ea3084ffcc8f3019b4edb3b02b0388260dec3bd1604e1e3ec190e0a451",
+    "backend/tests/test_spatial_analysis.py": "bf8da63aacfc6c408bafcd61b545476b14ee6bc5ee1ccf346d5f8a5e8d53b640",
+    "backend/tests/test_spatial_provider.py": "02704e8af9f4157b39afd51339ea8d0af215c44631c8178cab4d6087b7766594",
+    "backend/tests/phase03_fixtures.py": "682cbc58a086bc4d8e34f258efddf01b2dc60d4866987d862e4fadaaf67c82ca",
+    "backend/tests/phase03_manual_host.py": "b2b8525a6c29f03c54bedac5d757e9476e47a785cc0493770953ce0274fac713",
+    "backend/tests/phase03_spatial_integration.py": "7307c2e7a79ff0992e713f0eed5c636e033bb4cb51c54063176bfc554b06a5d7",
+    "lib/main.dart": "c0a336c2a4ba19503a73f994ad974583eab963de3bddd16db0e6bd4cb018d59e",
+    "lib/spatial_context.dart": "471e8639569858369bc50a0d2754ea067a1b42229a86e3040705cf5d65d3de1c",
+    "lib/spatial_pdf.dart": "f919496a27247f23669e56dd267283fcd56621fbf94254ce3df4444c831a2226",
+    "lib/widgets/spatial_context.dart": "a15b77f46f32c485fdfb7fc6df48077b2ed9733a9937494f2eb1383d2272e0c7",
+    "lib/screens/reference_analysis.dart": "5aa37f6c53d556cbed3c17f4efa6ef56f5fb992490e4fbb59806413e480b098a",
+    "lib/screens/map_screen.dart": "a2001f3d957a873e931e281d193649bcd0d3b449ec1a0dcedc1faa4e118a12a2",
+    "lib/screens/history_screen.dart": "851f7ff42f656aafb6e6780405d46bbc967706c4dcf4f67b2accaf83f271c177",
+    "lib/web/screens/web_operator_workflow.dart": "51a1ca79c994fa8396ae949fa77ae43219600e380b179deaa1504c73e0db80da",
+    "lib/web/operator_report.dart": "29f6e96d61b5aa5e6b926417c64c4b08796b3c690cede66ccdb44637bab9c7e6",
+    "test/spatial_context_test.dart": "4bedd1d12ce6a430545c5ed7e30306c0240d97baaac352149934f9c92802a6bb",
+    "test/fixtures/spatial_analysis.json": "161f505ac56fc53d5f5457171b38ba351fc0d9322b3b5b7cce7a3e2b5bdb4d48",
+    "deployment/verify-phase-03.ps1": "47b0a625365a27ccddabf747a3a363e521ee20fc2f1dc1b03ec6f537fd4d566b",
+    "docs/POLYGON_RASTER_ASSESSMENT.md": "b66555d96365e81f7b992552cab61de3afbdb25597f04c86933fc27752ebfc4c"
+  },
+  "closure_documentation_updated_at_utc": "2026-10-29T12:42:31.500000+00:00",
+  "product_sources_unchanged_since_final_client_verification": true
+}

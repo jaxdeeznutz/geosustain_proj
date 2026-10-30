@@ -1,0 +1,22 @@
+{
+  "samples": 9,
+  "measurements": [
+    {
+      "case": "cold_nine_different_samples",
+      "elapsed_seconds": 0.3404471999965608
+    },
+    {
+      "case": "warm_nine_exact_contexts",
+      "elapsed_seconds": 0.002589499927125871
+    }
+  ],
+  "cache": {
+    "models_prepared": 1,
+    "contexts": 9,
+    "normalized_node_bytes": 25140416,
+    "context_limit": 128,
+    "normalized_float_limit": 5000000
+  },
+  "model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "basis": "Actual local 500-tree forest, controlled numeric inputs, wall-clock on current environment; no provider/field performance claim"
+}

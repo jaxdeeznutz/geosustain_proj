@@ -1,0 +1,14 @@
+{
+  "recorded_at_utc": "2026-10-29T14:34:23.436957+00:00",
+  "reason": "Owner requested short explanations and a plain-language summary, with upcoming UI reference photo.",
+  "scope": "Presentation only: main copy and summary derived from existing verified signed contributions; full saved data/method and comparison retained in details; input displays rounded.",
+  "changed_files": {
+    "lib/local_explanation.dart": "aa228e89b37d820705a6b1526a578db4e0b795d785ac2f37081aeff673068280",
+    "lib/widgets/local_explanation.dart": "3179098e713231f6a767ec614bbae476357d8d6e35c01b8adf4a8d856e8b4b75",
+    "test/local_explanation_test.dart": "60b0b44e57c12149ffac4d2008e3ba3544ca50abc8ebcd7f9bffda442336c3f7"
+  },
+  "all_other_frozen_sources_unchanged": true,
+  "model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "verification": "Dart formatting passed; Flutter checks pending after UI reference changes.",
+  "ui_reference": "Awaiting owner image; layout changes have not started."
+}

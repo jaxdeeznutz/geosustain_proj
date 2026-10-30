@@ -190,13 +190,18 @@ void main() {
       appThemeMode.value = ThemeMode.dark;
       await tester.pumpAndSettle();
       final caption = tester.widget<Text>(
-        find.text('Choose a point or draw a polygon'),
+        find.text(
+          'Review Inbox → Inspect evidence → Verify, request information, or reject',
+        ),
       );
       expect(caption.style?.color, WebPortalColors.muted);
       final kpi = tester.widget<Text>(
-        find.text('Start your first crop analysis'),
+        find.text('No recorded model scores yet'),
       );
       expect(kpi.style?.color, WebPortalColors.accent);
+      expect(find.text('Choose a point or draw a polygon'), findsOneWidget);
+      expect(find.text('Start New Analysis'), findsWidgets);
+      expect(find.text('Open Review Inbox'), findsWidgets);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       state.dispose();

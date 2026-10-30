@@ -1,0 +1,7 @@
+{
+  "status": "passed_expected_refusal",
+  "exit_code": 1,
+  "expected_error": "Climate training contract unresolved",
+  "production_inputs_unchanged": true,
+  "basis": "Actual training CLI refused before reading/augmenting/training or publishing; no guard was bypassed."
+}

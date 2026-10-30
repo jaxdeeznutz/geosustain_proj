@@ -153,7 +153,16 @@ void main() {
     await tester.pumpWidget(GeoSustainApp(home: MyFarmsPage(state: state)));
     await tester.pumpAndSettle();
     final field = find.widgetWithText(TextField, 'Search farms');
-    await tester.ensureVisible(field);
+    await revealInList(
+      tester,
+      field,
+      list: find
+          .descendant(
+            of: find.byType(MyFarmsPage),
+            matching: find.byType(ListView),
+          )
+          .first,
+    );
     await tester.enterText(field, 'not-found-xyz');
     await tester.pumpAndSettle();
     expect(find.textContaining('No matching farms'), findsOneWidget);
@@ -174,6 +183,16 @@ void main() {
       await tester.pumpWidget(GeoSustainApp(home: MyFarmsPage(state: state)));
       await tester.pumpAndSettle();
       final name = find.text('Farm 1');
+      await revealInList(
+        tester,
+        name,
+        list: find
+            .descendant(
+              of: find.byType(MyFarmsPage),
+              matching: find.byType(ListView),
+            )
+            .first,
+      );
       await tester.scrollUntilVisible(
         name,
         180,
@@ -261,7 +280,17 @@ void main() {
       final api = _SubmitApi();
       final state = AnalysisState(api: api)
         ..currentUser = {'id': 10, 'role': 'farmer'};
-      final record = fixture.analysis(12, 1)..['is_crop_recommended'] = false;
+      final record = fixture.analysis(12, 1)
+        ..addAll({
+          'farm_id': 7,
+          'boundary_version': 1,
+          'selected_polygon': [
+            {'lat': 7.29, 'lng': 125.62},
+            {'lat': 7.29, 'lng': 125.621},
+            {'lat': 7.291, 'lng': 125.621},
+          ],
+        })
+        ..['is_crop_recommended'] = false;
       addTearDown(state.dispose);
       await tester.pumpWidget(
         GeoSustainApp(
@@ -287,7 +316,16 @@ void main() {
       final state = AnalysisState(api: _SubmitApi()..returnedId = 13)
         ..currentUser = {'id': 10, 'role': 'farmer'};
       addTearDown(state.dispose);
-      final record = fixture.analysis(12, 1);
+      final record = fixture.analysis(12, 1)
+        ..addAll({
+          'farm_id': 7,
+          'boundary_version': 1,
+          'selected_polygon': [
+            {'lat': 7.29, 'lng': 125.62},
+            {'lat': 7.29, 'lng': 125.621},
+            {'lat': 7.291, 'lng': 125.621},
+          ],
+        });
       await expectLater(
         state.submitAnalysisRecord(record),
         throwsFormatException,
@@ -301,7 +339,16 @@ void main() {
       final state = AnalysisState(api: _SubmitApi()..status = 'verified')
         ..currentUser = {'id': 10, 'role': 'farmer'};
       addTearDown(state.dispose);
-      final record = fixture.analysis(12, 1);
+      final record = fixture.analysis(12, 1)
+        ..addAll({
+          'farm_id': 7,
+          'boundary_version': 1,
+          'selected_polygon': [
+            {'lat': 7.29, 'lng': 125.62},
+            {'lat': 7.29, 'lng': 125.621},
+            {'lat': 7.291, 'lng': 125.621},
+          ],
+        });
       expect(await state.submitAnalysisRecord(record), isTrue);
       expect(record['verification_status'], 'verified');
     },

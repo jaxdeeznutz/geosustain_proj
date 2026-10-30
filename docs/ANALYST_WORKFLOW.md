@@ -1,48 +1,27 @@
 # Analyst web workflow
 
-The analyst web portal exposes two existing tasks: reviewing submitted farmer
-assessments and running independent land assessments for planning.
+The analyst portal follows the accepted capstone review workflow: review farmer-submitted assessments through the Review Inbox and submitted-case map.
 
-## Reviewing a submission
+## Review a submission
 
-Dashboard or Review Inbox → open a submitted case → inspect the saved boundary,
-data sources, date, coverage and limitations → complete the checklist → verify
-the assessment, request information, or reject with an explanation. The existing
-farmer correction and resubmission process retains earlier analysis revisions
-and decisions. Analysts cannot decide their own submissions.
+Open a submitted case, inspect its saved farm boundary, observations, dates, sources, coverage and limitations, complete the checklist, add notes and record Verified, Rejected or Request information. Farmers can see the status and notes. A corrected revision must be a new eligible analysis of the same current saved farm; earlier revisions and decisions remain in history. Analysts cannot decide their own prior submissions.
 
-Verification records review of the assessment. It does not guarantee land
-suitability or crop success and does not replace field or laboratory evidence.
+Verification records review of saved evidence. It does not guarantee crop success, verify field conditions or fill missing observations.
 
-## Independent assessment
+## Navigation and historical records
 
-Analyze Area, or Planning Map → Select an area → Continue to analysis → run point
-or boundary analysis → inspect the recorded evidence → save the assessment or
-create its report. No farmer submission is required. Independent results use the
-existing account-owned analysis records and do not replace submitted evidence or
-record a review decision.
+The sidebar exposes Overview, Planning Map, Analysis Workspace, My Analyses, Reports, Recommendation Patterns, Review Inbox, Settings and Activity. Planning Map shows submitted project cases; Analysis Workspace runs independent analyst assessments. My Analyses and account summary charts describe the signed-in analyst's own records. Review Inbox retains farmer-submitted evidence and review decisions.
 
-Point selection provides preliminary location screening. A boundary describes
-an area assessment; coverage and missing measurements still apply.
+The owner requested restoration of the independent tools during Phase 7. Their protected `/api/web/analysis` route accepts analyst role aliases and saves only to the authenticated analyst. It cannot attach farmer parcel IDs or boundary versions. The farmer analysis endpoint and formal farmer-submission requirements retain their original role restrictions. See [restoration evidence](../defense-evidence/capstone-fix-execution/phase-07/WEB_DESIGN_RESTORATION.md) for the design changes, source image, regression checks and pending browser acceptance.
 
-## Navigation and scope
+Historical submissions without a saved-farm link retain their original evidence and decisions with a limitation notice. No current farm or environmental metadata is invented. When a linked correction is impossible, submit a new formal saved-farm analysis instead of altering the historical case.
 
-Main navigation: Dashboard, Review Inbox, Planning Map, Analyze Area, Assessment
-Records and Reports. Settings and Activity remain available below these items.
-Recommendation Patterns is accessible from Reports, and existing URLs remain
-valid. Assessment Records contains the signed-in account's analyses; farmer
-submissions and their review history remain in the Review Inbox.
+## Formal farmer submission
 
-This change adjusts the Flutter analyst interface. It introduces no database
-migration, analysis model changes, new data providers, or backend permission or
-review-status changes. This note describes implementation behavior; the project's
-formal research objectives remain defined by its thesis documentation.
+See [Formal analysis workflow](FORMAL_ANALYSIS_WORKFLOW.md). The server validates owned active farm association, analyzed polygon and boundary version for initial and linked corrected submissions. New point/unsaved-polygon inspections are labelled preliminary and remain outside formal review. Duplicate requests preserve decisions and do not add duplicate events.
+
+The Phase 7 restoration updates the web presentation and independent assessment entry point. Authentication/verification, NPK estimates, crop-ranking formulas and saved review evidence remain unchanged. No database migration is required.
 
 ## Checks
 
-Run `flutter analyze --no-pub`, then
-`flutter test --no-pub test/analyst_flow_test.dart test/operator_workflow_test.dart test/web_remediation_test.dart`
-and `flutter build web --no-pub` in an environment with access to the Flutter SDK
-and dependency cache. The new workflow tests cover navigation, retaining a
-selected boundary, no analysis write during map-to-workspace navigation, and
-disabled decisions on an analyst's own submission.
+Run `./deployment/verify-phase-07.ps1` for Flutter analysis, complete widget/unit tests and a web build of this candidate. Backend regression and isolated SQL/API evidence are recorded separately. Phase completion requires its remaining client and manual checks; a local source or SQL pass is not deployed/device acceptance.

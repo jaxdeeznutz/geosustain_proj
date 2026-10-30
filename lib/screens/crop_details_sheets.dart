@@ -118,6 +118,7 @@ class CropFactorView {
   final CropFactorState state;
   final bool usedByModel;
   final bool referenceBased;
+  final bool applicationScreening;
   final String? valueText;
   const CropFactorView({
     required this.key,
@@ -130,6 +131,7 @@ class CropFactorView {
     required this.state,
     this.usedByModel = false,
     this.referenceBased = false,
+    this.applicationScreening = false,
     this.valueText,
   });
 }
@@ -452,6 +454,72 @@ CropFactorView? savedEnvironmentalReference(
   return null;
 }
 
+/// Display saved application checks without applying heuristics to old records.
+CropFactorView? savedApplicationScreening(
+  String key,
+  Map<String, dynamic> crop,
+  Map<String, dynamic> record,
+) {
+  if (!['humidity', 'ndvi'].contains(key)) return null;
+  final screening = analysisMapValue(record['application_screening']);
+  if (screening['version'] != 'application-screening-v1' ||
+      screening['used_for_ranking'] != false) {
+    return null;
+  }
+  final name = '${crop['crop'] ?? crop['name']}'.trim().toLowerCase();
+  for (final raw in analysisListValue(screening['crops'])) {
+    final entry = analysisMapValue(raw);
+    if ('${entry['crop']}'.trim().toLowerCase() != name) continue;
+    final factor = analysisMapValue(analysisMapValue(entry['factors'])[key]);
+    if (factor.isEmpty) return null;
+    final observation = analysisMapValue(factor['measurement']);
+    final current = analysisMapValue(
+      analysisMapValue(
+        record['environmental_measurements'],
+      )[factor['measurement_key']],
+    );
+    final value = analysisNumber(factor['value']);
+    final preferred = analysisListValue(factor['preferred']);
+    final accepted = analysisListValue(factor['accepted']);
+    final compatible =
+        value != null &&
+        value.isFinite &&
+        observation['value'] == value &&
+        current['value'] == value &&
+        ['measured', 'modelled'].contains(observation['quality']) &&
+        current['quality'] == observation['quality'] &&
+        observation['unit'] == (key == 'humidity' ? '%' : 'index') &&
+        observation['period'] ==
+            (key == 'humidity' ? 'current' : 'latest_scene') &&
+        current['unit'] == observation['unit'] &&
+        current['period'] == observation['period'] &&
+        preferred.length == 2 &&
+        accepted.length == 2;
+    final state = !compatible
+        ? CropFactorState.unassessed
+        : switch (factor['status']) {
+            'suitable' => CropFactorState.suitable,
+            'limited' => CropFactorState.near,
+            'not_suitable' => CropFactorState.outside,
+            _ => CropFactorState.unassessed,
+          };
+    return CropFactorView(
+      key: key,
+      label: key == 'humidity' ? 'Humidity (current)' : 'Vegetation (NDVI)',
+      unit: key == 'humidity' ? '%' : '',
+      value: value,
+      min: preferred.length == 2 ? analysisNumber(preferred[0]) : null,
+      max: preferred.length == 2 ? analysisNumber(preferred[1]) : null,
+      state: state,
+      applicationScreening: true,
+      interpretation:
+          '${factor['interpretation'] ?? 'Application screening; no compatible assessment saved.'}'
+          '${entry['profile_key'] == null ? '' : ' Profile: ${entry['profile_key']}.'}',
+    );
+  }
+  return null;
+}
+
 List<CropFactorView> environmentalFactorViews(
   Map<String, dynamic> crop,
   Map<String, dynamic> record,
@@ -486,6 +554,8 @@ List<CropFactorView> environmentalFactorViews(
     if (key == 'annual_rainfall_mm') {
       return annualRainfallFactorView(crop, record);
     }
+    final application = savedApplicationScreening(key, crop, record);
+    if (application != null) return application;
     final reference = savedEnvironmentalReference(key, crop);
     if (reference != null) return reference;
     final modelValue = recordedModelInput(record, key);
@@ -1097,7 +1167,9 @@ class EnvironmentalFactorCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            hasRange
+            factor.applicationScreening
+                ? 'Application screening'
+                : hasRange
                 ? 'Preferred range comparison'
                 : reference
                 ? 'Reference comparison'
@@ -1128,6 +1200,8 @@ class EnvironmentalFactorCard extends StatelessWidget {
             Text(
               factor.key == 'annual_rainfall_mm'
                   ? 'A compatible annual observation and crop range are needed.'
+                  : factor.applicationScreening
+                  ? 'A compatible observation and application range are needed.'
                   : 'A matching observation and documented crop range are needed before grading this factor.',
               style: const TextStyle(fontSize: 12, color: CropSheetStyle.muted),
             ),
@@ -1333,12 +1407,20 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
           SuitabilityScoreCard(
             score: score,
             scoreLabel: isModelRanked(record) ? 'Model score' : 'Suitability',
-            title: '$name was selected as the best match.',
+            title: isModelRanked(record)
+                ? 'Highest model score among enabled crops'
+                : '$name was selected as the best match.',
             description: isModelRanked(record)
                 ? 'Highest mean Random Forest class probability across the farm samples. Environmental comparisons below do not change this ranking.'
                 : 'The explanation below shows the measured conditions that contributed most to that result.',
           ),
         _gap(CropSheetStyle.sectionGap),
+        if (isModelRanked(record) && !preliminary)
+          LocalExplanationCard(
+            record: record,
+            initialCrop: name,
+            showCropPicker: false,
+          ),
         _SheetHeading(
           'Environmental & Soil Reference Assessment',
           subtitle:
@@ -1454,17 +1536,24 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
                 : cropMatchDescription(score),
           ),
         _gap(CropSheetStyle.cardGap),
-        InfoExplanationCard(
-          icon: Icons.spa,
-          title: 'About these details',
-          children: [
-            const Text(
-              'Crop growing requirements — condition comparisons, not model contributions.',
-            ),
-            const SizedBox(height: 8),
-            Text(cropReason(crop, record)),
-          ],
-        ),
+        if (modelRanked && !preliminary)
+          LocalExplanationCard(
+            record: record,
+            initialCrop: name,
+            showCropPicker: false,
+          ),
+        if (!modelRanked)
+          InfoExplanationCard(
+            icon: Icons.spa,
+            title: 'About these details',
+            children: [
+              const Text(
+                'Crop growing requirements — condition comparisons, not model contributions.',
+              ),
+              const SizedBox(height: 8),
+              Text(cropReason(crop, record)),
+            ],
+          ),
         if (factors.isNotEmpty) ...[
           _gap(CropSheetStyle.cardGap),
           _SheetHeading(
@@ -1502,17 +1591,12 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
             ],
           )
         else if (!preliminary) ...[
-          const InfoExplanationCard(
-            icon: Icons.bar_chart,
-            title: 'Model explanation',
-            background: CropSheetStyle.blueSoft,
-            accent: CropSheetStyle.blue,
-            children: [
-              Text(
-                'This model provides overall feature importance only. It does not provide crop-specific contributions or show which inputs increased or decreased this prediction.',
-              ),
-            ],
-          ),
+          if (!modelRanked)
+            LocalExplanationCard(
+              record: record,
+              initialCrop: '${crop['crop']}',
+              showCropPicker: false,
+            ),
           InfoExplanationCard(
             icon: Icons.description_outlined,
             title: 'Recorded model class score',

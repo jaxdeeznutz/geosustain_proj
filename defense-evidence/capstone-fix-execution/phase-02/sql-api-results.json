@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "checks": [
+    "Saved formal analyses for February/August retain distinct monthly snapshots with identical ranks/scores",
+    "Farmer detail and history round-trip exact saved seasonal JSON",
+    "Analyst case receives the exact snapshot submitted by farmer",
+    "Provider unavailability saves explicit state without blocking model result or rewriting historical snapshot"
+  ],
+  "basis": "Temporary verified local SQL schema; synthetic climate/model; no production or live-provider validation"
+}

@@ -1,0 +1,14 @@
+{
+  "status": "passed",
+  "checks": [
+    "Idempotent migration and empty-table rollback/remigration passed on the verified disposable server",
+    "All six categories create immutable revisions and activate through typed authorized API; stale revision saves rejected",
+    "New actual-model inference consumes sample limit, crop ranges, selected-month calendar, source metadata, installed-model identity and supporting citation; local attribution remains additive",
+    "Concurrent activation has one winner; stale generations fail; previously reviewed revision can be reactivated as rollback",
+    "Earlier analyses and submitted analyst evidence retain exact configuration, spatial and explanation snapshots after edits/activation rollback",
+    "Farmer/analyst read and mutation denied; unsafe source IDs, draft activation and model identity mismatch rejected",
+    "Audit history retains actor/date/version pointer changes; failed audit rolls back the revision; used-table rollback refuses evidence loss",
+    "Disabling every crop never re-enables the catalog; enabling Rice affects only new ranking and saves the exact filter; unsupported legacy crop fields rejected"
+  ],
+  "basis": "Verified disposable PostgreSQL schema and real existing forest; synthetic observations and controlled administrative fixtures, not reviewed agronomic evidence. Temporary schema dropped."
+}

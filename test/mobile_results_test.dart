@@ -267,6 +267,13 @@ void main() {
                 'session_id': 7,
                 'verification_status': 'draft',
                 'analysis_status': 'completed',
+                'farm_id': 2,
+                'boundary_version': 1,
+                'selected_polygon': [
+                  {'lat': 7.29, 'lng': 125.62},
+                  {'lat': 7.29, 'lng': 125.621},
+                  {'lat': 7.291, 'lng': 125.621},
+                ],
               },
             ),
           ),

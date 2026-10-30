@@ -1,0 +1,25 @@
+{
+  "files": {
+    "build/app/outputs/flutter-apk/app-release.apk": {
+      "sha256": "45fa91adc6b52be33184c67c56ffb591931620b191cf6367f1351fff1126536e",
+      "bytes": 69099245,
+      "modified_utc": "2026-10-28T03:25:11.424561+00:00",
+      "source_match": "NOT_ESTABLISHED_FOR_CURRENT_WORKTREE"
+    },
+    "backend/crop_model.pkl": {
+      "sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+      "bytes": 37233297,
+      "modified_utc": "2026-10-02T10:59:02+00:00",
+      "source_match": "NOT_ESTABLISHED_FOR_CURRENT_WORKTREE"
+    },
+    "backend/crop_model_metadata.json": {
+      "sha256": "3f80aa3591521de791a8a376b77662741a2c6cabe6a899ce001adcc4f935b7bd",
+      "bytes": 1514,
+      "modified_utc": "2026-10-22T15:51:25.843381+00:00",
+      "source_match": "NOT_ESTABLISHED_FOR_CURRENT_WORKTREE"
+    }
+  },
+  "live_hosts": "Not contacted during Phase 0; older deployment evidence is not current-source verification.",
+  "installed_phone": "Not inspected during Phase 0.",
+  "latest_screening": "Local source edits exist; their inclusion in the APK/web build is not established."
+}

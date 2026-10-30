@@ -1,0 +1,47 @@
+{
+  "recorded_utc": "2026-10-29T06:01:46.883416+00:00",
+  "failed_attempt": "attempts/20261029-055439-122",
+  "owner_result": {
+    "flutter_analyze": "passed on pre-fix candidate",
+    "flutter_tests": {
+      "passed": 220,
+      "failed": 5
+    },
+    "web_build": "not run because tests failed"
+  },
+  "causes": [
+    {
+      "tests": [
+        "unanalyzed farm hides old results at 402.0 px",
+        "farm search explains no match and clear restores rows",
+        "affected screens render at 402.0 px",
+        "affected screens render at 360.0 px"
+      ],
+      "cause": "Targets may not be built in lazy lists at their old positions; pointer scrolling can hit embedded maps.",
+      "fix": "Shared bounded scroll-position helper builds and reveals controls in the enclosing list. Existing reachability, empty-state, screenshot and layout assertions are retained."
+    },
+    {
+      "tests": [
+        "API request contains selected month and returns saved snapshot unchanged"
+      ],
+      "cause": "Mock attempted JSON parsing of the empty GET body from the existing request-status recovery protocol.",
+      "fix": "Explicit not_found response for GET status check, then validated POST with saved session/farm IDs and original seasonal snapshot."
+    }
+  ],
+  "files": {
+    "test/qa_support.dart": "b272dfb104312127e38ccddd17dd576450abf3acd751832292744af2581e904d",
+    "test/analysis_scope_test.dart": "c29c1537feddb42882be01402fd596e856d4187db78cf3ab92b7f0a5272c696b",
+    "test/grouped_phone_fixes_test.dart": "1326c3afb9482a9bc0ea5d8d1b37425ad9ff9d342712252cd4bf57ec9e6bb26c",
+    "test/mobile_design_test.dart": "2b28a8140335d5ac12cb5b22978b64d848ea1a033a942323227c750f8eb2c5a0",
+    "test/seasonal_context_test.dart": "d581620441377cb97f339a4e309b6a913a411ef2fcb937e3f9b1916bb93b3ece"
+  },
+  "validation": [
+    "All five Dart files parsed/formatted with Dart 3.11",
+    "git diff --check passed"
+  ],
+  "pending": [
+    "Phase 2 manual journey"
+  ],
+  "status": "verified_by_owner_full_flutter_rerun",
+  "verified_attempt": "20261029-060624-230"
+}

@@ -1,0 +1,170 @@
+{
+  "phase": 3,
+  "state": "complete_local_owner_accepted",
+  "observations": [
+    {
+      "recorded_at_utc": "2026-10-29T12:09:08.172283+00:00",
+      "basis": "owner-provided emulator screenshot",
+      "screenshot": "manual/android-ndvi.png",
+      "screenshot_sha256": "f49d05c4ef2695dadf24a68c34dbac315fdadf952b21ff899f2a36acb0458cfc",
+      "visible": [
+        "NDVI blue and gray cells clipped to the concave L-shaped outline",
+        "Mean 0.413 index; valid area 79.8%",
+        "Three descriptive value classes with bounds and gray missing-data category",
+        "No visible legend overflow"
+      ],
+      "not_established": [
+        "zoom/pan behavior",
+        "expanded source details",
+        "soil pH and unavailable rainfall layers",
+        "history/analyst/export parity"
+      ],
+      "scope": "Synthetic workflow fixture, not provider/field validation"
+    },
+    {
+      "recorded_at_utc": "2026-10-29T12:10:38.317431+00:00",
+      "basis": "owner-provided emulator screenshot",
+      "screenshot": "manual/android-soil-ph.png",
+      "screenshot_sha256": "16cf14a991d9e7a2f8da2b6ef35e0a1d81e6551d1bac7263f5bfe7063747c70f",
+      "visible": [
+        "Soil pH single constant blue layer clipped to the L-shaped parcel",
+        "Minimum/maximum/mean/median 6.000; population standard deviation 0.000",
+        "Two valid analysis-grid cells of two; projected-area coverage 100.0%",
+        "Native nominal resolution 250.000 m; analysis grid 253.000 projected m; EPSG:3857",
+        "Quality explicitly synthetic_fixture; counts explicitly not independent field samples",
+        "Constant-value legend fits; expanded statistics visible without an error panel"
+      ],
+      "not_established": [
+        "zoom/pan behavior",
+        "unavailable rainfall behavior and continued crop result access",
+        "history/analyst/export parity"
+      ],
+      "scope": "Synthetic workflow fixture, not provider/field validation"
+    },
+    {
+      "recorded_at_utc": "2026-10-29T12:12:25.536069+00:00",
+      "basis": "owner-provided emulator screenshot",
+      "screenshot": "manual/android-rainfall-unavailable.png",
+      "screenshot_sha256": "5e08f9e8e906d1137264fef4eb31fbcd95c0b19306e67a2fbe37d23d577a52b8",
+      "visible": [
+        "Completed 30-day rainfall selected; concave parcel entirely gray",
+        "Layer and quality explicitly unavailable",
+        "Controlled unavailable raster fixture: no precipitation cells supplied; model samples not substituted",
+        "No raster observations available; no suitability conclusion",
+        "Source CHIRPS daily; period Not retrieved",
+        "Expanded source details render without a crash"
+      ],
+      "not_established": [
+        "crop results remain accessible after selecting unavailable raster",
+        "history reopening and zoom/pan behavior",
+        "analyst/export parity"
+      ],
+      "scope": "Controlled synthetic source failure, not real provider availability"
+    },
+    {
+      "recorded_at_utc": "2026-10-29T12:15:18.227722+00:00",
+      "basis": "two owner screenshots plus explicit response all goods to crop access/history/unchanged values/zoom-pan checklist",
+      "screenshots": [
+        {
+          "screenshot": "manual/android-crops-after-raster-failure.png",
+          "sha256": "607bbfaacf8914c7e5b7e97ba3625ed67ac4c3435a2970bee4613e589e72c568"
+        },
+        {
+          "screenshot": "manual/android-history-ndvi.png",
+          "sha256": "ed0bca10aea5485a9cc758495593cc2903828e14894cdadab33eac4a2dd9f32f"
+        }
+      ],
+      "visible": [
+        "Crop Overview still available: Banana 40.9%, Rice 16.2%, Mango 2.3% visible",
+        "Reopened NDVI view displays mean 0.413 and valid area 79.8%",
+        "Map viewport has moved; visible cells stay within displayed parcel edges"
+      ],
+      "owner_confirmed": [
+        "Crop recommendations still accessible after unavailable rainfall layer",
+        "History reopening preserves NDVI values",
+        "Zoom/pan works and cells stay clipped"
+      ],
+      "not_established": [
+        "analyst UI parity",
+        "final report pagination and owner export review"
+      ],
+      "scope": "Synthetic workflow fixture; screenshot alone does not establish history navigation or dynamic zoom, which are owner-reported"
+    },
+    {
+      "recorded_at_utc": "2026-10-29T12:23:03.739104+00:00",
+      "basis": "three owner browser screenshots of submitted case 1 plus explicit all goods response",
+      "screenshots": [
+        {
+          "screenshot": "manual/analyst-rainfall-unavailable.png",
+          "sha256": "c8e03b52aaef20329259c85a103ae1d4178860f1e4fd7c94125942684f4d6d36"
+        },
+        {
+          "screenshot": "manual/analyst-ndvi.png",
+          "sha256": "0cf86be3a425b1e3f78b2e0a843e14f5723740fc68762d151b5f2e90695ecba3"
+        },
+        {
+          "screenshot": "manual/analyst-soil-ph.png",
+          "sha256": "4ec0f6efe3a0f852a4b48d2dc93b6b9df14883b5c0896f56f5827e8e2d5ab354"
+        }
+      ],
+      "visible": [
+        "Analyst Review Inbox case 1 raster views",
+        "NDVI mean 0.413 and valid area 79.8%, matching Android; L-shaped clipping and masked cells preserved",
+        "Soil pH constant 6.000 and valid area 100.0%, matching Android",
+        "Completed 30-day rainfall uniformly gray and explicitly unavailable; no sample substitution",
+        "All three views have descriptive legends and saved-cell/basemap distinction"
+      ],
+      "owner_confirmed": [
+        "Analyst NDVI, soil pH and unavailable rainfall match farmer view"
+      ],
+      "not_established": [
+        "expanded analyst source details by screenshot",
+        "owner review of actual farmer and analyst report exports",
+        "final farmer footer regeneration after latest adjustment"
+      ],
+      "scope": "Synthetic local workflow; exact snapshot parity additionally established by isolated SQL/API test"
+    },
+    {
+      "recorded_at_utc": "2026-10-29T12:42:31.500000+00:00",
+      "basis": "six owner export/print-preview screenshots and explicit all goods response to both-report readability/parity checklist",
+      "screenshots": [
+        {
+          "screenshot": "manual/analyst-export-ndvi.png",
+          "sha256": "7c9aa9e49a7f530d5cd0f962eded6de06bf70ec59c258e43b6c52b3a72cbf472"
+        },
+        {
+          "screenshot": "manual/analyst-export-soil-ph.png",
+          "sha256": "1d8a8bf707bc8c89f68f6849c5e8b2940e3e340d6f95a6f9e9e5c082754d3c68"
+        },
+        {
+          "screenshot": "manual/analyst-export-rainfall-unavailable.png",
+          "sha256": "17e726cf759f45eb85ca243cb602fde22831ff4108108fc20ab925e441ea70ff"
+        },
+        {
+          "screenshot": "manual/farmer-export-ndvi.png",
+          "sha256": "53448113c5e850fe4491e9b52abfe3ff92d396db6988ade64e583080a0db19fe"
+        },
+        {
+          "screenshot": "manual/farmer-export-soil-ph.png",
+          "sha256": "eb0d40526a14ce24c94fcc2520ffda249470d7ed6d59c382860b3d3ec6b3e7fe"
+        },
+        {
+          "screenshot": "manual/farmer-export-rainfall-unavailable.png",
+          "sha256": "c517d997290668cfe9d6a91947d7b1c9895b0a10576ef59a56def7b055c5a704"
+        }
+      ],
+      "visible": [
+        "Analyst NDVI page: clipped L-shaped cells and gray gaps, mean 0.413, median 0.400, population std 0.085, 91/114 cells and 79.8% projected-area coverage",
+        "Analyst pH page: constant 6.000, population std 0.000, 2/2 cells, 100.0% coverage, native 250 m and analysis 253 projected m",
+        "Analyst unavailable rainfall page: controlled failure reason, source period not retrieved, no model sample substitution",
+        "Farmer export preview: corresponding NDVI, constant pH and unavailable rainfall pages; current credit/page-number footer visible",
+        "Owner actual export previews show 9 analyst pages and 13 farmer pages; extra report context differs from reduced automated fixture PDFs"
+      ],
+      "owner_confirmed": [
+        "Both actual app exports are readable and match the saved maps/statistics/limitations"
+      ],
+      "scope": "Export generation/preview checked; physical printing and saved-file delivery are not claimed. Small farmer-preview text parity is owner-confirmed, supported separately by full-size automated PDF inspection."
+    }
+  ],
+  "accepted_at_utc": "2026-10-29T12:42:31.500000+00:00"
+}

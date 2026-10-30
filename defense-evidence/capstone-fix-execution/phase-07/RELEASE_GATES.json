@@ -1,0 +1,65 @@
+{
+  "recorded_at_utc": "2026-10-30T09:47:00.238139+00:00",
+  "gates": [
+    {
+      "scope": "Matching intended-host deployment, sign-in and recovery",
+      "status": "PENDING_RELEASE_TARGET_CHECK",
+      "qa_ids": [
+        "4.9",
+        "7.6",
+        "9.2"
+      ],
+      "note": "Local success does not validate the currently deployed revision."
+    },
+    {
+      "scope": "Email lifecycle and client coverage",
+      "status": "EXISTING_RECEIPT_CREDITED_OTHER_PATHS_PENDING",
+      "qa_ids": [
+        "5.8",
+        "9.9",
+        "11.4"
+      ],
+      "note": "Credit the owner-confirmed signup-verification receipt on 2026-10-27; do not claim a new Phase 7 send, completed signup, recovery receipt or all-client coverage."
+    },
+    {
+      "scope": "Required Google sign-in, SMS and push provider lifecycle paths",
+      "status": "PENDING_APPLICABLE_LIVE_PROVIDER_ACCEPTANCE",
+      "qa_ids": [
+        "9.10",
+        "11.7",
+        "11.9"
+      ],
+      "note": "Keep requirements applicable where previously required; no provider pass or N/A follows from local disabled providers."
+    },
+    {
+      "scope": "Physical/outdoor GPS, native picker and interrupted physical-device pending farm synchronization",
+      "status": "PENDING_RELEVANT_PHYSICAL_DEVICE_GATES",
+      "qa_ids": [
+        "3.1",
+        "4.8",
+        "5.1",
+        "6.7"
+      ],
+      "note": "Emulator denied/approximate permission and offline/account-switch checks passed by owner report; earlier OFF05/outdoor/native-picker limitations are not silently closed."
+    },
+    {
+      "scope": "OS worker termination/restart, production workload and production backup/restore",
+      "status": "PENDING_RELEASE_INFRASTRUCTURE_REHEARSAL",
+      "qa_ids": [
+        "6.7",
+        "7.16",
+        "13.4",
+        "14.7"
+      ],
+      "note": "Persisted interrupted state and disposable restore passed; no worker process was killed and no production database was tested."
+    },
+    {
+      "scope": "Scientific data, criteria, nutrient compatibility and final model evaluation",
+      "status": "PHASE_08_DATA_DEPENDENT",
+      "qa_ids": [],
+      "note": "Unchanged model and explicit proxies are not final scientific validation. Any changed Phase 8 candidate requires affected Phase 5/7 retests."
+    }
+  ],
+  "original_checklist_rows": 191,
+  "original_whole_row_statuses_modified": false
+}

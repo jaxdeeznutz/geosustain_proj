@@ -14,7 +14,6 @@ class WebAnalysisEvidence extends StatelessWidget {
     children: [
       AnalysisCoverageCard(record: record),
       CagroSoilObservationsCard(record: record),
-      ModelExplanationCard(record: record),
       ReferenceAnalysisContent(
         key: ValueKey(
           'web-evidence-${record['session_id']}-${record['analysis_mode']}',

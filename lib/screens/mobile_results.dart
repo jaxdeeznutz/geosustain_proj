@@ -504,7 +504,11 @@ class _AnalysisSection extends StatelessWidget {
     child: Padding(
       padding: const EdgeInsets.all(18),
       child: DefaultTextStyle.merge(
-        style: TextStyle(fontSize: 16, height: 1.4, color: Color(0xFF263C32)),
+        style: TextStyle(
+          fontSize: 16,
+          height: 1.4,
+          color: Theme.of(context).colorScheme.onSurface,
+        ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -731,6 +735,12 @@ class AnalysisBoundaryPreview extends StatelessWidget {
   }
 }
 
+bool formalReviewCandidate(Map<String, dynamic> record) =>
+    record['formal_submission_eligible'] != false &&
+    (int.tryParse('${record['farm_id']}') ?? 0) > 0 &&
+    (int.tryParse('${record['boundary_version']}') ?? 0) > 0 &&
+    analysisListValue(record['selected_polygon']).length >= 3;
+
 class AnalysisReviewCard extends StatefulWidget {
   final AnalysisState state;
   final Map<String, dynamic> record;
@@ -783,12 +793,21 @@ class _AnalysisReviewCardState extends State<AnalysisReviewCard> {
     final eligible =
         widget.state.accountRole == 'farmer' &&
         widget.record['session_id'] != null &&
+        formalReviewCandidate(widget.record) &&
         analysisProcessingLabel(widget.record) == 'Completed' &&
         status == 'draft';
     return _AnalysisSection(
       title: 'Analyst review',
       children: [
         VerificationStatusBadge(status: status),
+        if (status == 'draft' && !formalReviewCandidate(widget.record))
+          const Text(
+            'Preliminary inspection only. Open a saved farm and analyze its boundary before submitting for analyst review.',
+          ),
+        if (status != 'draft' && !formalReviewCandidate(widget.record))
+          const Text(
+            'This historical submission has no complete saved-farm boundary reference. Its original review history is preserved.',
+          ),
         if (widget.record['is_crop_recommended'] == false)
           const Text(
             'Review covers this partial assessment. It does not fill missing observations or establish crop suitability.',

@@ -1,0 +1,26 @@
+{
+  "recorded_at_utc": "2026-10-30T07:57:18.427980+00:00",
+  "owner_attempt": "attempts/20261030-074659-249",
+  "owner_checks": {
+    "flutter-pub-offline": "passed",
+    "flutter-analyze": "passed",
+    "flutter-tests": {
+      "passed": 263,
+      "failed": 3
+    },
+    "flutter-web-build": "not reached"
+  },
+  "root_causes": [
+    "Two dashboard cases retained an assertion that the restored independent analysis guidance was absent.",
+    "The signed contribution label/value Row overflowed at 360 px with 200 percent text."
+  ],
+  "changes": [
+    "Dashboard cases now require the restored guidance; existing analysis and inbox controls remain asserted.",
+    "Contribution labels and unchanged signed numeric values use Wrap for narrow or large-text layouts."
+  ],
+  "validation": {
+    "dart_format": "2 files; no changes required",
+    "targeted_dart_analysis": "passed; contribution-wrap-analysis.log",
+    "full_client": "pending_owner_rerun"
+  }
+}

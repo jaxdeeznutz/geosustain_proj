@@ -155,6 +155,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
               'Manage Your Farms',
               'View, edit, and analyze your saved farm areas. Create a new boundary or analyze an existing area anytime.',
             ),
+            PlantingMonthPicker(state: widget.state),
             if (widget.state.offlineWorkspace ||
                 widget.state.pendingFarmCount > 0)
               Card(
@@ -650,6 +651,10 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
                 const _MappingNotice('This farm has no readable boundary.'),
               const SizedBox(height: 12),
               if (_loading || _busy) const LinearProgressIndicator(),
+              PlantingMonthPicker(
+                state: widget.state,
+                enabled: !_busy && !_loading,
+              ),
               if (_busy && widget.state.loading)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 10),

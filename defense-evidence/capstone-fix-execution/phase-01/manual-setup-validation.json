@@ -1,0 +1,27 @@
+{
+  "state": "MANUAL_SETUP_VERIFIED_UI_RESULTS_PENDING",
+  "setup_smoke": "PASS: temporary schema, login, CORS, fixture inference, saved farm submission, analyst verification and owner notes/status",
+  "loopback_http": "PASS: health, real HTTP login and Chrome origin header",
+  "fixtures": "Synthetic environmental readings; no external backend HTTP or email/push workers",
+  "android_test_copy": "Windows-safe GEOSUSTAIN_PHASE01_QA debug marker; .phase01qa suffix. Actual corrected APK build/install pending.",
+  "manual_ui": "NOT_RUN",
+  "files": {
+    "backend/tests/phase01_manual_host.py": "2fbb3940c1e7f88aaefb5b632c5a18dc8dd464d290222fb7b284f0fc1e1b7fba",
+    "deployment/run-phase-01-farmer.ps1": "1fc413714d402d5c2df573e538b0ee0e6ab2530da2f46ec7eb7b0e5a132a9c6a",
+    "android/app/build.gradle.kts": "b28d0ae6ce3249d30890b82505974cce5753ed51a23a720d83e8a6bd984a68aa"
+  },
+  "device_choice": "Physical Android phone over USB; emulator alternative retained.",
+  "phone_launcher": "PowerShell syntax, native argument boundaries and nonzero failure handling verified. Actual APK build, USB forwarding, package verification/installation and UI execution remain pending owner run.",
+  "device_filter_fix": {
+    "cause": "Windows PowerShell pipeline treated the ConvertFrom-Json array as one object.",
+    "change": "Capture decoded JSON first, then enumerate through Get-PhaseAndroidDevices.",
+    "regression_checks": [
+      "one phone among desktop/browser devices",
+      "one emulator",
+      "empty list",
+      "multiple phones require selection"
+    ],
+    "result": "All four checks passed; actual phone detection and UI journey still pending."
+  },
+  "apk_package_fix": "See apk-package-fix.json; rejected normal-package APK was not installed."
+}

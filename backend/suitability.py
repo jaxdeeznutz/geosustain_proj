@@ -38,9 +38,9 @@ def factor_result(value, rule, factor):
         return 50.0, 'Within absolute range only'
     return 0.0, 'Outside documented range'
 
-def assess(measurements, active_crops=None):
+def assess(measurements, active_crops=None, requirements=None):
     assessments = []
-    for crop, rules in REQUIREMENTS.items():
+    for crop, rules in (REQUIREMENTS if requirements is None else requirements).items():
         factors = []
         for key, (label, unit, period) in FACTORS.items():
             rule = rules.get(key)

@@ -1,0 +1,109 @@
+{
+  "kinds": [
+    "crop_requirement",
+    "planting_calendar",
+    "environmental_source",
+    "model_version",
+    "supporting_reference",
+    "system_setting"
+  ],
+  "crops": [
+    "banana",
+    "coconut",
+    "rice",
+    "durian",
+    "mango",
+    "rubber",
+    "cacao"
+  ],
+  "factors": {
+    "temperature": {
+      "label": "Climate temperature",
+      "unit": "C",
+      "period": "annual_mean"
+    },
+    "rainfall": {
+      "label": "Annual rainfall",
+      "unit": "mm/year",
+      "period": "annual_mean_total"
+    },
+    "soil_ph": {
+      "label": "Soil pH in water",
+      "unit": "pH",
+      "period": "soil_surface"
+    },
+    "elevation": {
+      "label": "Elevation",
+      "unit": "m",
+      "period": "terrain"
+    },
+    "slope": {
+      "label": "Slope",
+      "unit": "%",
+      "period": "terrain"
+    },
+    "humidity": {
+      "label": "Climate humidity",
+      "unit": "%",
+      "period": "annual_mean"
+    }
+  },
+  "layers": {
+    "ndvi": {
+      "label": "Vegetation (NDVI)",
+      "source_id": "COPERNICUS/S2_SR_HARMONIZED",
+      "unit": "index",
+      "period": "latest_scene"
+    },
+    "elevation": {
+      "label": "Elevation",
+      "source_id": "USGS/SRTMGL1_003",
+      "unit": "m",
+      "period": "terrain"
+    },
+    "slope": {
+      "label": "Slope",
+      "source_id": "USGS/SRTMGL1_003 / ee.Terrain.slope",
+      "unit": "%",
+      "period": "terrain"
+    },
+    "soil_ph": {
+      "label": "Soil pH in water (0 cm)",
+      "source_id": "OpenLandMap/SOL/SOL_PH-H2O_USDA-4C1A2A_M/v02",
+      "unit": "pH",
+      "period": "soil_surface"
+    },
+    "rainfall_30d": {
+      "label": "Rainfall (completed 30 days)",
+      "source_id": "UCSB-CHG/CHIRPS/DAILY",
+      "unit": "mm/30 days",
+      "period": "rolling_30_days"
+    },
+    "rainfall_annual": {
+      "label": "Rainfall (5-year annual mean)",
+      "source_id": "UCSB-CHG/CHIRPS/DAILY",
+      "unit": "mm/year",
+      "period": "annual_mean_total"
+    },
+    "temperature_annual": {
+      "label": "Air temperature (5-year mean)",
+      "source_id": "ECMWF/ERA5_LAND/DAILY_AGGR",
+      "unit": "C",
+      "period": "annual_mean"
+    }
+  },
+  "installed_model": {
+    "sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+    "status": "loaded_trusted_artifact",
+    "activation": "Metadata binding only. Files are installed through the trusted developer release procedure; no uploads or model loading from records."
+  },
+  "scope": "Panabo City",
+  "settings": {
+    "analysis_sampling": [
+      1,
+      5,
+      9
+    ]
+  },
+  "limits": "Public references only. NPK records, provider URL changes and model uploads are unsupported."
+}

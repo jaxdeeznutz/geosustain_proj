@@ -1,0 +1,87 @@
+{
+  "recorded_at_utc": "2026-10-30T09:47:00.238139+00:00",
+  "phase_status": "complete_local_owner_accepted",
+  "targeted_dart_analysis": "passed; targeted-dart-analysis.log",
+  "dart_syntax_format": "passed for 13 touched Dart files",
+  "verifier_powershell_syntax": "passed",
+  "full_flutter_checks": "passed",
+  "new_pdf_render_review": "passed_test_exports_only; export-review/validation.json",
+  "device_browser_integrated_journey": "local owner-accepted; manual-acceptance.json",
+  "protected_backend_files_unchanged": 18,
+  "model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "baseline_changes": {
+    "backend/fastapi_app.py": {
+      "before": "3eadfea77b9a7571f6db0d7b15d973b9275a2c08afaac1911e9b31013cb73988",
+      "now": "e89634345081e787e7c2b3274d298715661b95d92f3469146f0dfde9455d0282"
+    },
+    "lib/api_service.dart": {
+      "before": "3ed602022d5f2e2bec686eb424a2482e052911360c704b3db41a6a27da8ca254",
+      "now": "7af8be15a8dd6e009066f3d065116b887a3464a3fd1309611af569ad96c1be8e"
+    },
+    "lib/local_explanation.dart": {
+      "before": "651b2ce8b70443935abbcfb6e97fb43b23ea20ff5cc1dc23b16e18b7545853d5",
+      "now": "aa228e89b37d820705a6b1526a578db4e0b795d785ac2f37081aeff673068280"
+    },
+    "lib/local_explanation_pdf.dart": {
+      "before": "aa9f38955abb5d0226fd5da80dc70e844dcb1604cd0dda561db169885839aa83",
+      "now": "914a45b5bda2289f35ae11cafa75404dc4c092b5c7655613ba803bcabc20c33d"
+    },
+    "lib/main.dart": {
+      "before": "9ef270c38e53a73b760ea3a05f3e963f746aec24147f83c28dace1aa6059e51a",
+      "now": "b9b4a74d5380d0f4fbd5cfab7572c6dc7df63dfa702dda32424f081d5449c8f2"
+    },
+    "lib/screens/crop_details_sheets.dart": {
+      "before": "ad499663ea0cdc8be1f0b081c4d4d8939b4557b67d2bc3e032630fa4acbfde59",
+      "now": "a0536bbb0907914acafe65e010a673d71fe592281898102bf73058a606b8ac7a"
+    },
+    "lib/screens/mobile_results.dart": {
+      "before": "caec2474f444fd4f967b6807a91e0ef62486a3fd5f24d63cf2d79344ae9334b3",
+      "now": "c1c8f10b8091d636cdc7a6295d137270fe28052003ad3e29435c8fa89b31c0aa"
+    },
+    "lib/screens/reference_analysis.dart": {
+      "before": "250cc6bde72dc9c63dbe6f521cabf24d91a23f3a641f36ab6b7a63250a187093",
+      "now": "38694a9ac384ef79ff77fa513df7bd7efd7bd3dab77169196c7bc8e4c2c2725c"
+    },
+    "lib/widgets/local_explanation.dart": {
+      "before": "26ab7e153a892097de35a19e3ff50093b1d46260ad588fdc71c1eb382b52879c",
+      "now": "7b56514e1d3de0bb9f22026b862a4540e069c689326eb13f7b18bdcfaa001960"
+    },
+    "test/local_explanation_test.dart": {
+      "before": "5e0b007f65489e20914012ce8c2faf8c84656f4e553c7c46770e01ffc6b28765",
+      "now": "368babb268a159baea23d4c0b5b013c7067102cc036d7972a40c4076cd057473"
+    }
+  },
+  "backend_tests_passed": 489,
+  "focused_analyst_formal_tests_passed": 45,
+  "authorized_backend_changes": [
+    "backend/fastapi_app.py"
+  ],
+  "web_restoration": "WEB_DESIGN_RESTORATION.md",
+  "web_full_flutter_and_visual_review": "pending_owner_verifier_and_generated_screenshots",
+  "original_landscape_copy_sha256": "8aa07018bdfd59c801a17f671745bc88f4c3d1f01709ef3de5bd8f6f3d453f32",
+  "last_owner_attempt": "attempts/20261030-075915-144",
+  "last_owner_analyzer_outcome": "passed",
+  "analyzer_fix": "analyzer-fix-20261030.json",
+  "last_owner_flutter_tests": {
+    "passed": 266,
+    "failed": 0
+  },
+  "latest_test_fixes": "test-fixes-20261030.json",
+  "flutter_tests_passed": 266,
+  "flutter_web_build": "passed",
+  "client_source_hashes_match_manifest": true,
+  "local_backend_openapi_probe": {
+    "recorded_at_utc": "2026-10-30T08:47:53.027498+00:00",
+    "reachable": true,
+    "independent_analyst_endpoint_present": true
+  },
+  "browser_login_sidebar_owner_acceptance": "accepted; manual-acceptance.json",
+  "owner_xai_summary_acceptance": "accepted; analyst main and crop detail screenshots in manual-acceptance.json",
+  "owner_report_contents": "confirmed_present; manual-acceptance.json",
+  "owner_saved_export_files": "both PDFs saved, owner-confirmed; independent owner-file hashes not collected",
+  "admin_review_audit_owner_acceptance": "confirmed by screenshot; manual-acceptance.json",
+  "admin_record_management_owner_acceptance": "inactive draft supporting reference creation confirmed",
+  "runtime_queue_restore": "passed; runtime-sql-restore.json",
+  "closure": "closure.json",
+  "external_release_gates": "RELEASE_GATES.json"
+}

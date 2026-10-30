@@ -1,0 +1,11 @@
+{
+  "backend/fastapi_app.py": "d60030ad7ebcb417371033c257ea9776713567388ee4f3eb7c1b2bb433fbeb70",
+  "backend/tests/conftest.py": "972f525615d5f6b13d92a81a52ee041644c56264328e0b0f632b505f6c78d6b8",
+  "lib/main.dart": "a9a4df957e1309dd21c8d40a69bfe4757552338f13d22f3cafbfa90c70e86987",
+  "lib/screens/map_screen.dart": "b4abd8dd39e9cee1757f9314d2791ac002b63504031387538b312926d54348d4",
+  "lib/screens/reference_analysis.dart": "fa425e0ef0c56cf52e75ca56c01cea2267b030bd96464ed4938dee385f8b80f2",
+  "lib/web/screens/web_operator_workflow.dart": "3de872f47cc9c9f849554f7e03f6d6064acb342e3031143dc895872d114aa6d3",
+  "lib/widgets/analysis_coverage.dart": "bc2527fcfb7232fd7002c03481d15bacce4984acdd344368fb9b5552d9fd6788",
+  "lib/web/operator_report.dart": "62a5c6ba61aecc55a85eb56b2fe1d09aad0beb7621713d498187431844645c18",
+  "lib/screens/history_screen.dart": "1c0acdb1cc995d2ead2888bb21f3bca8dcd66aef7466822d0ff401f961f2d4f1"
+}

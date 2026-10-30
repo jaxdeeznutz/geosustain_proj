@@ -1,0 +1,21 @@
+{
+  "failure": "Owner debug APK build completed, but isolated package verification rejected it before installation.",
+  "observed_application_id": "com.example.geosustain_clean_arranged",
+  "expected_application_id": "com.example.geosustain_clean_arranged.phase01qa",
+  "cause": "The mixed-case Gradle property opt-in was not activated across the Windows Flutter build. Dart documents uppercasing Windows environment keys.",
+  "fix": "Launcher and Android debug configuration now use the direct uppercase GEOSUSTAIN_PHASE01_QA environment marker. Build metadata is checked before copying/installing, and aapt package validation remains mandatory.",
+  "validated": [
+    "Standalone Windows Dart parent -> Java child receives the uppercase marker=true",
+    "PowerShell launcher syntax",
+    "Diff whitespace checks"
+  ],
+  "pending": [
+    "Actual Android rebuild and correct applicationId output",
+    "Phone installation and manual A-F checks"
+  ],
+  "files": {
+    "deployment/run-phase-01-farmer.ps1": "1fc413714d402d5c2df573e538b0ee0e6ab2530da2f46ec7eb7b0e5a132a9c6a",
+    "android/app/build.gradle.kts": "b28d0ae6ce3249d30890b82505974cce5753ed51a23a720d83e8a6bd984a68aa"
+  },
+  "production_application_installed_by_failed_run": false
+}

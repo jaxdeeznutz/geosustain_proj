@@ -184,13 +184,11 @@ class _WebMapVisual extends StatefulWidget {
   final bool showPopup;
   final VoidCallback onClosePopup;
   final Future<void> Function() onAnalyze;
-  final String? actionLabel;
   const _WebMapVisual({
     required this.state,
     required this.showPopup,
     required this.onClosePopup,
     required this.onAnalyze,
-    this.actionLabel,
   });
 
   @override
@@ -330,10 +328,9 @@ class _WebMapVisualState extends State<_WebMapVisual> {
                 onPressed: state.loading ? null : _analyze,
                 icon: Icon(Icons.analytics_rounded),
                 label: Text(
-                  widget.actionLabel ??
-                      (state.polygonPoints.length >= 3
-                          ? 'Analyze Polygon'
-                          : 'Analyze Point'),
+                  state.polygonPoints.length >= 3
+                      ? 'Analyze Polygon'
+                      : 'Analyze Point',
                 ),
                 style: FilledButton.styleFrom(
                   minimumSize: Size(0, 44),

@@ -1,0 +1,18 @@
+{
+  "baseline_backend": {
+    "command": ".\\.tools\\python\\python.exe -m pytest backend/tests -q -p no:cacheprovider",
+    "passed": 342,
+    "failed": 0,
+    "warnings": 4,
+    "duration_seconds": 42.91,
+    "scope": "Restored pre-Phase-1 baseline; controlled offline tests."
+  },
+  "flutter": {
+    "state": "BLOCKED_ENVIRONMENT",
+    "reason": "Cannot open C:\\flutter\\bin\\cache\\lockfile",
+    "not_a_pass": true
+  },
+  "crosswalk_rows": 50,
+  "phase_1_state": "DRAFT_SET_ASIDE_ACTIVE_SOURCE_RESTORED",
+  "publication": "No commit, push or deployment performed."
+}
