@@ -98,7 +98,10 @@ void main() {
     };
     await _open(tester, crop, {}, 1);
     expect(find.text('Recommended'), findsOneWidget);
-    expect(find.text('Environmental & Soil Reference Assessment'), findsOneWidget);
+    expect(
+      find.text('Environmental & Soil Reference Assessment'),
+      findsOneWidget,
+    );
     expect(find.text('0.66'), findsOneWidget);
     expect(find.text('0.32 – 0.75'), findsOneWidget);
     expect(find.text('25.63 mm'), findsNothing);
@@ -132,9 +135,17 @@ void main() {
       find.textContaining('Crop-specific conditions were not saved'),
       findsOneWidget,
     );
-    expect(find.text('Environmental & Soil Reference Assessment'), findsOneWidget);
+    expect(
+      find.text('Environmental & Soil Reference Assessment'),
+      findsOneWidget,
+    );
     expect(find.byType(EnvironmentalFactorCard), findsNWidgets(10));
-    expect(find.text('Model explanation'), findsOneWidget);
+    expect(find.text('Explainable AI'), findsOneWidget);
+    expect(find.text('Recorded model class score'), findsOneWidget);
+    expect(
+      find.textContaining('not saved or could not be verified'),
+      findsOneWidget,
+    );
     expect(find.textContaining('36.49%. This is separate'), findsOneWidget);
     expect(find.text('How to interpret the score'), findsOneWidget);
     expect(find.text('Recommended'), findsNothing);

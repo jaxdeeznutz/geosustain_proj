@@ -1,0 +1,15 @@
+{
+  "recorded_at_utc": "2026-10-29T12:46:48.163818+00:00",
+  "files": {
+    "backend/crop_model.pkl": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+    "backend/crop_model_features.pkl": "64ff2d3e43306f76a8a2287be653c3d13707b14ba7a4851555ac13262c36369f",
+    "backend/crop_model_metadata.json": "3f80aa3591521de791a8a376b77662741a2c6cabe6a899ce001adcc4f935b7bd",
+    "backend/Crop_recommendation.csv": "54a5a6e5408668e668667efc50de2fc867c1b875e0431b4f54dd331b0a109a4e",
+    "backend/Crop_recommendation_with_gis.csv": "1a6dcf3b22c20ff51c0ef7eee310df3ad5d359263d78d1a93e2dbaa7245ec03a",
+    "backend/training/train_model.py": "da5bae83433f632cd692286d736a46699cc3b6ed6549bcf5436bbbd495096c52",
+    "backend/training/climate_training_contract.py": "9b16fc190759d9aa5557aca45af4cd14139ec324d5e7258d36f591bac1a0dc6d",
+    "backend/model_artifacts.py": "9a6fad53dcf7153055638d62656934689ed2662c353343d65feb4a19e8788c1d",
+    "backend/model_ranking.py": "574cb2fb7152a6b30f6ea0a983203a0739a4701e4fc6a227e90316c52064e60e",
+    "backend/constraints.txt": "6725ff57e24640ec944ab07aa2ade057e64febc3c300448adf30a2949ff32079"
+  }
+}

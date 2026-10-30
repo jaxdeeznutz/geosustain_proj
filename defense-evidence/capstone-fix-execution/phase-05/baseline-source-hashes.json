@@ -1,0 +1,20 @@
+{
+  "recorded_at_utc": "2026-10-29T13:24:59.653333+00:00",
+  "files": {
+    "backend/model_explainability.py": "87bf7ee478750fd80b152333d3f4d47208508a9efa2a92fd07bd9ca78be4eeea",
+    "backend/model_ranking.py": "574cb2fb7152a6b30f6ea0a983203a0739a4701e4fc6a227e90316c52064e60e",
+    "backend/environmental_pipeline.py": "d1431847f4f1e22b94dadb845b0ce607694c71d1dd22417343cdb19918691c93",
+    "backend/rainfallDatasets.py": "3e312de50033a68b564cdc3f8e0f71f6ac503f7608a283529b85268752150990",
+    "backend/crop_model.pkl": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+    "backend/crop_model_features.pkl": "64ff2d3e43306f76a8a2287be653c3d13707b14ba7a4851555ac13262c36369f",
+    "backend/crop_model_metadata.json": "3f80aa3591521de791a8a376b77662741a2c6cabe6a899ce001adcc4f935b7bd",
+    "lib/main.dart": "c0a336c2a4ba19503a73f994ad974583eab963de3bddd16db0e6bd4cb018d59e",
+    "lib/screens/analysis_explanation.dart": "28aa59d813529ceddaef083facad091c00e763c26fc1c501b212863e61db51b9",
+    "lib/screens/reference_analysis.dart": "5aa37f6c53d556cbed3c17f4efa6ef56f5fb992490e4fbb59806413e480b098a",
+    "lib/screens/crop_details_sheets.dart": "f84a588227113c1e3c7a3038d13dc7f403c2e02eb2d97bf0c3e1402aa235cbc7",
+    "lib/screens/history_screen.dart": "851f7ff42f656aafb6e6780405d46bbc967706c4dcf4f67b2accaf83f271c177",
+    "lib/web/operator_report.dart": "29f6e96d61b5aa5e6b926417c64c4b08796b3c690cede66ccdb44637bab9c7e6",
+    "test/model_explanation_test.dart": "910fdc95b5b8a517ebff58a74cc1aae8a6bc7724cdb7045fd4a9c02a9311ba27",
+    "backend/tests/test_explainability.py": "28d29653dd3174d66dd05fa74909b628dfcd95c9c5fa4d703cdf7a8378693677"
+  }
+}

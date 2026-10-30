@@ -31,3 +31,9 @@ data/cagro_pending/
 
 # QA review outputs
 qa-findings/
+
+# Private/generated verification artifacts remain local.
+defense-evidence/**/owner-screenshots/
+defense-evidence/**/attempts/
+defense-evidence/**/*.zip
+defense-evidence/**/*.dump

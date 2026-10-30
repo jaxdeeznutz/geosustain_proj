@@ -1,4 +1,8 @@
 import 'dart:typed_data';
+import '../seasonal_context.dart';
+import '../spatial_pdf.dart';
+import '../local_explanation_pdf.dart';
+import '../controlled_references.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:flutter/services.dart' show rootBundle;
@@ -48,6 +52,7 @@ Future<Uint8List> buildOperatorReport(
   );
   pdf.addPage(
     pw.MultiPage(
+      maxPages: 50,
       pageFormat: PdfPageFormat.a4,
       margin: const pw.EdgeInsets.all(40),
       header: (_) => pw.Container(
@@ -98,8 +103,8 @@ Future<Uint8List> buildOperatorReport(
             'distinct_farms': 'Distinct farms',
             'oldest_pending': 'Oldest pending submission',
             'parcel_area_sum_ha': 'Latest parcel area sum (ha; may overlap)',
-            'farms_with_area':'Farms with recorded area',
-            'farms_without_area':'Farms without recorded area',
+            'farms_with_area': 'Farms with recorded area',
+            'farms_without_area': 'Farms without recorded area',
           }.entries)
             text(field.value, data[field.key]),
           heading('Interpretation'),
@@ -130,6 +135,26 @@ Future<Uint8List> buildOperatorReport(
             'This report records review decisions and evidence references. Open the linked analysis in GeoSustain for the full saved measurements, data provenance and limitations. An accepted review does not certify missing measurements. NPK and soil pH methods are outside this workflow change.',
             style: const pw.TextStyle(fontSize: 10),
           ),
+          heading('Saved seasonal context'),
+          for (final line in seasonalAssessmentLines(a))
+            pw.Padding(
+              padding: const pw.EdgeInsets.only(bottom: 6),
+              child: pw.Text(line, style: const pw.TextStyle(fontSize: 10)),
+            ),
+          ...buildSpatialPdfWidgets(a),
+          ...buildLocalExplanationPdfWidgets(a),
+          if (controlledReferenceLines(a).isNotEmpty) ...[
+            pw.NewPage(),
+            pw.Text(
+              'Saved reference versions',
+              style: pw.TextStyle(fontSize: 15, fontWeight: pw.FontWeight.bold),
+            ),
+            for (final line in controlledReferenceLines(a))
+              pw.Padding(
+                padding: const pw.EdgeInsets.only(top: 6),
+                child: pw.Text(line, style: const pw.TextStyle(fontSize: 9)),
+              ),
+          ],
           heading('Linked analysis revisions'),
           for (final r in rows(data['revisions']))
             text(

@@ -1,0 +1,20 @@
+{
+  "status": "PASS",
+  "checks": [
+    "Owned saved-polygon result stays a draft until deliberate submission; NPK and score unchanged",
+    "Concurrent first submissions produce one submitted event and one review case",
+    "Point and unsaved-polygon inspections are saved honestly and cannot be submitted formally",
+    "Cross-user reads/submissions/farm inference and analyst/admin independent inference are denied",
+    "Stale initial submission, stale corrected revision and replaced client geometry fail without mutation",
+    "Request information -> linked current-boundary revision -> verified; farmer notes/status and old revision preserved",
+    "Submission/decision retries cannot overwrite a decision or repeat review events",
+    "Archived farms reject new analysis/submission; historical reviewed retries stay readable",
+    "Historical incomplete reviewed records reopen without invented farm metadata or altered decisions",
+    "Rejection notes reach the owner; a promoted analyst cannot review their own prior submission"
+  ],
+  "database": "Verified disposable instance; isolated schema removed",
+  "providers": "Controlled inference fixture; workers disabled; no external message sent",
+  "limits": [
+    "This is SQL/API acceptance, not compiled-client or physical-device acceptance."
+  ]
+}

@@ -84,10 +84,12 @@ class WebAdaptiveRow extends StatelessWidget {
 }
 
 class WebPortalFrame extends StatefulWidget {
+  final AnalysisState? state;
   final Widget navigation;
   final Widget child;
   const WebPortalFrame({
     super.key,
+    this.state,
     required this.navigation,
     required this.child,
   });
@@ -97,13 +99,65 @@ class WebPortalFrame extends StatefulWidget {
 
 class _WebPortalFrameState extends State<WebPortalFrame> {
   bool expanded = true;
+  void _stateChanged() {
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    widget.state?.addListener(_stateChanged);
+  }
+
+  @override
+  void didUpdateWidget(WebPortalFrame oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.state != widget.state) {
+      oldWidget.state?.removeListener(_stateChanged);
+      widget.state?.addListener(_stateChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.state?.removeListener(_stateChanged);
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 1200;
+    final state = widget.state;
+    final roomy = MediaQuery.sizeOf(context).width >= 1000;
+    final accountName = '${state?.currentUser?['username'] ?? 'Analyst'}';
     return Scaffold(
       backgroundColor: WebPortalColors.canvas,
       appBar: AppBar(
-        title: const Text('GeoSustain'),
+        backgroundColor: WebPortalColors.surface,
+        surfaceTintColor: Colors.transparent,
+        title: state == null || !roomy
+            ? const Text('GeoSustain')
+            : ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 480),
+                child: TextField(
+                  key: const ValueKey('portal-analysis-search'),
+                  textInputAction: TextInputAction.search,
+                  decoration: const InputDecoration(
+                    hintText: 'Search my analyses...',
+                    prefixIcon: Icon(Icons.search, size: 20),
+                    isDense: true,
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                  ),
+                  onSubmitted: (value) => PortalRoutes.go(
+                    '/operator/history?q=${Uri.encodeQueryComponent(value.trim())}',
+                  ),
+                ),
+              ),
         leading: wide
             ? IconButton(
                 tooltip: expanded ? 'Collapse navigation' : 'Expand navigation',
@@ -112,6 +166,31 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
               )
             : null,
         actions: [
+          if (state != null && roomy)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 14),
+              child: Row(
+                children: [
+                  Icon(Icons.cloud_outlined, color: WebPortalColors.accent),
+                  const SizedBox(width: 8),
+                  Text(
+                    analysisNumber(
+                              state.liveWeather?['temperature_c'] ??
+                                  state.liveWeather?['temperature'],
+                            ) ==
+                            null
+                        ? 'Weather unavailable'
+                        : '${analysisNumber(state.liveWeather?['temperature_c'] ?? state.liveWeather?['temperature'])!.toStringAsFixed(1)} °C',
+                  ),
+                ],
+              ),
+            ),
+          if (state != null)
+            IconButton(
+              tooltip: 'Open activity',
+              onPressed: () => PortalRoutes.go('/operator/activity'),
+              icon: const Icon(Icons.notifications_outlined),
+            ),
           IconButton(
             tooltip: 'Toggle dark mode',
             icon: Icon(
@@ -124,6 +203,24 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
               await prefs.setBool('settings_dark_mode', dark);
             },
           ),
+          if (state != null && roomy)
+            TextButton.icon(
+              onPressed: () => PortalRoutes.go('/operator/settings'),
+              icon: CircleAvatar(
+                radius: 16,
+                child: Text(
+                  accountName.isEmpty ? 'A' : accountName[0].toUpperCase(),
+                ),
+              ),
+              label: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 140),
+                child: Text(
+                  '${state.currentUser?['username'] ?? 'Analyst'}',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
           IconButton(
             tooltip: 'Build information',
             icon: const Icon(Icons.info_outline),

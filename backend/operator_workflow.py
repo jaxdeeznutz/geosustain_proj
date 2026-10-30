@@ -218,6 +218,10 @@ def candidates(case_id,owner):
             WHERE s.user_id=%s AND s.farm_id IS NOT DISTINCT FROM %s AND s.verification_status='draft'
             AND s.analyzed_at>(SELECT analyzed_at FROM analysis_sessions WHERE id=%s)
             AND NOT EXISTS(SELECT 1 FROM review_case_revisions r WHERE r.session_id=s.id)
+            AND EXISTS(SELECT 1 FROM farm_parcels f WHERE f.id=s.farm_id
+                       AND f.farmer_id=s.user_id AND f.is_archived=FALSE
+                       AND f.boundary_version=s.boundary_version)
+            AND COALESCE(s.result_snapshot->>'formal_submission_eligible','true')<>'false'
             ORDER BY s.id DESC LIMIT 50''',(owner,case['farm_id'],case['current_session_id']))
         return [dict(r) for r in cur.fetchall()]
 
@@ -230,10 +234,15 @@ def resubmit(case_id,owner,session_id,version,notes):
             cur.execute('SELECT * FROM review_cases WHERE id=%s AND owner_id=%s FOR UPDATE',(case_id,owner));case=cur.fetchone()
             if not case:raise HTTPException(404,'Review case not found.')
             if case['status']!='needs_information' or case['version']!=version:raise HTTPException(409,'This case changed. Reload before responding.')
-            cur.execute('''SELECT id FROM analysis_sessions s WHERE id=%s AND user_id=%s AND farm_id IS NOT DISTINCT FROM %s
+            cur.execute('''SELECT s.* FROM analysis_sessions s WHERE id=%s AND user_id=%s AND farm_id IS NOT DISTINCT FROM %s
                 AND s.analyzed_at>(SELECT analyzed_at FROM analysis_sessions WHERE id=%s)
                 AND verification_status='draft' AND NOT EXISTS(SELECT 1 FROM review_case_revisions r WHERE r.session_id=s.id) FOR UPDATE''',(session_id,owner,case['farm_id'],case['current_session_id']))
-            if not cur.fetchone():raise HTTPException(409,'Choose a new, unsubmitted analysis of this same farm.')
+            session = cur.fetchone()
+            if not session:raise HTTPException(409,'Choose a new, unsubmitted analysis of this same farm.')
+            try:
+                db.validate_formal_submission(cur, session, owner)
+            except ValueError as exc:
+                raise HTTPException(409, str(exc)) from exc
             cur.execute('''UPDATE analysis_sessions SET verification_status='pending',submitted_at=NOW() WHERE id=%s''',(session_id,))
             cur.execute('SELECT COALESCE(MAX(revision),0)+1 AS next FROM review_case_revisions WHERE case_id=%s',(case_id,));revision=cur.fetchone()['next']
             cur.execute('INSERT INTO review_case_revisions VALUES(%s,%s,%s)',(case_id,session_id,revision))

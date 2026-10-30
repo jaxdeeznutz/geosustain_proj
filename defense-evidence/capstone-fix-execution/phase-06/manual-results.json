@@ -1,0 +1,96 @@
+{
+  "recorded_at_utc": "2026-10-30T00:09:13.306942+00:00",
+  "status": "complete_local_owner_accepted",
+  "basis": "Owner screenshots of isolated Phase 6 administrator portal; controlled fixture records only",
+  "checks": [
+    {
+      "check": "Super Administrator controlled records page and loaded trusted model identity",
+      "result": "passed_screenshot"
+    },
+    {
+      "check": "Invalid validity interval rejected and entered values retained for correction",
+      "result": "passed_screenshot",
+      "input": "2023-12-31 end preceded 2026-10-30 start"
+    },
+    {
+      "check": "Calendar creation after selecting planting_calendar and comma-separated months",
+      "result": "passed_screenshot",
+      "record_key": "rice",
+      "revision": 1,
+      "initial_state": "inactive_reviewed"
+    },
+    {
+      "check": "Calendar explicitly activated; accidentally created rainfall requirement deactivated",
+      "result": "passed_screenshot",
+      "calendar_state": "active_reviewed",
+      "rainfall_requirement_state": "inactive_reviewed"
+    },
+    {
+      "check": "Farmer February analysis consumes active calendar",
+      "result": "passed_screenshot",
+      "calendar": "Rice: selected month listed",
+      "captured_at": "2026-10-30T00:15:22.863938+00:00"
+    },
+    {
+      "check": "Earlier History analysis preserves calendar revision 1 after revision 2 activation",
+      "result": "passed_screenshot",
+      "calendar": "Rice: selected month listed",
+      "record_id": 2,
+      "revision": 1,
+      "captured_at": "2026-10-30T00:15:22.863938+00:00"
+    },
+    {
+      "check": "New February analysis consumes calendar revision 2",
+      "result": "passed_screenshot",
+      "calendar": "Rice: selected month not listed",
+      "record_id": 3,
+      "revision": 2,
+      "captured_at": "2026-10-30T02:17:10.318276+00:00"
+    },
+    {
+      "check": "Saved reference expander opens for both saved analyses after scroll restoration fix",
+      "result": "passed_installed_emulator_screenshots",
+      "old_record_revision": 1,
+      "new_record_revision": 2
+    },
+    {
+      "check": "Administrator audit actor/date/revision and activation pointer history",
+      "result": "passed_owner_browser_screenshot",
+      "actor_display": "Phase 6 Test Administrator",
+      "calendar_events": [
+        "revision 1 created",
+        "none to record 2 (generation 1)",
+        "revision 2 created",
+        "record 2 to none (generation 2)",
+        "none to record 3 (generation 3)"
+      ],
+      "other_event": "rainfall requirement record 1 deactivated"
+    },
+    {
+      "check": "Actual mobile analysis report preserves calendar revision 2",
+      "result": "passed_owner_export_screenshot",
+      "record_id": 3,
+      "revision": 2,
+      "section": "Saved reference versions"
+    },
+    {
+      "check": "Actual submitted analyst case report preserves calendar revision 2",
+      "result": "passed_owner_export_screenshot",
+      "record_id": 3,
+      "revision": 2,
+      "analysis_id_displayed": 2,
+      "case_url": "http://localhost:18002/#/operator/queue?case=1",
+      "section": "Saved reference versions"
+    }
+  ],
+  "remaining": [],
+  "limitation": "Synthetic local software workflow acceptance; no agronomic/provider/production claim.",
+  "history_followup": {
+    "status": "passed_focused_7_full_254_tests_and_owner_installed_emulator_recheck",
+    "observed": "Old analysis retained listed calendar; new reference expander failed on restored numeric scroll offset",
+    "fix": "Independent bool PageStorage identity by saved analysis/context/configuration; regression test includes seeded double scroll offset and record switching.",
+    "additional_fix": "Copyable references use SelectionArea/Text rather than nested SelectableText scrollables."
+  },
+  "updated_at_utc": "2026-10-30T02:35:59.223271+00:00",
+  "accepted_at_utc": "2026-10-30T02:40:23.390913+00:00"
+}

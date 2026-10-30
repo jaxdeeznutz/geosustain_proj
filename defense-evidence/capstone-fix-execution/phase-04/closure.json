@@ -1,0 +1,65 @@
+{
+  "closed_at_utc": "2026-10-29T13:14:43.263044+00:00",
+  "status": "complete_local_audit_and_tooling_verified",
+  "accepted_scope": "Phase 4 local artifact/data/manuscript audit and reproducible isolated comparison tooling; scientific acceptance explicitly deferred by the Phase 4 plan",
+  "backend_tests_passed": 421,
+  "new_evaluation_tests_passed": 16,
+  "python_static": "passed",
+  "verification_attempt": "defense-evidence\\capstone-fix-execution\\phase-04\\attempts\\20261029-130617-365079",
+  "controlled_run": "defense-evidence\\capstone-fix-execution\\phase-04\\runs\\verify-20261029-130617-365079",
+  "comparison_replay": "passed: exact deterministic evidence, including split membership, predictions, metrics, intervals and scaler state; capture timestamps and measured timings excluded",
+  "controlled_input": {
+    "basis": "seeded non-agricultural software fixture",
+    "rows": 360,
+    "connected_groups": 89,
+    "train_rows": 288,
+    "holdout_rows": 72,
+    "target_labels": [
+      "fixture_alpha",
+      "fixture_beta",
+      "fixture_gamma"
+    ]
+  },
+  "split_sha256": "c570d2c54073210fba28e51eeb78ed3a92a588e9f626b4b84a0c10447079d371",
+  "reproducibility_sha256": "4fb3d49f3f70249dbf1644919be1cd00048269880a325ab06125043ed1e80c82",
+  "acceptance_checks": {
+    "artifact_inventory": "Exact local model/sidecar/data hashes, classes, feature order, parameters and installed dependency versions captured",
+    "metric_trace": "Every Table 13 metric transcribed against visually checked source PDF page 91 and marked unresolved to original experiment; no replacement percentages invented",
+    "leakage_controls": "Declared-unit and exact-feature duplicate connected groups; common independent holdout; training-only grouped CV and preprocessing; no augmentation or resampling outside folds",
+    "results": "All five comparison metrics, class support, per-class results, confusion matrices, approximate group-bootstrap intervals, timings and selection rationale recorded",
+    "replay": "Separate CLI replay reproduced saved controlled results",
+    "publication": "Runner writes no models, rejects production/existing result paths, and checks protected bytes; original training CLI still refuses unresolved periods"
+  },
+  "production_model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "production_model_and_datasets_unchanged": true,
+  "all_phase3_frozen_sources_unchanged": true,
+  "new_model_published": false,
+  "deployed": false,
+  "table13_original_experiment": "unresolved; no recovered dataset/split/metric/artifact binding",
+  "scientific_model_acceptance": "deferred to Phase 8, with final manuscript reconciliation in Phase 9",
+  "live_runtime_identity": {
+    "url": "https://geosustain.onrender.com/health",
+    "operation": "read-only bounded unauthenticated GET /health",
+    "verified": false,
+    "reason": "ConnectionError; deployed model identity not established by this attempt."
+  },
+  "deferred_gate_ids": [
+    "P4-CLIMATE",
+    "P4-NPK",
+    "P4-LINEAGE",
+    "P4-TABLE13",
+    "P4-CATALOG",
+    "P4-LIVE",
+    "P4-SELECTION"
+  ],
+  "limitations": [
+    "Controlled fixture percentages are software evidence only, not crop accuracy or field validation",
+    "Measured local runtime versions do not establish the legacy training environment",
+    "Original Table 13 experiment files not recovered; duplicate-row diagnostic is hypothetical, not a reconstructed historical split",
+    "Scientific data periods/units/source/grouping review and actual final selection remain separate gates",
+    "No temporal/geographic transfer, calibrated harvest probability or paired model significance established",
+    "Live health probe could not establish deployed parity; local model identity must not be substituted for live evidence",
+    "PowerShell wrapper syntax checked; agent script-execution policy required running its equivalent Python entry point"
+  ],
+  "next_phase": "Phase 5 - local explanations; NOT STARTED"
+}

@@ -150,7 +150,7 @@ String? cropRankingContext(
       'a weaker growing-condition match',
   ];
   if (reasons.isNotEmpty) {
-    return 'Compared with ${leader['crop']}, this crop has ${reasons.join(' and ')}. Ranking and seasonal rules also affect the displayed score.';
+    return 'Compared with ${leader['crop']}, this crop has ${reasons.join(' and ')}. See the saved scoring method for how this result was ranked.';
   }
   return 'The saved rule adjustments and rank calibration place this crop below ${leader['crop']}. View details for its recorded scores.';
 }
@@ -429,7 +429,7 @@ class ModelExplanationCard extends StatelessWidget {
       explanation['samples'],
     ).whereType<Map>().map((s) => '${s['raw_prediction']}').toSet().join(', ');
     return _AnalysisSection(
-      title: 'Why the model recommended this crop',
+      title: 'Overall model factors',
       surface: const Color(0xFFEAF3FA),
       icon: Icons.insights_outlined,
       children: [
@@ -439,17 +439,9 @@ class ModelExplanationCard extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         const Text(
-          'A farm-specific explanation is not supported by the existing model. It cannot tell us which factors raised or lowered this crop’s prediction.',
+          'These are model-wide training statistics, shared across crops and analyses. Local signed contributions are shown separately in Explainable AI when a matching snapshot is available.',
         ),
         const SizedBox(height: 16),
-        const Text(
-          'Overall model factors',
-          style: TextStyle(
-            fontSize: 19,
-            fontWeight: FontWeight.w800,
-            color: Color(0xFF234F6E),
-          ),
-        ),
         const SizedBox(height: 8),
         if (available) ...[
           Text(
@@ -472,7 +464,7 @@ class ModelExplanationCard extends StatelessWidget {
         const SizedBox(height: 8),
         if (sampleNames.isNotEmpty)
           Text(
-            'Recorded model output${sampleNames.contains(',') ? 's' : ''}: $sampleNames. Crop mapping, condition scoring and seasonal rules determine the final recommendation.',
+            'Recorded model output${sampleNames.contains(',') ? 's' : ''}: $sampleNames. ${record['seasonal_assessment'] != null ? 'Monthly climate context does not change model scores or crop order.' : 'See the saved scoring method and any recorded seasonal adjustment for this result.'}',
           ),
         if (explanation.isNotEmpty)
           TextButton.icon(

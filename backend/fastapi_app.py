@@ -25,6 +25,9 @@ from model_ranking import ModelRankingUnavailable
 from land_cover import screen_land_cover, advisory_result, allow_estimated_analysis
 from cagro_soil import nutrient_layers
 from nutrient_contract import attach_display_estimates
+from application_screening import attach_application_screening
+from spatial_analysis import build_spatial_assessment
+from seasonal_assessment import fetch_baseline as fetch_seasonal_baseline, attach_seasonal_assessment
 from analysis_coverage import (require_analysis_coverage, require_point_coverage, coverage_catalog,
                                farm_coverage, CoverageUnavailable, VERSION as COVERAGE_VERSION,
                                HISTORICAL_NOTE)
@@ -33,10 +36,11 @@ from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 from email_validator import validate_email, EmailNotValidError
 from geometry import normalize_polygon, polygon_area_m2, in_study_area
 from model_explainability import merge_model_snapshots, finalize_explanation
+import controlled_records
 from psycopg2 import Error as DatabaseError
 from starlette.middleware.sessions import SessionMiddleware
 
@@ -62,7 +66,6 @@ from database import (
     get_planner_queue_counts,
     admin_dashboard_stats, admin_list_users, admin_update_user, admin_list_analyses,
     create_farm_parcel, list_farm_parcels, get_farm_parcel, update_farm_parcel,
-    get_climate_baseline, save_climate_baseline,
     validate_farm_polygon, get_active_crop_keys, list_crop_reference,
     update_crop_reference, get_audit_logs,
     get_user_analysis, find_analysis_request, change_user_password,
@@ -817,47 +820,8 @@ def _safe_number(value, default=None):
 
 
 def fetch_multi_year_monthly_baseline(lat: float, lon: float, month: int) -> Dict[str, Any]:
-    """Return a cached 20-year monthly climate baseline from NASA POWER.
-
-    The request is intentionally short and failure-tolerant: analyses continue
-    with recent conditions if the external climate service is unavailable.
-    """
-    cached = get_climate_baseline(lat, lon, month)
-    if cached:
-        return cached
-    start_year, end_year = 2005, 2024
-    try:
-        url = 'https://power.larc.nasa.gov/api/temporal/monthly/point'
-        params = {
-            'parameters': 'T2M,PRECTOTCORR,RH2M', 'community': 'AG',
-            'longitude': lon, 'latitude': lat,
-            'start': start_year, 'end': end_year, 'format': 'JSON',
-        }
-        response = requests.get(url, params=params, timeout=12)
-        response.raise_for_status()
-        payload = response.json()
-        parameter = payload.get('properties', {}).get('parameter', {})
-        month_key = f'{int(month):02d}'
-        def month_values(name):
-            source = parameter.get(name) or {}
-            vals=[]
-            for key,val in source.items():
-                if str(key).endswith(month_key) and isinstance(val,(int,float)) and val > -900:
-                    vals.append(float(val))
-            return vals
-        temps=month_values('T2M'); rains=month_values('PRECTOTCORR'); hums=month_values('RH2M')
-        values={
-            'mean_temperature_c': sum(temps)/len(temps) if temps else None,
-            'mean_rainfall_mm': sum(rains)/len(rains) if rains else None,
-            'mean_humidity_pct': sum(hums)/len(hums) if hums else None,
-            'baseline_start_year': start_year, 'baseline_end_year': end_year,
-            'source_name': 'NASA POWER',
-        }
-        return save_climate_baseline(lat, lon, month, values) or values
-    except Exception as exc:
-        print(f'NASA POWER baseline unavailable: {exc}')
-        return {'baseline_start_year': start_year, 'baseline_end_year': end_year,
-                'source_name': 'NASA POWER (temporarily unavailable)'}
+    """Versioned monthly context; old untyped DB cache is not reused."""
+    return fetch_seasonal_baseline(lat, lon, month)
 
 
 def _distribution(values: List[float], classifier):
@@ -956,8 +920,9 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
     # Super Administrator's crop reference table can temporarily narrow the
     # approved crop set (Section 17); this can only ever remove a crop from
     # consideration, never add one outside CROP_ENV_PROFILES (Section 9).
-    # Fails open (None = no restriction) on any DB error.
+    # An empty enabled set stays empty; a database outage cannot enable crops.
     active_crops = get_active_crop_keys()
+    controlled_configuration = controlled_records.load_active_records()
 
     try:
         cover = allow_estimated_analysis(screen_land_cover(lat, lon, polygon))
@@ -968,7 +933,7 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
     if not cover['allow_crops']:
         result = advisory_result(cover)
     elif polygon and len(polygon) >= 3:
-        sample_points = polygon_area_sample_points(polygon, max_points=9)
+        sample_points = polygon_area_sample_points(polygon, max_points=controlled_records.sampling_count(controlled_configuration))
         # Analyze independent parcel samples concurrently. Four workers avoids
         # overwhelming Earth Engine/external sources while reducing the old
         # multi-minute sequential wait substantially.
@@ -1039,9 +1004,8 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
                                    else 'Selected point; not a farm centroid or soil sample coordinate'))
     attach_display_estimates(result)
     result.update(nutrient_layers(result["cagro_soil"], result))
+    attach_application_screening(result)
     planting_month = int((body or {}).get("intended_planting_month") or datetime.now().month)
-    if not result.get('scoring_version'):
-        result = apply_local_seasonality(result, planting_month)
 
     result["selected_polygon"] = polygon
     result["analysis_source"] = analysis_source
@@ -1057,16 +1021,18 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         result["place_name"] = str(body["place_name"]).strip()
     else:
         result["place_name"] = reverse_geocode_place(float(lat), float(lon))
-    if result.get('scoring_version'):
-        result['intended_planting_month'] = planting_month
-        return result, analysis_source
+    result['spatial_assessment'] = build_spatial_assessment(polygon)
     baseline = fetch_multi_year_monthly_baseline(float(lat), float(lon), planting_month)
     result["historical_climate_baseline"] = baseline
+    attach_seasonal_assessment(result, baseline, planting_month)
     # A selected-month baseline and rolling air-temperature mean are different
     # temporal variables. Keep evidence separate; do not synthesize a blend.
     result["temperature_method"] = "Historical monthly baseline and analysis temperature retained separately; no cross-period blend"
-    result = build_analysis_summary(result)
-    result = finalize_explanation(result)
+    if not result.get('scoring_version'):
+        result = build_analysis_summary(result)
+        result = finalize_explanation(result)
+    controlled_records.attach_controlled_records(result, controlled_configuration)
+    result['configuration_snapshot']['enabled_crop_keys'] = sorted(active_crops) if active_crops is not None else sorted(name.lower() for name in controlled_records.REQUIREMENTS)
     return result, analysis_source
 
 
@@ -1110,6 +1076,7 @@ class AnalysisBody(BaseModel):
     place_name: Optional[str] = None
     intended_planting_month: Optional[int] = Field(default=None, ge=1, le=12)
     farm_id: Optional[int] = None
+    boundary_version: Optional[int] = Field(default=None, ge=1)
 
     @field_validator('polygon')
     @classmethod
@@ -1583,6 +1550,39 @@ def require_super_admin(user=Depends(get_api_user)):
 def api_admin_dashboard(user=Depends(require_super_admin)):
     return {'stats': admin_dashboard_stats()}
 
+
+@app.get('/api/admin/controlled-records/catalog')
+def api_controlled_catalog(user=Depends(require_super_admin)):
+    return controlled_records.catalog()
+
+
+@app.get('/api/admin/controlled-records')
+def api_controlled_records(user=Depends(require_super_admin),
+        kind: Optional[str] = Query(None, max_length=40),
+        offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100)):
+    if kind is not None and kind not in controlled_records.KINDS:
+        raise HTTPException(422, 'Unsupported record category.')
+    rows = controlled_records.list_records(kind, limit+1, offset)
+    return {'records': json_safe(rows[:limit]), 'has_more': len(rows)>limit}
+
+
+@app.post('/api/admin/controlled-records', status_code=201)
+def api_create_controlled_record(body: controlled_records.RecordBody, user=Depends(require_super_admin)):
+    try:
+        return {'record': json_safe(controlled_records.create_revision(body, user))}
+    except controlled_records.Conflict as exc:
+        raise HTTPException(409, str(exc)) from exc
+
+
+@app.post('/api/admin/controlled-records/activation')
+def api_activate_controlled_record(body: controlled_records.ActivationBody, user=Depends(require_super_admin)):
+    try:
+        return controlled_records.set_activation(body, user)
+    except controlled_records.Conflict as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
 @app.get('/api/admin/users')
 def api_admin_users(user=Depends(require_super_admin), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query("", max_length=160)):
     rows = admin_list_users(limit=limit+1, offset=offset, q=q)
@@ -1613,11 +1613,12 @@ def api_admin_list_crops(user=Depends(require_super_admin)):
 
 
 class CropReferenceUpdateBody(BaseModel):
-    label: Optional[str] = None
-    growth_cycle: Optional[str] = None
-    est_yield: Optional[str] = None
-    suitability_note: Optional[str] = None
-    is_active: Optional[bool] = None
+    model_config = ConfigDict(extra='forbid')
+    label: Optional[str] = Field(default=None, min_length=1, max_length=120)
+    growth_cycle: Optional[str] = Field(default=None, max_length=300)
+    est_yield: Optional[str] = Field(default=None, max_length=300)
+    suitability_note: Optional[str] = Field(default=None, max_length=1000)
+    is_active: Optional[bool] = Field(default=None, strict=True)
 
 
 @app.patch('/api/admin/crops/{crop_key}')
@@ -1697,7 +1698,10 @@ def mobile_save_analysis(body: SessionActionBody, user=Depends(get_api_user)):
 def mobile_submit_to_planner(body: SessionActionBody, user=Depends(get_api_user)):
     if user.get('role') != 'farmer':
         raise HTTPException(status_code=403,detail='Only farmers can submit an analysis for review.')
-    item = submit_analysis_to_planner(user["id"], body.session_id)
+    try:
+        item = submit_analysis_to_planner(user["id"], body.session_id)
+    except ValueError as exc:
+        raise HTTPException(409, str(exc)) from exc
     if not item:
         raise HTTPException(status_code=404, detail="Analysis not found or not eligible for review.")
     return {"submission": item}
@@ -1904,8 +1908,32 @@ def mobile_analysis_request(request_id: str, user=Depends(get_api_user)):
     return analysis_request_status(user['id'], request_id)
 
 
+def _authorize_analysis(body, user):
+    """Independent analyst assessments never attach to a farmer's parcel."""
+    role = user.get('role')
+    if role == 'farmer':
+        return
+    if role in ('analyst', 'planner', 'agricultural_planning_analyst'):
+        if body.farm_id is not None or body.boundary_version is not None:
+            raise HTTPException(403, 'Independent analyst assessments cannot attach to a farmer parcel. Review submitted evidence in the Review Inbox.')
+        return
+    raise HTTPException(403, 'This account cannot start an analysis.')
+
+
 @app.post("/api/mobile/analysis")
 def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user), idempotency_key: Optional[str]=Header(default=None)):
+    if user.get('role') != 'farmer':
+        raise HTTPException(403, 'Use the independent analyst workspace for your own assessment, or review submitted evidence in the Review Inbox.')
+    return _run_analysis_request(body, user, idempotency_key)
+
+
+@app.post('/api/web/analysis')
+def independent_analyst_analysis(body: AnalysisBody, user=Depends(require_planner), idempotency_key: Optional[str]=Header(default=None)):
+    return _run_analysis_request(body, user, idempotency_key)
+
+
+def _run_analysis_request(body, user, idempotency_key):
+    _authorize_analysis(body, user)
     key, _ = request_identity(idempotency_key, body.model_dump(exclude_none=True))
     import analysis_jobs
     if analysis_jobs.enabled():
@@ -1948,6 +1976,7 @@ def mobile_analysis(body: AnalysisBody, user=Depends(get_api_user), idempotency_
 
 
 def _perform_mobile_analysis(body, user, idempotency_key, charge_quota=True):
+    _authorize_analysis(body, user)
     payload=body.model_dump(exclude_none=True)
     key,digest=request_identity(idempotency_key,payload)
     try:
@@ -1964,6 +1993,16 @@ def _perform_mobile_analysis(body, user, idempotency_key, charge_quota=True):
         farm=get_farm_parcel(user['id'],body.farm_id)
         if not farm or farm.get('is_archived'):
             raise HTTPException(status_code=404,detail='Farm parcel not found or archived.')
+        if body.boundary_version is not None and body.boundary_version != farm['boundary_version']:
+            raise HTTPException(409, 'The farm boundary changed. Reload the farm before analyzing.')
+        if body.boundary_version is not None and body.polygon is not None:
+            from submission_policy import polygon_identity
+            try:
+                same_boundary = polygon_identity(body.polygon) == polygon_identity(farm['polygon'])
+            except ValueError as exc:
+                raise HTTPException(400, 'The selected farm boundary is invalid. Reload the saved farm before analyzing.') from exc
+            if not same_boundary:
+                raise HTTPException(409, 'The selected boundary differs from the saved farm. Reload the farm before analyzing.')
         # Use the server-owned version, never a client-supplied replacement ring.
         payload['polygon']=farm['polygon']
         payload['place_name']=farm.get('location_name') or body.place_name
@@ -1988,6 +2027,8 @@ def _perform_mobile_analysis(body, user, idempotency_key, charge_quota=True):
         result.update(farm_id=farm['id'], farm_name=farm['farm_name'], boundary_version=farm['boundary_version'])
     else:
         result['farm_name']=None
+    from submission_policy import attach_analysis_scope
+    attach_analysis_scope(result, farm)
     try:
         logging.getLogger('uvicorn.error').info('Analysis saving user=%s farm=%s', user['id'], body.farm_id)
         session_id=save_analysis_session(user['id'],result,analysis_source,request_key=key,request_hash=digest)

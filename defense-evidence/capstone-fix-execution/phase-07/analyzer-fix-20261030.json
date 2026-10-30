@@ -1,0 +1,16 @@
+{
+  "recorded_at_utc": "2026-10-30T07:44:12.196315+00:00",
+  "owner_attempt": "attempts/20261030-040338-634",
+  "owner_outcome": "pub offline passed; analyzer failed with two style diagnostics and two invalid overrides",
+  "fixes": [
+    "ordinary file comments replace dangling library documentation",
+    "unavailable-summary return enclosed in braces",
+    "ScopeApi and SeasonalFixtureApi accept independentAnalyst with matching default and assert farmer calls retain false"
+  ],
+  "checks": {
+    "summary_dart_analysis": "passed; summary-analyzer-fix.log",
+    "dart_format": "3 files; no changes required",
+    "diff_whitespace": "passed"
+  },
+  "full_client_rerun": "pending_owner"
+}

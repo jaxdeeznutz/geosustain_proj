@@ -1,0 +1,21 @@
+original_id,original_check,prior_recorded_status,phase07_scope_result,evidence_scope,evidence_refs,whole_row_promoted
+1.1,"Links (internal, external, social media)",PARTIAL,LOCAL_SUBCHECK_PASS,Restored analyst route/navigation owner acceptance,manual-acceptance.json,NO
+1.2,Buttons,PARTIAL,LOCAL_SUBCHECK_PASS,Restored controls and same-key analysis retry,manual-acceptance.json;runtime-sql-restore.json,NO
+1.3,Forms â€“ required fields and validation,PARTIAL,LOCAL_SUBCHECK_PASS,"Draft record save, field/period validation regression",manual-acceptance.json;client-validation.json,NO
+2.12,Export and import,PARTIAL,LOCAL_EXPORT_SUBCHECK_PASS,Owner confirms both PDFs saved and required sections present; test exports rendered and compared,manual-acceptance.json;export-review/validation.json,NO
+3.1,Responsive layout,PARTIAL,LOCAL_SUBCHECK_PASS,Owner rotation/large text/narrow-browser check; 200-percent XAI wrap regression passed,manual-acceptance.json;client-validation.json,NO
+4.1,Keyboard-only use,PARTIAL,LOCAL_SUBCHECK_PASS,Owner Tab/Enter and narrow-menu check,manual-acceptance.json,NO
+4.8,Recovery from mistakes,PARTIAL,LOCAL_SUBCHECK_PASS,Offline reopen/refresh and explicit failed-job retry,manual-acceptance.json;runtime-sql-restore.json,NO
+4.9,Session and time limits,PARTIAL,LOCAL_SUBCHECK_ONLY,Session and outage regressions; actual provider/session-expiry target checks remain separate,client-validation.json,NO
+5.1,Browsers,PARTIAL,LOCAL_SUBCHECK_ONLY,"Demonstrated desktop browser and Android emulator; screenshots show Edge UI, versions not captured",manual-acceptance.json,NO
+6.7,Stress and recovery,PARTIAL,CONTROLLED_SUBCHECK_PASS,Persisted running-job recovery and bounded fixture workload; not production stress or OS process termination,runtime-sql-restore.json,NO
+7.6,Session handling,PARTIAL,LOCAL_SUBCHECK_PASS,Offline restoration and cross-account state clearing owner check,manual-acceptance.json;client-validation.json,NO
+7.16,Backups,PASS,DISPOSABLE_RESTORE_PASS,"Real pg_dump/pg_restore retains synthetic analyses, jobs, audit and exact explanation",runtime-sql-restore.json,NO
+8.1,Permission matrix exists,PASS,LOCAL_SUBCHECK_PASS,Independent analyst endpoint explicitly separated from farmer-linked analysis and formal submission,WEB_DESIGN_RESTORATION.md;backend-tests.log,NO
+8.2,Log in as each role,PARTIAL,LOCAL_SUBCHECK_PASS,"Owner farmer, analyst, admin and second-farmer journeys",manual-acceptance.json,NO
+8.3,Vertical access (lower role â†’ higher pages),PASS,LOCAL_SUBCHECK_PASS,Role restrictions including farmer parcel fields on analyst requests,analyst-restoration-backend.log;backend-tests.log,NO
+8.4,"Horizontal access (same role, other people's data)",PASS,LOCAL_SUBCHECK_PASS,Real SQL owner isolation plus owner second-farmer UI check,manual-acceptance.json;runtime-sql-restore.json,NO
+9.2,Authentication on every endpoint,PASS,LOCAL_SUBCHECK_ONLY,Protected endpoint and role regression suite; not certification of every deployed endpoint,backend-tests.log,NO
+9.6,Third-party service failure,PASS,CONTROLLED_SUBCHECK_PASS,Injected provider outage persists failure and explicit retry recovers once,runtime-sql-restore.json,NO
+13.4,Backup before release,PASS,REHEARSAL_ONLY,Disposable restore rehearsal; production pre-release backup remains required,runtime-sql-restore.json,NO
+14.7,Performance and security re-checked,PARTIAL,LOCAL_SUBCHECK_ONLY,489 backend and 266 Flutter regressions plus bounded synthetic timings,backend-tests.log;client-validation.json;runtime-sql-restore.json,NO

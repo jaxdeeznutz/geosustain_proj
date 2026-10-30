@@ -47,5 +47,14 @@ def reset_auth_throttle():
 @pytest.fixture(autouse=True)
 def offline_land_cover(monkeypatch):
     import fastapi_app
+    monkeypatch.setattr(fastapi_app.controlled_records, 'load_active_records', lambda: [])
+    monkeypatch.setattr(fastapi_app, 'get_active_crop_keys', lambda: None)
     monkeypatch.setattr(fastapi_app, 'screen_land_cover', lambda *args: {
         'allow_crops': True, 'status': 'eligible', 'source': 'offline test fixture'})
+    # New monthly context must never introduce provider traffic into offline
+    # inference tests. Dedicated seasonal tests exercise parsing/cache/failures.
+    from seasonal_assessment import empty_baseline
+    monkeypatch.setattr(fastapi_app, 'fetch_multi_year_monthly_baseline', empty_baseline)
+    from spatial_analysis import build_spatial_assessment
+    monkeypatch.setattr(fastapi_app, 'build_spatial_assessment',
+                        lambda polygon: build_spatial_assessment(polygon, provider=lambda _: {}))

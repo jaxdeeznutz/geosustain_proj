@@ -157,28 +157,28 @@ void main() {
       await capture('profile');
       await tab('Analysis');
       await capture('analysis');
+      Future<void> revealAnalysis(Finder target) => revealInList(
+        tester,
+        target,
+        list: find.byKey(const PageStorageKey('mobile-analysis-scroll')),
+      );
+      await revealAnalysis(find.text('See more'));
       await tester.tap(find.text('See more').first);
       await tester.pumpAndSettle();
       await capture('analysis-expanded');
-      await tester.ensureVisible(find.text('See less').first);
+      await revealAnalysis(find.text('See less'));
       await tester.tap(find.text('See less').first);
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.textContaining('1. Rice').first);
+      await revealAnalysis(find.textContaining('1. Rice'));
       await tester.tap(find.textContaining('1. Rice').first);
       await tester.pumpAndSettle();
       await capture('crop-details');
       await tester.tap(find.byTooltip('Close'));
       await tester.pumpAndSettle();
-      await tester.dragUntilVisible(
-        find.text('View detailed explanation').hitTestable(),
-        find
-            .descendant(
-              of: find.byType(MobileAnalysisPage),
-              matching: find.byType(ListView),
-            )
-            .first,
-        const Offset(0, -250),
-      );
+      await revealAnalysis(find.text('Key Factors'));
+      await tester.tap(find.text('Key Factors'));
+      await tester.pumpAndSettle();
+      await revealAnalysis(find.text('View detailed explanation'));
       await capture('analysis-chart');
       await tester.tap(find.text('View detailed explanation'));
       await tester.pumpAndSettle();
@@ -190,13 +190,13 @@ void main() {
       await capture('analysis-details');
       await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Recommended'));
+      await revealAnalysis(find.text('Recommended'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Recommended'));
       await tester.pumpAndSettle();
       await tester.pumpAndSettle();
       await capture('other-crops');
-      await tester.ensureVisible(find.text('Key Factors'));
+      await revealAnalysis(find.text('Key Factors'));
       await tester.pumpAndSettle();
       await tester.tap(find.text('Key Factors'));
       await tester.pumpAndSettle();

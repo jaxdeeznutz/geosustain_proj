@@ -1,0 +1,14 @@
+{
+  "domain": "domain",
+  "metadata": {
+    "z": 1,
+    "a": "test"
+  },
+  "values": [
+    1e-20,
+    -4.5,
+    0.0
+  ],
+  "signature": "be935ac5227caf0495875ca5569444d25caabfed07f3b06ff99b93d282beb9ac",
+  "input_signature": "475b401b5b3eb71c4525a2bf5f93194c56ea8ab90622353b4d67a84eb865d9a0"
+}

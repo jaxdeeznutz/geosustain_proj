@@ -1,0 +1,49 @@
+{
+  "recorded_at_utc": "2026-10-28T07:49:52.939669+00:00",
+  "commit": "2eb82c725a2c50b64e3febfe610fe4958c11b75a",
+  "branch": "defense/implementation-2026-10-23",
+  "status": " M backend/fastapi_app.py\n M backend/tests/test_legacy_npk_restore.py\n M lib/screens/crop_details_sheets.dart\n M lib/screens/reference_analysis.dart\n?? backend/application_screening.py\n?? backend/tests/test_application_screening.py\n?? capstone-fix-plan/\n?? defense-evidence/2026-10-23/\n?? defense-evidence/2026-10-24/\n?? defense-evidence/email-live-acceptance-2026-10-27/ACCOUNT_SURFACE_RELEASE.json\n?? defense-evidence/operator-workflow-execution/backend-initial.txt\n?? defense-evidence/operator-workflow-execution/dart-fix.txt\n?? defense-evidence/operator-workflow-execution/local-profile-compilation.txt\n?? defense-evidence/operator-workflow-execution/local-release-compilation.txt\n?? defense-evidence/operator-workflow-execution/operator-widget-tests.txt\n?? defense-evidence/readiness-execution/\n?? defense-evidence/web-fix-execution/\n?? defense-evidence/web-live-2026-10-26/\n?? defense-readiness-plan/\n?? docs/APPLICATION_SCREENING.md\n?? test/application_screening_display_test.dart\n",
+  "files": {
+    "backend/fastapi_app.py": {
+      "sha256": "54316c13b0be173b63ef595f3c6da813c257aea677895c851e3d484de6f3b308",
+      "bytes": 101724
+    },
+    "backend/database.py": {
+      "sha256": "204276d6252d36e29d6b4426bad2ebbe1427672672f0af8f88e4fab8483437ed",
+      "bytes": 87040
+    },
+    "backend/operator_workflow.py": {
+      "sha256": "c798ea194f3dd42fdd86a99aa3beaa0f9280b8f818b46d6600bd30fdeea446de",
+      "bytes": 19968
+    },
+    "backend/model_ranking.py": {
+      "sha256": "574cb2fb7152a6b30f6ea0a983203a0739a4701e4fc6a227e90316c52064e60e",
+      "bytes": 4476
+    },
+    "backend/crop_model.pkl": {
+      "sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+      "bytes": 37233297
+    },
+    "lib/web/web_analyst_shell.dart": {
+      "sha256": "53b74810c4dcb39f13de12f0a2cb5c0381c7e5feecd7d2c12d7fb9a40ae6e6cc",
+      "bytes": 18194
+    },
+    "lib/screens/mobile_results.dart": {
+      "sha256": "4dab9e77bf70d6d30a85727dec7d1540bf1bc114ff22128f211e50df07c39e6a",
+      "bytes": 28962
+    },
+    "lib/main.dart": {
+      "sha256": "36343f377b3e8dcd48b8a49e0ae6b4b1703298032d62d3d7b92b23adaf7fd368",
+      "bytes": 106164
+    },
+    "build/app/outputs/flutter-apk/app-release.apk": {
+      "sha256": "45fa91adc6b52be33184c67c56ffb591931620b191cf6367f1351fff1126536e",
+      "bytes": 69099245
+    }
+  },
+  "limitations": [
+    "Existing SDK permissions block Flutter execution in this agent environment.",
+    "No new deployment, APK installation, live user journey or scientific validation performed.",
+    "Pre-existing humidity/NDVI changes and user QA evidence preserved."
+  ]
+}

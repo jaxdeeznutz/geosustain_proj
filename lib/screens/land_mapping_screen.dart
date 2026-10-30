@@ -799,6 +799,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                 ],
                 if (_saved != null) ...[
                   AnalysisCoverageCard(record: _saved!),
+                  PlantingMonthPicker(state: widget.state, enabled: !_busy),
                   FilledButton.icon(
                     onPressed: _busy || !farmCanAnalyze(_saved!)
                         ? null
@@ -1198,6 +1199,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
               const SizedBox(height: 12),
               if (_notice != null) _MappingNotice(_notice!),
               if (_saved != null) Text('Saved: ${_saved!['farm_name']}'),
+              PlantingMonthPicker(state: widget.state, enabled: !_busy),
               if (_busy) const LinearProgressIndicator(),
               FilledButton.icon(
                 onPressed: _busy ? null : () => _run(analyze: true),

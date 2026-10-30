@@ -271,11 +271,12 @@ def test_farm_retry_does_not_insert_another_farm(monkeypatch):
 
 def test_submission_retry_preserves_decision(monkeypatch):
     conn, cur = connection(
-        monkeypatch, [None, {"id": 42, "verification_status": "verified"}, None]
+        monkeypatch, [{"id": 42, "verification_status": "verified"}]
     )
     assert db.submit_analysis_to_planner(10, 42)["verification_status"] == "verified"
-    assert "verification_status = 'draft'" in cur.queries[0][0]
-    assert cur.queries[0][1] == (42, 10, 10)
+    assert 'FOR UPDATE OF s' in cur.queries[0][0]
+    assert len(cur.queries) == 1
+    assert cur.queries[0][1] == (42, 10)
 
 
 def test_boundary_edit_never_mutates_history(monkeypatch):

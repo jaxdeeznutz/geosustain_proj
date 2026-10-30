@@ -481,6 +481,8 @@ def init_db():
             migrate_operator(cur)
             from analysis_jobs import migrate as migrate_jobs
             migrate_jobs(cur)
+            from controlled_records import migrate as migrate_controlled_records
+            migrate_controlled_records(cur)
             cur.execute("CREATE INDEX IF NOT EXISTS idx_audit_logs_created_at ON audit_logs (created_at DESC)")
         conn.commit()
     finally:
@@ -1134,11 +1136,33 @@ def _history_select_sql(extra_select="", extra_join="", where_prefix="s.user_id 
 
 
 
+def validate_formal_submission(cur, session, owner):
+    from submission_policy import require_formal_polygon
+    cur.execute('''SELECT id,farmer_id,polygon,boundary_version,is_archived
+                   FROM farm_parcels WHERE id=%s AND farmer_id=%s FOR SHARE''',
+                (session.get('farm_id'), owner))
+    require_formal_polygon(session, cur.fetchone(), owner)
+
+
 def submit_analysis_to_planner(user_id: int, session_id: int):
     """Submit once; retries return the current review without erasing decisions."""
     conn = get_conn()
     try:
         with conn.cursor() as cur:
+            cur.execute('''SELECT s.* FROM analysis_sessions s JOIN users u ON u.id=s.user_id
+                           WHERE s.id=%s AND s.user_id=%s AND u.role='farmer' FOR UPDATE OF s''',
+                        (session_id, user_id))
+            session = cur.fetchone()
+            if not session:
+                return None
+            if session['verification_status'] in ('pending', 'verified', 'rejected', 'needs_information'):
+                # Historical submitted cases remain readable and retries never
+                # revalidate against today's farm or create another event.
+                return {key: session.get(key) for key in
+                        ('id', 'verification_status', 'analyzed_at', 'planner_notes', 'verified_at', 'submitted_at')}
+            if session['verification_status'] != 'draft':
+                return None
+            validate_formal_submission(cur, session, user_id)
             cur.execute(
                 """
                 UPDATE analysis_sessions
@@ -1632,22 +1656,14 @@ def list_crop_reference():
 
 
 def get_active_crop_keys():
-    """Returns the set of crop_key values currently marked active. Used to
-    let a Super Administrator temporarily remove a crop from recommendations
-    (e.g. a seed/seedling shortage) WITHOUT touching the approved crop list
-    in code (Section 9) or its scoring — this can only ever narrow the
-    approved set, never add to it. Fails open (returns None, meaning "no
-    restriction") on any DB error so a transient admin-table hiccup never
-    blocks Farmer analysis."""
-    try:
-        with get_conn() as conn:
-            with conn.cursor() as cur:
-                cur.execute("SELECT crop_key FROM crop_reference WHERE is_active = TRUE")
-                keys = {r['crop_key'] for r in cur.fetchall()}
-                return keys if keys else None
-    except Exception as exc:
-        print(f"get_active_crop_keys failed, defaulting to unrestricted: {exc}")
-        return None
+    """Return the exact enabled filter, including an intentionally empty set.
+
+    Database failure is an unavailable control, not permission to enable crops.
+    """
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT crop_key FROM crop_reference WHERE is_active = TRUE")
+            return {r['crop_key'] for r in cur.fetchall()}
 
 
 def update_crop_reference(crop_key: str, label=None, growth_cycle=None, est_yield=None,
@@ -1675,6 +1691,8 @@ def update_crop_reference(crop_key: str, label=None, growth_cycle=None, est_yiel
     vals.append(crop_key)
     with get_conn() as conn:
         with conn.cursor() as cur:
+            cur.execute('SELECT * FROM crop_reference WHERE crop_key=%s FOR UPDATE', (crop_key,))
+            previous = cur.fetchone()
             cur.execute(
                 f"UPDATE crop_reference SET {', '.join(sets)} WHERE crop_key=%s RETURNING *",
                 tuple(vals),
@@ -1682,7 +1700,9 @@ def update_crop_reference(crop_key: str, label=None, growth_cycle=None, est_yiel
             row = cur.fetchone()
             if row:
                 audit_in_transaction(cur, actor_user_id, actor_role, 'crop_reference_update',
-                    'crop_reference', row['id'], {'crop_key': crop_key, 'is_active': row['is_active']})
+                    'crop_reference', row['id'], {'crop_key': crop_key, 'is_active': row['is_active'],
+                     'before': {key: previous[key] for key in ('label','growth_cycle','est_yield','suitability_note','is_active')} if previous else None,
+                     'after': {key: row[key] for key in ('label','growth_cycle','est_yield','suitability_note','is_active')}})
             conn.commit()
     updated = dict(row) if row else None
     return updated

@@ -30,93 +30,23 @@ class _LiveFieldMapState extends State<LiveFieldMap> {
     super.dispose();
   }
 
-  List<Map<String, dynamic>> _heatmapGrid(AnalysisState s) {
-    final raw = s.result?['heatmap_grid'];
-    if (raw is! List) return const [];
-    return raw
-        .whereType<Map>()
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
-  }
-
-  double? _num(dynamic value) =>
-      value is num ? value.toDouble() : double.tryParse('$value');
-
-  String _heatmapKey(String layer) =>
-      const {
-        'NDVI': 'ndvi',
-        'Suitability': 'crop_suitability',
-        'Soil pH': 'soil_ph',
-        'Rainfall': 'rainfall',
-        'Elevation': 'elevation',
-        'Slope': 'slope',
-      }[layer] ??
-      'ndvi';
-
-  Color? _polygonHeatColor(AnalysisState s) {
-    final grid = _heatmapGrid(s);
-    if (grid.isEmpty) return null;
-    final key = _heatmapKey(s.heatmapLayer);
-    final values = grid.map((e) => _num(e[key])).whereType<double>().toList();
-    if (values.isEmpty) return null;
-    final minV = values.reduce((a, b) => a < b ? a : b);
-    final maxV = values.reduce((a, b) => a > b ? a : b);
-    final average = values.reduce((a, b) => a + b) / values.length;
-    final t = maxV == minV
-        ? .75
-        : ((average - minV) / (maxV - minV)).clamp(0.0, 1.0);
-    if (t >= .75) return const Color(0xFF16A765);
-    if (t >= .50) return const Color(0xFF8BD450);
-    if (t >= .25) return const Color(0xFFF0AA20);
-    return const Color(0xFFE95B55);
-  }
-
-  Color _heatColor(double value, double minV, double maxV) {
-    final t = maxV == minV
-        ? .65
-        : ((value - minV) / (maxV - minV)).clamp(0.0, 1.0);
-    if (t >= .75) return const Color(0xFF08783A);
-    if (t >= .50) return const Color(0xFF77C66E);
-    if (t >= .25) return const Color(0xFFF0B33A);
-    return const Color(0xFFE65A4F);
-  }
-
-  List<Polygon> _heatCells(AnalysisState s, List<LatLng> boundary) {
-    final grid = _heatmapGrid(s);
-    if (grid.length < 2 || boundary.length < 3) return const [];
-    final key = _heatmapKey(s.heatmapLayer);
-    final values = grid.map((e) => _num(e[key])).whereType<double>().toList();
-    if (values.isEmpty) return const [];
-    final minV = values.reduce(math.min), maxV = values.reduce(math.max);
-    final lats = boundary.map((p) => p.latitude).toList(),
-        lngs = boundary.map((p) => p.longitude).toList();
-    final latStep = ((lats.reduce(math.max) - lats.reduce(math.min)) / 7)
-        .clamp(.00008, .0012)
-        .toDouble();
-    final lngStep = ((lngs.reduce(math.max) - lngs.reduce(math.min)) / 7)
-        .clamp(.00008, .0012)
-        .toDouble();
-    final cells = <Polygon>[];
-    for (final item in grid) {
-      final lat = _num(item['lat']),
-          lng = _num(item['lng']),
-          value = _num(item[key]);
-      if (lat == null || lng == null || value == null) continue;
-      cells.add(
-        Polygon(
-          points: [
-            LatLng(lat - latStep, lng - lngStep),
-            LatLng(lat - latStep, lng + lngStep),
-            LatLng(lat + latStep, lng + lngStep),
-            LatLng(lat + latStep, lng - lngStep),
-          ],
-          color: _heatColor(value, minV, maxV).withValues(alpha: .62),
-          borderColor: Colors.white.withValues(alpha: .45),
-          borderStrokeWidth: 1,
-        ),
-      );
+  List<Polygon> _heatCells(AnalysisState state, List<LatLng> boundary) {
+    final result = state.result;
+    if (state.drawing || result == null || boundary.length < 3) return [];
+    final saved = FarmGeometry.fromPayload(result['selected_polygon']);
+    if (saved.length < 3) return [];
+    if (jsonEncode(FarmGeometry.payload(saved)) !=
+        jsonEncode(FarmGeometry.payload(boundary))) {
+      return [];
     }
-    return cells;
+    final layer = const {
+      'NDVI': 'ndvi',
+      'Soil pH': 'soil_ph',
+      'Rainfall': 'rainfall_30d',
+      'Elevation': 'elevation',
+      'Slope': 'slope',
+    }[state.heatmapLayer];
+    return layer == null ? [] : spatialCellPolygons(result, layer);
   }
 
   @override
@@ -124,6 +54,7 @@ class _LiveFieldMapState extends State<LiveFieldMap> {
     final s = widget.analysisState;
     final points = List<LatLng>.from(s.polygonPoints);
     final pin = s.selectedPoint;
+    final heatCells = _heatCells(s, points);
 
     return FlutterMap(
       mapController: s.mapController,
@@ -155,18 +86,15 @@ class _LiveFieldMapState extends State<LiveFieldMap> {
           PolylineLayer(
             polylines: [Polyline(points: points, color: green, strokeWidth: 4)],
           ),
-        if (_heatCells(s, points).isNotEmpty)
-          PolygonLayer(polygons: _heatCells(s, points)),
+        if (heatCells.isNotEmpty) PolygonLayer(polygons: heatCells),
         if (points.length >= 3)
           PolygonLayer(
             polygons: [
               Polygon(
                 points: points,
-                color: _heatCells(s, points).isNotEmpty
+                color: heatCells.isNotEmpty
                     ? Colors.transparent
-                    : (_polygonHeatColor(s) ?? green).withValues(
-                        alpha: _polygonHeatColor(s) == null ? 0.18 : 0.46,
-                      ),
+                    : Colors.blueGrey.withValues(alpha: .18),
                 borderColor: Colors.white,
                 borderStrokeWidth: 3,
               ),
@@ -583,7 +511,7 @@ class _MapAnalyzePageState extends State<MapAnalyzePage> {
                       labelText: 'Intended Planting Month',
                       prefixIcon: Icon(Icons.calendar_month_rounded),
                       helperText:
-                          'The crop ranking will be adjusted using the local planting calendar.',
+                          'Historical monthly context is shown separately from crop ranking; it is not a forecast.',
                     ),
                     items: List.generate(12, (index) {
                       final month = index + 1;

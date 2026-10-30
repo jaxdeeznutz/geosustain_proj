@@ -1,0 +1,24 @@
+{
+  "status": "passed",
+  "checks": [
+    "Actual unchanged forest and nine saved polygon samples produce an additive signed explanation; retry returns the same persisted analysis",
+    "Farmer submit -> analyst decision -> farmer status/notes preserves original evidence; other-account detail access is denied",
+    "Real queued independent analyst assessment recovers a persisted running state, remains owner-only and cannot attach a farmer parcel",
+    "Injected provider failure persists a failed job; explicit same-key retry completes without duplicate saved results",
+    "pg_dump/pg_restore to a separate disposable database retains all saved analyses, completed jobs, audit event and exact explanation snapshot"
+  ],
+  "timings": {
+    "nine_sample_polygon_seconds": 3.239190799999051,
+    "queued_nine_sample_recovery_seconds": 3.4237043999601156,
+    "injected_provider_failure_seconds": 0.5037238999502733,
+    "dump_restore_seconds": 1.3993807000806555
+  },
+  "backup_sha256": "0b08a2c24a233215233b9a055f86e14ebfa088ec813ed9349bdcbd7fd2b8b8ed",
+  "backup_file": ".tools\\phase07_restore_366619d21a5d46609500c30dd6f27555.dump",
+  "scope": "Verified disposable PostgreSQL; synthetic observations and unchanged actual forest; new schema and restore database removed.",
+  "limits": [
+    "Bounded fixture workload, not production performance or live provider validation.",
+    "Recovery uses persisted interrupted state, not an OS worker-kill test.",
+    "Production backup/restore and real provider/device acceptance remain release gates."
+  ]
+}

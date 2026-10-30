@@ -1,0 +1,29 @@
+{
+  "recorded_at_utc": "2026-10-29T14:48:03.726998+00:00",
+  "commit": "2eb82c725a2c50b64e3febfe610fe4958c11b75a",
+  "files": {
+    "backend/database.py": "264eb8dd2ceb0c015f26fd68e0d5fdc99330a647505b6691e5b986ceb4e53ced",
+    "backend/fastapi_app.py": "96df0b4b8ff49a49c728d4177db9793952b968478d7c531d9be99526e1761ab9",
+    "backend/suitability.py": "70899143965e7a1513dedb4a84685f4b0a4613d38cf2468fc425ba598bbf4c69",
+    "backend/crop_requirements.py": "cf69fd115fec09677d53198574d677cc07a5a7244706ba1d0676494cdd08eb2e",
+    "backend/seasonal_assessment.py": "7b683ad5cdf590dfaca581437942166deb467456ab540f1d327370d09ffced1b",
+    "backend/spatial_analysis.py": "3af6a259d3889b092de1fbb7ffc14ee01a36f438eec6b89dff9776252ee8fc58",
+    "backend/model_ranking.py": "574cb2fb7152a6b30f6ea0a983203a0739a4701e4fc6a227e90316c52064e60e",
+    "backend/model_explainability.py": "fe29716ccab10ee1243e9a2bbf0ced7a05d2f5042c512d4525e89091ff07255c",
+    "backend/local_attribution.py": "148c1ae64932fe5212f95a1883f86e15b6c4a1953e9372b5fe4be7f9a5778b4d",
+    "backend/environmental_pipeline.py": "d1431847f4f1e22b94dadb845b0ce607694c71d1dd22417343cdb19918691c93",
+    "backend/rainfallDatasets.py": "3e312de50033a68b564cdc3f8e0f71f6ac503f7608a283529b85268752150990",
+    "backend/crop_model.pkl": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+    "backend/crop_model_features.pkl": "64ff2d3e43306f76a8a2287be653c3d13707b14ba7a4851555ac13262c36369f",
+    "backend/crop_model_metadata.json": "3f80aa3591521de791a8a376b77662741a2c6cabe6a899ce001adcc4f935b7bd",
+    "lib/main.dart": "34245269e1f3440831889094f867a6829b428bff6620d3e59010b016d6d93b18",
+    "lib/api_service.dart": "33be8ac4816ec7e9f48343543bfadda22f096b865fded68b3aa4252f2a261957",
+    "lib/web/web_admin_shell.dart": "d583444ad552e500c4945343a86119e4297563429b82eca90fb75f594d7b666c",
+    "lib/seasonal_context.dart": "3fc6b995f92585c1d0da7337259fad00ef9e6839acba7e43c282ea8cdbe43ed3",
+    "lib/spatial_context.dart": "471e8639569858369bc50a0d2754ea067a1b42229a86e3040705cf5d65d3de1c",
+    "lib/web/operator_report.dart": "9ade069115c7dd361eea5246537558287a2d4932f3fcab3a016bd6c408077b39",
+    "lib/screens/history_screen.dart": "9dcc7f0376411007c156bcd0680b4cbb2eba7fc171a3b271c48681dd6653c803",
+    "backend/tests/conftest.py": "f48585ea3084ffcc8f3019b4edb3b02b0388260dec3bd1604e1e3ec190e0a451",
+    "test/defense_admin_test.dart": "875eeb0e3341462632da1b776a4729a020602353c2cae3459f60b2078ae4092d"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "closed_at_utc": "2026-10-30T09:47:00.238139+00:00",
+  "status": "complete_local_owner_accepted",
+  "scope": "Local candidate stabilization and demonstrated emulator/browser multi-role acceptance only",
+  "source_commit": "2eb82c725a2c50b64e3febfe610fe4958c11b75a",
+  "source_manifest": "implementation-source-hashes.json",
+  "client_run": "attempts/20261030-075915-144",
+  "client_source_hashes_match": true,
+  "backend_tests_passed": 489,
+  "flutter_tests_passed": 266,
+  "client_checks": {
+    "flutter-pub-offline": true,
+    "flutter-analyze": true,
+    "flutter-tests": true,
+    "flutter-web-build": true
+  },
+  "manual_acceptance": "manual-acceptance.json",
+  "test_export_review": "export-review/validation.json",
+  "owner_saved_exports": "Owner explicitly confirmed both PDFs saved and required sections present; owner files not collected for independent hashes.",
+  "runtime_sql_restore": "runtime-sql-restore.json",
+  "original_qa_subchecks": "QA_SUBCHECK_MATRIX.csv",
+  "release_gates_retained": "RELEASE_GATES.json",
+  "model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "not_implied": [
+    "Production deployment or provider certification",
+    "Pass for all 191 original QA rows",
+    "Scientific/model/dataset or participant evaluation signoff"
+  ],
+  "next_phase": "Phase 8 intake preparation; keep runtime proxies and CAGRO state unchanged pending defensible data or actual accepted limited scope."
+}

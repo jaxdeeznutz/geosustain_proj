@@ -1,0 +1,137 @@
+{
+  "recorded_at_utc": "2026-10-29T13:07:22.756196+00:00",
+  "passed": true,
+  "error": null,
+  "source_commit": "2eb82c725a2c50b64e3febfe610fe4958c11b75a",
+  "source_files": {
+    "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\backend\\training\\evaluate_models.py": "e093055029f2ce60260a70fce5a4bcc1a83245a52c19854c98d649de3e23229e",
+    "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\backend\\training\\controlled_fixture.py": "14780254b8aaad94a105536c765747b7d3f166bfb24aec291383c63870d3383e",
+    "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\backend\\training\\audit_model_evidence.py": "d40a5ee4590de5247d1110e8a4b336166bc9114c3e9147a7159dbf337e08fe02",
+    "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\backend\\tests\\test_model_evaluation.py": "fa2f92e88323f4df90db40e5ccc7a8b3786aac6fcd305eedd15e330bff0afe3d",
+    "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\backend\\tests\\verify_phase04_tooling.py": "e26cc839e291d5271b60110ed54c6d8ac18554e8809dd7031989c50ff0451186",
+    "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\deployment\\verify-phase-04.ps1": "ebb18fce1ba3df4be0e7faa340e8aedb8ebbeabc4df0888cabefceb0e52ee88d"
+  },
+  "checks": [
+    {
+      "check": "python-static",
+      "arguments": [
+        "-m",
+        "ruff",
+        "check",
+        "--select",
+        "F",
+        "backend/training/evaluate_models.py",
+        "backend/training/controlled_fixture.py",
+        "backend/training/audit_model_evidence.py",
+        "backend/tests/test_model_evaluation.py",
+        "backend/tests/verify_phase04_tooling.py"
+      ],
+      "started_at_utc": "2026-10-29T13:06:17.458524+00:00",
+      "ended_at_utc": "2026-10-29T13:06:17.674353+00:00",
+      "exit_code": 0,
+      "expected_refusal": false,
+      "passed": true,
+      "log": "defense-evidence\\capstone-fix-execution\\phase-04\\attempts\\20261029-130617-365079\\python-static.log"
+    },
+    {
+      "check": "backend-tests",
+      "arguments": [
+        "-m",
+        "pytest",
+        "backend/tests",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "started_at_utc": "2026-10-29T13:06:17.674353+00:00",
+      "ended_at_utc": "2026-10-29T13:06:59.872676+00:00",
+      "exit_code": 0,
+      "expected_refusal": false,
+      "passed": true,
+      "log": "defense-evidence\\capstone-fix-execution\\phase-04\\attempts\\20261029-130617-365079\\backend-tests.log"
+    },
+    {
+      "check": "model-data-audit",
+      "arguments": [
+        "backend/training/audit_model_evidence.py",
+        "--output",
+        "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-04\\attempts\\20261029-130617-365079\\audit"
+      ],
+      "started_at_utc": "2026-10-29T13:06:59.872676+00:00",
+      "ended_at_utc": "2026-10-29T13:07:02.956837+00:00",
+      "exit_code": 0,
+      "expected_refusal": false,
+      "passed": true,
+      "log": "defense-evidence\\capstone-fix-execution\\phase-04\\attempts\\20261029-130617-365079\\model-data-audit.log"
+    },
+    {
+      "check": "controlled-input",
+      "arguments": [
+        "backend/training/controlled_fixture.py",
+        "--output",
+        "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-04\\runs\\verify-20261029-130617-365079\\inputs"
+      ],
+      "started_at_utc": "2026-10-29T13:07:02.956837+00:00",
+      "ended_at_utc": "2026-10-29T13:07:05.225130+00:00",
+      "exit_code": 0,
+      "expected_refusal": false,
+      "passed": true,
+      "log": "defense-evidence\\capstone-fix-execution\\phase-04\\attempts\\20261029-130617-365079\\controlled-input.log"
+    },
+    {
+      "check": "controlled-comparison",
+      "arguments": [
+        "backend/training/evaluate_models.py",
+        "--dataset",
+        "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-04\\runs\\verify-20261029-130617-365079\\inputs\\controlled.csv",
+        "--contract",
+        "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-04\\runs\\verify-20261029-130617-365079\\inputs\\contract.json",
+        "--output",
+        "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-04\\runs\\verify-20261029-130617-365079\\evaluation"
+      ],
+      "started_at_utc": "2026-10-29T13:07:05.225130+00:00",
+      "ended_at_utc": "2026-10-29T13:07:12.801110+00:00",
+      "exit_code": 0,
+      "expected_refusal": false,
+      "passed": true,
+      "log": "defense-evidence\\capstone-fix-execution\\phase-04\\attempts\\20261029-130617-365079\\controlled-comparison.log"
+    },
+    {
+      "check": "controlled-replay",
+      "arguments": [
+        "backend/training/evaluate_models.py",
+        "--dataset",
+        "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-04\\runs\\verify-20261029-130617-365079\\inputs\\controlled.csv",
+        "--contract",
+        "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-04\\runs\\verify-20261029-130617-365079\\inputs\\contract.json",
+        "--output",
+        "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-04\\runs\\verify-20261029-130617-365079\\replay",
+        "--reproduce",
+        "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-04\\runs\\verify-20261029-130617-365079\\evaluation\\results.json"
+      ],
+      "started_at_utc": "2026-10-29T13:07:12.801110+00:00",
+      "ended_at_utc": "2026-10-29T13:07:20.328713+00:00",
+      "exit_code": 0,
+      "expected_refusal": false,
+      "passed": true,
+      "log": "defense-evidence\\capstone-fix-execution\\phase-04\\attempts\\20261029-130617-365079\\controlled-replay.log"
+    },
+    {
+      "check": "unresolved-training-refused",
+      "arguments": [
+        "backend/training/train_model.py"
+      ],
+      "started_at_utc": "2026-10-29T13:07:20.328713+00:00",
+      "ended_at_utc": "2026-10-29T13:07:22.556439+00:00",
+      "exit_code": 1,
+      "expected_refusal": true,
+      "passed": true,
+      "log": "defense-evidence\\capstone-fix-execution\\phase-04\\attempts\\20261029-130617-365079\\unresolved-training-refused.log"
+    }
+  ],
+  "protected_assets_unchanged": true,
+  "attempt": "defense-evidence\\capstone-fix-execution\\phase-04\\attempts\\20261029-130617-365079",
+  "controlled_run": "defense-evidence\\capstone-fix-execution\\phase-04\\runs\\verify-20261029-130617-365079",
+  "scope": "Local audit and deterministic controlled tooling verification only. No agricultural accuracy, Table 13 reproduction, production replacement, provider success or deployment implied.",
+  "deferred": "Independent scientific inputs, compatible climate/nutrient data and final production selection remain in Phase 8; actual live runtime parity requires a successful separate probe."
+}

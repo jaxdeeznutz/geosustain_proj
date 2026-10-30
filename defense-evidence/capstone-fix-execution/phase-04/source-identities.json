@@ -1,0 +1,15 @@
+{
+  "recorded_at_utc": "2026-10-29T13:14:43.263044+00:00",
+  "source_commit": "2eb82c725a2c50b64e3febfe610fe4958c11b75a",
+  "files": {
+    "backend/training/evaluate_models.py": "e093055029f2ce60260a70fce5a4bcc1a83245a52c19854c98d649de3e23229e",
+    "backend/training/controlled_fixture.py": "14780254b8aaad94a105536c765747b7d3f166bfb24aec291383c63870d3383e",
+    "backend/training/audit_model_evidence.py": "d40a5ee4590de5247d1110e8a4b336166bc9114c3e9147a7159dbf337e08fe02",
+    "backend/tests/test_model_evaluation.py": "fa2f92e88323f4df90db40e5ccc7a8b3786aac6fcd305eedd15e330bff0afe3d",
+    "backend/tests/verify_phase04_tooling.py": "e26cc839e291d5271b60110ed54c6d8ac18554e8809dd7031989c50ff0451186",
+    "deployment/verify-phase-04.ps1": "ebb18fce1ba3df4be0e7faa340e8aedb8ebbeabc4df0888cabefceb0e52ee88d",
+    "docs/MODEL_EVALUATION_TOOLING.md": "04f4ff960e42287bbbb5391a8445dfbd2a5dd901cc15e2d5d114237bb8ff208a"
+  },
+  "protected_assets_unchanged": true,
+  "phase3_sources_unchanged": true
+}

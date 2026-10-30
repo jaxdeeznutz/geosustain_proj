@@ -83,7 +83,7 @@ def test_preflight_allows_model_estimates_independently_of_cagro_coverage(client
 
 def test_web_cannot_bypass_with_supported_client_polygon(client, monkeypatch):
     monkeypatch.setattr(api, 'find_analysis_request', lambda *args: None)
-    monkeypatch.setattr(api, 'current_user', lambda request: {'id':10})
+    monkeypatch.setattr(api, 'current_user', lambda request: {'id':10, 'role':'farmer'})
     monkeypatch.setattr(api, 'get_farm_parcel', lambda *a: {'id':1,'farm_name':'Farm', 'boundary_version':1, 'polygon':square(7.29,125.53)})
     infer = Mock()
     monkeypatch.setattr(api, 'analyze_location', infer)

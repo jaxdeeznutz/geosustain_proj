@@ -1,0 +1,120 @@
+{
+  "status": "complete_local_owner_accepted",
+  "entries": [
+    {
+      "recorded_at_utc": "2026-10-30T08:47:53.027498+00:00",
+      "kind": "owner_reported",
+      "owner_statement": "all working fine",
+      "accepted_scope": [
+        "updated landscape web login",
+        "restored analyst sidebar/pages initial browser check"
+      ],
+      "context": "Reply to the restarted local backend/web browser check. Does not imply completion of farmer submission, analyst decision, farmer return/export, admin or additional device/provider gates.",
+      "client_run": "20261030-075915-144",
+      "local_backend_probe": {
+        "recorded_at_utc": "2026-10-30T08:47:53.027498+00:00",
+        "reachable": true,
+        "independent_analyst_endpoint_present": true
+      }
+    },
+    {
+      "recorded_at_utc": "2026-10-30T08:58:01.522512+00:00",
+      "kind": "owner_screenshot",
+      "image": "owner-screenshots/analyst-case-1-pending-ndvi.png",
+      "sha256": "d990a28cc1e9c109031b3c9e36930ded929acea57104e56561904968e4004ca1",
+      "observed": [
+        "Analyst case #1 pending review; analysis #1 and case version 1",
+        "Saved boundary matches current farm coordinates; farm boundary version 1",
+        "Recorded NDVI raster visible, mean 0.413 index, valid area 79.8 percent",
+        "Restored analyst navigation and new visual theme visible"
+      ],
+      "scope": "Confirms submission reached analyst case workbench and raster display. Review decision, farmer return and actual exports are not yet demonstrated."
+    },
+    {
+      "recorded_at_utc": "2026-10-30T09:01:34.481799+00:00",
+      "kind": "owner_screenshots_and_report",
+      "owner_statement": "all goods",
+      "images": [
+        {
+          "path": "owner-screenshots/analyst-case-1-ranking-and-reference-fit.png",
+          "sha256": "85eaae1b6a72d1a6829f5a1e2f607accb0063a6d0571866e5d6e3f1322b1ab5a"
+        },
+        {
+          "path": "owner-screenshots/analyst-case-1-rice-detail-summary.png",
+          "sha256": "9627a5fc81b250c2bd74b14b8e83fc2120ea0df15e9e0671c345520d700db6ef"
+        },
+        {
+          "path": "owner-screenshots/farmer-history-approved.png",
+          "sha256": "dcae885f257f11660f5bebbe3bb389aeeebe77e66432fbd9f58eed37fc97f033"
+        }
+      ],
+      "observed": [
+        "Case #1 analyst explanation: Rice 12.042 percent, baseline 5.882 percent, net +6.160 percentage points; 9 saved samples",
+        "Why Rice ranks first: 3.413 percentage points above Mango with positive and negative model factors",
+        "Reference fit: temperature 27 C and pH 6 within preferred ranges; annual rainfall 2100 mm/year has limited fit; FAO EcoCrop source visible",
+        "Rice crop detail modal retains the same explanation",
+        "Android Medium Phone API 37.0 History displays Phase 5 Explainable AI Test Farm, 1.103 ha and Approved status"
+      ],
+      "owner_report_context": "Owner reports all goods after instructions to verify assessment and inspect farmer status/advisory note. Status is directly pictured; note text is owner-reported rather than independently visible.",
+      "scope": "Completes observed farmer submission -> analyst evidence/review -> farmer status return checkpoint. Actual saved exports and administrative/additional device/provider checks remain pending."
+    },
+    {
+      "recorded_at_utc": "2026-10-30T09:06:40.658371+00:00",
+      "kind": "owner_reported",
+      "owner_statement": "yeah it is present",
+      "accepted_scope": "Owner confirms requested ranking explanation, research citations, review status and advisory note are present in the farmer/analyst report check.",
+      "context": "Reply to instructions to save both reports and inspect their content.",
+      "limitation": "No owner-generated PDF file paths or bytes supplied; actual file hashes and independent inspection are not claimed."
+    },
+    {
+      "recorded_at_utc": "2026-10-30T09:21:10.880927+00:00",
+      "kind": "owner_screenshot",
+      "image": "owner-screenshots/admin-review-verification-audit.png",
+      "sha256": "f7e8d6d694639500cc5ef28539f52f4cbc77c060b9ca40ab426efaf480bec6f8",
+      "observed": [
+        "Super Administrator Audit & System page accessible",
+        "Recent activity shows Phase 1 Test Analyst - review verified",
+        "Displayed review timestamp 2026-10-30T16:59:27.670099+08:00"
+      ],
+      "scope": "Confirms administrative visibility of the review decision audit event in the active local lab. Case number is linked by ongoing journey context, not printed in this screenshot."
+    },
+    {
+      "recorded_at_utc": "2026-10-30T09:25:01.461057+00:00",
+      "kind": "owner_screenshot",
+      "image": "owner-screenshots/admin-supporting-reference-inactive-draft.png",
+      "sha256": "3f1da58fa6ebb7af41ebd120716abfd3b3c8ca04070e318e83f52994860d7438",
+      "observed": [
+        "Supporting references: Phase 7 workflow check, record key phase7_workflow_check, revision 1",
+        "Inactive | draft; valid until 2030-12-31",
+        "Success message: Revision saved. Activate it separately after review.",
+        "Trusted model hash remains 6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278"
+      ],
+      "scope": "Confirms current-build administrator draft creation and inactive-by-default behavior; no activation requested or performed."
+    },
+    {
+      "recorded_at_utc": "2026-10-30T09:40:00.595271+00:00",
+      "kind": "owner_reported",
+      "owner_statement": "all goods",
+      "accepted_scope": [
+        "Android rotation and large-text readability",
+        "airplane-mode close/reopen and online refresh recovery",
+        "second-farmer account isolation and original-farmer approved history return"
+      ],
+      "context": "Reply to the three explicit mobile checks; no screenshots were supplied for these checks."
+    },
+    {
+      "recorded_at_utc": "2026-10-30T09:40:00.595271+00:00",
+      "kind": "owner_question_answers",
+      "answers": {
+        "narrow_browser_menu_and_keyboard_navigation": "Pass",
+        "denied_location_permission_guidance": "Pass",
+        "both_actual_pdf_files_saved": "Both PDFs saved",
+        "approximate_location_accuracy_handling": "Pass"
+      },
+      "scope": "Owner reports current candidate passed these checks. PDF contents were previously confirmed; independent hashes of owner-created saved files are not claimed."
+    }
+  ],
+  "remaining_scope": [
+    "Release/physical/provider/scientific gates retained in RELEASE_GATES.json"
+  ]
+}

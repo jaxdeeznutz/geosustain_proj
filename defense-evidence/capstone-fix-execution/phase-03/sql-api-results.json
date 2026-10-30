@@ -1,0 +1,9 @@
+{
+  "status": "passed",
+  "checks": [
+    "Real forest inference produces formal concave-farm result with explicit partial, constant/coarse and unavailable raster layers",
+    "Farmer detail/history and analyst submitted case retain the exact raster cells, masks, metadata and statistics",
+    "All-raster failure leaves actual model scores/order, inputs, annual grades and estimated NPK unchanged; earlier snapshot is immutable"
+  ],
+  "basis": "Verified disposable PostgreSQL schema; synthetic source rasters and environmental inputs; actual unchanged forest. Temporary schema dropped."
+}

@@ -55,54 +55,6 @@ class WebDashboardScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (state.isPlanner) ...[
-          Text(
-            'Analyst workspace',
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 12),
-          WebAdaptiveRow(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _AnalystWorkflowCard(
-                  icon: Icons.fact_check_rounded,
-                  title: 'Review farmer submissions',
-                  description:
-                      'Open a submitted case, inspect its saved boundary and evidence, then record your review decision.',
-                  steps:
-                      'Review Inbox → Inspect evidence → Verify, request information, or reject',
-                  action: 'Open Review Inbox',
-                  onPressed: () => PortalRoutes.go('/operator/queue'),
-                ),
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: _AnalystWorkflowCard(
-                  icon: Icons.add_location_alt_rounded,
-                  title: 'Analyze an area',
-                  description:
-                      'Create your own land assessment for planning. A farmer submission is not required.',
-                  steps:
-                      'Select point or boundary → Analyze → Inspect results → Save or report',
-                  action: 'Start analyst assessment',
-                  onPressed: onStartAnalyze,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          WebOperatorOverview(state: state),
-          const SizedBox(height: 24),
-          const Text(
-            'My assessment activity',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-          ),
-          const Text(
-            'The following statistics describe your own analysis records, separately from the submitted review workload.',
-          ),
-          const SizedBox(height: 12),
-        ],
         if (!summaryReady)
           Padding(
             padding: EdgeInsets.only(bottom: 12),
@@ -134,7 +86,9 @@ class WebDashboardScreen extends StatelessWidget {
                 title: 'Average Model Score',
                 value: avg == null ? '—' : '${avg.toStringAsFixed(1)}%',
                 subtitle: avg == null
-                    ? 'Start your first crop analysis'
+                    ? (state.isPlanner
+                          ? 'No recorded model scores yet'
+                          : 'Start your first crop analysis')
                     : 'Recorded crop model scores',
               ),
             ),
@@ -217,6 +171,46 @@ class WebDashboardScreen extends StatelessWidget {
             Expanded(child: _DashboardDidYouKnow()),
           ],
         ),
+        if (state.isPlanner) ...[
+          Text(
+            'Submitted review workload',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 12),
+          WebAdaptiveRow(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _AnalystWorkflowCard(
+                  icon: Icons.fact_check_rounded,
+                  title: 'Review farmer submissions',
+                  description:
+                      'Open a submitted case, inspect its saved boundary and evidence, then record your review decision.',
+                  steps:
+                      'Review Inbox → Inspect evidence → Verify, request information, or reject',
+                  action: 'Open Review Inbox',
+                  onPressed: () => PortalRoutes.go('/operator/queue'),
+                ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: _AnalystWorkflowCard(
+                  icon: Icons.map_rounded,
+                  title: 'Map of submitted cases',
+                  description:
+                      'Locate farmer-submitted cases and open their saved evidence for review.',
+                  steps: 'Open map → Select submitted case → Inspect evidence',
+                  action: 'Open submitted case map',
+                  onPressed: onOpenMapAnalysis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+          WebOperatorOverview(state: state),
+          const SizedBox(height: 24),
+          const SizedBox(height: 12),
+        ],
       ],
     );
   }
@@ -236,25 +230,28 @@ class _AnalystWorkflowCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) => _WebCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Icon(icon, color: WebPortalColors.accent, size: 30),
-        const SizedBox(height: 12),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-        ),
-        const SizedBox(height: 8),
-        Text(description),
-        const SizedBox(height: 12),
-        Text(steps, style: TextStyle(color: WebPortalColors.muted)),
-        const SizedBox(height: 16),
-        FilledButton(onPressed: onPressed, child: Text(action)),
-      ],
-    ),
-  );
+  Widget build(BuildContext context) {
+    Theme.of(context);
+    return _WebCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Icon(icon, color: WebPortalColors.accent, size: 30),
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
+          ),
+          const SizedBox(height: 8),
+          Text(description),
+          const SizedBox(height: 12),
+          Text(steps, style: TextStyle(color: WebPortalColors.muted)),
+          const SizedBox(height: 16),
+          FilledButton(onPressed: onPressed, child: Text(action)),
+        ],
+      ),
+    );
+  }
 }
 
 class _DashboardWelcomeRow extends StatelessWidget {
@@ -577,7 +574,7 @@ class _DashboardQuickActions extends StatelessWidget {
           child: FilledButton.icon(
             onPressed: onStartAnalyze,
             icon: Icon(Icons.add_circle_outline_rounded),
-            label: Text('Start New Analysis'),
+            label: const Text('Start New Analysis'),
           ),
         ),
         SizedBox(height: 8),
@@ -598,7 +595,7 @@ class _DashboardQuickActions extends StatelessWidget {
           child: OutlinedButton.icon(
             onPressed: onOpenHistory,
             icon: Icon(Icons.history_rounded),
-            label: Text(analyst ? 'Assessment Records' : 'Analysis History'),
+            label: const Text('Analysis History'),
             style: OutlinedButton.styleFrom(
               foregroundColor: WebPortalColors.accent,
             ),

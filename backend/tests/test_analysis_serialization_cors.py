@@ -67,7 +67,7 @@ def test_actual_save_adapter_and_post_handle_cached_baseline(monkeypatch):
     monkeypatch.setattr(api, 'build_analysis_result', lambda **kw: (result, 'selected-polygon'))
     monkeypatch.setattr(api, 'get_user_analysis', lambda *args: {
         **snapshots[0], 'session_id': 42, 'analysis_status': 'completed', 'created_at': timestamp})
-    api.app.dependency_overrides[api.get_api_user] = lambda: {'id': 2}
+    api.app.dependency_overrides[api.get_api_user] = lambda: {'id': 2, 'role': 'farmer'}
     try:
         with TestClient(api.app) as client:
             response = client.post('/api/mobile/analysis', json={'farm_id': 2},

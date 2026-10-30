@@ -1,0 +1,65 @@
+{
+  "recorded_at_utc": "2026-10-29T14:26:56.552418+00:00",
+  "status": "complete_owner_accepted",
+  "basis": "Owner-provided Android emulator screenshots and explicit owner reports; synthetic Phase 5 lab, actual unchanged forest",
+  "checks": [
+    {
+      "check": "Overview local Rice explanation",
+      "result": "passed_screenshot",
+      "score_pct": 12.042,
+      "baseline_pct": 5.882,
+      "net_pp": 6.16,
+      "sample_count": 9
+    },
+    {
+      "check": "Mango selection and Rice alternative comparison",
+      "result": "passed_screenshot",
+      "score_pct": 8.629,
+      "baseline_pct": 5.882,
+      "net_pp": 2.747,
+      "mango_minus_rice_pp": -3.413
+    },
+    {
+      "check": "Local Mango detail sheet, method and recorded input ranges",
+      "result": "passed_screenshot"
+    },
+    {
+      "check": "Recommended Mango crop details",
+      "result": "passed_screenshot",
+      "rounded_score_pct": 8.63
+    },
+    {
+      "check": "History reopen preserves visible local explanation",
+      "result": "passed_owner_report"
+    },
+    {
+      "check": "Analysis submitted to planner",
+      "result": "passed_owner_report"
+    },
+    {
+      "check": "Analyst browser local Rice explanation and Mango comparison",
+      "result": "passed_screenshot_and_owner_report",
+      "score_pct": 12.042,
+      "baseline_pct": 5.882,
+      "net_pp": 6.16,
+      "rice_minus_mango_pp": 3.413
+    },
+    {
+      "check": "Analyst ranked crop list and Mango crop details",
+      "result": "passed_screenshot_and_owner_report",
+      "rounded_mango_score_pct": 8.63
+    },
+    {
+      "check": "Actual mobile analysis report Explainable AI section",
+      "result": "passed_explicit_owner_confirmation"
+    },
+    {
+      "check": "Actual analyst case report Explainable AI section",
+      "result": "passed_explicit_owner_confirmation"
+    }
+  ],
+  "remaining": [],
+  "limitation": "Local workflow acceptance only; no provider, field, production or scientific validity claim.",
+  "ui_refinement": "Deferred to Phase 7 at owner request; active UI matches previously passed and owner-checked candidate.",
+  "accepted_at_utc": "2026-10-29T14:39:42.571205+00:00"
+}

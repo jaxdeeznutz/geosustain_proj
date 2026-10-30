@@ -710,6 +710,10 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
               const Text(
                 'Review the saved boundary, sources, dates, coverage and limitations before recording a decision. Accepting the assessment does not guarantee crop success or replace field and laboratory evidence.',
               ),
+              if (c['farm_id'] == null)
+                const Text(
+                  'Historical submission without a saved-farm association. Preserve its original evidence and review history; do not infer a farm boundary.',
+                ),
               if (ownSubmission)
                 const Text(
                   'You cannot verify or reject your own submission. Another analyst must review it.',
@@ -986,6 +990,9 @@ class _OperatorEvidenceMapState extends State<OperatorEvidenceMap> {
   };
   @override
   Widget build(BuildContext context) {
+    if (widget.record['spatial_assessment'] != null) {
+      return SpatialRasterCard(record: widget.record);
+    }
     final labels = <String, String>{
       ..._OperatorEvidenceMapState.labels,
       'slope': analysisNumber(widget.record['slope_pct']) != null
@@ -1111,13 +1118,11 @@ class WebAnalystPlanningMap extends StatefulWidget {
   final AnalysisState state;
   final WebRecordController controller;
   final MapController mapController;
-  final VoidCallback onContinue;
   const WebAnalystPlanningMap({
     super.key,
     required this.state,
     required this.controller,
     required this.mapController,
-    required this.onContinue,
   });
 
   @override
@@ -1125,62 +1130,11 @@ class WebAnalystPlanningMap extends StatefulWidget {
 }
 
 class _WebAnalystPlanningMapState extends State<WebAnalystPlanningMap> {
-  bool explore = false;
-
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      _WebCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Choose your map task',
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                ChoiceChip(
-                  label: const Text('Submitted cases'),
-                  selected: !explore,
-                  onSelected: (_) => setState(() => explore = false),
-                ),
-                ChoiceChip(
-                  label: const Text('Select an area'),
-                  selected: explore,
-                  onSelected: (_) => setState(() => explore = true),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              explore
-                  ? 'Select a point or use the boundary drawing tool. Continue to Analyze Area to run your independent assessment; your selection is retained.'
-                  : 'Open a submitted case to review its saved evidence and record a decision.',
-            ),
-          ],
-        ),
-      ),
-      const SizedBox(height: 16),
-      if (explore)
-        _WebMapVisual(
-          state: widget.state,
-          showPopup: false,
-          onClosePopup: () {},
-          actionLabel: 'Continue to analysis',
-          onAnalyze: () async => widget.onContinue(),
-        )
-      else
-        WebOperatorMap(
-          state: widget.state,
-          controller: widget.controller,
-          mapController: widget.mapController,
-        ),
-    ],
+  Widget build(BuildContext context) => WebOperatorMap(
+    state: widget.state,
+    controller: widget.controller,
+    mapController: widget.mapController,
   );
 }
 
@@ -1514,7 +1468,11 @@ class _FarmerReviewResponsePageState extends State<FarmerReviewResponsePage> {
                   '${e['notes'] ?? ''}\n${analysisDateText(e['created_at'])}',
                 ),
               ),
-            if (c['status'] == 'needs_information') ...[
+            if (c['status'] == 'needs_information' && c['farm_id'] == null)
+              const Text(
+                'This historical case has no saved farm to link a correction to. Create or open a saved farm, analyze its current boundary and submit a new formal case. The original case and notes remain in your history.',
+              ),
+            if (c['status'] == 'needs_information' && c['farm_id'] != null) ...[
               const Text(
                 'Correct the farm or provide the requested evidence, run a new analysis of this same farm, then select it here. Your earlier analysis stays in the review history.',
               ),

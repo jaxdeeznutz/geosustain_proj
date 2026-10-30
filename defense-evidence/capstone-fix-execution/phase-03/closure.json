@@ -1,0 +1,36 @@
+{
+  "closed_at_utc": "2026-10-29T12:42:31.500000+00:00",
+  "status": "complete_local_owner_accepted",
+  "client_run": "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-03\\attempts\\20261029-123149-022",
+  "backend_tests_passed": 405,
+  "backend_followup_targeted_tests_passed": 22,
+  "flutter_tests_passed": 231,
+  "flutter_analyzer": "passed",
+  "web_build": "passed",
+  "sql_api": "passed; disposable verified PostgreSQL schema; exact farmer/history/analyst snapshot parity and model-evidence preservation",
+  "prior_formal_workflow_regression": "passed",
+  "independent_reference": "REFERENCE_CASES.md; analytic unit-grid and polygon calculations independent of reducer implementation",
+  "manual_checks": [
+    "Android NDVI clipped to concave L-shaped farm, explicit gray missing cells and descriptive legend",
+    "Constant/coarse pH: min/max/mean/median 6, population std 0, 250 m native support, 100% coverage",
+    "Completed 30-day rainfall unavailable without fabricated cells or substituted model samples",
+    "Crop recommendations remain available after selecting unavailable raster",
+    "History reopening preserves NDVI mean 0.413 and valid area 79.8%; zoom/pan accepted by owner",
+    "Analyst NDVI, constant pH and unavailable rainfall match farmer views",
+    "Both actual farmer and analyst report previews accepted by owner; matching maps/statistics/source limitations"
+  ],
+  "pdf_render_review": "pdf-qa/final-footer/inspection.json; generated fixture PDFs fully rendered and text/bounds checked",
+  "manual_evidence": "manual-observations.json",
+  "owner_acceptance": "all goods, with six actual app export-preview screenshots",
+  "basis": "Local synthetic workflow, real unchanged forest; screenshots, owner confirmations, independent arithmetic tests and isolated SQL/API checks distinguished in evidence",
+  "limitations": [
+    "No successful live raster-provider retrieval or field/agronomic validation is claimed; provider graph/REST tests were offline and manual data explicitly synthetic",
+    "No physical printing, push, deployment or live production parity claimed",
+    "Optional raster grid limits and unavailable states remain documented; coarse sources do not establish subpixel detail",
+    "Exact snapshot persistence independently established by SQL/API; historical UI navigation and dynamic zoom/pan are owner-confirmed"
+  ],
+  "source_hashes_match_recorded_candidate": true,
+  "source_candidate_hash_manifest": "candidate-source-hashes.json",
+  "model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "next_phase": "Phase 4 - model evidence; NOT STARTED"
+}

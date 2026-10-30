@@ -99,6 +99,10 @@ List<String> analysisCoverageLines(Map<String, dynamic> record) {
 /// Report text comes from saved evidence, never from a fresh spatial lookup.
 List<String> cagroAnalysisReportLines(Map<String, dynamic> record) {
   final lines = analysisCoverageLines(record);
+  lines.addAll(seasonalAssessmentLines(record));
+  if (record['analysis_scope_notice'] != null) {
+    lines.add('${record['analysis_scope_notice']}');
+  }
   final soil = analysisMapValue(record['soil_nutrients_observed']);
   final originals = analysisListValue(
     analysisMapValue(record['cagro_soil'])['observations'],

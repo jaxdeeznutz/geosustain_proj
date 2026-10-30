@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "checks": [
+    "Actual forest: varied original parcel samples reconstruct every class score; all active crop classes map correctly",
+    "Farmer detail/history and analyst submitted case preserve identical local and per-sample explanation snapshots",
+    "Attribution failure leaves scores/ranking intact and does not replace an earlier saved explanation",
+    "Saved attribution rebinds from recorded inputs and contributions without reading or predicting with the current model"
+  ],
+  "basis": "Verified disposable PostgreSQL schema; synthetic observations; actual unchanged forest. Temporary schema dropped."
+}

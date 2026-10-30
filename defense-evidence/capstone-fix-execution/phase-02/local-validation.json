@@ -1,0 +1,61 @@
+{
+  "recorded_utc": "2026-10-29T05:31:56.972258+00:00",
+  "source_commit": "2eb82c725a2c50b64e3febfe610fe4958c11b75a",
+  "source_has_uncommitted_phase01_and_phase02_changes": true,
+  "source_hashes": {
+    "backend/seasonal_assessment.py": "7b683ad5cdf590dfaca581437942166deb467456ab540f1d327370d09ffced1b",
+    "backend/fastapi_app.py": "d60030ad7ebcb417371033c257ea9776713567388ee4f3eb7c1b2bb433fbeb70",
+    "backend/tests/conftest.py": "972f525615d5f6b13d92a81a52ee041644c56264328e0b0f632b505f6c78d6b8",
+    "backend/tests/test_seasonal_assessment.py": "3e133d313f8da3bb30beeb50d10af38bbdd3adce96f6aa1e5d6315e6f555186a",
+    "backend/tests/phase02_seasonal_integration.py": "2e6e29791e2cae1e9af2d963bf5923936571e37d8f7e52b317349ebcd6f9df67",
+    "backend/tests/phase02_manual_host.py": "1d34d0aa8196f3df0b76c98d7e75caf748190ffa5140a9eae1feaf1fac0793c1",
+    "lib/main.dart": "a9a4df957e1309dd21c8d40a69bfe4757552338f13d22f3cafbfa90c70e86987",
+    "lib/seasonal_context.dart": "3fc6b995f92585c1d0da7337259fad00ef9e6839acba7e43c282ea8cdbe43ed3",
+    "lib/widgets/seasonal_context.dart": "7f352244e3db4a5bb223d9a6bbc87120a43845b1fb339a15d94a02efd9b8eb05",
+    "lib/screens/my_farms_screen.dart": "09d8c52fe279957973de128fe03b07c02b8a08fe8bb781ac1f7abc0ee00277fb",
+    "lib/screens/land_mapping_screen.dart": "6175709e0f9e6b59c78ed83266be5bddb46fbdddd34f4d0f9252daf6404a209a",
+    "lib/screens/reference_analysis.dart": "fa425e0ef0c56cf52e75ca56c01cea2267b030bd96464ed4938dee385f8b80f2",
+    "lib/screens/history_screen.dart": "1c0acdb1cc995d2ead2888bb21f3bca8dcd66aef7466822d0ff401f961f2d4f1",
+    "lib/screens/analysis_explanation.dart": "28aa59d813529ceddaef083facad091c00e763c26fc1c501b212863e61db51b9",
+    "lib/screens/map_screen.dart": "b4abd8dd39e9cee1757f9314d2791ac002b63504031387538b312926d54348d4",
+    "lib/widgets/analysis_coverage.dart": "bc2527fcfb7232fd7002c03481d15bacce4984acdd344368fb9b5552d9fd6788",
+    "lib/web/operator_report.dart": "62a5c6ba61aecc55a85eb56b2fe1d09aad0beb7621713d498187431844645c18",
+    "lib/screens/insights_report_admin_screen.dart": "fee5b08ae04b993b3c8984e12a4db6b1b1fb43ef4378d19c6fb0a29857d6101c",
+    "test/seasonal_context_test.dart": "ed19bc44ce1656746bff5b4cd2db4c38cb35598fa5e2a0b364331f39f42715f0",
+    "deployment/verify-phase-02.ps1": "039b980cac3d87b4b46d3556e63d8ee2f9d4b99cba2eee701fa5e7f564025679",
+    "test/qa_support.dart": "b272dfb104312127e38ccddd17dd576450abf3acd751832292744af2581e904d",
+    "test/analysis_scope_test.dart": "c29c1537feddb42882be01402fd596e856d4187db78cf3ab92b7f0a5272c696b",
+    "test/grouped_phone_fixes_test.dart": "1326c3afb9482a9bc0ea5d8d1b37425ad9ff9d342712252cd4bf57ec9e6bb26c",
+    "test/mobile_design_test.dart": "2b28a8140335d5ac12cb5b22978b64d848ea1a033a942323227c750f8eb2c5a0"
+  },
+  "model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "backend_regression": {
+    "passed": 383,
+    "warnings": 4,
+    "log": "backend-tests.log"
+  },
+  "seasonal_targeted_after_metadata_change": {
+    "passed": 10
+  },
+  "isolated_sql_api": "passed: sql-api-results.json",
+  "phase01_regression": "passed: phase01-regression.log",
+  "manual_host_smoke": "passed: real existing model with controlled inputs; four monthly states; temporary schema removed",
+  "shared_dart_text_smoke": "passed using standalone SDK Dart; not a Flutter test run",
+  "flutter_analyze_tests_web_build": {
+    "status": "passed",
+    "tests_passed": 226,
+    "owner_run": "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-02\\attempts\\20261029-062426-804"
+  },
+  "provider_probe": "unavailable; no live-provider success claimed",
+  "manual_ui_and_export_visual_check": "passed and owner accepted; see MANUAL_JOURNEY.md and closure.json",
+  "status": "complete_local_owner_accepted",
+  "deployed": false,
+  "client_fix_evidence": "client-failure-fixes.json",
+  "new_manual_defect": "seasonal-expansion-fix.json",
+  "verified_client_run": "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-02\\attempts\\20261029-062426-804",
+  "flutter_checks": {
+    "analyzer": "passed",
+    "tests": 226,
+    "web_build": "passed"
+  }
+}

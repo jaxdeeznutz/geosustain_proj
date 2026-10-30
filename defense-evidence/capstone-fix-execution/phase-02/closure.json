@@ -1,0 +1,29 @@
+{
+  "closed_at_utc": "2026-10-29T08:17:53.867615+00:00",
+  "status": "complete_local_owner_accepted",
+  "client_run": "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-02\\attempts\\20261029-062426-804",
+  "backend_tests_passed": 383,
+  "flutter_tests_passed": 226,
+  "flutter_analyzer": "passed",
+  "web_build": "passed",
+  "manual_checks": [
+    "February complete monthly evidence",
+    "August complete monthly evidence",
+    "February historical reopen retains original snapshot",
+    "May unavailable climate with model result preserved (owner confirmation)",
+    "November partial climate with 19/20 temperature coverage",
+    "Unchanged model scores and order across months (owner confirmation)",
+    "Exact farmer/analyst snapshot parity",
+    "Analyst case report accepted by owner",
+    "Readable farmer PDF preserves saved snapshot and limitations"
+  ],
+  "basis": "Owner screenshots and explicit confirmations; controlled synthetic workflow data. SQL/API and unit checks documented separately.",
+  "limitations": [
+    "Bounded real-provider probe returned unavailable; no live-provider success or agronomic validation claimed",
+    "No legacy record without seasonal snapshot was present in fresh manual lab; automated absence-handling tests passed",
+    "No push or deployment performed"
+  ],
+  "source_hashes_match_recorded_candidate": true,
+  "model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "next_phase": "Phase 3 polygon statistics and heatmaps - not started"
+}

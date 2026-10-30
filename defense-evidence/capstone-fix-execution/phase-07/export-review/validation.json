@@ -1,0 +1,46 @@
+{
+  "recorded_at_utc": "2026-10-30T08:08:02.315988+00:00",
+  "fixture": "test/fixtures/local_analysis.json",
+  "reports": {
+    "analyst-explanation-report.pdf": {
+      "sha256": "fa0e7e1ff273d1f683a63b6548c94809fc00d35cc6757042108e8bbb9c19c917",
+      "pages": 24,
+      "summary_pages": [
+        11,
+        13
+      ],
+      "saved_scores_verified": {
+        "Rice": "12.041872%",
+        "Mango": "8.629182%",
+        "Banana": "3.189621%",
+        "Coconut": "2.191350%",
+        "Durian": "1.506564%",
+        "Cacao": "1.118867%",
+        "Rubber": "0.854759%"
+      },
+      "required_text_and_model_context": "passed",
+      "visual_inspection": "passed: all-page contact sheet and full-size selected Rice/Mango summary pages; no observed clipping or overlap; tables continue with repeated headers"
+    },
+    "farmer-explanation-report.pdf": {
+      "sha256": "3761a470ccbf6cc337567495f9bc6533d830f4b2c2e02059c3a4aa066ee87ed6",
+      "pages": 27,
+      "summary_pages": [
+        14,
+        16
+      ],
+      "saved_scores_verified": {
+        "Rice": "12.041872%",
+        "Mango": "8.629182%",
+        "Banana": "3.189621%",
+        "Coconut": "2.191350%",
+        "Durian": "1.506564%",
+        "Cacao": "1.118867%",
+        "Rubber": "0.854759%"
+      },
+      "required_text_and_model_context": "passed",
+      "visual_inspection": "passed: all-page contact sheet and full-size selected Rice/Mango summary pages; no observed clipping or overlap; tables continue with repeated headers"
+    }
+  },
+  "limitation": "Test-generated PDFs; owner app exports and manual journey remain separate.",
+  "visually_reviewed_at_utc": "2026-10-30T08:12:36.159193+00:00"
+}

@@ -361,13 +361,14 @@ class ApiService {
     double lon, {
     String? placeName,
     int? intendedPlantingMonth,
+    bool independentAnalyst = false,
   }) async {
     return _postAnalysis({
       'lat': lat,
       'lon': lon,
       if (placeName != null && placeName.isNotEmpty) 'place_name': placeName,
       'intended_planting_month': ?intendedPlantingMonth,
-    });
+    }, independentAnalyst: independentAnalyst);
   }
 
   Future<Map<String, dynamic>> analyzePolygon(
@@ -375,13 +376,16 @@ class ApiService {
     String? placeName,
     int? intendedPlantingMonth,
     int? farmId,
+    int? boundaryVersion,
+    bool independentAnalyst = false,
   }) async {
     return _postAnalysis({
       'polygon': polygon,
       if (placeName != null && placeName.isNotEmpty) 'place_name': placeName,
       'intended_planting_month': ?intendedPlantingMonth,
       'farm_id': ?farmId,
-    });
+      'boundary_version': ?boundaryVersion,
+    }, independentAnalyst: independentAnalyst);
   }
 
   static String newRequestId() {
@@ -502,11 +506,15 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> _postAnalysis(
-    Map<String, dynamic> payload,
-  ) async {
+    Map<String, dynamic> payload, {
+    bool independentAnalyst = false,
+  }) async {
     final timer = Stopwatch()..start();
     try {
-      final result = await _performAnalysisRequest(payload);
+      final result = await _performAnalysisRequest(
+        payload,
+        independentAnalyst: independentAnalyst,
+      );
       if (kDebugMode) {
         debugPrint(
           'Analysis completed elapsed_ms=${timer.elapsedMilliseconds}',
@@ -525,10 +533,12 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> _performAnalysisRequest(
-    Map<String, dynamic> payload,
-  ) async {
+    Map<String, dynamic> payload, {
+    bool independentAnalyst = false,
+  }) async {
     final token = await getToken();
-    final key = await _requestKey('analysis', payload);
+    final operation = independentAnalyst ? 'analyst_analysis' : 'analysis';
+    final key = await _requestKey(operation, payload);
     // Recover a completed/in-flight request before attempting any new POST.
     final prior = await _analysisStatus(key, token);
     Map<String, dynamic> data;
@@ -538,7 +548,9 @@ class ApiService {
       try {
         final response = await _client
             .post(
-              Uri.parse('$baseUrl/api/mobile/analysis'),
+              Uri.parse(
+                '$baseUrl/api/${independentAnalyst ? 'web' : 'mobile'}/analysis',
+              ),
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': 'Bearer $token',
@@ -586,7 +598,7 @@ class ApiService {
         'The server returned a different farm. Refresh your farm and try again.',
       );
     }
-    await _completeRequest('analysis', key, token);
+    await _completeRequest(operation, key, token);
     return data;
   }
 
@@ -1618,6 +1630,38 @@ class ApiService {
       );
     }
     return List<dynamic>.from(data['crops'] ?? const []);
+  }
+
+  Future<Map<String, dynamic>> controlledRecordsRequest(
+    String suffix, {
+    Map<String, dynamic>? body,
+    String? kind,
+    int offset = 0,
+  }) async {
+    final token = await getToken();
+    final uri = Uri.parse('$baseUrl/api/admin/controlled-records$suffix')
+        .replace(
+          queryParameters: body == null && suffix.isEmpty
+              ? {'offset': '$offset', 'limit': '25', 'kind': ?kind}
+              : null,
+        );
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+    final response =
+        await (body == null
+                ? _client.get(uri, headers: headers)
+                : _client.post(uri, headers: headers, body: jsonEncode(body)))
+            .timeout(const Duration(seconds: 60));
+    final data = _decodeJson(response);
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not update controlled records'),
+      );
+    }
+    return Map<String, dynamic>.from(data);
   }
 
   Future<Map<String, dynamic>> updateAdminCrop(

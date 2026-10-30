@@ -1,0 +1,53 @@
+{
+  "closed_at_utc": "2026-10-30T02:40:23.390913+00:00",
+  "status": "complete_local_owner_accepted",
+  "source_commit": "2eb82c725a2c50b64e3febfe610fe4958c11b75a",
+  "source_manifest": "implementation-source-hashes.json",
+  "backend_tests_passed": 475,
+  "flutter_tests_passed": 254,
+  "focused_history_tests_passed": 7,
+  "client_checks": {
+    "flutter-pub-offline": true,
+    "flutter-analyze": true,
+    "flutter-tests": true,
+    "flutter-web-build": true
+  },
+  "client_attempt": "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\defense-evidence\\capstone-fix-execution\\phase-06\\attempts\\20261030-015008-805",
+  "sql_api": "Passed on the verified disposable PostgreSQL server: all six record categories, stale revision/generation rejection, concurrent activation, real consumers, old/submitted snapshot preservation, roles, invalid data/model identity, audit failure, migration rollback and empty crop-filter behavior.",
+  "record_categories": [
+    "crop_requirement",
+    "planting_calendar",
+    "environmental_source",
+    "model_version",
+    "supporting_reference",
+    "system_setting"
+  ],
+  "owner_manual_acceptance": [
+    "Administrator page, record creation and invalid-date correction with input retention",
+    "Reviewed inactive calendar explicitly activated; unintended rainfall requirement deactivated",
+    "Earlier February result retains listed month and revision 1 after configuration changes",
+    "New February result uses not-listed month and revision 2",
+    "Fixed reference expander opens for both restored saved analyses",
+    "Audit actor, dates, revision creation and before/after activation IDs visible",
+    "Both actual app exports preserve saved calendar revision 2, record 3"
+  ],
+  "history_fix": "Independent PageStorageKey for reference expander; SelectionArea/Text retains copy support without nested SelectableText scroll state. Regression includes seeded double scroll offset, expansion, analysis switching and reopening.",
+  "reports": "Both builders rendered and visually reviewed; all six fixture record checksums and calendar text verified. Owner actual mobile and submitted analyst exports also passed.",
+  "migration": "Idempotent new revision/pointer tables. Empty-table rollback/remigration verified; used-table rollback refuses evidence deletion. Previous reviewed activation pointers can be restored with generation checking.",
+  "scope_decisions": {
+    "model_installation": "Trusted developer release operation. Admins manage matching version metadata; records never upload, load, deserialize or deploy model files.",
+    "nutrients": "NPK entry and scientific data changes remain deferred to Phase 8.",
+    "ui_refinement": "Owner requested broader wording/layout refinement in Phase 7; draft preserved under phase-05/deferred-phase-07-ui."
+  },
+  "production_model_sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "protected_model_ranking_attribution_original_requirements_seasonal_spatial_and_npk_sources_unchanged": true,
+  "deployed": false,
+  "published": false,
+  "limitations": [
+    "Local synthetic workflow and administrative fixtures, not independent scientific review or real provider/field validation.",
+    "Sampling control may change new model scores by selecting a different allowed set of original samples; actual ranking formula and model artifact are unchanged.",
+    "Later model/input changes require affected consumer, attribution, performance, UI and export revalidation.",
+    "No production migration, external messages or release performed."
+  ],
+  "next_phase": "Phase 7 - integrated verification and deferred wording/UI refinement; not started"
+}

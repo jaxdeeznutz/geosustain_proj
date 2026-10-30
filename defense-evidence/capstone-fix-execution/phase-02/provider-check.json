@@ -1,0 +1,14 @@
+{
+  "status": "unavailable",
+  "source_name": "NASA POWER",
+  "source_url": "https://power.larc.nasa.gov/api/temporal/monthly/point",
+  "retrieved_at": "2026-10-29T05:17:31.995772+00:00",
+  "baseline_start_year": 2005,
+  "baseline_end_year": 2024,
+  "limitations": [
+    "Historical monthly context is not a forecast or a crop planting calendar.",
+    "Monthly climate provider unavailable or returned an invalid response. Retry a new analysis later."
+  ],
+  "metrics": {},
+  "basis": "One bounded public Panabo representative-point provider check, not field validation"
+}

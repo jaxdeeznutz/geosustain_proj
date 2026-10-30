@@ -1,0 +1,261 @@
+[
+  {
+    "id": 9,
+    "kind": "model_version",
+    "record_key": "installed_model",
+    "revision": 2,
+    "document": {
+      "kind": "model_version",
+      "scope": "Panabo City",
+      "title": "Controlled test reference",
+      "method": "Synthetic reference contract test, not field validation",
+      "payload": {
+        "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      },
+      "reference": "Software test only",
+      "record_key": "installed_model",
+      "valid_from": "2026-10-28",
+      "review_note": "Reviewed only as a software test fixture",
+      "valid_until": "2026-11-28",
+      "evidence_url": "https://example.org/controlled-fixture",
+      "review_status": "reviewed"
+    },
+    "content_sha256": "e4d357ab018c0a9fe84f555dca7b7c4d9ab443a2c048f95d2f6eb942ca2054bb",
+    "created_by": 4,
+    "created_at": "2026-10-29 22:59:09.949898+08:00",
+    "generation": 1,
+    "active_record_id": 4
+  },
+  {
+    "id": 8,
+    "kind": "supporting_reference",
+    "record_key": "unreviewed_reference",
+    "revision": 1,
+    "document": {
+      "kind": "supporting_reference",
+      "scope": "Panabo City",
+      "title": "Controlled test reference",
+      "method": "Synthetic reference contract test, not field validation",
+      "payload": {
+        "citation": "Controlled software fixture, not agronomic evidence",
+        "applies_to": "analysis"
+      },
+      "reference": "Software test only",
+      "record_key": "unreviewed_reference",
+      "valid_from": "2026-10-28",
+      "review_note": "Reviewed only as a software test fixture",
+      "valid_until": "2026-11-28",
+      "evidence_url": "https://example.org/controlled-fixture",
+      "review_status": "draft"
+    },
+    "content_sha256": "87e11fc8e6bac6b21cba6523156b932d4742b32176a315719dcd4cf4e9a00580",
+    "created_by": 4,
+    "created_at": "2026-10-29 22:59:09.591326+08:00",
+    "generation": 0,
+    "active_record_id": null
+  },
+  {
+    "id": 7,
+    "kind": "system_setting",
+    "record_key": "analysis_sampling",
+    "revision": 2,
+    "document": {
+      "kind": "system_setting",
+      "scope": "Panabo City",
+      "title": "Controlled test reference",
+      "method": "Synthetic reference contract test, not field validation",
+      "payload": {
+        "sample_count": 9
+      },
+      "reference": "Software test only",
+      "record_key": "analysis_sampling",
+      "valid_from": "2026-10-28",
+      "review_note": "Reviewed only as a software test fixture",
+      "valid_until": "2026-11-28",
+      "evidence_url": "https://example.org/controlled-fixture",
+      "review_status": "reviewed"
+    },
+    "content_sha256": "59805af1a93dfa11d30b4611f5fe78868c1dbd66218a39fa8f017a6967bfc771",
+    "created_by": 4,
+    "created_at": "2026-10-29 22:59:06.680289+08:00",
+    "generation": 3,
+    "active_record_id": 6
+  },
+  {
+    "id": 6,
+    "kind": "system_setting",
+    "record_key": "analysis_sampling",
+    "revision": 1,
+    "document": {
+      "kind": "system_setting",
+      "scope": "Panabo City",
+      "title": "Controlled test reference",
+      "method": "Synthetic reference contract test, not field validation",
+      "payload": {
+        "sample_count": 5
+      },
+      "reference": "Software test only",
+      "record_key": "analysis_sampling",
+      "valid_from": "2026-10-28",
+      "review_note": "Reviewed only as a software test fixture",
+      "valid_until": "2026-11-28",
+      "evidence_url": "https://example.org/controlled-fixture",
+      "review_status": "reviewed"
+    },
+    "content_sha256": "057823389b14918d417d714d46211dd8352ca168d68d91f69b0d6a866a99c2d7",
+    "created_by": 4,
+    "created_at": "2026-10-29 22:59:03.541214+08:00",
+    "generation": 3,
+    "active_record_id": 6
+  },
+  {
+    "id": 5,
+    "kind": "supporting_reference",
+    "record_key": "reviewed_local_reference",
+    "revision": 1,
+    "document": {
+      "kind": "supporting_reference",
+      "scope": "Panabo City",
+      "title": "Controlled test reference",
+      "method": "Synthetic reference contract test, not field validation",
+      "payload": {
+        "citation": "Controlled software fixture, not agronomic evidence",
+        "applies_to": "analysis"
+      },
+      "reference": "Software test only",
+      "record_key": "reviewed_local_reference",
+      "valid_from": "2026-10-28",
+      "review_note": "Reviewed only as a software test fixture",
+      "valid_until": "2026-11-28",
+      "evidence_url": "https://example.org/controlled-fixture",
+      "review_status": "reviewed"
+    },
+    "content_sha256": "485657c4d4597447f7e7cc21a772fa462017900e50cbde5e916a9d8632eee4b2",
+    "created_by": 4,
+    "created_at": "2026-10-29 22:59:02.863630+08:00",
+    "generation": 1,
+    "active_record_id": 5
+  },
+  {
+    "id": 4,
+    "kind": "model_version",
+    "record_key": "installed_model",
+    "revision": 1,
+    "document": {
+      "kind": "model_version",
+      "scope": "Panabo City",
+      "title": "Controlled test reference",
+      "method": "Synthetic reference contract test, not field validation",
+      "payload": {
+        "sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278"
+      },
+      "reference": "Software test only",
+      "record_key": "installed_model",
+      "valid_from": "2026-10-28",
+      "review_note": "Reviewed only as a software test fixture",
+      "valid_until": "2026-11-28",
+      "evidence_url": "https://example.org/controlled-fixture",
+      "review_status": "reviewed"
+    },
+    "content_sha256": "973fcc43da5326dd8ad636ca8d6af501becac034a81f470eaaacbc9c063633f3",
+    "created_by": 4,
+    "created_at": "2026-10-29 22:59:02.248874+08:00",
+    "generation": 1,
+    "active_record_id": 4
+  },
+  {
+    "id": 3,
+    "kind": "environmental_source",
+    "record_key": "ndvi",
+    "revision": 1,
+    "document": {
+      "kind": "environmental_source",
+      "scope": "Panabo City",
+      "title": "Controlled test reference",
+      "method": "Synthetic reference contract test, not field validation",
+      "payload": {
+        "unit": "index",
+        "layer": "ndvi",
+        "period": "latest_scene",
+        "source_id": "COPERNICUS/S2_SR_HARMONIZED"
+      },
+      "reference": "Software test only",
+      "record_key": "ndvi",
+      "valid_from": "2026-10-28",
+      "review_note": "Reviewed only as a software test fixture",
+      "valid_until": "2026-11-28",
+      "evidence_url": "https://example.org/controlled-fixture",
+      "review_status": "reviewed"
+    },
+    "content_sha256": "e6971ece4900c522c99c77c0edc52c844c95e8bcb959c4849b8e5c912d89636a",
+    "created_by": 4,
+    "created_at": "2026-10-29 22:59:01.599486+08:00",
+    "generation": 1,
+    "active_record_id": 3
+  },
+  {
+    "id": 2,
+    "kind": "planting_calendar",
+    "record_key": "rice",
+    "revision": 1,
+    "document": {
+      "kind": "planting_calendar",
+      "scope": "Panabo City",
+      "title": "Controlled test reference",
+      "method": "Synthetic reference contract test, not field validation",
+      "payload": {
+        "crop": "rice",
+        "months": [
+          2,
+          8
+        ]
+      },
+      "reference": "Software test only",
+      "record_key": "rice",
+      "valid_from": "2026-10-28",
+      "review_note": "Reviewed only as a software test fixture",
+      "valid_until": "2026-11-28",
+      "evidence_url": "https://example.org/controlled-fixture",
+      "review_status": "reviewed"
+    },
+    "content_sha256": "b0acb9f29b9eb078ee513a3f933c58e12fcf2b32452bd5ba0e0a21d15251effb",
+    "created_by": 4,
+    "created_at": "2026-10-29 22:59:00.430849+08:00",
+    "generation": 1,
+    "active_record_id": 2
+  },
+  {
+    "id": 1,
+    "kind": "crop_requirement",
+    "record_key": "rice_rainfall",
+    "revision": 1,
+    "document": {
+      "kind": "crop_requirement",
+      "scope": "Panabo City",
+      "title": "Controlled test reference",
+      "method": "Synthetic reference contract test, not field validation",
+      "payload": {
+        "crop": "rice",
+        "unit": "mm/year",
+        "factor": "rainfall",
+        "period": "annual_mean_total",
+        "absolute_max": 4000,
+        "absolute_min": 1000,
+        "preferred_max": 2500,
+        "preferred_min": 2000
+      },
+      "reference": "Software test only",
+      "record_key": "rice_rainfall",
+      "valid_from": "2026-10-28",
+      "review_note": "Reviewed only as a software test fixture",
+      "valid_until": "2026-11-28",
+      "evidence_url": "https://example.org/controlled-fixture",
+      "review_status": "reviewed"
+    },
+    "content_sha256": "3d3f295a956daf83a37bf30ced172b02d3f2bc836bb6045944b4592347ad3111",
+    "created_by": 4,
+    "created_at": "2026-10-29 22:58:59.839544+08:00",
+    "generation": 1,
+    "active_record_id": 1
+  }
+]

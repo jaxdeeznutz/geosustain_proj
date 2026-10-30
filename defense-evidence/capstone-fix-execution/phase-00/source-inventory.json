@@ -1,0 +1,1126 @@
+{
+  "recorded_at_utc": "2026-10-28T08:03:34.952762+00:00",
+  "commit": "2eb82c725a2c50b64e3febfe610fe4958c11b75a",
+  "files": {
+    "android/app/build.gradle.kts": {
+      "sha256": "92e836086d38234a2d531c21ef1b85554b0bc9bf0350046d3d6a1e6006f53c4b",
+      "bytes": 3921,
+      "tracked": true
+    },
+    "backend/.env.example": {
+      "sha256": "8553a46ecef4a175af674d3f6f4023c6f57790ca232e107b8997b47f24ab9148",
+      "bytes": 3248,
+      "tracked": true
+    },
+    "backend/Crop_recommendation.csv": {
+      "sha256": "54a5a6e5408668e668667efc50de2fc867c1b875e0431b4f54dd331b0a109a4e",
+      "bytes": 150034,
+      "tracked": true
+    },
+    "backend/Crop_recommendation_with_gis.csv": {
+      "sha256": "1a6dcf3b22c20ff51c0ef7eee310df3ad5d359263d78d1a93e2dbaa7245ec03a",
+      "bytes": 302160,
+      "tracked": true
+    },
+    "backend/README_BACKEND.md": {
+      "sha256": "66fbbe4feb67c4e6a7214a8303e2057f442ac47cf45dae068fc6905bf19f022a",
+      "bytes": 442,
+      "tracked": true
+    },
+    "backend/activity_notifications.py": {
+      "sha256": "77a9f995f36835979f9f5918f465eaa0f452e4383e2053b3c4f0067ee014d2d8",
+      "bytes": 10159,
+      "tracked": true
+    },
+    "backend/analysis_coverage.py": {
+      "sha256": "07d93f2284df289eb388a68bfa13ca351ba36ebd6115a859adc2a9cf00ef2b4e",
+      "bytes": 7582,
+      "tracked": true
+    },
+    "backend/analysis_jobs.py": {
+      "sha256": "e8612df8c70660c4265b197bdcd33e1401800740ce3a25e31a55322ca1330f00",
+      "bytes": 5959,
+      "tracked": true
+    },
+    "backend/app.py": {
+      "sha256": "9a86fe1c178975b9d52b954101da2cb85b93a0bb487403abd015b9f2e86a11d8",
+      "bytes": 18591,
+      "tracked": true
+    },
+    "backend/application_screening.py": {
+      "sha256": "45b6c98259ff88038d0133b9cb009971f8c2f3a8920b4c18190f6c9860acb805",
+      "bytes": 3851,
+      "tracked": false
+    },
+    "backend/auth_security.py": {
+      "sha256": "c28f4db791c10449a0b2a0b5774fa0b636318ecdde5b755fd63880345d86d57b",
+      "bytes": 7139,
+      "tracked": true
+    },
+    "backend/bootstrap_admin.py": {
+      "sha256": "45af20ffee2e1149473e35034113e0dd8817453385dbdf2e35413b2ff19d995f",
+      "bytes": 3484,
+      "tracked": true
+    },
+    "backend/cagro_soil.py": {
+      "sha256": "4a1821e8ace843d7bceb0abb4e7a1e4f71d005496267209654dd0d81df42a985",
+      "bytes": 13005,
+      "tracked": true
+    },
+    "backend/city_boundary.py": {
+      "sha256": "431d5938b287963b16bad12191151f7e40febb3247cec89e1c9c5822583b9ba3",
+      "bytes": 1960,
+      "tracked": true
+    },
+    "backend/climate_contract.py": {
+      "sha256": "e3db448d5e3693801fea6584156380cfecd367a5e15091335719474434d9b458",
+      "bytes": 3620,
+      "tracked": true
+    },
+    "backend/config.py": {
+      "sha256": "9734439ef42665f4bbb9f8f22299c785582734b04bc7c7cae1d687bbf212ebb8",
+      "bytes": 215,
+      "tracked": true
+    },
+    "backend/constraints.txt": {
+      "sha256": "6725ff57e24640ec944ab07aa2ade057e64febc3c300448adf30a2949ff32079",
+      "bytes": 1544,
+      "tracked": true
+    },
+    "backend/crop_model.pkl": {
+      "sha256": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+      "bytes": 37233297,
+      "tracked": true
+    },
+    "backend/crop_model_features.pkl": {
+      "sha256": "64ff2d3e43306f76a8a2287be653c3d13707b14ba7a4851555ac13262c36369f",
+      "bytes": 96,
+      "tracked": true
+    },
+    "backend/crop_model_metadata.json": {
+      "sha256": "3f80aa3591521de791a8a376b77662741a2c6cabe6a899ce001adcc4f935b7bd",
+      "bytes": 1514,
+      "tracked": true
+    },
+    "backend/crop_requirements.py": {
+      "sha256": "cf69fd115fec09677d53198574d677cc07a5a7244706ba1d0676494cdd08eb2e",
+      "bytes": 6682,
+      "tracked": true
+    },
+    "backend/data/PANABO_BOUNDARY_SOURCE.md": {
+      "sha256": "2e6d157bf19224427454f4c01f3130f4d0f9950a140a40020a66d76351a20b27",
+      "bytes": 1230,
+      "tracked": true
+    },
+    "backend/data/cagro_locations.json": {
+      "sha256": "2891a140a877dc8071d051bc43f17ec9b7527b57c298e5e3d9b9d0202e8d2000",
+      "bytes": 4892,
+      "tracked": true
+    },
+    "backend/data/cagro_observations.json": {
+      "sha256": "540f987a00fec29a936387ace33ac8b779a1d4b86de1134e68f02af57dfaeafa",
+      "bytes": 31480,
+      "tracked": true
+    },
+    "backend/data/panabo_boundary.geojson": {
+      "sha256": "bac0ec3c20503931a87c737745db0e52a936d29c31232cd19724b87deafd21a0",
+      "bytes": 12037,
+      "tracked": true
+    },
+    "backend/database.py": {
+      "sha256": "204276d6252d36e29d6b4426bad2ebbe1427672672f0af8f88e4fab8483437ed",
+      "bytes": 87040,
+      "tracked": true
+    },
+    "backend/defense_security.py": {
+      "sha256": "cf8a0b177544be32559ba2c80b27b0629b9a8eae66d4d5a3f7d325706719c96f",
+      "bytes": 1693,
+      "tracked": true
+    },
+    "backend/email_verification.py": {
+      "sha256": "4b9007c1b9c3f95d5e9bd3a2b0a6e5475e909f3ba0409c09ccee9d86f76a2ac3",
+      "bytes": 6283,
+      "tracked": true
+    },
+    "backend/environmental_pipeline.py": {
+      "sha256": "d1431847f4f1e22b94dadb845b0ce607694c71d1dd22417343cdb19918691c93",
+      "bytes": 12703,
+      "tracked": true
+    },
+    "backend/fastapi_app.py": {
+      "sha256": "54316c13b0be173b63ef595f3c6da813c257aea677895c851e3d484de6f3b308",
+      "bytes": 101724,
+      "tracked": true
+    },
+    "backend/federated_identity.py": {
+      "sha256": "3a724c37a84fdd7cfef1d4ab2f8fabdbfd4e35b463eb953185ef831600953b0c",
+      "bytes": 9307,
+      "tracked": true
+    },
+    "backend/geometry.py": {
+      "sha256": "4b16cb68a5f25022a1c71c2ff022b9e4293e63f22eb3980e086aa4c78544ce6c",
+      "bytes": 5035,
+      "tracked": true
+    },
+    "backend/http_config.py": {
+      "sha256": "4bc6ef75ea2cccc37edb04b9336bfc1a12826c428c830122a5fd76b54a3181fa",
+      "bytes": 1624,
+      "tracked": true
+    },
+    "backend/json_safe.py": {
+      "sha256": "d6984914c7d3c576815f1dd5dbe11f134fc8db8c88a029155ce4d2d6d2edd561",
+      "bytes": 1338,
+      "tracked": true
+    },
+    "backend/land_cover.py": {
+      "sha256": "4d031bcc72870defb1ee9962950b11d25a11126a182e4e4d4a7d33bd302e596e",
+      "bytes": 6221,
+      "tracked": true
+    },
+    "backend/mail_delivery.py": {
+      "sha256": "a5b79b495006e4f977d3804412fcc85d08bab52f0acc9c929e864b3d61790b14",
+      "bytes": 4491,
+      "tracked": true
+    },
+    "backend/migrate_defense.py": {
+      "sha256": "856ac6041d1f8f12746f0d668fc31a15750274236afe0fc693b884172ba2a91e",
+      "bytes": 2233,
+      "tracked": true
+    },
+    "backend/migrate_password_auth.py": {
+      "sha256": "68c74ccdb930399e29f6151d5a40ff3154117d3ffd6ea7fb6412fcf817c86c96",
+      "bytes": 4262,
+      "tracked": true
+    },
+    "backend/model_artifacts.py": {
+      "sha256": "9a6fad53dcf7153055638d62656934689ed2662c353343d65feb4a19e8788c1d",
+      "bytes": 7325,
+      "tracked": true
+    },
+    "backend/model_explainability.py": {
+      "sha256": "87bf7ee478750fd80b152333d3f4d47208508a9efa2a92fd07bd9ca78be4eeea",
+      "bytes": 4895,
+      "tracked": true
+    },
+    "backend/model_ranking.py": {
+      "sha256": "574cb2fb7152a6b30f6ea0a983203a0739a4701e4fc6a227e90316c52064e60e",
+      "bytes": 4476,
+      "tracked": true
+    },
+    "backend/nutrient_contract.py": {
+      "sha256": "f868f5be690cabc9de0e1b3ef1c20fb3e448daf1ea9bff0e7ba4eee726dc2973",
+      "bytes": 5620,
+      "tracked": true
+    },
+    "backend/operator_routes.py": {
+      "sha256": "fc341a9a74e4405353a3ded1c1b769f95e7b3cbb0af5e48ac03aa06b0b790670",
+      "bytes": 6249,
+      "tracked": true
+    },
+    "backend/operator_workflow.py": {
+      "sha256": "c798ea194f3dd42fdd86a99aa3beaa0f9280b8f818b46d6600bd30fdeea446de",
+      "bytes": 19968,
+      "tracked": true
+    },
+    "backend/password_auth.py": {
+      "sha256": "e131a2709676cab19e59ddaaf1ead8cf3c8d03f2397bb5414b84f464e6b79bf1",
+      "bytes": 1122,
+      "tracked": true
+    },
+    "backend/password_reset.py": {
+      "sha256": "844afeb6b1a795b7b5d72cf9404db11932215a2aaf6ffc9652a9cddd055318c8",
+      "bytes": 5086,
+      "tracked": true
+    },
+    "backend/provider_cache.py": {
+      "sha256": "5e077e1b4a99f11686b4c0d7087e86be6e98f980996630026d037b93558127f5",
+      "bytes": 1529,
+      "tracked": true
+    },
+    "backend/push_delivery.py": {
+      "sha256": "cf99f2ef25bb5914ef873c073d3a4b317ce2c2f290a4c12e51fc7922dde8d6d0",
+      "bytes": 9343,
+      "tracked": true
+    },
+    "backend/qa_closure.py": {
+      "sha256": "9d80373483a5e9f8a4462252f5eb32334ee79068044fb1075f4749dfd7d61443",
+      "bytes": 5671,
+      "tracked": true
+    },
+    "backend/rainfallDatasets.py": {
+      "sha256": "3e312de50033a68b564cdc3f8e0f71f6ac503f7608a283529b85268752150990",
+      "bytes": 62184,
+      "tracked": true
+    },
+    "backend/render.yaml": {
+      "sha256": "1db166337e18629a226d09eac11211bd20ff5c1a2a13f271840aed7b9dc4d9df",
+      "bytes": 343,
+      "tracked": true
+    },
+    "backend/requirements-dev.txt": {
+      "sha256": "e99c35e30aae20eb48c1f1fcd804c99c2fdc0ab0195b7555d13b779bf52257ca",
+      "bytes": 42,
+      "tracked": true
+    },
+    "backend/requirements-legacy.txt": {
+      "sha256": "24c24533d6484d000d40cc2292332b31b0f91ddbbba3e767b4fe5a622915ad97",
+      "bytes": 132,
+      "tracked": true
+    },
+    "backend/requirements.txt": {
+      "sha256": "3f4e3c11aafadc2619eb8f7f538a13b303e2d9974b9b3ddd67c9e4b27341bccc",
+      "bytes": 259,
+      "tracked": true
+    },
+    "backend/soil_nutrient_screening.py": {
+      "sha256": "03c130d233f0cc25d09f736d122f29755c975ba9af14b46693d0740ecc1377db",
+      "bytes": 5204,
+      "tracked": true
+    },
+    "backend/static/app.js": {
+      "sha256": "6c26cb4a25c61c4ca8421a06a9f0647e7b4bca6838223df4d627f69a97080a42",
+      "bytes": 18681,
+      "tracked": true
+    },
+    "backend/static/auth.css": {
+      "sha256": "820c9f6326613db0b4d71455390f17e45a840a6a46033dc5bf83a4ea0c6466ee",
+      "bytes": 5251,
+      "tracked": true
+    },
+    "backend/static/style.css": {
+      "sha256": "6a75e57eb3bdb53afa045dbf213b1b72527a649cb36b1039515537625f984b77",
+      "bytes": 14526,
+      "tracked": true
+    },
+    "backend/suitability.py": {
+      "sha256": "70899143965e7a1513dedb4a84685f4b0a4613d38cf2468fc425ba598bbf4c69",
+      "bytes": 7632,
+      "tracked": true
+    },
+    "backend/templates/history.html": {
+      "sha256": "c220f2ff433410112426e5d066379e3a7af71f7ddeda9ef359a2e084cff14baf",
+      "bytes": 5514,
+      "tracked": true
+    },
+    "backend/templates/index.html": {
+      "sha256": "beba5fa2bc96ea27d9ad4babefabaa7b30d663d9ca51f9cce56c162ee8a4d394",
+      "bytes": 9118,
+      "tracked": true
+    },
+    "backend/templates/login.html": {
+      "sha256": "60845b4609b42a6f439c509b7bfd96a0537d38ca159cb4cba8cd34d401145167",
+      "bytes": 2359,
+      "tracked": true
+    },
+    "backend/templates/register.html": {
+      "sha256": "cb12e3f0b28db21aff79081b9d9b436c3b292b0a744d7a6bd5a763fffd8e2e28",
+      "bytes": 3216,
+      "tracked": true
+    },
+    "backend/templates/verify_signup.html": {
+      "sha256": "25af00c49e2bfff8ec61877a86e179aaad36f03a2b9b6e960bdb2e13f5d60e98",
+      "bytes": 1071,
+      "tracked": true
+    },
+    "backend/tests/closure_integration.py": {
+      "sha256": "9ac7da47d42661fcd6bb3bca84aa5971b0a48913d80a204ee3edf93aac28f163",
+      "bytes": 11036,
+      "tracked": true
+    },
+    "backend/tests/closure_worker_fixture.py": {
+      "sha256": "61cc8d7d449bf12185cf3241c59488e8963459c914b3cbae4aa4d50c5d1c2e50",
+      "bytes": 985,
+      "tracked": true
+    },
+    "backend/tests/conftest.py": {
+      "sha256": "8e3acf91294ac50b63674db77c96a7ea34a9269953693a1dc10dfca6a0470c66",
+      "bytes": 1754,
+      "tracked": true
+    },
+    "backend/tests/defense_integration.py": {
+      "sha256": "da80b6304a9f19e50e8d5fef1392c88d99883d03dda962f5d95708dcde23439c",
+      "bytes": 19932,
+      "tracked": true
+    },
+    "backend/tests/integration_postgres.py": {
+      "sha256": "80682367bf62dcca9a8efac994c51c1f8622d399dfe9c9dc17dfdca28b62e74d",
+      "bytes": 15130,
+      "tracked": true
+    },
+    "backend/tests/operator_workflow_integration.py": {
+      "sha256": "7ad2e4c635249a7b9703ddf9c4cac1297de664e7761550c6ff5cf7f3a1c21b30",
+      "bytes": 7575,
+      "tracked": true
+    },
+    "backend/tests/readiness_integration.py": {
+      "sha256": "777932c81c07a89e5aabd52a1e80a024c84f43a32f6c61143fe93f757ba23cd8",
+      "bytes": 8010,
+      "tracked": true
+    },
+    "backend/tests/test_activity_notifications.py": {
+      "sha256": "aa570d3414e959c2a34185877b8efede18a11ad88d885aeab39d0f8386568275",
+      "bytes": 2330,
+      "tracked": true
+    },
+    "backend/tests/test_analysis_coverage.py": {
+      "sha256": "219c9e3962703e3031c247d75adbb3c5077113f442232446a2eecbeb8382a0cb",
+      "bytes": 6011,
+      "tracked": true
+    },
+    "backend/tests/test_analysis_optimization_comparison.py": {
+      "sha256": "34e254f1b23678cf5e999f22cd1809b9e4f0b715e0bf771b47adcf60370be31b",
+      "bytes": 5321,
+      "tracked": true
+    },
+    "backend/tests/test_analysis_scope.py": {
+      "sha256": "e56f426cfa36c31fc1e79480f4ed44f8c0a3a8e9860ece1f950b97ca2d9b2a80",
+      "bytes": 2515,
+      "tracked": true
+    },
+    "backend/tests/test_analysis_serialization_cors.py": {
+      "sha256": "2575702716dfccc9beebdd5c48c26177de60f9a233e239ebdb89cc5583a7d303",
+      "bytes": 6621,
+      "tracked": true
+    },
+    "backend/tests/test_application_screening.py": {
+      "sha256": "62165b515402d6393c92ce136dd95bb3b9b1f3933b783b1a9709c48ce66b6352",
+      "bytes": 4308,
+      "tracked": false
+    },
+    "backend/tests/test_cagro_disabled.py": {
+      "sha256": "1e1b16fff9a04170a129b2ecb389ee09862defcacfeb26d5ebba56941bf2bd32",
+      "bytes": 2280,
+      "tracked": true
+    },
+    "backend/tests/test_cagro_soil.py": {
+      "sha256": "ed087800417d4ab85bfbf17cdeaab40b38e000d8fb01a9e764eec9d34c6fbb4b",
+      "bytes": 8690,
+      "tracked": true
+    },
+    "backend/tests/test_climate_contract.py": {
+      "sha256": "d79b72a397adf64a50372651a1781e26fdd2c0fb8e2cbb7a60cce406b9f3135e",
+      "bytes": 4928,
+      "tracked": true
+    },
+    "backend/tests/test_defense_security.py": {
+      "sha256": "17b976debe9ea3894d6d846830844255f88831d5018df8852e8c8fede28f8a56",
+      "bytes": 2032,
+      "tracked": true
+    },
+    "backend/tests/test_delivery_configuration.py": {
+      "sha256": "0ec7f4526b1ca65595a09ca266302985a876cface769783c74c92ce25b294e7a",
+      "bytes": 1546,
+      "tracked": true
+    },
+    "backend/tests/test_earth_engine_startup.py": {
+      "sha256": "52fc1d91b8f94294bb35b0ccb63909f8a4ffd7e4c4455433c5a949e277f6a448",
+      "bytes": 2678,
+      "tracked": true
+    },
+    "backend/tests/test_email_verification.py": {
+      "sha256": "5a4c2530d038b390470dd939f3208422ff4e50cec78d0e13c7ac8aeab2836ed6",
+      "bytes": 3084,
+      "tracked": true
+    },
+    "backend/tests/test_environmental_recovery.py": {
+      "sha256": "4ddbb720f97189deca19ff638e4eda762fc7f1b9b89e5f815b1cd95c3c1258aa",
+      "bytes": 2906,
+      "tracked": true
+    },
+    "backend/tests/test_explainability.py": {
+      "sha256": "28d29653dd3174d66dd05fa74909b628dfcd95c9c5fa4d703cdf7a8378693677",
+      "bytes": 6221,
+      "tracked": true
+    },
+    "backend/tests/test_federated_identity.py": {
+      "sha256": "d3ee648952d7c55962df5bedbf62a5cdf8e9b6d3a02026616b754ecbe4ca4d34",
+      "bytes": 6148,
+      "tracked": true
+    },
+    "backend/tests/test_land_cover.py": {
+      "sha256": "61b73f3864cfd4df92d13f74de01c57509561fd3ae83cdb99c42d21ab87b149e",
+      "bytes": 6216,
+      "tracked": true
+    },
+    "backend/tests/test_legacy_npk_restore.py": {
+      "sha256": "651c61e0918f8c15b2e7efdcf9ce48f59791aa114363c2bceedf6e9238b1e855",
+      "bytes": 6360,
+      "tracked": true
+    },
+    "backend/tests/test_mail_delivery.py": {
+      "sha256": "f5bd6439ea2f74eb5e4699f4a62362a8edee00400f0a25a33e494bbb5ddd543d",
+      "bytes": 5284,
+      "tracked": true
+    },
+    "backend/tests/test_mobile_workflow.py": {
+      "sha256": "378e87eae94280fe50d084668a5632824cfdf99d955351601f590632377f534e",
+      "bytes": 9686,
+      "tracked": true
+    },
+    "backend/tests/test_model_artifacts.py": {
+      "sha256": "2fa2d11c5eac929746709553bd2d08fd6a49455b48806fde3723eabe911c9d6d",
+      "bytes": 10966,
+      "tracked": true
+    },
+    "backend/tests/test_model_ranking.py": {
+      "sha256": "d2ec10cceb7dbd36456adf7ca4bbc232b5de63a7df55adc08f174a7af9229f9c",
+      "bytes": 4925,
+      "tracked": true
+    },
+    "backend/tests/test_nutrient_contract.py": {
+      "sha256": "dc934bbdadf89cb6fc24106e9d5379ee1c3297ac513bb2f89f8050d072d2d520",
+      "bytes": 3954,
+      "tracked": true
+    },
+    "backend/tests/test_panabo_preliminary.py": {
+      "sha256": "a22dbd262b58c498f9b4e685b31481f30af2972c68db70a7beaaa0f6852773c8",
+      "bytes": 3241,
+      "tracked": true
+    },
+    "backend/tests/test_password_auth.py": {
+      "sha256": "277d64c9076a36680633c66705eabb25408d6fab018160526041808e5dffce08",
+      "bytes": 8872,
+      "tracked": true
+    },
+    "backend/tests/test_provider_cache.py": {
+      "sha256": "db0fc154b4df076576c27c49a9b4b1fd08404fcc8634e9bd82174161374462b7",
+      "bytes": 1643,
+      "tracked": true
+    },
+    "backend/tests/test_qa_closure.py": {
+      "sha256": "3393393d14fb4eaab84c5fc33dba2ff94bc4b3b29247d6e756f2e75e09b5c606",
+      "bytes": 4229,
+      "tracked": true
+    },
+    "backend/tests/test_readiness_analysis.py": {
+      "sha256": "a20dbbe18fd85140cd738774c20a46d006f1d89477f6e9e13c42fc5d8aba66aa",
+      "bytes": 3143,
+      "tracked": true
+    },
+    "backend/tests/test_regressions.py": {
+      "sha256": "18b849f87bc76951f35be8c479e5b5d773407f085e2e93bdee538db1d72b71d2",
+      "bytes": 5820,
+      "tracked": true
+    },
+    "backend/tests/test_soil_nutrient_screening.py": {
+      "sha256": "5741ae721a6375b1dca20f8c7579c530d8fdb4cddccee5125e97c0fb5cada73b",
+      "bytes": 4620,
+      "tracked": true
+    },
+    "backend/tests/test_web_remediation.py": {
+      "sha256": "4e6e6f8f4e4740bd2fbcfefc01e309905badfe2e8ed7ec23577f0ad25cc7558d",
+      "bytes": 2568,
+      "tracked": true
+    },
+    "backend/tests/web_integration.py": {
+      "sha256": "d5d1a32192ff4996f39f12e2965b059d23164aba0e91b3ae0c51a829c8b2abb5",
+      "bytes": 3046,
+      "tracked": true
+    },
+    "backend/training/climate_training_contract.py": {
+      "sha256": "9b16fc190759d9aa5557aca45af4cd14139ec324d5e7258d36f591bac1a0dc6d",
+      "bytes": 1205,
+      "tracked": true
+    },
+    "backend/training/train_model.py": {
+      "sha256": "da5bae83433f632cd692286d736a46699cc3b6ed6549bcf5436bbbd495096c52",
+      "bytes": 17683,
+      "tracked": true
+    },
+    "backend/verify_model.py": {
+      "sha256": "8cad2435702216285f4b2bc70076c04cb6cef95fbd09cecb67521d52e0d65b83",
+      "bytes": 755,
+      "tracked": true
+    },
+    "backend/web_summary.py": {
+      "sha256": "25e01b4e1eec1488518ae75efb9e190ef2be335cdd4699d7e07592b94c4d0426",
+      "bytes": 2618,
+      "tracked": true
+    },
+    "docs/APPLICATION_SCREENING.md": {
+      "sha256": "2a9cc3330ef58898f4b6a4d2a6b88052985b4078570b963cdd49ed7b9afb9cf1",
+      "bytes": 1664,
+      "tracked": false
+    },
+    "lib/api_service.dart": {
+      "sha256": "f5be8da7a4531ba0b983f5b9bff6465512aa65ea904157708bb48e8581dd0b9f",
+      "bytes": 56130,
+      "tracked": true
+    },
+    "lib/boundary_draft_store.dart": {
+      "sha256": "b9e6cd4532b94ee22866de1a2ad917b21c9fcae5d0f767d54b4c51675af84773",
+      "bytes": 2116,
+      "tracked": true
+    },
+    "lib/farm_geometry.dart": {
+      "sha256": "6c2ed8c851f082e1f93bd9cf3a4c2a18b84caf796e940df16ce1a4d21ac687b3",
+      "bytes": 8910,
+      "tracked": true
+    },
+    "lib/federated_identity.dart": {
+      "sha256": "23523f66223e27287d684ce4bed09aeba9aa375a01258face9dd3c842dd8bf94",
+      "bytes": 5387,
+      "tracked": true
+    },
+    "lib/firebase_runtime.dart": {
+      "sha256": "74e235456776a757e4c6b7a971bdde02a5e7913f43a6bcb770dce3b5214f82cd",
+      "bytes": 2046,
+      "tracked": true
+    },
+    "lib/main.dart": {
+      "sha256": "36343f377b3e8dcd48b8a49e0ae6b4b1703298032d62d3d7b92b23adaf7fd368",
+      "bytes": 106164,
+      "tracked": true
+    },
+    "lib/offline_farm_store.dart": {
+      "sha256": "d3ee36fe1e7b69bfbc9b07fa4411a13dbe7d8f596b6323f89a074055d4956440",
+      "bytes": 8680,
+      "tracked": true
+    },
+    "lib/push_notifications.dart": {
+      "sha256": "33d2b1f8aec9f8b96a847b2e332c5c070697606f990a621f3ad20c78c9068694",
+      "bytes": 5667,
+      "tracked": true
+    },
+    "lib/screens/activity_inbox.dart": {
+      "sha256": "f18f5e8ec93ef775420731d60545ef3913c4422363b7c0a1f509a07868b44ba5",
+      "bytes": 15104,
+      "tracked": true
+    },
+    "lib/screens/analysis_explanation.dart": {
+      "sha256": "059e918ffe2c830898daec3a928bf97ae4b7fe0b2dffb7b13b93314e25da50d2",
+      "bytes": 21324,
+      "tracked": true
+    },
+    "lib/screens/analyze_screen.dart": {
+      "sha256": "99c7309a51d983e2196966e81389804a0f72ed221398412d36616b1804bf902f",
+      "bytes": 45801,
+      "tracked": true
+    },
+    "lib/screens/crop_details_sheets.dart": {
+      "sha256": "f84a588227113c1e3c7a3038d13dc7f403c2e02eb2d97bf0c3e1402aa235cbc7",
+      "bytes": 59666,
+      "tracked": true
+    },
+    "lib/screens/design_system.dart": {
+      "sha256": "b11dd7cca84a318c20d727e7176bf4a9eb1c5a05f7798b1db8f61d70d0230839",
+      "bytes": 26677,
+      "tracked": true
+    },
+    "lib/screens/email_verification.dart": {
+      "sha256": "2d8bd668f272c92ab2c02a9cc82e8fab096ef078fb3d26f54666939f9df3a117",
+      "bytes": 3695,
+      "tracked": true
+    },
+    "lib/screens/history_screen.dart": {
+      "sha256": "bb60ff350f94529f6ff3bf5769cec299cab2487cd6730c5b6ce2c9efd7214c4a",
+      "bytes": 30646,
+      "tracked": true
+    },
+    "lib/screens/home_screen.dart": {
+      "sha256": "107904590e6bf4c96fc2f0362171f7c73889781879496a7df36b2fc17f385de2",
+      "bytes": 36664,
+      "tracked": true
+    },
+    "lib/screens/identity_settings.dart": {
+      "sha256": "d1b4c9d7ebecab50bb506474846649494c6838a3a81272d772b00dd4e1efc0a5",
+      "bytes": 8805,
+      "tracked": true
+    },
+    "lib/screens/insights_report_admin_screen.dart": {
+      "sha256": "fa6dc3d559bf4a7db549f32f3fb1010787efbf0f1e061306b98970e27a11de4a",
+      "bytes": 25275,
+      "tracked": true
+    },
+    "lib/screens/land_mapping_screen.dart": {
+      "sha256": "6412ee6f9bb3a1706614a6fe49442d6a4e995de1ea64ce54a23067ebc915a550",
+      "bytes": 68512,
+      "tracked": true
+    },
+    "lib/screens/local_farm_page.dart": {
+      "sha256": "7153f591df6abe78bfeefafc2bc5a2e55da9c2c4ea3c702fa3a6a80f2ea2d8c0",
+      "bytes": 5559,
+      "tracked": true
+    },
+    "lib/screens/map_screen.dart": {
+      "sha256": "2d45230c8e67ecc587a9b91b4700a46d499b43a1ca7cc39b10ba1a0ef1b06f7f",
+      "bytes": 27878,
+      "tracked": true
+    },
+    "lib/screens/mobile_results.dart": {
+      "sha256": "4dab9e77bf70d6d30a85727dec7d1540bf1bc114ff22128f211e50df07c39e6a",
+      "bytes": 28962,
+      "tracked": true
+    },
+    "lib/screens/mobile_visuals.dart": {
+      "sha256": "1e8bce2e0ee0e0480877b1cd3ccaa39ab375ea9e27c1b4765ca73065c75f5882",
+      "bytes": 4031,
+      "tracked": true
+    },
+    "lib/screens/my_farms_screen.dart": {
+      "sha256": "96f36bc8b796b3feeba2fff46fcb2ed775988c7b7a30d95eed58df28cb24406b",
+      "bytes": 24704,
+      "tracked": true
+    },
+    "lib/screens/password_recovery.dart": {
+      "sha256": "8750800eb5b6349dbb064a1d72f6394f4f3fa75b0c3db4ceae895bc93ef4d75c",
+      "bytes": 8028,
+      "tracked": true
+    },
+    "lib/screens/profile_screen.dart": {
+      "sha256": "7ca9504cfd35c524692fb6db877941019e58ccc6264c931f0732cd670e16acec",
+      "bytes": 42661,
+      "tracked": true
+    },
+    "lib/screens/reference_analysis.dart": {
+      "sha256": "98e2907cdef5ff3c65c9593d65665f2f9bea2c5a56f44ab5abfc7f7592d7e4d8",
+      "bytes": 33875,
+      "tracked": true
+    },
+    "lib/screens/reference_visuals.dart": {
+      "sha256": "6b7c133c7d2ee681708ed5e2d266608b04f1479fdef721dff6e3e62d4979abc9",
+      "bytes": 14218,
+      "tracked": true
+    },
+    "lib/screens/review_notifications.dart": {
+      "sha256": "9d7780dfcacc5d9a68c3e01c07f9f98a9f0c2dd2a07505c5c4b84e1ab57322f0",
+      "bytes": 3032,
+      "tracked": true
+    },
+    "lib/screens/session_gate.dart": {
+      "sha256": "59b8626fd319c8f406770c225399ea8c4616ffc924ca7dc64c43f0f32311ce2f",
+      "bytes": 5734,
+      "tracked": true
+    },
+    "lib/screens/settings_screen.dart": {
+      "sha256": "f8987947b6dfaaccb682278cb651d215f814f277b6babb3af1af31c76024d746",
+      "bytes": 5247,
+      "tracked": true
+    },
+    "lib/session_token_store.dart": {
+      "sha256": "7a4a690c02226a63c7d968f9fe602152378d3d6b2bf3c48f688f3e6294d9d3aa",
+      "bytes": 1156,
+      "tracked": true
+    },
+    "lib/web/analysis_metrics.dart": {
+      "sha256": "ae69dafe282976ca902348488f5dff213cca6ed98302517e6897ee17c87a49f4",
+      "bytes": 2436,
+      "tracked": true
+    },
+    "lib/web/auth/web_auth_login.dart": {
+      "sha256": "faadb9eb83ac4ded83aa8d373dd11d3ef53eae3a25e68dba10fed118d777d9bb",
+      "bytes": 12833,
+      "tracked": true
+    },
+    "lib/web/browser_location_stub.dart": {
+      "sha256": "1b47ec8b64128bb5ce0bf5b82b7c83ef37e236e28f378ccfd9c56c4803a8aac2",
+      "bytes": 91,
+      "tracked": true
+    },
+    "lib/web/browser_location_web.dart": {
+      "sha256": "e7b07ca82ee36e164b6d3a768409dd86510eba48de43cb31272da8ce71629ed2",
+      "bytes": 528,
+      "tracked": true
+    },
+    "lib/web/operator_metrics.dart": {
+      "sha256": "268d14645314db72a230877ca9497a1af41c5bcba803b55861988c626990302b",
+      "bytes": 485,
+      "tracked": true
+    },
+    "lib/web/operator_report.dart": {
+      "sha256": "0083952fc028636069a6c627eb0e0b64db749bc897c269a8d38e2cccea7b56f4",
+      "bytes": 7334,
+      "tracked": true
+    },
+    "lib/web/portal_routes.dart": {
+      "sha256": "2bbd5c74d644cc47ca0241d09c70578f47ec3ff49355e879e880482d4e4f6f00",
+      "bytes": 2083,
+      "tracked": true
+    },
+    "lib/web/route_location.dart": {
+      "sha256": "ba3f23e0093cab051405a909aea892e41d17424613c3dfc2d3cea3dc0d070e23",
+      "bytes": 267,
+      "tracked": true
+    },
+    "lib/web/screens/web_analyze_screen.dart": {
+      "sha256": "54263b63ab866cd95591bf32b424fc9965ae61cf5b1678f4ffec9d3f14201aeb",
+      "bytes": 16817,
+      "tracked": true
+    },
+    "lib/web/screens/web_dashboard_screen.dart": {
+      "sha256": "a8f9a4d1fea58b9fa5cb33552b618131ac324c8c19ff78ff68377bc482a822b0",
+      "bytes": 37464,
+      "tracked": true
+    },
+    "lib/web/screens/web_history_reports_screen.dart": {
+      "sha256": "018f5591e870720c8a0a255efb71bacb839f4a94c1d58d24de1e06346631b2ee",
+      "bytes": 33099,
+      "tracked": true
+    },
+    "lib/web/screens/web_map_screen.dart": {
+      "sha256": "4c8affa39d63353367c027885e19134fd06fff83f574a6b9615bcf749ce5c3da",
+      "bytes": 36730,
+      "tracked": true
+    },
+    "lib/web/screens/web_operator_workflow.dart": {
+      "sha256": "1065d4d1967b0675a5c466fc23e1aeb0aa705c944b0cd8858ccfaf63bc1a8213",
+      "bytes": 57086,
+      "tracked": true
+    },
+    "lib/web/screens/web_planner_queue_screen.dart": {
+      "sha256": "fe685189176f17090652e2c131a810c4fbc35dc91168c902c6671f2fe7f73345",
+      "bytes": 70357,
+      "tracked": true
+    },
+    "lib/web/screens/web_trends_weather_soil_settings_screen.dart": {
+      "sha256": "60182d049ba245ef3e6d6fcdf61eea441a99ae068ddd734a19245ff2872673ce",
+      "bytes": 49999,
+      "tracked": true
+    },
+    "lib/web/web_admin_shell.dart": {
+      "sha256": "d583444ad552e500c4945343a86119e4297563429b82eca90fb75f594d7b666c",
+      "bytes": 35527,
+      "tracked": true
+    },
+    "lib/web/web_analyst_shell.dart": {
+      "sha256": "53b74810c4dcb39f13de12f0a2cb5c0381c7e5feecd7d2c12d7fb9a40ae6e6cc",
+      "bytes": 18194,
+      "tracked": true
+    },
+    "lib/web/web_record_controller.dart": {
+      "sha256": "ea8e4d099acbb6456250ef6b113476cecc34b9368ce8a7a8955e6e19cba8ad66",
+      "bytes": 2349,
+      "tracked": true
+    },
+    "lib/web/widgets/web_analysis_evidence.dart": {
+      "sha256": "d38bef68ee2866d6c4d07fbf0a6c9209390fafb2d602b4fcd074407ab3159b14",
+      "bytes": 2185,
+      "tracked": true
+    },
+    "lib/web/widgets/web_common.dart": {
+      "sha256": "7e7d45da85ba7df668ec6cb4b46da94e332f8db55f32809f4db7d989b57d4a69",
+      "bytes": 17604,
+      "tracked": true
+    },
+    "lib/web/widgets/web_portal_layout.dart": {
+      "sha256": "45a3a0fe4cc32e77ade0f7fe516013b88d86682e32a91cfc6ced8ec560adc738",
+      "bytes": 4684,
+      "tracked": true
+    },
+    "lib/web_build_identity.dart": {
+      "sha256": "ad5db982955703bb62947fb09db763a77b06f3a6a48d4f7a6ec2551d868052ec",
+      "bytes": 135,
+      "tracked": true
+    },
+    "lib/widgets/analysis_coverage.dart": {
+      "sha256": "7df73240b00182a2df14199ab54af4a82111ac9b0b6debac827b6c4572dbd483",
+      "bytes": 16597,
+      "tracked": true
+    },
+    "lib/widgets/cagro_soil_card.dart": {
+      "sha256": "1117cb0d02e0f2d1aef4c93b9369a66850b4dc5ee81f07319d2d75d88f3a61e5",
+      "bytes": 9503,
+      "tracked": true
+    },
+    "lib/widgets/geo_bottom_nav.dart": {
+      "sha256": "e33ef2d09e18ebb93f8987a8b774c6e985c67698d6bec71c11e45e038f279cc3",
+      "bytes": 2215,
+      "tracked": true
+    },
+    "lib/widgets/geo_header.dart": {
+      "sha256": "21b44be390ae6eaba237b77b2956443feaf38e8fdc4b00bbcc8b495f13626469",
+      "bytes": 8603,
+      "tracked": true
+    },
+    "lib/widgets/geo_result_widgets.dart": {
+      "sha256": "360a7b38b879e954bca6854c168abdacba6066ff1d7f0a6d2e78791225a31495",
+      "bytes": 5646,
+      "tracked": true
+    },
+    "pubspec.lock": {
+      "sha256": "96057bda036663cdfa7a4f658787f78d26fd56d8b65a909b84028cbda9387d3a",
+      "bytes": 26926,
+      "tracked": true
+    },
+    "pubspec.yaml": {
+      "sha256": "021cbd053208849af66d91275876b33b29e56b9e46e8c206cff2a4b22c572e4b",
+      "bytes": 749,
+      "tracked": true
+    },
+    "render.yaml": {
+      "sha256": "caaa9f35670657fff56c79421e44519b0da1d8da4124b5c923133c3618e2a118",
+      "bytes": 421,
+      "tracked": true
+    },
+    "test/account_workspace_test.dart": {
+      "sha256": "246f6e6bf173c7d5341472353ad206fa4f453021ba98c2bb87b0fac23d52d8ff",
+      "bytes": 5616,
+      "tracked": true
+    },
+    "test/analysis_coverage_test.dart": {
+      "sha256": "29be81af5107d9d50ac83406e1e213d3305db1b139000099f7d49f931195d5ea",
+      "bytes": 6619,
+      "tracked": true
+    },
+    "test/analysis_scope_test.dart": {
+      "sha256": "00b2d2cc7b17b756201b228881f6fc6002ea16acb66360f16bf6936d21ba7660",
+      "bytes": 11395,
+      "tracked": true
+    },
+    "test/analyst_flow_test.dart": {
+      "sha256": "6d0652b2e2854ba702ebad72f212580590587dd1d408b2b7e44c772074118dec",
+      "bytes": 5566,
+      "tracked": true
+    },
+    "test/annual_rainfall_display_test.dart": {
+      "sha256": "6a0d0e5949e6e3730d7831433edab01b82fb4d55d9a6bf70f74322b7a309e3c8",
+      "bytes": 4216,
+      "tracked": true
+    },
+    "test/api_service_test.dart": {
+      "sha256": "9b6a71578f3828268139db305ecdb88c02f8c1b235ed56c2b09caec953be749d",
+      "bytes": 8286,
+      "tracked": true
+    },
+    "test/app_smoke_test.dart": {
+      "sha256": "bb7892268109552eced99b29fb376662f9e8e9f5b149ebbf7d78f9001e10354e",
+      "bytes": 800,
+      "tracked": true
+    },
+    "test/application_screening_display_test.dart": {
+      "sha256": "af7798bcd7908aeafd2dc8a91f17c458f2c113738e290148426ee6141c57d313",
+      "bytes": 4695,
+      "tracked": false
+    },
+    "test/cagro_disabled_display_test.dart": {
+      "sha256": "30ff993de2f8455ea74f593344cd79ad907d2eb96c847509b84137775eef0f00",
+      "bytes": 2272,
+      "tracked": true
+    },
+    "test/cagro_nutrient_reference_test.dart": {
+      "sha256": "262eb80264b07b328f9a2222cf5cfae739fb6bc20650c8b84f9c03b3580cb447",
+      "bytes": 5482,
+      "tracked": true
+    },
+    "test/cagro_soil_card_test.dart": {
+      "sha256": "1dbc184ffa8b6b5e96e8453d92e6bc7065c193d316618f70b682aea8e35473e5",
+      "bytes": 3793,
+      "tracked": true
+    },
+    "test/closure_capture.dart": {
+      "sha256": "54e20519be51fc9c79ea3375dae250864470a4d465741ac8acda9dc4f82dc0ed",
+      "bytes": 3848,
+      "tracked": true
+    },
+    "test/crop_details_sheet_test.dart": {
+      "sha256": "e5bfb3b4a58abd628d5336304aa10f9f7e470e42268ad08956e0ed6ea467f8d7",
+      "bytes": 6622,
+      "tracked": true
+    },
+    "test/crop_ranking_test.dart": {
+      "sha256": "0a54dde792a070500121856b431f4c328a4d91b053531d545dc1acc427bf81c0",
+      "bytes": 1279,
+      "tracked": true
+    },
+    "test/defense_admin_test.dart": {
+      "sha256": "875eeb0e3341462632da1b776a4729a020602353c2cae3459f60b2078ae4092d",
+      "bytes": 2139,
+      "tracked": true
+    },
+    "test/defense_pdf_test.dart": {
+      "sha256": "8a595bfdd824e1d5d24cb89bf1db77828312a950a5bc751afd563ca95d7246dd",
+      "bytes": 3502,
+      "tracked": true
+    },
+    "test/defense_workflows_test.dart": {
+      "sha256": "560270facabd62ea9c9a59456509ac9b89e80d8e88be7ad2501cc5719beec33f",
+      "bytes": 5817,
+      "tracked": true
+    },
+    "test/design_system_test.dart": {
+      "sha256": "c1a5eb2f7e652e67ed78a518e976014f18cd49bf9d03188a3b7face0bca099fe",
+      "bytes": 6375,
+      "tracked": true
+    },
+    "test/device_theme_regression_test.dart": {
+      "sha256": "4c705f0f0e8c3c0c389bee9cbe81c38b52b17c8fbb5c5b3d9ce40301bca83254",
+      "bytes": 10903,
+      "tracked": true
+    },
+    "test/email_verification_test.dart": {
+      "sha256": "1eab76a02d468faa96348eec16fa613c97a3769e4bd17f5457e300d9be47d160",
+      "bytes": 2681,
+      "tracked": true
+    },
+    "test/environmental_factor_display_test.dart": {
+      "sha256": "0bc9ef1add9743b2a7e5e8a4835e53f4fc128a483861807a0fca9e6d5363d603",
+      "bytes": 5332,
+      "tracked": true
+    },
+    "test/error_classification_test.dart": {
+      "sha256": "904326a4a61c85c1d7e2ad633a7ad3d8f3b55fccdcd7efff37b3ed7dacbdaa8d",
+      "bytes": 1666,
+      "tracked": true
+    },
+    "test/farm_geometry_test.dart": {
+      "sha256": "befba6aca88ec6b0f1ad79959898ca3f59e4adcf59a730c09388eabf7899ab73",
+      "bytes": 6457,
+      "tracked": true
+    },
+    "test/fixtures/model_analysis.json": {
+      "sha256": "77d776efaee73f69cb8340943efb293a04ba48ea314ee2ad800c2224d02b54e4",
+      "bytes": 60859,
+      "tracked": true
+    },
+    "test/fixtures/operator_review.json": {
+      "sha256": "2adafa9381a72c52bc56a8f7a3573dae2a5bb884fb04c656ad9b68508c938b2d",
+      "bytes": 4225,
+      "tracked": true
+    },
+    "test/flutter_test_config.dart": {
+      "sha256": "8ff500ee25ba43459d65b995e60d5739409add38aad5f864c14c34e4b901751b",
+      "bytes": 1539,
+      "tracked": true
+    },
+    "test/grouped_phone_fixes_test.dart": {
+      "sha256": "4e4147552eb76b29e123bd0df8d5b1558ee6da07449afe362804142d6a22851a",
+      "bytes": 11461,
+      "tracked": true
+    },
+    "test/legacy_npk_display_test.dart": {
+      "sha256": "59224e02a9095b68a51f78317456205b84fa85036d1a858ada8de708e0677236",
+      "bytes": 2535,
+      "tracked": true
+    },
+    "test/mapping_flow_test.dart": {
+      "sha256": "1192b96cebc661c47cd6d0625fa682f788d9ecfab6cfe5926082410153300c56",
+      "bytes": 15836,
+      "tracked": true
+    },
+    "test/mobile_design_test.dart": {
+      "sha256": "5a7f8e2467892da4448c5ed69d73fdd34cdef2f37b9ccc97ac6684d72f78a668",
+      "bytes": 12721,
+      "tracked": true
+    },
+    "test/mobile_results_test.dart": {
+      "sha256": "6d3a2f20ebde6a672f4a6ba4b3fee4e91cbe42e99852ac048555b0c356facd73",
+      "bytes": 9892,
+      "tracked": true
+    },
+    "test/mobile_shell_test.dart": {
+      "sha256": "0742d36e74b44bb6c45d1906e0011e795a482e56eb930a288e9bb85d8dcf756e",
+      "bytes": 8614,
+      "tracked": true
+    },
+    "test/model_explanation_test.dart": {
+      "sha256": "2700965823153a829c810efec1e83ab84fe79ce47adc5c3f567373161a6da5e0",
+      "bytes": 9883,
+      "tracked": true
+    },
+    "test/offline_farm_store_test.dart": {
+      "sha256": "d9a1cfa3e65bbef1076cc75d8e5701ccff672d6b410c02aa570c2fa731c0a554",
+      "bytes": 5245,
+      "tracked": true
+    },
+    "test/operator_workflow_test.dart": {
+      "sha256": "27fa59a2da966db0011b7eb5b3dde9943b2648abcb1552696d2f38fa53f3a63c",
+      "bytes": 9835,
+      "tracked": true
+    },
+    "test/panabo_screening_test.dart": {
+      "sha256": "99db8d654a27867b656da0b4ba39eb5db58905f9c830d081cd36410b1a61fd4c",
+      "bytes": 8500,
+      "tracked": true
+    },
+    "test/qa_closure_test.dart": {
+      "sha256": "be11eef1d58e64931471f1935e559a9ec091f6c35246e4b742bd796e19cf153a",
+      "bytes": 5785,
+      "tracked": true
+    },
+    "test/qa_support.dart": {
+      "sha256": "03261fc6d15082e1a77c3584c9cb00105ed32ef855e03c5fd13e7d2a8f9139cf",
+      "bytes": 2275,
+      "tracked": true
+    },
+    "test/readiness_identity_test.dart": {
+      "sha256": "be595a94f87c2513bb8e1bded88a62cc069b35e16308f06a738c04b34ef1f7b9",
+      "bytes": 7992,
+      "tracked": true
+    },
+    "test/session_gate_test.dart": {
+      "sha256": "ed485d3873356c4048d745acf3b9dc610e35ee4c58422aa8895e6e585ce2fe51",
+      "bytes": 1800,
+      "tracked": true
+    },
+    "test/web_analysis_metrics_test.dart": {
+      "sha256": "313f3863110cdf5d706accdd4f69e25337fe2a27469862a7cb170cef2de8b810",
+      "bytes": 1441,
+      "tracked": true
+    },
+    "test/web_remediation_test.dart": {
+      "sha256": "331d3ab8793dc882d120f559ca1560673524b8c344083c4003586842d31f8728",
+      "bytes": 7891,
+      "tracked": true
+    },
+    "vercel.json": {
+      "sha256": "03dd7e9871d47b109cc9dbe3af18a9f3ae09b04681a0b5743a0c3802599fd725",
+      "bytes": 1413,
+      "tracked": true
+    },
+    "web/404.html": {
+      "sha256": "2a145b7290158f0929bf7ca94cc8f6399d369a3373cfe0517c19c34c46aca46f",
+      "bytes": 578,
+      "tracked": true
+    },
+    "web/favicon.png": {
+      "sha256": "e5d0e5f01ea2a79ad703aeaedd5f3f965d7dde759b933a32ead84687a20a4558",
+      "bytes": 940,
+      "tracked": true
+    },
+    "web/favicon.svg": {
+      "sha256": "3f1e4c5c01273cf09f8b258d0184372b251c8697b4c697ca8d23905992341a70",
+      "bytes": 325,
+      "tracked": true
+    },
+    "web/firebase-config.js": {
+      "sha256": "33054b79f53b85ea5337e4fd0c76d853dc05e4ab196adf9f08edecf5d115155b",
+      "bytes": 194,
+      "tracked": true
+    },
+    "web/firebase-messaging-sw.js": {
+      "sha256": "164b0b65d488c30a48d2c3c4239737b839e9bce25a611d21678e71f0d417d4f2",
+      "bytes": 557,
+      "tracked": true
+    },
+    "web/icons/Icon-192.png": {
+      "sha256": "1201a4da0aa3cfd79497bbe0f5e4b6812f06ef4ecec6a89dd24d4827dc5bd731",
+      "bytes": 2469,
+      "tracked": true
+    },
+    "web/icons/Icon-512.png": {
+      "sha256": "e988835df34591a26ad1d43f48127c381e8b91c536c81aeeef3693c8b3dde3fc",
+      "bytes": 7552,
+      "tracked": true
+    },
+    "web/icons/Icon-maskable-192.png": {
+      "sha256": "1201a4da0aa3cfd79497bbe0f5e4b6812f06ef4ecec6a89dd24d4827dc5bd731",
+      "bytes": 2469,
+      "tracked": true
+    },
+    "web/icons/Icon-maskable-512.png": {
+      "sha256": "e988835df34591a26ad1d43f48127c381e8b91c536c81aeeef3693c8b3dde3fc",
+      "bytes": 7552,
+      "tracked": true
+    },
+    "web/index.html": {
+      "sha256": "366ded5b2d39ebfa951bc71796df6eaea2433b8c1f120e11cf9792f7a0030414",
+      "bytes": 2065,
+      "tracked": true
+    },
+    "web/manifest.json": {
+      "sha256": "012613cc2b51352816547a9494b80b42522810baa1774d5199fa5aa01d603beb",
+      "bytes": 993,
+      "tracked": true
+    }
+  }
+}

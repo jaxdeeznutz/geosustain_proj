@@ -1,0 +1,18 @@
+{
+  "phase_1_draft_set_aside": true,
+  "original_hashed_files_restored": {
+    "backend/fastapi_app.py": true,
+    "backend/database.py": true,
+    "backend/operator_workflow.py": true,
+    "backend/model_ranking.py": true,
+    "backend/crop_model.pkl": true,
+    "lib/web/web_analyst_shell.dart": true,
+    "lib/screens/mobile_results.dart": true,
+    "lib/main.dart": true,
+    "build/app/outputs/flutter-apk/app-release.apk": true
+  },
+  "phase_1_new_source_absent": true,
+  "phase_1_draft_location": ".tools/phase-01-draft/",
+  "baseline_source_patch": "baseline-source.patch",
+  "new_baseline_sources": "baseline-new-source/"
+}

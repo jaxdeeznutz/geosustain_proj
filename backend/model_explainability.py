@@ -8,6 +8,7 @@ import hashlib
 import json
 import math
 import uuid
+from local_attribution import sample_attribution, bind_local_explanation
 
 
 FEATURE_LABELS = {
@@ -36,6 +37,7 @@ def forest_snapshot(model, version, inputs, raw_prediction, probabilities):
         'raw_prediction': str(raw_prediction), 'class_probabilities': probabilities,
     }
     sample['sample_id'] = content_hash(sample)
+    sample['local_attribution'] = sample_attribution(model, version, inputs, probabilities)
     result = {
         'schema_version': 1, 'status': 'unavailable', 'scope': 'global',
         'method': 'random_forest_mean_decrease_in_impurity',
@@ -106,4 +108,4 @@ def finalize_explanation(result):
     snapshot['input_snapshot_hash'] = content_hash(snapshot.get('samples', []))
     snapshot['ranking'] = deepcopy(result.get('top_crop_recommendations') or [])
     result['model_explanation'] = snapshot
-    return result
+    return bind_local_explanation(result, snapshot, FEATURE_LABELS)

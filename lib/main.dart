@@ -20,9 +20,16 @@ import 'package:printing/printing.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'api_service.dart';
+import 'controlled_references.dart';
+import 'recommendation_summary.dart';
 import 'farm_geometry.dart';
 import 'boundary_draft_store.dart';
 import 'offline_farm_store.dart';
+import 'seasonal_context.dart';
+import 'spatial_context.dart';
+import 'spatial_pdf.dart';
+import 'local_explanation.dart';
+import 'local_explanation_pdf.dart';
 import 'push_notifications.dart';
 import 'federated_identity.dart';
 import 'web_build_identity.dart';
@@ -40,6 +47,10 @@ part 'widgets/geo_bottom_nav.dart';
 part 'widgets/geo_result_widgets.dart';
 part 'widgets/cagro_soil_card.dart';
 part 'widgets/analysis_coverage.dart';
+part 'widgets/seasonal_context.dart';
+part 'widgets/spatial_context.dart';
+part 'widgets/local_explanation.dart';
+part 'widgets/controlled_reference_versions.dart';
 part 'screens/reference_analysis.dart';
 part 'screens/home_screen.dart';
 part 'screens/map_screen.dart';
@@ -63,6 +74,7 @@ part 'screens/settings_screen.dart';
 part 'web/auth/web_auth_login.dart';
 part 'web/web_analyst_shell.dart';
 part 'web/web_admin_shell.dart';
+part 'web/widgets/controlled_records.dart';
 part 'web/widgets/web_common.dart';
 part 'web/widgets/web_analysis_evidence.dart';
 part 'web/widgets/web_portal_layout.dart';
@@ -1953,6 +1965,12 @@ class AnalysisState extends ChangeNotifier {
   }
 
   Future<bool> submitAnalysisRecord(Map<String, dynamic> record) async {
+    if ((record['verification_status'] ?? 'draft') == 'draft' &&
+        !formalReviewCandidate(record)) {
+      throw StateError(
+        'Open a saved farm and analyze its current boundary before submitting.',
+      );
+    }
     final id = int.tryParse('${normalizeRecord(record)['session_id']}');
     if (id == null) return false;
     final epoch = _sessionEpoch, owner = currentUser?['id'];
@@ -2186,7 +2204,7 @@ class AnalysisState extends ChangeNotifier {
   }
 
   String _analysisKey(String type, double lat, double lon) {
-    return '$type:${lat.toStringAsFixed(5)},${lon.toStringAsFixed(5)}';
+    return '$type:${lat.toStringAsFixed(5)},${lon.toStringAsFixed(5)}:month=$intendedPlantingMonth';
   }
 
   bool _isRecentDuplicate(String key) {
@@ -2224,6 +2242,7 @@ class AnalysisState extends ChangeNotifier {
         lon,
         placeName: selectedPlaceName,
         intendedPlantingMonth: intendedPlantingMonth,
+        independentAnalyst: webOperator && isAnalystRole,
       ),
       lat: lat,
       lon: lon,
@@ -2260,6 +2279,7 @@ class AnalysisState extends ChangeNotifier {
         payload,
         placeName: selectedPlaceName,
         intendedPlantingMonth: intendedPlantingMonth,
+        independentAnalyst: webOperator && isAnalystRole,
       ),
       lat: centerLat,
       lon: centerLon,
@@ -2319,6 +2339,7 @@ class AnalysisState extends ChangeNotifier {
         placeName: selectedPlaceName,
         intendedPlantingMonth: intendedPlantingMonth,
         farmId: farmId,
+        boundaryVersion: int.tryParse('${farm['boundary_version']}'),
       ),
       lat: centerLat,
       lon: centerLon,

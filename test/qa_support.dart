@@ -2,6 +2,41 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+
+/// Build lazy children by scrolling the enclosing list's position directly.
+/// Pointer drags can pan embedded maps rather than the surrounding page.
+Future<void> revealInList(
+  WidgetTester tester,
+  Finder target, {
+  required Finder list,
+}) async {
+  final scrollable = find
+      .descendant(of: list, matching: find.byType(Scrollable))
+      .first;
+  final position = tester.state<ScrollableState>(scrollable).position;
+  position.jumpTo(position.minScrollExtent);
+  await tester.pumpAndSettle();
+  for (var step = 0; step < 40; step++) {
+    if (target.evaluate().isNotEmpty) {
+      await tester.ensureVisible(target.first);
+      await tester.pumpAndSettle();
+      if (target.hitTestable().evaluate().isNotEmpty) return;
+    }
+    final next = (position.pixels + 240)
+        .clamp(position.minScrollExtent, position.maxScrollExtent)
+        .toDouble();
+    if (next == position.pixels) break;
+    position.jumpTo(next);
+    await tester.pumpAndSettle();
+  }
+  expect(
+    target.hitTestable(),
+    findsWidgets,
+    reason: 'Control must be reachable in its enclosing list.',
+  );
+}
 
 final _tileBytes = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR4nGN4+e7lfwAJRAPAWkyUCAAAAABJRU5ErkJggg==',

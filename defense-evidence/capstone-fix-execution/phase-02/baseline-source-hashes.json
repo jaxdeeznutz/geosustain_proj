@@ -1,0 +1,12 @@
+{
+  "backend/fastapi_app.py": "e6132917f8df44bee595bd8a6702fdce3d8926d455d7e1ae2e6177aa4bd46f3d",
+  "backend/tests/conftest.py": "8e3acf91294ac50b63674db77c96a7ea34a9269953693a1dc10dfca6a0470c66",
+  "lib/main.dart": "c2b011534d74873be68d51f8e74f92134af8058b2deafe53ffe1840c1ce7ac5b",
+  "lib/screens/analysis_explanation.dart": "059e918ffe2c830898daec3a928bf97ae4b7fe0b2dffb7b13b93314e25da50d2",
+  "lib/screens/history_screen.dart": "0fe76218636dc5374aa1dc50c2cfd25cc2e9699001a382b28a7d8f78259bf556",
+  "lib/screens/land_mapping_screen.dart": "6412ee6f9bb3a1706614a6fe49442d6a4e995de1ea64ce54a23067ebc915a550",
+  "lib/screens/map_screen.dart": "2d45230c8e67ecc587a9b91b4700a46d499b43a1ca7cc39b10ba1a0ef1b06f7f",
+  "lib/screens/my_farms_screen.dart": "96f36bc8b796b3feeba2fff46fcb2ed775988c7b7a30d95eed58df28cb24406b",
+  "lib/screens/reference_analysis.dart": "8e034b4f67c4a74e9484d87c57c692b4f25d95adf7188e78e6579c192252c190",
+  "lib/widgets/analysis_coverage.dart": "fb6c10fdbc641563e40366cd6a591ded823194ff07df76fdf67edde4dde66442"
+}

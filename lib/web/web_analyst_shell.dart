@@ -183,6 +183,7 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
 
   @override
   Widget build(BuildContext context) => WebPortalFrame(
+    state: state,
     navigation: _WebSidebar(
       state: state,
       selectedIndex: page,
@@ -224,21 +225,13 @@ class _WebSidebar extends StatelessWidget {
 
   // Keep existing route indices so saved links and browser history still work.
   static List<(int, IconData, String)> itemsFor(bool isPlanner) => [
-    (0, Icons.dashboard_rounded, isPlanner ? 'Dashboard' : 'Overview'),
-    if (isPlanner) (6, Icons.fact_check_rounded, 'Review Inbox'),
+    (0, Icons.dashboard_rounded, 'Overview'),
     (1, Icons.map_rounded, 'Planning Map'),
-    (
-      2,
-      Icons.center_focus_strong_rounded,
-      isPlanner ? 'Analyze Area' : 'Analysis Workspace',
-    ),
-    (
-      3,
-      Icons.history_rounded,
-      isPlanner ? 'Assessment Records' : 'My Analyses',
-    ),
+    (2, Icons.center_focus_strong_rounded, 'Analysis Workspace'),
+    (3, Icons.history_rounded, 'My Analyses'),
     (4, Icons.picture_as_pdf_rounded, 'Reports'),
-    if (!isPlanner) (5, Icons.show_chart_rounded, 'Recommendation Patterns'),
+    (5, Icons.show_chart_rounded, 'Recommendation Patterns'),
+    if (isPlanner) (6, Icons.fact_check_rounded, 'Review Inbox'),
     (isPlanner ? 7 : 6, Icons.settings_rounded, 'Settings'),
     (isPlanner ? 8 : 7, Icons.notifications_outlined, 'Activity'),
   ];
@@ -248,12 +241,18 @@ class _WebSidebar extends StatelessWidget {
     final name =
         '${state.currentUser?['username'] ?? state.currentUser?['name'] ?? 'Analyst'}';
     return Container(
-      width: 280,
+      width: 256,
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF064E2E), Color(0xFF08733F)],
+          colors: [Color(0xFF003D32), Color(0xFF075B43)],
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
+        ),
+        image: const DecorationImage(
+          image: AssetImage('assets/images/web/eco_valley_panorama.png'),
+          fit: BoxFit.fitWidth,
+          alignment: Alignment.bottomCenter,
+          opacity: .38,
         ),
       ),
       padding: EdgeInsets.fromLTRB(24, 28, 24, 24),
@@ -332,9 +331,7 @@ class _WebSidebar extends StatelessWidget {
             itemBuilder: (_, i) {
               final rowItems = itemsFor(state.isPlanner);
               final item = rowItems[i];
-              final selected =
-                  selectedIndex == item.$1 ||
-                  (selectedIndex == 5 && item.$1 == 4);
+              final selected = selectedIndex == item.$1;
               return InkWell(
                 borderRadius: BorderRadius.circular(14),
                 onTap: () {
@@ -426,10 +423,10 @@ class _WebPageFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     final isPlanner = state.isPlanner;
     final titles = [
-      isPlanner ? 'Dashboard' : 'Overview',
+      'Overview',
       'Planning Map',
-      isPlanner ? 'Analyze Area' : 'Analysis Workspace',
-      isPlanner ? 'Assessment Records' : 'My Analyses',
+      'Analysis Workspace',
+      'My Analyses',
       'Reports',
       'Recommendation Patterns',
       if (isPlanner) 'Review Inbox',
@@ -439,9 +436,7 @@ class _WebPageFrame extends StatelessWidget {
     final subtitles = [
       'Overview of suitability results, live conditions, and quick actions',
       'Review analyzed areas, map markers, and saved field boundaries',
-      isPlanner
-          ? 'Create an independent analyst assessment using a point or boundary'
-          : 'Run point or polygon-based crop and land suitability analysis',
+      'Run an independent point or boundary analysis; review farmer submissions separately in the inbox',
       isPlanner
           ? 'Your analyst assessments; farmer submissions are in the Review Inbox'
           : 'Review previously analyzed land records with dates and recommendations',
@@ -469,7 +464,6 @@ class _WebPageFrame extends StatelessWidget {
               state: state,
               controller: reviewMap,
               mapController: planningMap,
-              onContinue: () => onNavigate(2),
             )
           : WebMapScreen(
               state: state,
@@ -484,7 +478,12 @@ class _WebPageFrame extends StatelessWidget {
         previousAnalysis: previousAnalysis,
       );
     } else if (page == 3) {
-      body = WebHistoryScreen(state: state);
+      body = WebHistoryScreen(
+        key: ValueKey(
+          'history-${PortalRoutes.current.value.queryParameters['q'] ?? ''}',
+        ),
+        state: state,
+      );
     } else if (page == 4) {
       body = WebReportsScreen(state: state);
     } else if (page == 5) {
@@ -506,7 +505,17 @@ class _WebPageFrame extends StatelessWidget {
       body = WebSettingsScreen(state: state);
     }
 
-    return SizedBox.expand(
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      decoration: BoxDecoration(
+        image: DecorationImage(
+          image: const AssetImage('assets/images/web/eco_valley_panorama.png'),
+          alignment: Alignment.topCenter,
+          fit: BoxFit.fitWidth,
+          opacity: WebPortalColors.dark ? .04 : .12,
+        ),
+      ),
       child: CustomScrollView(
         key: PageStorageKey(
           'web_page_${index}_${PortalRoutes.current.value.queryParameters['case'] ?? PortalRoutes.current.value.queryParameters['session'] ?? 'list'}',
