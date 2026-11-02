@@ -4,11 +4,13 @@ class NotificationsPage extends StatefulWidget {
   final AnalysisState? state;
   final ApiService? api;
   final int? initialSessionId;
+  final bool webLayout;
   const NotificationsPage({
     super.key,
     this.state,
     this.api,
     this.initialSessionId,
+    this.webLayout = false,
   });
   @override
   State<NotificationsPage> createState() => _NotificationsPageState();
@@ -342,45 +344,79 @@ class _NotificationsPageState extends State<NotificationsPage> {
       onTap: () => _open(row, device: device),
     ),
   );
-  @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: GeoSustainHeader(
-      title: 'Notifications',
-      embedded: false,
-      state: widget.state,
-      showNotifications: false,
-      trailing: GeoHeaderAction(
-        tooltip: 'Refresh notifications',
-        icon: Icons.refresh,
-        onPressed: loading ? null : _load,
+  Widget _webActivity(BuildContext context) {
+    final empty =
+        !loading &&
+        error == null &&
+        rows.isEmpty &&
+        (offset != 0 || local.isEmpty);
+    final filter = SizedBox(
+      width: 220,
+      child: DropdownButtonFormField<String>(
+        key: ValueKey('web-activity-filter-$type'),
+        initialValue: type,
+        isExpanded: true,
+        decoration: const InputDecoration(
+          prefixIcon: Icon(Icons.tune_rounded, size: 18),
+          contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        ),
+        items: [
+          for (final entry in labels.entries)
+            DropdownMenuItem(value: entry.key, child: Text(entry.value)),
+        ],
+        onChanged: loading
+            ? null
+            : (value) {
+                if (value != null) {
+                  setState(() => type = value);
+                  _load(page: 0);
+                }
+              },
       ),
-    ),
-    body: RefreshIndicator(
-      onRefresh: _load,
-      child: ListView(
-        padding: const EdgeInsets.all(16),
+    );
+    return _WebCard(
+      key: const ValueKey('activity-content-panel'),
+      padding: const EdgeInsets.all(22),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (widget.state != null && !widget.state!.isPlanner)
-            OutlinedButton(
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => FarmerReviewCasesPage(state: widget.state!),
-                ),
-              ),
-              child: const Text('My review cases and corrections'),
-            ),
-          Semantics(
-            liveRegion: true,
-            child: Text(
-              '$unread unread notifications',
-              style: Theme.of(context).textTheme.titleMedium,
-            ),
+          LayoutBuilder(
+            builder: (_, box) {
+              const heading = _AnalystSectionTitle(
+                'Recent Activity',
+                icon: Icons.history_rounded,
+                subtitle:
+                    'Track your latest analyses, submissions, reviews, and system updates.',
+              );
+              if (box.maxWidth < 650) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [heading, const SizedBox(height: 14), filter],
+                );
+              }
+              return Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: heading),
+                  const SizedBox(width: 20),
+                  filter,
+                ],
+              );
+            },
           ),
+          const SizedBox(height: 14),
           Wrap(
             spacing: 12,
+            runSpacing: 8,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              Semantics(
+                liveRegion: true,
+                child: Text(
+                  '$unread unread notifications',
+                  style: TextStyle(fontSize: 12, color: WebPortalColors.muted),
+                ),
+              ),
               FilterChip(
                 label: const Text('Unread only'),
                 selected: unreadOnly,
@@ -391,53 +427,64 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         _load(page: 0);
                       },
               ),
-              DropdownButton<String>(
-                value: type,
-                items: [
-                  for (final entry in labels.entries)
-                    DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
-                    ),
-                ],
-                onChanged: loading
-                    ? null
-                    : (value) {
-                        setState(() => type = value!);
-                        _load(page: 0);
-                      },
-              ),
               TextButton(
                 onPressed: loading || opening || unread == 0 ? null : _markAll,
                 child: const Text('Mark all as read'),
               ),
+              TextButton.icon(
+                onPressed: loading ? null : _load,
+                icon: const Icon(Icons.refresh, size: 17),
+                label: const Text('Refresh activity'),
+              ),
             ],
           ),
-          if (loading) const LinearProgressIndicator(),
+          const SizedBox(height: 14),
+          if (loading)
+            const LinearProgressIndicator(semanticsLabel: 'Loading activity'),
           if (error != null)
-            Card(
-              child: ListTile(
-                title: Text(error!),
-                trailing: TextButton(
-                  onPressed: _load,
-                  child: const Text('Retry'),
-                ),
-              ),
-            )
-          else if (!loading && rows.isEmpty && (offset != 0 || local.isEmpty))
-            const Padding(
-              padding: EdgeInsets.all(24),
-              child: Text(
-                'No notifications match this view. Analysis, submission, review and farm-sync activity appear here.',
+            Semantics(
+              liveRegion: true,
+              child: MaterialBanner(
+                content: Text(error!),
+                actions: [
+                  TextButton(onPressed: _load, child: const Text('Retry')),
+                ],
               ),
             ),
-          if (error == null) ...[
-            for (final row in rows) tile(row),
-            if (offset == 0)
-              for (final row in local) tile(row, device: true),
-          ],
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          Container(
+            key: const ValueKey('activity-results-panel'),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(
+                color: WebPortalColors.muted.withValues(alpha: .14),
+              ),
+            ),
+            padding: const EdgeInsets.all(10),
+            child: empty
+                ? _WebEmptyState(
+                    title: type.isEmpty && !unreadOnly
+                        ? 'No recent activity'
+                        : 'No activity matches this view',
+                    message:
+                        'Your activity will appear here once you create analyses, submit cases, or receive updates.',
+                    icon: Icons.schedule_outlined,
+                  )
+                : Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (error == null) ...[
+                        for (final row in rows) tile(row),
+                        if (offset == 0)
+                          for (final row in local) tile(row, device: true),
+                      ],
+                    ],
+                  ),
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 12,
+            runSpacing: 8,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
               TextButton(
                 onPressed: loading || offset == 0
@@ -445,27 +492,165 @@ class _NotificationsPageState extends State<NotificationsPage> {
                     : () => _load(page: math.max(0, offset - 50)),
                 child: const Text('Previous'),
               ),
-              Text('Page ${offset ~/ 50 + 1}'),
+              Text(
+                'Page ${offset ~/ 50 + 1}',
+                style: TextStyle(fontSize: 12, color: WebPortalColors.muted),
+              ),
               TextButton(
                 onPressed: loading || !more
                     ? null
                     : () => _load(page: offset + 50),
                 child: const Text('Next'),
               ),
-            ],
-          ),
-          TextButton.icon(
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => WeatherNotificationsPage(state: widget.state),
+              TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) =>
+                        WeatherNotificationsPage(state: widget.state),
+                  ),
+                ),
+                icon: const Icon(Icons.cloud_outlined, size: 17),
+                label: const Text('View weather advisories'),
               ),
-            ),
-            icon: const Icon(Icons.cloud_outlined),
-            label: const Text('View weather advisories'),
+            ],
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.webLayout) {
+      return _webActivity(context);
+    }
+    return Scaffold(
+      appBar: GeoSustainHeader(
+        title: 'Notifications',
+        embedded: false,
+        state: widget.state,
+        showNotifications: false,
+        trailing: GeoHeaderAction(
+          tooltip: 'Refresh notifications',
+          icon: Icons.refresh,
+          onPressed: loading ? null : _load,
+        ),
+      ),
+      body: RefreshIndicator(
+        onRefresh: _load,
+        child: ListView(
+          padding: const EdgeInsets.all(16),
+          children: [
+            if (widget.state != null && !widget.state!.isPlanner)
+              OutlinedButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => FarmerReviewCasesPage(state: widget.state!),
+                  ),
+                ),
+                child: const Text('My review cases and corrections'),
+              ),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                '$unread unread notifications',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+            Wrap(
+              spacing: 12,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                FilterChip(
+                  label: const Text('Unread only'),
+                  selected: unreadOnly,
+                  onSelected: loading
+                      ? null
+                      : (value) {
+                          setState(() => unreadOnly = value);
+                          _load(page: 0);
+                        },
+                ),
+                DropdownButton<String>(
+                  value: type,
+                  items: [
+                    for (final entry in labels.entries)
+                      DropdownMenuItem(
+                        value: entry.key,
+                        child: Text(entry.value),
+                      ),
+                  ],
+                  onChanged: loading
+                      ? null
+                      : (value) {
+                          setState(() => type = value!);
+                          _load(page: 0);
+                        },
+                ),
+                TextButton(
+                  onPressed: loading || opening || unread == 0
+                      ? null
+                      : _markAll,
+                  child: const Text('Mark all as read'),
+                ),
+              ],
+            ),
+            if (loading) const LinearProgressIndicator(),
+            if (error != null)
+              Card(
+                child: ListTile(
+                  title: Text(error!),
+                  trailing: TextButton(
+                    onPressed: _load,
+                    child: const Text('Retry'),
+                  ),
+                ),
+              )
+            else if (!loading && rows.isEmpty && (offset != 0 || local.isEmpty))
+              const Padding(
+                padding: EdgeInsets.all(24),
+                child: Text(
+                  'No notifications match this view. Analysis, submission, review and farm-sync activity appear here.',
+                ),
+              ),
+            if (error == null) ...[
+              for (final row in rows) tile(row),
+              if (offset == 0)
+                for (final row in local) tile(row, device: true),
+            ],
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                TextButton(
+                  onPressed: loading || offset == 0
+                      ? null
+                      : () => _load(page: math.max(0, offset - 50)),
+                  child: const Text('Previous'),
+                ),
+                Text('Page ${offset ~/ 50 + 1}'),
+                TextButton(
+                  onPressed: loading || !more
+                      ? null
+                      : () => _load(page: offset + 50),
+                  child: const Text('Next'),
+                ),
+              ],
+            ),
+            TextButton.icon(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => WeatherNotificationsPage(state: widget.state),
+                ),
+              ),
+              icon: const Icon(Icons.cloud_outlined),
+              label: const Text('View weather advisories'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

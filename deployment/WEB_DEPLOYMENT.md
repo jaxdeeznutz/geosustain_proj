@@ -15,7 +15,10 @@ python deployment/build_web.py
 environment values listed in `deployment/build_web.py` are passed to Flutter and
 used to generate the same public `firebase-config.js`. Supply all four required
 app identifiers together. Never put server/service-account credentials in these
-values. For public VAPID/OAuth identifiers see `IDENTITY_AND_DELIVERY_SETUP.md`.
+values. If the host provides no core Firebase identifiers, the build uses the
+owner's `deployment/firebase-web.public.json`. Complete core environment values
+override that file; a partial core override fails instead of mixing projects.
+For public VAPID/OAuth identifiers see `IDENTITY_AND_DELIVERY_SETUP.md`.
 
 The build writes `build-info.json` with commit, application source fingerprint,
 SDK, API origin and compiled JS hash. The source fingerprint distinguishes local

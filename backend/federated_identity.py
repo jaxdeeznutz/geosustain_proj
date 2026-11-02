@@ -77,10 +77,36 @@ def google_login(token):
         name = 'Google Farmer'
     password_hash = bcrypt.hashpw(secrets.token_urlsafe(32).encode(), bcrypt.gensalt()).decode()
     user = db.create_user(name, email, password_hash,
-        role='farmer', email_verified=True, auth_provider='google', google_sub=claims['sub'])
+        role='farmer', email_verified=True, auth_provider='google', google_sub=claims['sub'], password_setup_required=True)
     if not user:
         raise HTTPException(409, 'An account already exists. Sign in and link Google from your profile.')
     return user
+
+
+def setup_google_password(user, password_hash):
+    """Finish this account's one-time setup under a row lock; never relink identities."""
+    with closing(db.get_conn()) as conn, conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM users WHERE id=%s FOR UPDATE', (user['id'],))
+            current = cur.fetchone()
+            if not current or not current.get('is_active', True):
+                raise HTTPException(401, 'Sign in with Google again to continue.')
+            if current.get('password_version', 0) != user.get('password_version', 0):
+                raise HTTPException(409, 'The account changed. Sign in with Google again.')
+            if not current.get('password_setup_required'):
+                raise HTTPException(409, 'A password is already configured. Use Change password in your profile.')
+            if not current.get('google_sub') or current.get('email_verified') is not True:
+                raise HTTPException(403, 'A verified Google account is required.')
+            cur.execute('''UPDATE users SET password_hash=%s,password_setup_required=FALSE,
+                password_version=password_version+1,updated_at=NOW()
+                WHERE id=%s AND password_version=%s AND password_setup_required=TRUE AND is_active=TRUE
+                RETURNING *''', (password_hash, user['id'], user.get('password_version', 0)))
+            updated = cur.fetchone()
+            if not updated:
+                raise HTTPException(409, 'The account changed. Sign in with Google again.')
+            cur.execute('DELETE FROM push_subscriptions WHERE user_id=%s', (user['id'],))
+            db.audit_in_transaction(cur, user['id'], updated['role'], 'google_password_setup', 'user', user['id'])
+            return dict(updated)
 
 
 def link_google(user, token, current_password):

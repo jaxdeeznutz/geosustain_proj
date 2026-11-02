@@ -238,153 +238,168 @@ class _WebSidebar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final name =
         '${state.currentUser?['username'] ?? state.currentUser?['name'] ?? 'Analyst'}';
     return Container(
-      width: 256,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF003D32), Color(0xFF075B43)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-        ),
-        image: const DecorationImage(
-          image: AssetImage('assets/images/web/eco_valley_panorama.png'),
-          fit: BoxFit.fitWidth,
+      width: 224,
+      decoration: const BoxDecoration(
+        color: Color(0xFF003D32),
+        image: DecorationImage(
+          image: AssetImage('assets/images/web/analyst_sidebar_valley.png'),
           alignment: Alignment.bottomCenter,
-          opacity: .38,
+          fit: BoxFit.fitWidth,
         ),
       ),
-      padding: EdgeInsets.fromLTRB(24, 28, 24, 24),
       child: ListView(
+        primary: false,
+        padding: const EdgeInsets.fromLTRB(14, 22, 14, 180),
         children: [
-          Row(
-            children: [
-              Icon(Icons.eco_rounded, color: Colors.white, size: 34),
-              SizedBox(width: 12),
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'GeoSustain',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.eco_rounded,
+                  color: Color(0xFF76D99D),
+                  size: 32,
                 ),
-              ),
-            ],
-          ),
-          SizedBox(height: 34),
-          Row(
-            children: [
-              CircleAvatar(
-                radius: 26,
-                backgroundColor: WebPortalColors.surface.withValues(alpha: .2),
-                child: Text(
-                  name.isEmpty ? 'A' : name[0].toUpperCase(),
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                    fontSize: 20,
-                  ),
-                ),
-              ),
-              SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      name,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    Text(
-                      'Agricultural Planning Analyst',
-                      style: TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: 28),
-          ListView.separated(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            itemCount: itemsFor(state.isPlanner).length,
-            separatorBuilder: (_, i) => i == 5
-                ? const Divider(color: Colors.white30, height: 28)
-                : const SizedBox(height: 6),
-            itemBuilder: (_, i) {
-              final rowItems = itemsFor(state.isPlanner);
-              final item = rowItems[i];
-              final selected = selectedIndex == item.$1;
-              return InkWell(
-                borderRadius: BorderRadius.circular(14),
-                onTap: () {
-                  if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
-                    Navigator.pop(context);
-                  }
-                  onSelect(item.$1);
-                },
-                child: Container(
-                  padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: selected
-                        ? Colors.white.withValues(alpha: .20)
-                        : Colors.transparent,
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Icon(item.$2, color: Colors.white, size: 22),
-                      SizedBox(width: 14),
-                      Expanded(
-                        child: Text(
-                          item.$3,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w900,
-                          ),
+                      Text(
+                        'GeoSustain',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 23,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      Text(
+                        'Agricultural Insights Platform',
+                        style: TextStyle(color: Color(0xFFCEE3DB), fontSize: 9),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 30),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  radius: 21,
+                  backgroundColor: const Color(0xFF2D8068),
+                  child: Text(
+                    name.isEmpty ? 'A' : name[0].toUpperCase(),
+                    style: const TextStyle(color: Colors.white, fontSize: 17),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Text(
+                        'Agricultural Planning Analyst',
+                        style: TextStyle(
+                          color: Color(0xFFCEE3DB),
+                          fontSize: 10,
                         ),
                       ),
                     ],
                   ),
                 ),
-              );
-            },
+              ],
+            ),
           ),
-          InkWell(
-            borderRadius: BorderRadius.circular(14),
-            onTap: logout,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              child: Row(
-                children: [
-                  Icon(Icons.logout_rounded, color: Colors.white),
-                  SizedBox(width: 14),
-                  Text(
-                    'Logout',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
+          const SizedBox(height: 25),
+          for (final item in itemsFor(state.isPlanner)) ...[
+            if (item.$3 == 'Settings')
+              const Divider(color: Colors.white24, height: 24),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 5),
+              child: Semantics(
+                selected: selectedIndex == item.$1,
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    borderRadius: BorderRadius.circular(10),
+                    onTap: () {
+                      if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
+                        Navigator.pop(context);
+                      }
+                      onSelect(item.$1);
+                    },
+                    child: Container(
+                      constraints: const BoxConstraints(minHeight: 44),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: selectedIndex == item.$1
+                            ? const LinearGradient(
+                                colors: [Color(0xFF16784F), Color(0xFF237F56)],
+                              )
+                            : null,
+                        borderRadius: BorderRadius.circular(10),
+                        border: selectedIndex == item.$1
+                            ? Border.all(
+                                color: const Color(0xFF7DD7A4),
+                                width: .6,
+                              )
+                            : null,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(item.$2, color: Colors.white, size: 20),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              item.$3,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: selectedIndex == item.$1
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ],
+                ),
               ),
+            ),
+          ],
+          TextButton.icon(
+            onPressed: logout,
+            icon: const Icon(Icons.logout_rounded, size: 20),
+            label: const Align(
+              alignment: Alignment.centerLeft,
+              child: Text('Logout'),
+            ),
+            style: TextButton.styleFrom(
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
             ),
           ),
         ],
@@ -421,6 +436,7 @@ class _WebPageFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final isPlanner = state.isPlanner;
     final titles = [
       'Overview',
@@ -445,7 +461,7 @@ class _WebPageFrame extends StatelessWidget {
       if (isPlanner)
         'Review saved evidence, request information and record decisions',
       'Manage dashboard preferences and account settings',
-      'Analysis, review and account activity',
+      'Your recent activity across analyses, submissions, and reviews.',
     ];
     final index = page.clamp(0, titles.length - 1);
 
@@ -500,29 +516,24 @@ class _WebPageFrame extends StatelessWidget {
               bySession: !query.containsKey('case'),
             );
     } else if (page == (isPlanner ? 8 : 7)) {
-      body = NotificationsPage(state: state);
+      body = NotificationsPage(state: state, webLayout: true);
     } else {
       body = WebSettingsScreen(state: state);
     }
 
-    return Container(
-      width: double.infinity,
-      height: double.infinity,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: const AssetImage('assets/images/web/eco_valley_panorama.png'),
-          alignment: Alignment.topCenter,
-          fit: BoxFit.fitWidth,
-          opacity: WebPortalColors.dark ? .04 : .12,
-        ),
-      ),
+    return _AnalystPageCanvas(
       child: CustomScrollView(
         key: PageStorageKey(
           'web_page_${index}_${PortalRoutes.current.value.queryParameters['case'] ?? PortalRoutes.current.value.queryParameters['session'] ?? 'list'}',
         ),
         slivers: [
           SliverPadding(
-            padding: EdgeInsets.fromLTRB(32, 28, 32, 40),
+            padding: EdgeInsets.fromLTRB(
+              MediaQuery.sizeOf(context).width < 600 ? 16 : 22,
+              20,
+              MediaQuery.sizeOf(context).width < 600 ? 16 : 22,
+              32,
+            ),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
                 if (page != 0) ...[
@@ -534,16 +545,7 @@ class _WebPageFrame extends StatelessWidget {
                   ),
                   SizedBox(height: 18),
                 ],
-                if (page == (isPlanner ? 8 : 7))
-                  SizedBox(
-                    height: math.max(
-                      400.0,
-                      MediaQuery.sizeOf(context).height - 220,
-                    ),
-                    child: body,
-                  )
-                else
-                  body,
+                body,
               ]),
             ),
           ),

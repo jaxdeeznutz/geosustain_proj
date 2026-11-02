@@ -55,7 +55,13 @@ String reviewAge(dynamic value) {
 
 class _OperatorFilters extends StatefulWidget {
   final WebRecordController controller;
-  const _OperatorFilters(this.controller);
+  final bool dense;
+  final bool separateDates;
+  const _OperatorFilters(
+    this.controller, {
+    this.dense = false,
+    this.separateDates = false,
+  });
   @override
   State<_OperatorFilters> createState() => _OperatorFiltersState();
 }
@@ -70,123 +76,182 @@ class _OperatorFiltersState extends State<_OperatorFilters> {
   }
 
   @override
-  Widget build(BuildContext context) => Wrap(
-    spacing: 12,
-    runSpacing: 12,
-    children: [
-      SizedBox(
-        width: 260,
-        child: TextField(
-          controller: search,
-          decoration: const InputDecoration(
-            labelText: 'Search case, farmer or farm',
-            prefixIcon: Icon(Icons.search),
-          ),
-          onChanged: controller.search,
-        ),
+  Widget build(BuildContext context) => Theme(
+    data: Theme.of(context).copyWith(
+      inputDecorationTheme: Theme.of(context).inputDecorationTheme.copyWith(
+        floatingLabelBehavior: widget.dense
+            ? FloatingLabelBehavior.always
+            : FloatingLabelBehavior.auto,
       ),
-      SizedBox(
-        width: 220,
-        child: DropdownButtonFormField<String>(
-          isExpanded: true,
-          key: ValueKey(controller.parameters['status']),
-          initialValue: controller.parameters['status'] ?? 'pending',
-          decoration: const InputDecoration(labelText: 'Review status'),
-          items: [
-            for (final value in [
-              'all',
-              'pending',
-              'needs_information',
-              'verified',
-              'rejected',
-            ])
-              DropdownMenuItem(
-                value: value,
-                child: Text(
-                  value == 'all' ? 'All statuses' : reviewLabel(value),
-                ),
-              ),
-          ],
-          onChanged: (value) =>
-              controller.filter({...controller.parameters, 'status': value!}),
-        ),
-      ),
-      SizedBox(
-        width: 180,
-        child: DropdownButtonFormField<String>(
-          isExpanded: true,
-          key: ValueKey(controller.parameters['sort']),
-          initialValue: controller.parameters['sort'] ?? 'oldest',
-          decoration: const InputDecoration(labelText: 'Submission order'),
-          items: const [
-            DropdownMenuItem(value: 'oldest', child: Text('Oldest first')),
-            DropdownMenuItem(value: 'newest', child: Text('Newest first')),
-          ],
-          onChanged: (value) =>
-              controller.filter({...controller.parameters, 'sort': value!}),
-        ),
-      ),
-      SizedBox(
-        width: 220,
-        child: TextFormField(
-          key: ValueKey(controller.parameters['place']),
-          initialValue: controller.parameters['place'],
-          decoration: const InputDecoration(
-            labelText: 'Place contains',
-            helperText: 'Press Enter to apply',
-          ),
-          onFieldSubmitted: (value) => controller.filter({
-            ...controller.parameters,
-            'place': value.trim(),
-          }),
-        ),
-      ),
-      if (controller.path.endsWith('/inbox'))
+    ),
+    child: _WebFilterRows(
+      separateDates: widget.separateDates,
+      children: [
         SizedBox(
-          width: 230,
-          child: DropdownButtonFormField<String>(
-            key: ValueKey('view-${controller.parameters['view']}'),
-            initialValue: controller.parameters['view'] ?? 'all',
-            isExpanded: true,
-            decoration: const InputDecoration(labelText: 'Workload view'),
-            items: [
-              for (final e in {
-                'all': 'All cases',
-                'preliminary': 'Preliminary assessments',
-                'reviewed_week': 'Reviewed in 7 days',
-                'followups_due': 'Cases with due tasks',
-              }.entries)
-                DropdownMenuItem(value: e.key, child: Text(e.value)),
-            ],
-            onChanged: (v) =>
-                controller.filter({...controller.parameters, 'view': v!}),
-          ),
-        ),
-      for (final field in ['start', 'end'])
-        SizedBox(
-          width: 170,
-          child: TextFormField(
-            key: ValueKey('$field${controller.parameters[field]}'),
-            initialValue: controller.parameters[field],
+          width: widget.dense ? 190 : 260,
+          child: TextField(
+            controller: search,
             decoration: InputDecoration(
-              labelText:
-                  '${field == 'start' ? 'From' : 'Through'} submission date',
-              helperText: 'YYYY-MM-DD; Enter applies',
+              helperText: widget.dense ? ' ' : null,
+              labelText: 'Search case, farmer or farm',
+              prefixIcon: Icon(Icons.search),
             ),
-            onFieldSubmitted: (value) => controller.filter(
-              {
-                ...controller.parameters,
-                if (value.trim().isNotEmpty) field: value.trim(),
-              }..removeWhere((k, v) => k == field && value.trim().isEmpty),
-            ),
+            onChanged: controller.search,
           ),
         ),
-      OutlinedButton.icon(
-        onPressed: controller.loading ? null : () => controller.load(),
-        icon: const Icon(Icons.refresh),
-        label: const Text('Refresh'),
-      ),
-    ],
+        SizedBox(
+          width: widget.dense ? 155 : 220,
+          child: DropdownButtonFormField<String>(
+            isExpanded: true,
+            key: ValueKey(controller.parameters['status']),
+            initialValue: controller.parameters['status'] ?? 'pending',
+            decoration: InputDecoration(
+              labelText: 'Review status',
+              helperText: widget.dense ? ' ' : null,
+            ),
+            items: [
+              for (final value in [
+                'all',
+                'pending',
+                'needs_information',
+                'verified',
+                'rejected',
+              ])
+                DropdownMenuItem(
+                  value: value,
+                  child: Text(
+                    value == 'all' ? 'All statuses' : reviewLabel(value),
+                  ),
+                ),
+            ],
+            onChanged: (value) =>
+                controller.filter({...controller.parameters, 'status': value!}),
+          ),
+        ),
+        SizedBox(
+          width: widget.dense ? 135 : 180,
+          child: DropdownButtonFormField<String>(
+            isExpanded: true,
+            key: ValueKey(controller.parameters['sort']),
+            initialValue: controller.parameters['sort'] ?? 'oldest',
+            decoration: InputDecoration(
+              labelText: 'Submission order',
+              helperText: widget.dense ? ' ' : null,
+            ),
+            items: const [
+              DropdownMenuItem(value: 'oldest', child: Text('Oldest first')),
+              DropdownMenuItem(value: 'newest', child: Text('Newest first')),
+            ],
+            onChanged: (value) =>
+                controller.filter({...controller.parameters, 'sort': value!}),
+          ),
+        ),
+        SizedBox(
+          width: widget.dense ? 155 : 220,
+          child: TextFormField(
+            key: ValueKey(controller.parameters['place']),
+            initialValue: controller.parameters['place'],
+            decoration: const InputDecoration(
+              labelText: 'Place contains',
+              helperText: 'Press Enter to apply',
+            ),
+            onFieldSubmitted: (value) => controller.filter({
+              ...controller.parameters,
+              'place': value.trim(),
+            }),
+          ),
+        ),
+        if (controller.path.endsWith('/inbox'))
+          SizedBox(
+            width: 190,
+            child: DropdownButtonFormField<String>(
+              key: ValueKey('view-${controller.parameters['view']}'),
+              initialValue: controller.parameters['view'] ?? 'all',
+              isExpanded: true,
+              decoration: const InputDecoration(labelText: 'Workload view'),
+              items: [
+                for (final e in {
+                  'all': 'All cases',
+                  'preliminary': 'Preliminary assessments',
+                  'reviewed_week': 'Reviewed in 7 days',
+                  'followups_due': 'Cases with due tasks',
+                }.entries)
+                  DropdownMenuItem(value: e.key, child: Text(e.value)),
+              ],
+              onChanged: (v) =>
+                  controller.filter({...controller.parameters, 'view': v!}),
+            ),
+          ),
+        for (final field in ['start', 'end'])
+          SizedBox(
+            width: 170,
+            child: TextFormField(
+              key: ValueKey('$field${controller.parameters[field]}'),
+              initialValue: controller.parameters[field],
+              decoration: InputDecoration(
+                labelText:
+                    '${field == 'start' ? 'From' : 'Through'} submission date',
+                helperText: widget.dense
+                    ? 'YYYY-MM-DD · Enter'
+                    : 'YYYY-MM-DD; Enter applies',
+              ),
+              onFieldSubmitted: (value) => controller.filter(
+                {
+                  ...controller.parameters,
+                  if (value.trim().isNotEmpty) field: value.trim(),
+                }..removeWhere((k, v) => k == field && value.trim().isEmpty),
+              ),
+            ),
+          ),
+        Padding(
+          padding: EdgeInsets.only(top: widget.dense ? 4 : 0),
+          child: OutlinedButton.icon(
+            onPressed: controller.loading ? null : () => controller.load(),
+            icon: const Icon(Icons.refresh),
+            label: const Text('Refresh'),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _WebFilterRows extends StatelessWidget {
+  final List<Widget> children;
+  final bool separateDates;
+  const _WebFilterRows({required this.children, required this.separateDates});
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (_, box) {
+      if (!separateDates) {
+        return Wrap(spacing: 12, runSpacing: 12, children: children);
+      }
+      final fields = children.take(children.length - 3).toList();
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (box.maxWidth >= 950)
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                for (var i = 0; i < fields.length; i++) ...[
+                  if (i != 0) const SizedBox(width: 12),
+                  Expanded(flex: i == 0 || i == 3 ? 12 : 10, child: fields[i]),
+                ],
+              ],
+            )
+          else
+            Wrap(spacing: 12, runSpacing: 12, children: fields),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            crossAxisAlignment: WrapCrossAlignment.start,
+            children: children.skip(children.length - 3).toList(),
+          ),
+        ],
+      );
+    },
   );
 }
 
@@ -194,71 +259,95 @@ class _OperatorPageState extends StatelessWidget {
   final WebRecordController controller;
   final String noun;
   final Widget Function(Map<String, dynamic>) row;
+  final bool illustrateEmpty;
   const _OperatorPageState(
     this.controller, {
     required this.row,
     this.noun = 'review cases',
+    this.illustrateEmpty = false,
   });
   @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      if (controller.loading)
-        const LinearProgressIndicator(semanticsLabel: 'Loading records'),
-      if (controller.error != null)
-        MaterialBanner(
-          content: Text(
-            '${controller.error}\n${controller.loaded ? 'Previously loaded records remain visible; filters have not been applied.' : 'Records are unavailable.'}',
+  Widget build(BuildContext context) {
+    final empty =
+        controller.loaded &&
+        controller.rows.isEmpty &&
+        !controller.loading &&
+        controller.error == null;
+    final scope = Text(
+      '${controller.rows.length} $noun on page ${controller.offset ~/ controller.limit + 1}. Applied search: ${controller.appliedQuery.isEmpty ? 'none' : controller.appliedQuery}. Status: ${reviewLabel(controller.appliedParameters['status'] ?? 'all')}.',
+      textAlign: illustrateEmpty && empty ? TextAlign.center : TextAlign.start,
+      style: TextStyle(fontSize: 11, color: WebPortalColors.muted),
+    );
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (controller.loading)
+          const LinearProgressIndicator(semanticsLabel: 'Loading records'),
+        if (controller.error != null)
+          MaterialBanner(
+            content: Text(
+              '${controller.error}\n${controller.loaded ? 'Previously loaded records remain visible; filters have not been applied.' : 'Records are unavailable.'}',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => controller.load(),
+                child: const Text('Retry'),
+              ),
+            ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => controller.load(),
-              child: const Text('Retry'),
+        if (controller.loaded && !(illustrateEmpty && empty))
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: scope,
+          ),
+        if (empty)
+          if (illustrateEmpty)
+            const _WebEmptyState(
+              title: 'No review cases found',
+              message:
+                  'No records match these filters. Change or clear the filters to see other records.',
+              icon: Icons.fact_check_outlined,
+            )
+          else
+            const Padding(
+              padding: EdgeInsets.all(24),
+              child: Text(
+                'No records match these filters. Change or clear the filters to see other records.',
+              ),
+            ),
+        for (final value in controller.rows)
+          Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: row(value),
+          ),
+        if (illustrateEmpty && empty) ...[scope, const SizedBox(height: 16)],
+        Wrap(
+          spacing: 12,
+          runSpacing: 10,
+          children: [
+            OutlinedButton.icon(
+              onPressed: controller.loading || controller.offset == 0
+                  ? null
+                  : () => controller.load(
+                      offset: math.max(0, controller.offset - controller.limit),
+                    ),
+              icon: const Icon(Icons.chevron_left, size: 16),
+              label: const Text('Previous page'),
+            ),
+            OutlinedButton.icon(
+              onPressed: controller.loading || !controller.more
+                  ? null
+                  : () => controller.load(
+                      offset: controller.offset + controller.limit,
+                    ),
+              icon: const Icon(Icons.chevron_right, size: 16),
+              label: const Text('Next page'),
             ),
           ],
         ),
-      if (controller.loaded)
-        Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          child: Text(
-            '${controller.rows.length} $noun on page ${controller.offset ~/ controller.limit + 1}. Applied search: ${controller.appliedQuery.isEmpty ? 'none' : controller.appliedQuery}. Status: ${reviewLabel(controller.appliedParameters['status'] ?? 'all')}.',
-          ),
-        ),
-      if (controller.loaded &&
-          controller.rows.isEmpty &&
-          !controller.loading &&
-          controller.error == null)
-        const Padding(
-          padding: EdgeInsets.all(24),
-          child: Text(
-            'No records match these filters. Change or clear the filters to see other records.',
-          ),
-        ),
-      for (final value in controller.rows)
-        Padding(padding: const EdgeInsets.only(bottom: 12), child: row(value)),
-      Wrap(
-        spacing: 12,
-        children: [
-          OutlinedButton(
-            onPressed: controller.loading || controller.offset == 0
-                ? null
-                : () => controller.load(
-                    offset: math.max(0, controller.offset - controller.limit),
-                  ),
-            child: const Text('Previous page'),
-          ),
-          OutlinedButton(
-            onPressed: controller.loading || !controller.more
-                ? null
-                : () => controller.load(
-                    offset: controller.offset + controller.limit,
-                  ),
-            child: const Text('Next page'),
-          ),
-        ],
-      ),
-    ],
-  );
+      ],
+    );
+  }
 }
 
 class WebOperatorInbox extends StatelessWidget {
@@ -271,38 +360,43 @@ class WebOperatorInbox extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         _WebCard(
+          key: const ValueKey('review-filters-panel'),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              const _AnalystSectionTitle(
                 'Submitted cases',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+                icon: Icons.description_outlined,
+                subtitle:
+                    'Open a case → Inspect its saved boundary and evidence → Record a decision. Oldest submissions appear first. Verification describes the assessment review, not guaranteed land suitability or crop success.',
               ),
-              const Text(
-                'Open a case → Inspect its saved boundary and evidence → Record a decision. Oldest submissions appear first. Verification describes the assessment review, not guaranteed land suitability or crop success.',
-              ),
-              const SizedBox(height: 16),
-              _OperatorFilters(controller),
+              const SizedBox(height: 22),
+              _OperatorFilters(controller, dense: true, separateDates: true),
             ],
           ),
         ),
         const SizedBox(height: 16),
-        _OperatorPageState(
-          controller,
-          row: (r) => Card(
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(18),
-              isThreeLine: true,
-              title: Text(
-                'Case #${r['case_id']} · ${r['farm_name'] ?? r['place_name'] ?? 'Unnamed farm'}',
+        _WebCard(
+          key: const ValueKey('review-results-panel'),
+          padding: const EdgeInsets.all(22),
+          child: _OperatorPageState(
+            controller,
+            illustrateEmpty: true,
+            row: (r) => Card(
+              child: ListTile(
+                contentPadding: const EdgeInsets.all(18),
+                isThreeLine: true,
+                title: Text(
+                  'Case #${r['case_id']} · ${r['farm_name'] ?? r['place_name'] ?? 'Unnamed farm'}',
+                ),
+                subtitle: Text(
+                  '${r['farmer_name']} · ${reviewLabel(r['verification_status'])}\nSubmitted ${analysisDateText(r['submitted_at'])} · ${reviewAge(r['submitted_at'])}\n'
+                  '${r['analysis_mode'] == 'preliminary_environmental' ? 'Preliminary screening · model score unavailable' : 'Model score: ${r['compatibility_pct'] == null ? 'unavailable' : '${r['compatibility_pct']}%'}'} · analyzed ${analysisDateText(r['analyzed_at'])}',
+                ),
+                trailing: const Icon(Icons.arrow_forward, size: 20),
+                onTap: () =>
+                    PortalRoutes.go('/operator/queue?case=${r['case_id']}'),
               ),
-              subtitle: Text(
-                '${r['farmer_name']} · ${reviewLabel(r['verification_status'])}\nSubmitted ${analysisDateText(r['submitted_at'])} · ${reviewAge(r['submitted_at'])}\n'
-                '${r['analysis_mode'] == 'preliminary_environmental' ? 'Preliminary screening · model score unavailable' : 'Model score: ${r['compatibility_pct'] == null ? 'unavailable' : '${r['compatibility_pct']}%'}'} · analyzed ${analysisDateText(r['analyzed_at'])}',
-              ),
-              trailing: const Icon(Icons.arrow_forward),
-              onTap: () =>
-                  PortalRoutes.go('/operator/queue?case=${r['case_id']}'),
             ),
           ),
         ),
@@ -1052,14 +1146,10 @@ class _OperatorEvidenceMapState extends State<OperatorEvidenceMap> {
           const SizedBox(height: 8),
           SizedBox(
             height: 340,
-            child: FlutterMap(
+            child: ContextMap(
               key: ValueKey(widget.record['session_id']),
               options: MapOptions(initialCenter: center, initialZoom: 15),
               children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.geosustain.mobile',
-                ),
                 if (polygon.length >= 3)
                   PolygonLayer(
                     polygons: [
@@ -1095,11 +1185,6 @@ class _OperatorEvidenceMapState extends State<OperatorEvidenceMap> {
                             ),
                           ),
                         ),
-                  ],
-                ),
-                const RichAttributionWidget(
-                  attributions: [
-                    TextSourceAttribution('OpenStreetMap contributors'),
                   ],
                 ),
               ],
@@ -1155,6 +1240,9 @@ class WebOperatorMap extends StatefulWidget {
 class _WebOperatorMapState extends State<WebOperatorMap> {
   WebRecordController get records => widget.controller;
   MapController get map => widget.mapController;
+  bool _markers = true, _boundaries = true, _basemap = true, _ready = false;
+  LatLng _viewCenter = panaboCenter;
+  double _zoom = 12;
   @override
   void initState() {
     super.initState();
@@ -1165,155 +1253,444 @@ class _WebOperatorMapState extends State<WebOperatorMap> {
     analysisNumber(r['center_lat']) ?? panaboCenter.latitude,
     analysisNumber(r['center_lon']) ?? panaboCenter.longitude,
   );
+
+  Widget _layer(
+    String label,
+    IconData icon,
+    bool checked,
+    ValueChanged<bool> change,
+  ) => CheckboxListTile(
+    contentPadding: EdgeInsets.zero,
+    dense: true,
+    controlAffinity: ListTileControlAffinity.leading,
+    value: checked,
+    onChanged: (v) => setState(() => change(v ?? false)),
+    title: Row(
+      children: [
+        Icon(icon, size: 17, color: WebPortalColors.accent),
+        const SizedBox(width: 8),
+        Expanded(child: Text(label, style: const TextStyle(fontSize: 12))),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: records,
-    builder: (_, _) => Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _WebCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    builder: (_, _) {
+      final polygons = records.rows
+          .where(
+            (r) => FarmGeometry.fromPayload(r['selected_polygon']).length >= 3,
+          )
+          .toList();
+      final areas = records.rows.map(_analystArea).whereType<double>().toList();
+      final totalArea = areas.fold<double>(0, (a, b) => a + b);
+      final farms = records.rows
+          .where((r) => r['farm_id'] != null)
+          .map((r) => r['farm_id'])
+          .toSet()
+          .length;
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _AnalystMetricGrid(
             children: [
-              const Text(
-                'Planning map · submitted project cases',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              _AnalystMetric(
+                icon: Icons.folder_shared_outlined,
+                label: 'Loaded Project Cases',
+                value: '${records.rows.length}',
+                caption: 'Current filtered page · up to 50',
               ),
-              const Text(
-                'Up to 50 cases per page. Colors show review status. Markers are parcel centers; this is not a citywide farm or infrastructure inventory. Open a case for its saved measurements and layer availability.',
+              _AnalystMetric(
+                icon: Icons.map_outlined,
+                label: 'Mapped Area',
+                value: areas.isEmpty
+                    ? 'Not recorded'
+                    : '${totalArea.toStringAsFixed(2)} ha',
+                caption: '${areas.length} loaded cases with saved area',
               ),
-              const SizedBox(height: 12),
-              _OperatorFilters(records),
-              Wrap(
-                spacing: 12,
-                children: [
-                  OutlinedButton(
-                    onPressed: () => records.filter({
-                      ...records.parameters,
-                      'west': '${map.camera.visibleBounds.west}',
-                      'east': '${map.camera.visibleBounds.east}',
-                      'south': '${map.camera.visibleBounds.south}',
-                      'north': '${map.camera.visibleBounds.north}',
-                    }),
-                    child: const Text('Search this map area (centers)'),
-                  ),
-                  TextButton(
-                    onPressed: () => records.filter(
-                      Map.of(records.parameters)..removeWhere(
-                        (k, v) =>
-                            ['west', 'east', 'north', 'south'].contains(k),
+              _AnalystMetric(
+                icon: Icons.schedule_rounded,
+                label: 'Pending Review',
+                value:
+                    '${records.rows.where((r) => r['verification_status'] == 'pending').length}',
+                caption: 'Current filtered page',
+                color: const Color(0xFFAD7200),
+              ),
+              _AnalystMetric(
+                icon: Icons.check_circle_outline_rounded,
+                label: 'Accepted Cases',
+                value:
+                    '${records.rows.where((r) => r['verification_status'] == 'verified').length}',
+                caption: 'Review status · loaded cases',
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _AnalystColumns(
+            mainFlex: 4,
+            sideFlex: 1,
+            breakpoint: 1000,
+            equalHeight: true,
+            main: WebStretchCards(
+              spacing: 12,
+              children: [
+                _WebCard(
+                  key: const ValueKey('planning-filters-panel'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _AnalystSectionTitle(
+                        'Planning map · submitted project cases',
+                        icon: Icons.map_outlined,
+                        subtitle:
+                            'Up to 50 cases per page. Markers are parcel centers, not a citywide farm or infrastructure inventory.',
                       ),
-                    ),
-                    child: const Text('Clear map bounds'),
+                      const SizedBox(height: 16),
+                      _OperatorFilters(records, dense: true),
+                      const SizedBox(height: 10),
+                      Wrap(
+                        spacing: 10,
+                        runSpacing: 8,
+                        children: [
+                          OutlinedButton.icon(
+                            onPressed: !_ready
+                                ? null
+                                : () => records.filter({
+                                    ...records.parameters,
+                                    'west': '${map.camera.visibleBounds.west}',
+                                    'east': '${map.camera.visibleBounds.east}',
+                                    'south':
+                                        '${map.camera.visibleBounds.south}',
+                                    'north':
+                                        '${map.camera.visibleBounds.north}',
+                                  }),
+                            icon: const Icon(Icons.search, size: 16),
+                            label: const Text('Search this map area (centers)'),
+                          ),
+                          TextButton.icon(
+                            onPressed: () => records.filter(
+                              Map.of(records.parameters)..removeWhere(
+                                (k, v) => [
+                                  'west',
+                                  'east',
+                                  'north',
+                                  'south',
+                                ].contains(k),
+                              ),
+                            ),
+                            icon: const Icon(
+                              Icons.layers_clear_outlined,
+                              size: 16,
+                            ),
+                            label: const Text('Clear map bounds'),
+                          ),
+                        ],
+                      ),
+                      if (records.parameters.containsKey('west'))
+                        const Text(
+                          'Map bounds are active. Panning alone does not change the applied results.',
+                        ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Loaded distinct farms: $farms. Multiple cases may refer to one farm.',
+                        style: TextStyle(
+                          color: WebPortalColors.muted,
+                          fontSize: 11,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 14,
+                        runSpacing: 7,
+                        children: [
+                          for (final status in [
+                            'pending',
+                            'needs_information',
+                            'verified',
+                            'rejected',
+                          ])
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.circle,
+                                  size: 9,
+                                  color: reviewColor(status),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  reviewLabel(status),
+                                  style: const TextStyle(fontSize: 11),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ],
                   ),
-                ],
-              ),
-              if (records.parameters.containsKey('west'))
-                const Text(
-                  'Map bounds are active. Panning alone does not change the applied results.',
                 ),
-              Text(
-                'Loaded distinct farms: ${records.rows.where((r) => r['farm_id'] != null).map((r) => r['farm_id']).toSet().length}. Multiple cases may refer to one farm.',
-              ),
-              Wrap(
-                spacing: 16,
-                children: [
-                  for (final s in [
-                    'pending',
-                    'needs_information',
-                    'verified',
-                    'rejected',
-                  ])
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
+                ClipRRect(
+                  key: const ValueKey('planning-map-panel'),
+                  borderRadius: BorderRadius.circular(14),
+                  child: SizedBox(
+                    height: 480,
+                    child: Stack(
                       children: [
-                        Icon(Icons.circle, size: 12, color: reviewColor(s)),
-                        const SizedBox(width: 4),
-                        Text(reviewLabel(s)),
+                        ContextMap(
+                          basemapVisible: _basemap,
+                          mapController: map,
+                          options: MapOptions(
+                            initialCenter: panaboCenter,
+                            initialZoom: 12,
+                            onMapReady: () {
+                              if (mounted) setState(() => _ready = true);
+                            },
+                            onPositionChanged: (position, gesture) {
+                              if (mounted) {
+                                setState(() {
+                                  _viewCenter = position.center;
+                                  _zoom = position.zoom;
+                                });
+                              }
+                            },
+                          ),
+                          children: [
+                            if (_boundaries)
+                              PolygonLayer(
+                                polygons: [
+                                  for (final r in polygons)
+                                    Polygon(
+                                      points: FarmGeometry.fromPayload(
+                                        r['selected_polygon'],
+                                      ),
+                                      color: reviewColor(
+                                        r['verification_status'],
+                                      ).withValues(alpha: .15),
+                                      borderColor: reviewColor(
+                                        r['verification_status'],
+                                      ),
+                                      borderStrokeWidth: 2,
+                                    ),
+                                ],
+                              ),
+                            if (_markers)
+                              MarkerLayer(
+                                markers: [
+                                  for (final r in records.rows)
+                                    Marker(
+                                      point: center(r),
+                                      width: 48,
+                                      height: 48,
+                                      child: IconButton(
+                                        tooltip:
+                                            'Case #${r['case_id']} · ${reviewLabel(r['verification_status'])}',
+                                        icon: Icon(
+                                          Icons.location_on,
+                                          color: reviewColor(
+                                            r['verification_status'],
+                                          ),
+                                        ),
+                                        onPressed: () => PortalRoutes.go(
+                                          '/operator/queue?case=${r['case_id']}',
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                          ],
+                        ),
+                        Positioned(
+                          top: 12,
+                          left: 12,
+                          child: Material(
+                            color: WebPortalColors.surface,
+                            elevation: 2,
+                            borderRadius: BorderRadius.circular(9),
+                            child: Column(
+                              children: [
+                                IconButton(
+                                  tooltip: 'Zoom in',
+                                  onPressed: !_ready
+                                      ? null
+                                      : () => map.move(
+                                          _viewCenter,
+                                          math.min(18.0, _zoom + 1),
+                                        ),
+                                  icon: const Icon(Icons.add, size: 20),
+                                ),
+                                IconButton(
+                                  tooltip: 'Zoom out',
+                                  onPressed: !_ready
+                                      ? null
+                                      : () => map.move(
+                                          _viewCenter,
+                                          math.max(3.0, _zoom - 1),
+                                        ),
+                                  icon: const Icon(Icons.remove, size: 20),
+                                ),
+                                IconButton(
+                                  tooltip: 'Center on Panabo City',
+                                  onPressed: !_ready
+                                      ? null
+                                      : () => map.move(panaboCenter, 12),
+                                  icon: const Icon(
+                                    Icons.my_location_rounded,
+                                    size: 20,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        SizedBox(
-          height: 450,
-          child: FlutterMap(
-            mapController: map,
-            options: MapOptions(initialCenter: panaboCenter, initialZoom: 12),
-            children: [
-              TileLayer(
-                urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                userAgentPackageName: 'com.geosustain.mobile',
-              ),
-              PolygonLayer(
-                polygons: [
-                  for (final r in records.rows)
-                    if (FarmGeometry.fromPayload(
-                          r['selected_polygon'],
-                        ).length >=
-                        3)
-                      Polygon(
-                        points: FarmGeometry.fromPayload(r['selected_polygon']),
-                        color: reviewColor(
-                          r['verification_status'],
-                        ).withValues(alpha: .15),
-                        borderColor: reviewColor(r['verification_status']),
-                        borderStrokeWidth: 2,
+                  ),
+                ),
+              ],
+            ),
+            side: WebStretchCards(
+              children: [
+                _WebCard(
+                  key: const ValueKey('planning-layers-panel'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _AnalystSectionTitle(
+                        'Map Layers',
+                        icon: Icons.layers_outlined,
                       ),
-                ],
-              ),
-              MarkerLayer(
-                markers: [
-                  for (final r in records.rows)
-                    Marker(
-                      point: center(r),
-                      width: 48,
-                      height: 48,
-                      child: IconButton(
-                        tooltip:
-                            'Case #${r['case_id']} · ${reviewLabel(r['verification_status'])}',
-                        icon: Icon(
-                          Icons.location_on,
-                          color: reviewColor(r['verification_status']),
-                        ),
-                        onPressed: () => PortalRoutes.go(
-                          '/operator/queue?case=${r['case_id']}',
+                      const SizedBox(height: 10),
+                      _layer(
+                        'Project cases',
+                        Icons.location_on_outlined,
+                        _markers,
+                        (v) => _markers = v,
+                      ),
+                      _layer(
+                        'Farm boundaries',
+                        Icons.crop_free_rounded,
+                        _boundaries,
+                        (v) => _boundaries = v,
+                      ),
+                      _layer(
+                        'Basemap imagery',
+                        Icons.map_outlined,
+                        _basemap,
+                        (v) => _basemap = v,
+                      ),
+                      const Divider(),
+                      Text(
+                        'Terrain, NDVI and soil evidence are available inside each case when saved. Open a case to inspect its recorded layers.',
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: WebPortalColors.muted,
                         ),
                       ),
-                    ),
-                ],
-              ),
-              const RichAttributionWidget(
-                attributions: [
-                  TextSourceAttribution('OpenStreetMap contributors'),
-                ],
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        _OperatorPageState(
-          records,
-          noun: 'map cases',
-          row: (r) => Card(
-            child: ListTile(
-              title: Text(
-                'Case #${r['case_id']} · ${r['farm_name'] ?? r['place_name']}',
-              ),
-              subtitle: Text(
-                '${reviewLabel(r['verification_status'])} · submitted ${analysisDateText(r['submitted_at'])}',
-              ),
-              trailing: const Icon(Icons.arrow_forward),
-              onTap: () =>
-                  PortalRoutes.go('/operator/queue?case=${r['case_id']}'),
+                    ],
+                  ),
+                ),
+                _WebCard(
+                  key: const ValueKey('planning-info-panel'),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _AnalystSectionTitle(
+                        'Map Information',
+                        icon: Icons.info_outline,
+                      ),
+                      const SizedBox(height: 18),
+                      for (final entry in [
+                        (
+                          Icons.place_outlined,
+                          'Current view',
+                          '${_viewCenter.latitude.toStringAsFixed(4)}, ${_viewCenter.longitude.toStringAsFixed(4)}',
+                        ),
+                        (
+                          Icons.folder_outlined,
+                          'Loaded cases',
+                          '${records.rows.length} (current filter)',
+                        ),
+                        (
+                          Icons.crop_free_rounded,
+                          'Saved boundaries',
+                          '${polygons.length} in loaded cases',
+                        ),
+                        (
+                          Icons.layers_outlined,
+                          'Visible layers',
+                          '${[_markers, _boundaries, _basemap].where((v) => v).length} of 3 enabled',
+                        ),
+                      ])
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 18),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Icon(
+                                entry.$1,
+                                size: 18,
+                                color: WebPortalColors.muted,
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      entry.$2,
+                                      style: const TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    Text(
+                                      entry.$3,
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: WebPortalColors.muted,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
-    ),
+          const SizedBox(height: 14),
+          _WebCard(
+            padding: const EdgeInsets.all(14),
+            child: _OperatorPageState(
+              records,
+              noun: 'map cases',
+              row: (r) => ListTile(
+                dense: true,
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(
+                  Icons.location_on_outlined,
+                  color: reviewColor(r['verification_status']),
+                ),
+                title: Text(
+                  'Case #${r['case_id']} · ${r['farm_name'] ?? r['place_name']}',
+                ),
+                subtitle: Text(
+                  '${reviewLabel(r['verification_status'])} · submitted ${analysisDateText(r['submitted_at'])}',
+                ),
+                trailing: const Icon(Icons.arrow_forward, size: 18),
+                onTap: () =>
+                    PortalRoutes.go('/operator/queue?case=${r['case_id']}'),
+              ),
+            ),
+          ),
+        ],
+      );
+    },
   );
 }
 

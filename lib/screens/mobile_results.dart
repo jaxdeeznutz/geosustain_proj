@@ -467,8 +467,9 @@ class MobileAnalysisResult extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) =>
-      ReferenceAnalysisContent(state: state, record: record);
+  Widget build(BuildContext context) => state.accountRole == 'farmer'
+      ? FarmerAnalysisContent(state: state, record: record)
+      : ReferenceAnalysisContent(state: state, record: record);
 }
 
 class _AnalysisParagraph extends StatelessWidget {
@@ -698,7 +699,7 @@ class AnalysisBoundaryPreview extends StatelessWidget {
           const SizedBox(height: 12),
           SizedBox(
             height: 230,
-            child: FlutterMap(
+            child: ContextMap(
               key: ValueKey('boundary-${record['session_id']}'),
               options: MapOptions(
                 initialCameraFit: CameraFit.coordinates(
@@ -707,10 +708,6 @@ class AnalysisBoundaryPreview extends StatelessWidget {
                 ),
               ),
               children: [
-                TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.geosustain.mobile',
-                ),
                 PolygonLayer(
                   polygons: [
                     Polygon(
@@ -719,11 +716,6 @@ class AnalysisBoundaryPreview extends StatelessWidget {
                       borderColor: green,
                       borderStrokeWidth: 3,
                     ),
-                  ],
-                ),
-                const RichAttributionWidget(
-                  attributions: [
-                    TextSourceAttribution('OpenStreetMap contributors'),
                   ],
                 ),
               ],
@@ -744,10 +736,12 @@ bool formalReviewCandidate(Map<String, dynamic> record) =>
 class AnalysisReviewCard extends StatefulWidget {
   final AnalysisState state;
   final Map<String, dynamic> record;
+  final bool simple;
   const AnalysisReviewCard({
     super.key,
     required this.state,
     required this.record,
+    this.simple = false,
   });
   @override
   State<AnalysisReviewCard> createState() => _AnalysisReviewCardState();
@@ -801,28 +795,43 @@ class _AnalysisReviewCardState extends State<AnalysisReviewCard> {
       children: [
         VerificationStatusBadge(status: status),
         if (status == 'draft' && !formalReviewCandidate(widget.record))
-          const Text(
-            'Preliminary inspection only. Open a saved farm and analyze its boundary before submitting for analyst review.',
+          Text(
+            widget.simple
+                ? 'Save and analyze a farm boundary before sending for review.'
+                : 'Preliminary inspection only. Open a saved farm and analyze its boundary before submitting for analyst review.',
           ),
         if (status != 'draft' && !formalReviewCandidate(widget.record))
-          const Text(
-            'This historical submission has no complete saved-farm boundary reference. Its original review history is preserved.',
+          Text(
+            widget.simple
+                ? 'Older result: saved boundary unavailable.'
+                : 'This historical submission has no complete saved-farm boundary reference. Its original review history is preserved.',
           ),
         if (widget.record['is_crop_recommended'] == false)
-          const Text(
-            'Review covers this partial assessment. It does not fill missing observations or establish crop suitability.',
+          Text(
+            widget.simple
+                ? 'Review covers the available land data only.'
+                : 'Review covers this partial assessment. It does not fill missing observations or establish crop suitability.',
           ),
         const SizedBox(height: 10),
-        Text(switch (status) {
-          'verified' =>
-            'An analyst approved this analysis. This decision applies to this analysis and its recorded boundary.',
-          'pending' =>
-            'Your analysis is awaiting an analyst’s decision. Refresh to retrieve the latest review.',
-          'rejected' =>
-            'Review the analyst’s feedback before submitting again. A new analysis starts with its own review status.',
-          _ =>
-            'Completing an automated analysis does not submit it or approve it. Submit when you are ready for an analyst to review these results.',
-        }),
+        Text(
+          widget.simple
+              ? switch (status) {
+                  'verified' => 'Reviewed. Read the feedback below.',
+                  'pending' => 'Sent. Waiting for an analyst.',
+                  'rejected' => 'Not approved. Read the feedback below.',
+                  _ => 'Send these results to an analyst when ready.',
+                }
+              : switch (status) {
+                  'verified' =>
+                    'An analyst approved this analysis. This decision applies to this analysis and its recorded boundary.',
+                  'pending' =>
+                    'Your analysis is awaiting an analyst’s decision. Refresh to retrieve the latest review.',
+                  'rejected' =>
+                    'Review the analyst’s feedback before submitting again. A new analysis starts with its own review status.',
+                  _ =>
+                    'Completing an automated analysis does not submit it or approve it. Submit when you are ready for an analyst to review these results.',
+                },
+        ),
         if (widget.record['verified_at'] != null) ...[
           const SizedBox(height: 8),
           Text('Reviewed: ${analysisDateText(widget.record['verified_at'])}'),
@@ -853,6 +862,8 @@ class _AnalysisReviewCardState extends State<AnalysisReviewCard> {
             label: Text(
               _submitting
                   ? 'Submitting…'
+                  : widget.simple
+                  ? 'Send for review'
                   : status == 'rejected'
                   ? 'Resubmit for Analyst Review'
                   : 'Submit for Analyst Review',

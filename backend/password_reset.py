@@ -62,7 +62,7 @@ def complete(ticket, code, password_hash, secret):
                 cur.execute('UPDATE password_reset_challenges SET attempts=attempts+1 WHERE ticket_hash=%s', (digest(ticket),))
                 error = 'Incorrect recovery code. Check your email and try again.'
             else:
-                cur.execute('''UPDATE users SET password_hash=%s,password_version=password_version+1,
+                cur.execute('''UPDATE users SET password_hash=%s,password_version=password_version+1,password_setup_required=FALSE,
                     email_verified=TRUE,updated_at=NOW() WHERE id=%s''', (password_hash, challenge['user_id']))
                 cur.execute('UPDATE password_reset_challenges SET used_at=NOW() WHERE ticket_hash=%s', (digest(ticket),))
                 cur.execute('DELETE FROM push_subscriptions WHERE user_id=%s', (challenge['user_id'],))

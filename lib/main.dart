@@ -33,6 +33,7 @@ import 'local_explanation_pdf.dart';
 import 'push_notifications.dart';
 import 'federated_identity.dart';
 import 'web_build_identity.dart';
+import 'web/widgets/aligned_cards.dart';
 import 'web/analysis_metrics.dart';
 import 'web/portal_routes.dart';
 import 'web/web_record_controller.dart';
@@ -52,12 +53,14 @@ part 'widgets/spatial_context.dart';
 part 'widgets/local_explanation.dart';
 part 'widgets/controlled_reference_versions.dart';
 part 'screens/reference_analysis.dart';
+part 'screens/farmer_analysis.dart';
 part 'screens/home_screen.dart';
 part 'screens/map_screen.dart';
 part 'screens/my_farms_screen.dart';
 part 'screens/local_farm_page.dart';
 part 'screens/land_mapping_screen.dart';
 part 'screens/session_gate.dart';
+part 'screens/google_password_setup.dart';
 part 'screens/password_recovery.dart';
 part 'screens/email_verification.dart';
 part 'screens/identity_settings.dart';
@@ -78,6 +81,9 @@ part 'web/widgets/controlled_records.dart';
 part 'web/widgets/web_common.dart';
 part 'web/widgets/web_analysis_evidence.dart';
 part 'web/widgets/web_portal_layout.dart';
+part 'web/widgets/analyst_design.dart';
+part 'web/widgets/admin_design.dart';
+part 'widgets/context_map.dart';
 part 'web/screens/web_dashboard_screen.dart';
 part 'web/screens/web_map_screen.dart';
 part 'web/screens/web_analyze_screen.dart';
@@ -531,7 +537,7 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const ShellPage()),
+        MaterialPageRoute(builder: (_) => const SessionGate()),
       );
     } catch (error) {
       if (mounted) {
@@ -1343,7 +1349,8 @@ class AnalysisState extends ChangeNotifier {
   final resourceErrors = <String, String>{};
   bool get webOperator => kIsWeb && (isAnalystRole || isSuperAdmin);
   bool get hasWorkspaceAccess =>
-      kIsWeb ? isAnalystRole || isSuperAdmin : accountRole == 'farmer';
+      currentUser?['password_setup_required'] != true &&
+      (kIsWeb ? isAnalystRole || isSuperAdmin : accountRole == 'farmer');
   bool userLoaded = false;
   Uint8List? profilePhotoBytes;
   Map<String, dynamic> profileCounts = {
@@ -2686,6 +2693,14 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
       );
     }
 
+    if (state.currentUser?['password_setup_required'] == true) {
+      return GooglePasswordSetupPage(
+        api: state.api,
+        user: state.currentUser!,
+        onCompleted: state.loadUserData,
+        onSignOut: logout,
+      );
+    }
     if (state.accountRole.contains('unknown')) {
       return AccessDeniedPage(
         desktopAttempt: kIsWeb,
@@ -2701,7 +2716,7 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
     }
 
     if (kIsWeb && state.isSuperAdmin) {
-      return WebAdminDashboard(logout: logout, message: message);
+      return WebAdminDashboard(state: state, logout: logout, message: message);
     }
 
     if (kIsWeb && state.isAnalystRole) {

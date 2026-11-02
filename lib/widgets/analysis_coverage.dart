@@ -264,17 +264,12 @@ class _CoverageExplorerState extends State<CoverageExplorer> {
               if (_catalog!['error'] != null) Text('${_catalog!['error']}'),
               SizedBox(
                 height: 270,
-                child: FlutterMap(
+                child: ContextMap(
                   options: MapOptions(
                     initialCenter: panaboCenter,
                     initialZoom: 11,
                   ),
                   children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.geosustain.mobile',
-                    ),
                     PolygonLayer(polygons: coverageBoundaryPolygons(_catalog!)),
                     MarkerLayer(
                       markers: [

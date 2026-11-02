@@ -94,6 +94,8 @@ class OfflineFarmStore {
       id,
       (data) => data['identity'] = {
         for (final key in ['id', 'username', 'email', 'role']) key: user[key],
+        if (user['password_setup_required'] == true)
+          'password_setup_required': true,
       },
     );
   }

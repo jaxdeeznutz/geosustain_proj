@@ -162,6 +162,10 @@ void main() {
         target,
         list: find.byKey(const PageStorageKey('mobile-analysis-scroll')),
       );
+      // Farmer overview stays short; the existing detailed journey is opt-in.
+      await revealAnalysis(find.text('Full analysis details'));
+      await tester.tap(find.text('Full analysis details'));
+      await tester.pumpAndSettle();
       await revealAnalysis(find.text('See more'));
       await tester.tap(find.text('See more').first);
       await tester.pumpAndSettle();

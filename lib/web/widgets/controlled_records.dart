@@ -11,7 +11,12 @@ const _controlledKindLabels = {
 
 class ControlledRecordsPanel extends StatefulWidget {
   final ApiService api;
-  const ControlledRecordsPanel({super.key, required this.api});
+  final bool adminDesign;
+  const ControlledRecordsPanel({
+    super.key,
+    required this.api,
+    this.adminDesign = false,
+  });
   @override
   State<ControlledRecordsPanel> createState() => _ControlledRecordsPanelState();
 }
@@ -173,10 +178,16 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Controlled reference records',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-          ),
+          if (widget.adminDesign)
+            const _AnalystSectionTitle(
+              'Controlled reference records',
+              icon: Icons.storage_rounded,
+            )
+          else
+            const Text(
+              'Controlled reference records',
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+            ),
           const SizedBox(height: 6),
           const Text(
             'Save a revision, review its evidence, then activate it for new analyses. Existing analyses keep their saved versions.',

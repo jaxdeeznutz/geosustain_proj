@@ -117,7 +117,7 @@ def redeem_password_recovery(token, password_hash):
             if not recovery:
                 return False
             cur.execute("""UPDATE users SET password_hash=%s, password_version=password_version+1,
-                updated_at=NOW() WHERE id=%s AND password_version=%s AND is_active RETURNING id""",
+                password_setup_required=FALSE, updated_at=NOW() WHERE id=%s AND password_version=%s AND is_active RETURNING id""",
                 (password_hash, recovery['user_id'], recovery['password_version']))
             if not cur.fetchone():
                 return False
@@ -143,6 +143,7 @@ CREATE TABLE IF NOT EXISTS users (
     verification_expires_at TIMESTAMPTZ,
     google_sub VARCHAR(255) UNIQUE,
     auth_provider VARCHAR(30) NOT NULL DEFAULT 'email',
+    password_setup_required BOOLEAN NOT NULL DEFAULT FALSE,
     created_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
     updated_at    TIMESTAMPTZ  NOT NULL DEFAULT NOW()
 );
@@ -346,6 +347,7 @@ def init_db():
             cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS verification_expires_at TIMESTAMPTZ")
             cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS google_sub VARCHAR(255) UNIQUE")
             cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS auth_provider VARCHAR(30) NOT NULL DEFAULT 'email'")
+            cur.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS password_setup_required BOOLEAN NOT NULL DEFAULT FALSE")
             cur.execute("ALTER TABLE environmental_data ADD COLUMN IF NOT EXISTS infrastructure_suitability VARCHAR(80)")
             cur.execute("ALTER TABLE environmental_data ADD COLUMN IF NOT EXISTS infrastructure_score FLOAT")
             cur.execute("ALTER TABLE environmental_data ADD COLUMN IF NOT EXISTS infrastructure_status TEXT")
@@ -489,7 +491,7 @@ def init_db():
         conn.close()
 
 
-def create_user(username: str, email: str, password_hash: str, role: str = "farmer", email_verified: bool = False, auth_provider: str = "email", google_sub: str = None):
+def create_user(username: str, email: str, password_hash: str, role: str = "farmer", email_verified: bool = False, auth_provider: str = "email", google_sub: str = None, password_setup_required: bool = False):
     """Create an account; only an actual duplicate email returns None."""
     normalized_email = email.strip().lower()
     conn = get_conn()
@@ -504,11 +506,11 @@ def create_user(username: str, email: str, password_hash: str, role: str = "farm
                         return None
                     cur.execute(
                         """
-                        INSERT INTO users (username, email, password_hash, role, email_verified, auth_provider, google_sub)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                        RETURNING id, username, email, role, location, profile_photo, is_active, email_verified, auth_provider, created_at
+                        INSERT INTO users (username, email, password_hash, role, email_verified, auth_provider, google_sub, password_setup_required)
+                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                        RETURNING id, username, email, role, location, profile_photo, is_active, email_verified, auth_provider, google_sub, password_setup_required, created_at
                         """,
-                        (username.strip(), normalized_email, password_hash, role, email_verified, auth_provider, google_sub),
+                        (username.strip(), normalized_email, password_hash, role, email_verified, auth_provider, google_sub, password_setup_required),
                     )
                     user = cur.fetchone()
                 conn.commit()

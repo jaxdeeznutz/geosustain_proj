@@ -209,7 +209,8 @@ class _WebMapScreenState extends State<WebMapScreen> {
     return result;
   }
 
-  double? _suitability(Map<String, dynamic> record) => WebAnalysisMetrics.modelScore(record);
+  double? _suitability(Map<String, dynamic> record) =>
+      WebAnalysisMetrics.modelScore(record);
 
   String _crop(Map<String, dynamic> record) => _mapRecordPrimaryValue(record);
 
@@ -756,8 +757,10 @@ class _InteractiveReviewMap extends StatelessWidget {
         height: 650,
         child: Stack(
           children: [
-            FlutterMap(
+            ContextMap(
               mapController: mapController,
+              satellite: state.satellite,
+              onSatelliteChanged: (_) => state.toggleSatellite(),
               options: MapOptions(
                 initialCenter: selectedPoint ?? state.selectedPoint,
                 initialZoom: 12.8,
@@ -768,12 +771,6 @@ class _InteractiveReviewMap extends StatelessWidget {
                 ),
               ),
               children: [
-                TileLayer(
-                  urlTemplate: state.satellite
-                      ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-                      : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'com.geosustain.mobile',
-                ),
                 if (parcelPolygons.isNotEmpty)
                   PolygonLayer(polygons: parcelPolygons),
                 MarkerLayer(markers: markers),

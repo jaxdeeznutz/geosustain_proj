@@ -260,6 +260,15 @@ class ApiService {
             'current_password': password,
           }))['user']
           as Map<String, dynamic>;
+
+  Future<Map<String, dynamic>> completeGooglePasswordSetup(
+    String password,
+  ) async => _acceptLogin(
+    await _identityPost('/api/mobile/auth/password-setup', {
+      'new_password': password,
+    }),
+  );
+
   Future<Map<String, dynamic>> startPhoneVerification(String phone) =>
       _identityPost('/api/mobile/phone-verification/start', {
         'phone_number': phone,

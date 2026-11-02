@@ -74,7 +74,7 @@ def test_new_google_user_has_server_owned_lowest_role(proof, monkeypatch):
     monkeypatch.setattr(identity.db, 'create_user', create)
     assert identity.google_login(proof())['role'] == 'farmer'
     assert create.call_args.kwargs == {'role': 'farmer', 'email_verified': True,
-        'auth_provider': 'google', 'google_sub': 'immutable-fixture-subject'}
+        'auth_provider': 'google', 'google_sub': 'immutable-fixture-subject', 'password_setup_required': True}
 
 
 def test_disabled_identity_cannot_get_an_app_session(proof, monkeypatch):
