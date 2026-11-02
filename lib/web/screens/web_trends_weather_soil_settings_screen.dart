@@ -39,6 +39,7 @@ class WebCropTrendsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final counts = <String, int>{};
     final monthly = <DateTime, int>{};
     double totalScore = 0;
@@ -107,189 +108,71 @@ class WebCropTrendsScreen extends StatelessWidget {
         ? monthEntries
         : monthEntries.sublist(monthEntries.length - 6);
 
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final narrow = constraints.maxWidth < 1050;
-        return SingleChildScrollView(
-          padding: EdgeInsets.only(bottom: 28),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _AnalystMetricGrid(
             children: [
-              Wrap(
-                spacing: 18,
-                runSpacing: 18,
-                children: [
-                  _TrendSummaryCard(
-                    icon: Icons.article_rounded,
-                    label: 'Total Saved Analyses',
-                    value: '$total',
-                    caption: summary == null
-                        ? 'Loaded recommendations only'
-                        : 'All analyses owned by this account',
-                    width: narrow
-                        ? constraints.maxWidth
-                        : (constraints.maxWidth - 36) / 3,
-                  ),
-                  _TrendSummaryCard(
-                    icon: Icons.emoji_events_rounded,
-                    label: 'Most Recommended Crop',
-                    value: topCrop,
-                    caption: topCount == 0
-                        ? 'No recommendations yet'
-                        : 'Recommended $topCount ${topCount == 1 ? 'time' : 'times'}',
-                    width: narrow
-                        ? constraints.maxWidth
-                        : (constraints.maxWidth - 36) / 3,
-                  ),
-                  _TrendSummaryCard(
-                    icon: Icons.speed_rounded,
-                    label: 'Average Model Score',
-                    value: scored == 0
-                        ? 'Not assessed'
-                        : '${average.toStringAsFixed(1)}%',
-                    caption: 'Across all crop recommendations',
-                    width: narrow
-                        ? constraints.maxWidth
-                        : (constraints.maxWidth - 36) / 3,
-                  ),
-                ],
+              _AnalystMetric(
+                icon: Icons.article_rounded,
+                label: 'Total Saved Analyses',
+                value: '$total',
+                series: recentMonths.map((e) => e.value.toDouble()).toList(),
+                caption: summary == null
+                    ? 'Loaded recommendations only'
+                    : 'All analyses owned by this account',
               ),
-              SizedBox(height: 18),
-              if (narrow) ...[
-                _CropFrequencyCard(entries: entries),
-                SizedBox(height: 18),
-                _SuitabilityDistributionCard(
-                  values: distribution,
-                  total: scored,
-                ),
-              ] else
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: _CropFrequencyCard(entries: entries),
-                    ),
-                    SizedBox(width: 18),
-                    Expanded(
-                      flex: 2,
-                      child: _SuitabilityDistributionCard(
-                        values: distribution,
-                        total: scored,
-                      ),
-                    ),
-                  ],
-                ),
-              SizedBox(height: 18),
-              if (narrow) ...[
-                _RecentTrendCard(entries: recentMonths),
-                SizedBox(height: 18),
-                _TrendInsightsCard(
-                  topCrop: topCrop,
-                  topCount: topCount,
-                  high: high,
-                  total: scored,
-                  monthly: recentMonths,
-                ),
-              ] else
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      flex: 3,
-                      child: _RecentTrendCard(entries: recentMonths),
-                    ),
-                    SizedBox(width: 18),
-                    Expanded(
-                      flex: 2,
-                      child: _TrendInsightsCard(
-                        topCrop: topCrop,
-                        topCount: topCount,
-                        high: high,
-                        total: scored,
-                        monthly: recentMonths,
-                      ),
-                    ),
-                  ],
-                ),
+              _AnalystMetric(
+                icon: Icons.emoji_events_rounded,
+                label: 'Most Recommended Crop',
+                value: topCrop,
+                caption: topCount == 0
+                    ? 'No recommendations yet'
+                    : 'Recommended $topCount ${topCount == 1 ? 'time' : 'times'}',
+              ),
+              _AnalystMetric(
+                icon: Icons.speed_rounded,
+                label: 'Average Model Score',
+                value: scored == 0
+                    ? 'Not assessed'
+                    : '${average.toStringAsFixed(1)}%',
+                caption: 'Across all crop recommendations',
+              ),
             ],
           ),
-        );
-      },
-    );
-  }
-}
-
-class _TrendSummaryCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final String caption;
-  final double width;
-  const _TrendSummaryCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.caption,
-    required this.width,
-  });
-
-  @override
-  Widget build(BuildContext context) => SizedBox(
-    width: width,
-    child: _WebCard(
-      child: Row(
-        children: [
-          Container(
-            width: 64,
-            height: 64,
-            decoration: BoxDecoration(
-              color: WebPortalColors.tint,
-              borderRadius: BorderRadius.circular(18),
+          const SizedBox(height: 18),
+          _AnalystColumns(
+            mainFlex: 3,
+            sideFlex: 2,
+            breakpoint: 880,
+            equalHeight: true,
+            main: _CropFrequencyCard(entries: entries),
+            side: _SuitabilityDistributionCard(
+              values: distribution,
+              total: scored,
             ),
-            child: Icon(icon, color: WebPortalColors.accent, size: 31),
           ),
-          SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: WebPortalColors.muted,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  value,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 25,
-                    color: WebPortalColors.accent,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                SizedBox(height: 5),
-                Text(
-                  caption,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    color: WebPortalColors.muted,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
+          const SizedBox(height: 18),
+          _AnalystColumns(
+            mainFlex: 3,
+            sideFlex: 2,
+            breakpoint: 880,
+            equalHeight: true,
+            main: _RecentTrendCard(entries: recentMonths),
+            side: _TrendInsightsCard(
+              topCrop: topCrop,
+              topCount: topCount,
+              high: high,
+              total: scored,
+              monthly: recentMonths,
             ),
           ),
         ],
       ),
-    ),
-  );
+    );
+  }
 }
 
 class _CropFrequencyCard extends StatelessWidget {
@@ -297,60 +180,21 @@ class _CropFrequencyCard extends StatelessWidget {
   const _CropFrequencyCard({required this.entries});
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final shown = entries.take(6).toList();
     final maxValue = shown.isEmpty ? 1 : shown.first.value;
     return _WebCard(
+      key: const ValueKey('patterns-frequency-panel'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Recommendation Frequency by Crop',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    Text(
-                      'Frequency of recommended crops from saved analyses',
-                      style: TextStyle(color: WebPortalColors.muted),
-                    ),
-                  ],
-                ),
-              ),
-              Container(
-                padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  border: Border.all(color: Color(0xFFDCE7DF)),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      Icons.calendar_today_outlined,
-                      color: WebPortalColors.accent,
-                      size: 16,
-                    ),
-                    SizedBox(width: 7),
-                    Text(
-                      'All Time',
-                      style: TextStyle(fontWeight: FontWeight.w700),
-                    ),
-                    SizedBox(width: 4),
-                    Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-                  ],
-                ),
-              ),
-            ],
+          const _AnalystChartHeading(
+            title: 'Recommendation Frequency by Crop',
+            subtitle: 'Frequency of recommended crops from saved analyses',
+            scope: 'All Time',
+            scopeIcon: Icons.calendar_today_outlined,
           ),
-          SizedBox(height: 24),
+          SizedBox(height: 20),
           if (shown.isEmpty)
             SizedBox(
               height: 210,
@@ -371,7 +215,7 @@ class _CropFrequencyCard extends StatelessWidget {
                 child: Row(
                   children: [
                     SizedBox(
-                      width: 190,
+                      width: MediaQuery.sizeOf(context).width < 600 ? 108 : 165,
                       child: Text(
                         e.key,
                         maxLines: 2,
@@ -399,7 +243,10 @@ class _CropFrequencyCard extends StatelessWidget {
                       child: Text(
                         '${e.value}',
                         textAlign: TextAlign.right,
-                        style: TextStyle(fontWeight: FontWeight.w900),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 11,
+                        ),
                       ),
                     ),
                   ],
@@ -408,7 +255,10 @@ class _CropFrequencyCard extends StatelessWidget {
             }),
           if (shown.isNotEmpty)
             Padding(
-              padding: EdgeInsets.only(left: 202, top: 2),
+              padding: EdgeInsets.only(
+                left: MediaQuery.sizeOf(context).width < 600 ? 120 : 177,
+                top: 2,
+              ),
               child: Text(
                 'Number of Recommendations',
                 style: TextStyle(fontSize: 12, color: WebPortalColors.muted),
@@ -429,6 +279,7 @@ class _SuitabilityDistributionCard extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final labels = [
       'High (75% - 100%)',
       'Medium (50% - 75%)',
@@ -442,12 +293,13 @@ class _SuitabilityDistributionCard extends StatelessWidget {
       Color(0xFFC7E6D0),
     ];
     return _WebCard(
+      key: const ValueKey('patterns-distribution-panel'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Model Score Distribution',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
           ),
           SizedBox(height: 5),
           Text(
@@ -457,10 +309,10 @@ class _SuitabilityDistributionCard extends StatelessWidget {
           SizedBox(height: 20),
           LayoutBuilder(
             builder: (context, box) {
-              final stack = box.maxWidth < 470;
+              final stack = box.maxWidth < 350;
               final chart = SizedBox(
-                width: 195,
-                height: 195,
+                width: 140,
+                height: 140,
                 child: CustomPaint(
                   painter: _DonutPainter(values: values, colors: colors),
                   child: Center(
@@ -470,7 +322,7 @@ class _SuitabilityDistributionCard extends StatelessWidget {
                         Text(
                           '$total',
                           style: TextStyle(
-                            fontSize: 30,
+                            fontSize: 25,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -507,13 +359,19 @@ class _SuitabilityDistributionCard extends StatelessWidget {
                         Expanded(
                           child: Text(
                             labels[i],
-                            style: TextStyle(fontWeight: FontWeight.w700),
+                            style: TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
                           ),
                         ),
                         SizedBox(width: 8),
                         Text(
                           '$pct% (${values[i]})',
-                          style: TextStyle(fontWeight: FontWeight.w900),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 11,
+                          ),
                         ),
                       ],
                     ),
@@ -549,52 +407,15 @@ class _RecentTrendCard extends StatelessWidget {
   const _RecentTrendCard({required this.entries});
   @override
   Widget build(BuildContext context) => _WebCard(
+    key: const ValueKey('patterns-trend-panel'),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Recent Trend',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    'Number of recommendations over time',
-                    style: TextStyle(color: WebPortalColors.muted),
-                  ),
-                ],
-              ),
-            ),
-            Container(
-              padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                border: Border.all(color: Color(0xFFDCE7DF)),
-                borderRadius: BorderRadius.circular(10),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    Icons.date_range_rounded,
-                    color: WebPortalColors.accent,
-                    size: 16,
-                  ),
-                  SizedBox(width: 7),
-                  Text(
-                    'Last 6 Months',
-                    style: TextStyle(fontWeight: FontWeight.w700),
-                  ),
-                  SizedBox(width: 4),
-                  Icon(Icons.keyboard_arrow_down_rounded, size: 18),
-                ],
-              ),
-            ),
-          ],
+        const _AnalystChartHeading(
+          title: 'Recent Trend',
+          subtitle: 'Number of recommendations over time',
+          scope: 'Last 6 recorded months',
+          scopeIcon: Icons.date_range_rounded,
         ),
         SizedBox(height: 18),
         SizedBox(
@@ -628,16 +449,18 @@ class _TrendInsightsCard extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final highPct = total == 0 ? 0 : (high * 100 / total).round();
     final increasing =
         monthly.length >= 2 && monthly.last.value >= monthly.first.value;
     return _WebCard(
+      key: const ValueKey('patterns-insights-panel'),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Key Insights',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
           ),
           SizedBox(height: 18),
           _InsightRow(
@@ -658,10 +481,12 @@ class _TrendInsightsCard extends StatelessWidget {
           SizedBox(height: 16),
           _InsightRow(
             icon: Icons.trending_up_rounded,
-            title: increasing
+            title: monthly.length < 2
+                ? 'More dated records are needed to describe a trend.'
+                : increasing
                 ? 'Recommendation activity is stable or increasing.'
                 : 'Recommendation activity has recently slowed.',
-            subtitle: 'Based on the latest available monthly records.',
+            subtitle: 'Compared with the first available month shown.',
           ),
         ],
       ),
@@ -679,33 +504,43 @@ class _InsightRow extends StatelessWidget {
     required this.subtitle,
   });
   @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        width: 48,
-        height: 48,
-        decoration: BoxDecoration(
-          color: WebPortalColors.tint,
-          shape: BoxShape.circle,
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(12),
+    decoration: BoxDecoration(
+      color: WebPortalColors.tint.withValues(alpha: .5),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 34,
+          height: 34,
+          decoration: BoxDecoration(
+            color: WebPortalColors.tint,
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: WebPortalColors.accent, size: 19),
         ),
-        child: Icon(icon, color: WebPortalColors.accent, size: 24),
-      ),
-      SizedBox(width: 13),
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: TextStyle(fontWeight: FontWeight.w900)),
-            SizedBox(height: 3),
-            Text(
-              subtitle,
-              style: TextStyle(color: WebPortalColors.muted, height: 1.35),
-            ),
-          ],
+        SizedBox(width: 13),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+              ),
+              SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: TextStyle(color: WebPortalColors.muted, height: 1.35),
+              ),
+            ],
+          ),
         ),
-      ),
-    ],
+      ],
+    ),
   );
 }
 
@@ -867,6 +702,7 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final w = state.liveWeather ?? {};
     final d = state.result ?? {};
     final weatherSource = '${w['weather_source'] ?? 'Open-Meteo live weather'}';
@@ -1392,6 +1228,7 @@ class _WebEnvironmentPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final d = state.result ?? {};
     final rainfall = d['rainfall_30d_mm'] ?? d['rainfall_30d'];
     final slope = d['slope_pct'] ?? d['slope'];

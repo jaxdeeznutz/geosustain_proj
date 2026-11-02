@@ -219,14 +219,14 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.ensureVisible(find.text('Submit for Analyst Review'));
+      final submit = find.widgetWithText(FilledButton, 'Send for review');
+      expect(submit, findsOneWidget);
+      await tester.ensureVisible(submit);
       await tester.pumpAndSettle();
+      expect(submit.hitTestable(), findsOneWidget);
+      expect(tester.widget<FilledButton>(submit).onPressed, isNotNull);
       expect(
-        find.text('Submit for Analyst Review').hitTestable(),
-        findsOneWidget,
-      );
-      expect(
-        tester.getBottomLeft(find.text('Submit for Analyst Review')).dy,
+        tester.getBottomLeft(submit).dy,
         lessThan(tester.getTopLeft(find.byType(NavigationBar)).dy),
       );
       expect(tester.takeException(), isNull);

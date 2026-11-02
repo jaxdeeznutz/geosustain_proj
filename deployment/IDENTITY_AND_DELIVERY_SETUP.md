@@ -1,6 +1,6 @@
 # Configure the owned services
 
-The implementation is present. Brevo HTTPS verification-email acceptance and owner-confirmed inbox receipt were recorded on 2026-10-27; completed signup and recovery acceptance remain separate. No owned Firebase project has been supplied, so Google/SMS/push receipt remains pending. Local proof/transport doubles do not certify live delivery.
+The implementation is present. Brevo HTTPS verification-email acceptance and owner-confirmed inbox receipt were recorded on 2026-10-27; completed signup and recovery acceptance remain separate. The owner supplied the existing Firebase project `geosustain-4c722` and its public Web config on 2026-11-03; see [reconnection steps](FIREBASE_RECONNECT.md). Google/SMS/push live acceptance remains pending. Local proof/transport doubles do not certify live delivery.
 
 The Vercel website is the analyst/administrator portal, including when opened on a phone. Farmer registration and sign-in belong in the installed mobile app. Public farmer signup never grants analyst access; administrator assignment controls privileged roles.
 

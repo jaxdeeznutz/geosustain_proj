@@ -18,10 +18,12 @@ double? recordedModelInput(Map<String, dynamic> record, String key) {
 class ReferenceAnalysisContent extends StatefulWidget {
   final AnalysisState state;
   final Map<String, dynamic> record;
+  final bool showActions;
   const ReferenceAnalysisContent({
     super.key,
     required this.state,
     required this.record,
+    this.showActions = true,
   });
   @override
   State<ReferenceAnalysisContent> createState() =>
@@ -157,7 +159,8 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
               'This is a partial assessment, not a crop recommendation. You can ask an analyst to review the available evidence or retry online when coverage is available.',
             ),
           ),
-          AnalysisReviewCard(state: widget.state, record: r),
+          if (widget.showActions)
+            AnalysisReviewCard(state: widget.state, record: r),
           if ('${cover['limitation'] ?? ''}'.isNotEmpty)
             GeoResultCard(
               color: const Color(0xFFE9F3FD),
@@ -505,7 +508,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             _LegacyModelSummary(record: r),
         ],
         if (tab == 3) SpatialRasterCard(record: r),
-        if (tab == 0) ...[
+        if (tab == 0 && widget.showActions) ...[
           AnalysisReviewCard(state: widget.state, record: r),
           OutlinedButton.icon(
             onPressed: () async {

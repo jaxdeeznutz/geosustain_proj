@@ -21,7 +21,16 @@ def config():
         raise ValueError('API_BASE_URL must be an HTTPS origin without credentials, query or fragment')
     public={key:os.environ[key] for key in PUBLIC_KEYS if os.getenv(key)}
     required=('FIREBASE_API_KEY','FIREBASE_PROJECT_ID','FIREBASE_SENDER_ID','FIREBASE_WEB_APP_ID')
-    if any(k in public for k in required) and not all(k in public for k in required):
+    # Use the owner's checked-in public app identifiers unless the host supplies
+    # its own core Firebase configuration. Never mix projects on partial overrides.
+    if not any(k in public for k in required):
+        public_path=ROOT/'deployment'/'firebase-web.public.json'
+        if public_path.is_file():
+            saved=json.loads(public_path.read_text(encoding='utf-8'))
+            if not isinstance(saved,dict) or any(k not in PUBLIC_KEYS or not isinstance(v,str) or not v.strip() for k,v in saved.items()):
+                raise ValueError('Invalid public Firebase configuration file')
+            public={**saved,**public}
+    if public and not all(k in public for k in required):
         raise ValueError('Partial Firebase web configuration: provide the four required public app identifiers together')
     return api,public
 

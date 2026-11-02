@@ -132,9 +132,10 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
     final state = widget.state;
     final roomy = MediaQuery.sizeOf(context).width >= 1000;
     final accountName = '${state?.currentUser?['username'] ?? 'Analyst'}';
-    return Scaffold(
+    final portal = Scaffold(
       backgroundColor: WebPortalColors.canvas,
       appBar: AppBar(
+        toolbarHeight: state == null ? null : 62,
         backgroundColor: WebPortalColors.surface,
         surfaceTintColor: Colors.transparent,
         title: state == null || !roomy
@@ -214,10 +215,29 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
               ),
               label: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 140),
-                child: Text(
-                  '${state.currentUser?['username'] ?? 'Analyst'}',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      accountName,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    Text(
+                      'Agricultural Planning Analyst',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 9,
+                        color: WebPortalColors.muted,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -235,10 +255,96 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
       drawer: !wide
           ? Drawer(width: 280, child: SafeArea(child: widget.navigation))
           : null,
-      body: Row(
+      body: state != null
+          ? widget.child
+          : Row(
+              children: [
+                if (wide && expanded) widget.navigation,
+                Expanded(child: widget.child),
+              ],
+            ),
+    );
+    if (state == null) {
+      return portal;
+    }
+    final theme = Theme.of(context);
+    final outline = OutlineInputBorder(
+      borderRadius: BorderRadius.circular(10),
+      borderSide: BorderSide(
+        color: WebPortalColors.dark
+            ? const Color(0xFF384C3F)
+            : const Color(0xFFE0EAE7),
+      ),
+    );
+    return Theme(
+      data: theme.copyWith(
+        textTheme: theme.textTheme.copyWith(
+          bodyMedium: TextStyle(
+            fontSize: 13,
+            height: 1.4,
+            color: WebPortalColors.ink,
+          ),
+          bodySmall: TextStyle(
+            fontSize: 11,
+            height: 1.35,
+            color: WebPortalColors.muted,
+          ),
+          bodyLarge: TextStyle(fontSize: 14, color: WebPortalColors.ink),
+          titleMedium: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: WebPortalColors.ink,
+          ),
+        ),
+        inputDecorationTheme: InputDecorationTheme(
+          filled: true,
+          fillColor: WebPortalColors.surface,
+          isDense: true,
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 13,
+          ),
+          border: outline,
+          enabledBorder: outline,
+          focusedBorder: outline.copyWith(
+            borderSide: BorderSide(color: WebPortalColors.accent),
+          ),
+          labelStyle: TextStyle(fontSize: 12, color: WebPortalColors.muted),
+          hintStyle: TextStyle(fontSize: 12, color: WebPortalColors.muted),
+        ),
+        filledButtonTheme: FilledButtonThemeData(
+          style: FilledButton.styleFrom(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+            textStyle: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(9),
+            ),
+          ),
+        ),
+        outlinedButtonTheme: OutlinedButtonThemeData(
+          style: OutlinedButton.styleFrom(
+            foregroundColor: WebPortalColors.accent,
+            side: BorderSide(
+              color: WebPortalColors.accent.withValues(alpha: .3),
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+            textStyle: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(9),
+            ),
+          ),
+        ),
+      ),
+      child: Row(
         children: [
           if (wide && expanded) widget.navigation,
-          Expanded(child: widget.child),
+          Expanded(child: portal),
         ],
       ),
     );

@@ -30,7 +30,7 @@ class AuthSecurityMiddleware:
              '/api/mobile/change-password', '/api/mobile/recover-password',
              '/verify-email', '/resend-verification', '/api/mobile/verify-email',
              '/api/mobile/verify-code', '/api/mobile/send-verification', '/api/mobile/resend-verification'}
-    paths |= {'/api/mobile/auth/google', '/api/mobile/auth/link-google',
+    paths |= {'/api/mobile/auth/google', '/api/mobile/auth/link-google', '/api/mobile/auth/password-setup',
               '/api/mobile/phone-verification/start', '/api/mobile/phone-verification/complete',
               '/api/mobile/password-reset/start', '/api/mobile/password-reset/complete'}
 

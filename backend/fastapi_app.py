@@ -502,7 +502,7 @@ def sign_in_user(request: Request, user) -> None:
 def current_user(request: Request):
     uid = request.session.get("user_id")
     user = get_user_by_id(uid) if uid else None
-    if user and not defense_db.session_revoked(request.session.get('sid')) and user.get('is_active',True) and request.session.get('password_version',0) == user.get('password_version',0):
+    if user and not user.get('password_setup_required', False) and not defense_db.session_revoked(request.session.get('sid')) and user.get('is_active',True) and request.session.get('password_version',0) == user.get('password_version',0):
         return user
     return None
 
@@ -516,9 +516,11 @@ def require_web_user(request: Request):
 
 def generate_mobile_token(user) -> str:
     sid = secrets.token_urlsafe(32)
-    defense_db.start_session(user['id'], sid, MOBILE_TOKEN_MAX_AGE)
+    setup = user.get('password_setup_required', False)
+    defense_db.start_session(user['id'], sid, 900 if setup else MOBILE_TOKEN_MAX_AGE)
     return token_serializer.dumps(
-        {"id": user["id"], "sid": sid, "password_version": user.get('password_version',0)},
+        {"id": user["id"], "sid": sid, "password_version": user.get('password_version',0),
+         **({'scope': 'password_setup'} if setup else {})},
         salt="geosustain-mobile",
     )
 
@@ -534,6 +536,7 @@ def user_public_dict(user) -> Dict[str, Any]:
         "email_verified": bool(user.get('email_verified')),
         "auth_provider": user.get('auth_provider', 'email'),
         "google_linked": bool(user.get('google_sub')),
+        "password_setup_required": bool(user.get('password_setup_required', False)),
         "phone_number": user.get('phone_number'),
         "phone_verified": user.get('phone_verified_at') is not None,
     }
@@ -548,9 +551,23 @@ def get_api_user(request: Request):
         payload = token_serializer.loads(token, salt="geosustain-mobile", max_age=MOBILE_TOKEN_MAX_AGE)
     except (BadSignature, SignatureExpired):
         raise HTTPException(status_code=401, detail="Unauthorized. Please log in again.")
+    if not isinstance(payload, dict):
+        raise HTTPException(status_code=401, detail="Unauthorized. Please log in again.")
     user = get_user_by_id(payload.get("id"))
     if not user or not user.get('is_active',True) or payload.get('password_version',0) != user.get('password_version',0) or defense_db.session_revoked(payload.get('sid')):
         raise HTTPException(status_code=401, detail="Unauthorized. Please log in again.")
+    if payload.get('scope') == 'password_setup':
+        try:
+            token_serializer.loads(token, salt='geosustain-mobile', max_age=900)
+        except (BadSignature, SignatureExpired):
+            raise HTTPException(401, 'Password setup expired. Sign in with Google again.')
+        if not user.get('password_setup_required', False):
+            raise HTTPException(401, 'Sign in again to continue.')
+    elif user.get('password_setup_required', False) or payload.get('scope') is not None:
+        raise HTTPException(401, 'Sign in with Google to finish password setup.')
+    if user.get('password_setup_required', False) and (request.method, request.url.path) not in {
+            ('GET', '/api/mobile/me'), ('POST', '/api/mobile/auth/password-setup'), ('POST', '/api/mobile/logout')}:
+        raise HTTPException(403, 'Create your GeoSustain password before opening the workspace.')
     return user
 
 
@@ -1438,6 +1455,25 @@ def google_signin(body: ProviderTokenBody):
     from federated_identity import google_login
     user = google_login(body.id_token)
     return {'user': user_public_dict(user), 'token': generate_mobile_token(user)}
+
+
+class GooglePasswordSetupBody(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    new_password: str = Field(min_length=8, max_length=72)
+
+    @field_validator('new_password')
+    @classmethod
+    def valid_password(cls, value):
+        return validate_new_password(value)
+
+
+@app.post('/api/mobile/auth/password-setup')
+def google_password_setup(body: GooglePasswordSetupBody, user=Depends(get_api_user)):
+    from federated_identity import setup_google_password
+    if not user.get('password_setup_required', False):
+        raise HTTPException(409, 'A password is already configured. Use Change password in your profile.')
+    updated = setup_google_password(user, hash_password(body.new_password))
+    return {'user': user_public_dict(updated), 'token': generate_mobile_token(updated)}
 
 
 @app.post('/api/mobile/auth/link-google')

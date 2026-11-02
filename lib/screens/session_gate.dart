@@ -13,6 +13,7 @@ class _SessionGateState extends State<SessionGate> {
   bool checking = true;
   String? error;
   bool authenticated = false;
+  Map<String, dynamic>? passwordSetupUser;
   AnalysisState? offlineState;
   bool offlineChosen = false;
 
@@ -21,7 +22,10 @@ class _SessionGateState extends State<SessionGate> {
       final token = await api.getToken();
       final local = await OfflineFarmStore.read();
       final user = analysisMapValue(local['identity']);
-      if (token == null || user['id'] == null || user['role'] != 'farmer') {
+      if (token == null ||
+          user['id'] == null ||
+          user['role'] != 'farmer' ||
+          user['password_setup_required'] == true) {
         throw StateError(
           'Sign in online as a farmer once on this device to enable saved farms offline.',
         );
@@ -72,12 +76,17 @@ class _SessionGateState extends State<SessionGate> {
     setState(() {
       checking = true;
       error = null;
+      authenticated = false;
+      passwordSetupUser = null;
     });
     String? token;
     try {
       token = await api.getToken();
       if (token != null && token.isNotEmpty) {
-        await api.getMe();
+        final user = await api.getMe();
+        passwordSetupUser = user['password_setup_required'] == true
+            ? user
+            : null;
         authenticated = true;
       }
     } on ApiException catch (e) {
@@ -177,6 +186,22 @@ class _SessionGateState extends State<SessionGate> {
             ),
           ),
         ),
+      );
+    }
+    if (authenticated && passwordSetupUser != null) {
+      return GooglePasswordSetupPage(
+        api: api,
+        user: passwordSetupUser!,
+        onCompleted: restore,
+        onSignOut: () async {
+          await api.logout();
+          if (mounted) {
+            setState(() {
+              authenticated = false;
+              passwordSetupUser = null;
+            });
+          }
+        },
       );
     }
     return authenticated

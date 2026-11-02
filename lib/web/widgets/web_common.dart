@@ -4,8 +4,9 @@ class _WebCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry padding;
   const _WebCard({
+    super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(22),
+    this.padding = const EdgeInsets.all(18),
   });
   @override
   Widget build(BuildContext context) {
@@ -14,15 +15,15 @@ class _WebCard extends StatelessWidget {
       padding: padding,
       decoration: BoxDecoration(
         color: WebPortalColors.surface,
-        borderRadius: BorderRadius.circular(22),
+        borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: WebPortalColors.dark ? Color(0xFF384C3F) : Color(0xFFE4ECE6),
         ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: .035),
-            blurRadius: 18,
-            offset: Offset(0, 8),
+            blurRadius: 22,
+            offset: Offset(0, 5),
           ),
         ],
       ),
@@ -61,59 +62,83 @@ class _WebHeader extends StatelessWidget {
     required this.message,
   });
   @override
-  Widget build(BuildContext context) => WebAdaptiveRow(
-    crossAxisAlignment: CrossAxisAlignment.center,
-    children: [
-      Expanded(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Semantics(
-              header: true,
-              child: Text(
-                title,
-                style: TextStyle(
-                  fontSize: 32,
-                  fontWeight: FontWeight.w900,
-                  color: WebPortalColors.ink,
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 4),
+    child: WebAdaptiveRow(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  color: WebPortalColors.tint,
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Icon(
+                  title == 'Planning Map'
+                      ? Icons.map_outlined
+                      : title == 'Recommendation Patterns'
+                      ? Icons.bar_chart_rounded
+                      : title == 'Activity'
+                      ? Icons.notifications_outlined
+                      : title == 'Reports'
+                      ? Icons.description_outlined
+                      : title == 'Review Inbox'
+                      ? Icons.fact_check_outlined
+                      : title == 'My Analyses'
+                      ? Icons.description_rounded
+                      : Icons.eco_rounded,
+                  color: WebPortalColors.accent,
+                  size: 28,
                 ),
               ),
-            ),
-            SizedBox(height: 4),
-            Text(
-              subtitle,
-              style: TextStyle(color: WebPortalColors.muted, fontSize: 15),
-            ),
-          ],
-        ),
-      ),
-      OutlinedButton.icon(
-        onPressed: state.weatherLoading
-            ? null
-            : () async {
-                final err = await state.refreshLiveWeather();
-                if (err != null) message(err);
-              },
-        icon: Icon(Icons.refresh_rounded),
-        label: Text(
-          state.weatherLoading ? 'Refreshing weather...' : 'Refresh Weather',
-        ),
-        style: OutlinedButton.styleFrom(
-          foregroundColor: WebPortalColors.accent,
-          side: BorderSide(color: Color(0xFFE1E8E2)),
-          padding: EdgeInsets.symmetric(horizontal: 18, vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(14),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Semantics(
+                      header: true,
+                      child: Text(
+                        title,
+                        style: TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.w800,
+                          color: WebPortalColors.ink,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subtitle,
+                      style: TextStyle(
+                        color: WebPortalColors.muted,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
         ),
-      ),
-      SizedBox(width: 14),
-      IconButton(
-        tooltip: 'Open activity',
-        onPressed: () => PortalRoutes.go('/operator/activity'),
-        icon: Icon(Icons.notifications_none_rounded),
-      ),
-    ],
+        OutlinedButton.icon(
+          onPressed: state.weatherLoading
+              ? null
+              : () async {
+                  final err = await state.refreshLiveWeather();
+                  if (err != null) message(err);
+                },
+          icon: const Icon(Icons.refresh_rounded, size: 17),
+          label: Text(
+            state.weatherLoading ? 'Refreshing weather...' : 'Refresh Weather',
+          ),
+        ),
+      ],
+    ),
   );
 }
 

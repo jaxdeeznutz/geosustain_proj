@@ -193,6 +193,26 @@ class HeroMapCard extends StatelessWidget {
                     icon: Icons.arrow_drop_down,
                     onTap: state.toggleSatellite,
                   ),
+                  if (state.accountRole == 'farmer')
+                    MiniPill(
+                      text: 'Map guide',
+                      icon: Icons.info_outline,
+                      onTap: () => showDialog<void>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Map guide'),
+                          content: SingleChildScrollView(
+                            child: FarmerLiveMapGuide(state: state),
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context),
+                              child: const Text('Close'),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   if (state.result?['heatmap_grid'] is List &&
                       (state.result?['heatmap_grid'] as List).isNotEmpty)
                     ...[

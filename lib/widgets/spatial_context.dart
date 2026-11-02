@@ -24,7 +24,12 @@ List<Polygon> spatialCellPolygons(Map<String, dynamic> record, String layerId) {
 
 class SpatialRasterCard extends StatefulWidget {
   final Map<String, dynamic> record;
-  const SpatialRasterCard({super.key, required this.record});
+  final bool simple;
+  const SpatialRasterCard({
+    super.key,
+    required this.record,
+    this.simple = false,
+  });
   @override
   State<SpatialRasterCard> createState() => _SpatialRasterCardState();
 }
@@ -38,8 +43,26 @@ class _SpatialRasterCardState extends State<SpatialRasterCard> {
     if (layers.isEmpty) {
       return Column(
         children: [
-          GeoResultCard(child: Text(spatialAssessmentLines(record).join('\n'))),
+          GeoResultCard(
+            child: Text(
+              widget.simple
+                  ? 'Map readings are unavailable. You can still check the saved boundary.'
+                  : spatialAssessmentLines(record).join('\n'),
+            ),
+          ),
           AnalysisBoundaryPreview(record: record),
+          if (widget.simple &&
+              FarmGeometry.fromPayload(record['selected_polygon']).length >= 3)
+            const FarmerLegend(
+              title: 'Boundary guide',
+              items: [
+                FarmerLegendItem(
+                  Icons.crop_free,
+                  green,
+                  'Green outline: Saved farm boundary',
+                ),
+              ],
+            ),
         ],
       );
     }
@@ -55,17 +78,19 @@ class _SpatialRasterCardState extends State<SpatialRasterCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
-            'Polygon raster layers',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          Text(
+            widget.simple ? 'Land readings' : 'Polygon raster layers',
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
             key: ValueKey('spatial-layer-$scope-${layer['id']}'),
             initialValue: '${layer['id']}',
             isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Recorded raster layer',
+            decoration: InputDecoration(
+              labelText: widget.simple
+                  ? 'Show on map'
+                  : 'Recorded raster layer',
             ),
             items: [
               for (final item in layers)
@@ -80,7 +105,7 @@ class _SpatialRasterCardState extends State<SpatialRasterCard> {
           if (boundary.length >= 3)
             SizedBox(
               height: 310,
-              child: FlutterMap(
+              child: ContextMap(
                 key: ValueKey('spatial-map-$scope'),
                 options: MapOptions(
                   initialCameraFit: CameraFit.coordinates(
@@ -89,11 +114,6 @@ class _SpatialRasterCardState extends State<SpatialRasterCard> {
                   ),
                 ),
                 children: [
-                  TileLayer(
-                    urlTemplate:
-                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                    userAgentPackageName: 'com.geosustain.mobile',
-                  ),
                   PolygonLayer(
                     polygons: [
                       Polygon(
@@ -114,21 +134,36 @@ class _SpatialRasterCardState extends State<SpatialRasterCard> {
                       ),
                     ],
                   ),
-                  const RichAttributionWidget(
-                    attributions: [
-                      TextSourceAttribution('OpenStreetMap contributors'),
-                    ],
-                  ),
                 ],
               ),
             ),
           const SizedBox(height: 10),
           Text(
-            stats.isEmpty
+            widget.simple
+                ? (stats.isEmpty
+                      ? 'No usable readings were saved.'
+                      : 'Average: ${spatialValue(stats['mean'])} ${layer['unit']} · ${analysisNumber(stats['valid_area_fraction']) == null ? 'Coverage unavailable' : 'Data covers ${((analysisNumber(stats['valid_area_fraction'])!) * 100).toStringAsFixed(1)}% of the farm'}')
+                : stats.isEmpty
                 ? '${layer['reason']}'
                 : 'Mean ${spatialValue(stats['mean'])} ${layer['unit']} · valid area ${((analysisNumber(stats['valid_area_fraction']) ?? 0) * 100).toStringAsFixed(1)}%',
           ),
-          Text('${legend['interpretation']}'),
+          if (widget.simple) ...[
+            const Text(
+              'Colors show the amount of the selected reading, not crop suitability.',
+              style: TextStyle(fontSize: 12),
+            ),
+            if (layer['id'] == 'ndvi')
+              const Text(
+                'NDVI shows vegetation greenness.',
+                style: TextStyle(fontSize: 12),
+              ),
+            const SizedBox(height: 8),
+            const Text(
+              'Map color guide',
+              style: TextStyle(fontWeight: FontWeight.w700),
+            ),
+          ] else
+            Text('${legend['interpretation']}'),
           Wrap(
             spacing: 12,
             runSpacing: 8,
@@ -151,17 +186,55 @@ class _SpatialRasterCardState extends State<SpatialRasterCard> {
                     ),
                   ],
                 ),
-              const Text(
-                'Gray = no data / not evaluated',
-                style: TextStyle(fontSize: 11),
-              ),
+              if (widget.simple)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      Icons.help_outline,
+                      size: 16,
+                      color: spatialColor(spatialCellColor(layer, null)),
+                    ),
+                    const SizedBox(width: 4),
+                    const Flexible(
+                      child: Text(
+                        'Gray: No usable reading',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                const Text(
+                  'Gray = no data / not evaluated',
+                  style: TextStyle(fontSize: 11),
+                ),
+              if (widget.simple)
+                const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.crop_free, size: 16, color: darkGreen),
+                    SizedBox(width: 4),
+                    Flexible(
+                      child: Text(
+                        'Green outline: Analyzed boundary',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
             ],
           ),
           ExpansionTile(
             key: PageStorageKey('spatial-evidence-$scope-${layer['id']}'),
             tilePadding: EdgeInsets.zero,
-            title: const Text('Statistics, sources and limitations'),
+            title: Text(
+              widget.simple
+                  ? 'Map details and sources'
+                  : 'Statistics, sources and limitations',
+            ),
             children: [
+              if (widget.simple) Text('${legend['interpretation']}'),
               for (final line in [
                 ...spatialLayerLines(layer),
                 '${spatialObject(record['spatial_assessment'])['statistics_method']}',
@@ -179,9 +252,11 @@ class _SpatialRasterCardState extends State<SpatialRasterCard> {
                 ),
             ],
           ),
-          const Text(
-            'Saved raster cells are clipped to the recorded farm. Model samples remain separate. The current basemap is navigation context.',
-            style: TextStyle(fontSize: 12),
+          Text(
+            widget.simple
+                ? 'The background map is for navigation.'
+                : 'Saved raster cells are clipped to the recorded farm. Model samples remain separate. The current basemap is navigation context.',
+            style: const TextStyle(fontSize: 12),
           ),
         ],
       ),

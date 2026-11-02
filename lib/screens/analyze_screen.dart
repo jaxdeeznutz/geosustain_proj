@@ -74,7 +74,7 @@ class AnalysisMapCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               child: SizedBox(
                 height: 220,
-                child: FlutterMap(
+                child: ContextMap(
                   options: MapOptions(
                     initialCameraFit: CameraFit.coordinates(
                       coordinates: points,
@@ -85,11 +85,6 @@ class AnalysisMapCard extends StatelessWidget {
                     ),
                   ),
                   children: [
-                    TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                      userAgentPackageName: 'com.geosustain.mobile',
-                    ),
                     PolygonLayer(
                       polygons: [
                         Polygon(
