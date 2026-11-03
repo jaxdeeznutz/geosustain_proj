@@ -10,6 +10,17 @@ from contextlib import nullcontext
 from fastapi.testclient import TestClient
 
 
+@pytest.fixture(autouse=True)
+def isolate_environmental_provider_state():
+    import provider_cache
+    import open_meteo_http
+    provider_cache._values.clear()
+    open_meteo_http.reset_state()
+    yield
+    provider_cache._values.clear()
+    open_meteo_http.reset_state()
+
+
 @pytest.fixture
 def client(monkeypatch):
     import fastapi_app as api

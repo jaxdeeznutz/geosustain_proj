@@ -342,6 +342,7 @@ WEATHER_CODE_TEXT = {
 
 def fetch_open_meteo_weather(lat: float, lon: float) -> Dict[str, Any]:
     """Fetch weather with forecast windows aligned to the provider's local time."""
+    from open_meteo_http import get
     params = {
         "latitude": lat,
         "longitude": lon,
@@ -353,7 +354,7 @@ def fetch_open_meteo_weather(lat: float, lon: float) -> Dict[str, Any]:
         "wind_speed_unit": "kmh",
         "timezone": "Asia/Manila",
     }
-    response = requests.get(
+    response = get(
         "https://api.open-meteo.com/v1/forecast", params=params,
         headers={"User-Agent": "GeoSustainCapstone/1.0"}, timeout=12,
     )

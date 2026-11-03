@@ -14,25 +14,32 @@ from climate_contract import attach_climate_fields, model_climate_inputs, same_p
 logger = logging.getLogger('uvicorn.error')
 
 
-def current_humidity(weather, lat, lon):
-    """Use provider humidity, then a coordinate-specific weather model; never a constant."""
-    value = number(weather[0]) if weather[4] == 'measured' else None
-    source = 'OpenWeather current'
-    if value is None or not 0 <= value <= 100:
-        import requests
-        value = None
-        source = 'Open-Meteo current relative humidity (weather model)'
-        try:
-            response = requests.get('https://api.open-meteo.com/v1/forecast', params={
-                'latitude': lat, 'longitude': lon, 'current': 'relative_humidity_2m'}, timeout=10)
-            response.raise_for_status()
-            value = number(response.json().get('current', {}).get('relative_humidity_2m'))
-            if value is not None and not 0 <= value <= 100:
-                value = None
-        except Exception as exc:
-            logger.warning('Humidity backup unavailable type=%s', type(exc).__name__)
+def _humidity_backup(lat, lon):
+    from open_meteo_http import get
+    value = None
+    source = 'Open-Meteo current relative humidity (weather model)'
+    try:
+        response = get('https://api.open-meteo.com/v1/forecast', params={
+            'latitude': lat, 'longitude': lon, 'current': 'relative_humidity_2m'}, timeout=10)
+        response.raise_for_status()
+        value = number(response.json().get('current', {}).get('relative_humidity_2m'))
+        if value is not None and not 0 <= value <= 100:
+            value = None
+    except Exception as exc:
+        logger.warning('Humidity backup unavailable type=%s', type(exc).__name__)
     return {'value': value, 'unit': '%', 'period': 'current',
             'quality': 'modelled' if value is not None else 'unavailable', 'source': source}
+
+
+def current_humidity(weather, lat, lon):
+    """Keep current-period humidity at the exact coordinate; no fixed fallback."""
+    value = number(weather[0]) if weather[4] == 'measured' else None
+    if value is not None and 0 <= value <= 100:
+        return {'value': value, 'unit': '%', 'period': 'current',
+                'quality': 'modelled', 'source': 'OpenWeather current'}
+    # Same five-minute lifetime as the primary weather observation cache.
+    # Failures are not observations and cannot replace a fresh successful value.
+    return retrieve('humidity_current', _humidity_backup, lat, lon, 300)
 
 def climate_baseline_5y(lat, lon):
     """Five complete calendar years, explicitly a short baseline, not a 30-year normal."""

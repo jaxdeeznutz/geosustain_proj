@@ -285,55 +285,6 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
     }
   }
 
-  Future<void> _chooseAnalysis() async {
-    final rows = newestAnalysisRecords(
-      widget.state.historyRecords.where(analysisIsCompleted),
-    );
-    final selected = await showModalBottomSheet<Map<String, dynamic>>(
-      context: context,
-      isScrollControlled: true,
-      showDragHandle: true,
-      builder: (context) => SafeArea(
-        child: SizedBox(
-          height: MediaQuery.sizeOf(context).height * .65,
-          child: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.all(16),
-                child: Text(
-                  'Choose an analysis',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
-                ),
-              ),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: rows.length,
-                  itemBuilder: (context, i) => AnalysisHistoryRow(
-                    record: rows[i],
-                    onTap: () => Navigator.pop(context, rows[i]),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (selected == null || !mounted) return;
-    setState(() {
-      _selecting = true;
-      _error = null;
-    });
-    try {
-      final error = await widget.state.selectAnalysis(selected);
-      if (mounted) setState(() => _error = error);
-    } catch (e) {
-      if (mounted) setState(() => _error = friendlyErrorMessage(e));
-    } finally {
-      if (mounted) setState(() => _selecting = false);
-    }
-  }
-
   @override
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: widget.state,
@@ -352,7 +303,10 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
           .toList();
       final busy =
           _refreshing || _selecting || state.loading || state.historyLoading;
-      final error = _error ?? state.analysisError ?? state.historyError;
+      final error =
+          _error ??
+          state.analysisError ??
+          (result == null ? state.historyError : null);
       return GeoSafeArea(
         child: RefreshIndicator(
           onRefresh: _refresh,
@@ -364,25 +318,20 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
               GeoSustainHeader(
                 title: 'Analysis',
                 state: state,
+                back: widget.goFarms,
                 trailing: IconButton(
                   tooltip: 'Refresh',
                   onPressed: busy ? null : _refresh,
                   icon: const Icon(Icons.refresh),
                 ),
               ),
-              if (result != null && completed.length > 1)
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: OutlinedButton.icon(
-                    style: OutlinedButton.styleFrom(
-                      shape: const StadiumBorder(),
-                    ),
-                    onPressed: busy ? null : _chooseAnalysis,
-                    icon: const Icon(Icons.swap_horiz),
-                    label: const Text('Switch analysis'),
-                  ),
-                ),
               if (busy) const LinearProgressIndicator(),
+              if (result != null && state.historyError != null)
+                TextButton.icon(
+                  onPressed: busy ? null : _refresh,
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Results shown. Retry history refresh'),
+                ),
               if (state.loading)
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 12),
@@ -631,6 +580,9 @@ class AnalysisIndicatorsCard extends StatelessWidget {
           ),
         if (warnings.isNotEmpty || quality.isNotEmpty)
           ExpansionTile(
+            key: PageStorageKey<String>(
+              'analysis-source-details-${record['session_id'] ?? record['id']}',
+            ),
             tilePadding: EdgeInsets.zero,
             title: Text('Data sources and limitations'),
             children: [
@@ -674,7 +626,12 @@ class AnalysisCropsCard extends StatelessWidget {
 
 class AnalysisBoundaryPreview extends StatelessWidget {
   final Map<String, dynamic> record;
-  const AnalysisBoundaryPreview({super.key, required this.record});
+  final bool lockMap;
+  const AnalysisBoundaryPreview({
+    super.key,
+    required this.record,
+    this.lockMap = false,
+  });
   @override
   Widget build(BuildContext context) {
     final points = <LatLng>[];
@@ -689,6 +646,9 @@ class AnalysisBoundaryPreview extends StatelessWidget {
     if (points.length < 3) return const SizedBox.shrink();
     return Card(
       child: ExpansionTile(
+        key: PageStorageKey<String>(
+          'analysis-boundary-details-${record['session_id'] ?? record['id']}-${record['boundary_version']}',
+        ),
         title: Text('Analyzed boundary'),
         subtitle: Text(analysisAreaText(record)),
         childrenPadding: const EdgeInsets.all(12),
@@ -700,8 +660,13 @@ class AnalysisBoundaryPreview extends StatelessWidget {
           SizedBox(
             height: 230,
             child: ContextMap(
-              key: ValueKey('boundary-${record['session_id']}'),
+              key: ValueKey(
+                'boundary-${record['session_id']}-$lockMap-${jsonEncode(record['selected_polygon'])}',
+              ),
               options: MapOptions(
+                interactionOptions: InteractionOptions(
+                  flags: lockMap ? InteractiveFlag.none : InteractiveFlag.all,
+                ),
                 initialCameraFit: CameraFit.coordinates(
                   coordinates: points,
                   padding: const EdgeInsets.all(24),

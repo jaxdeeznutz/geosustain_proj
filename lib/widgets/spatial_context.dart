@@ -25,10 +25,12 @@ List<Polygon> spatialCellPolygons(Map<String, dynamic> record, String layerId) {
 class SpatialRasterCard extends StatefulWidget {
   final Map<String, dynamic> record;
   final bool simple;
+  final bool lockMap;
   const SpatialRasterCard({
     super.key,
     required this.record,
     this.simple = false,
+    this.lockMap = false,
   });
   @override
   State<SpatialRasterCard> createState() => _SpatialRasterCardState();
@@ -50,7 +52,7 @@ class _SpatialRasterCardState extends State<SpatialRasterCard> {
                   : spatialAssessmentLines(record).join('\n'),
             ),
           ),
-          AnalysisBoundaryPreview(record: record),
+          AnalysisBoundaryPreview(record: record, lockMap: widget.lockMap),
           if (widget.simple &&
               FarmGeometry.fromPayload(record['selected_polygon']).length >= 3)
             const FarmerLegend(
@@ -106,8 +108,15 @@ class _SpatialRasterCardState extends State<SpatialRasterCard> {
             SizedBox(
               height: 310,
               child: ContextMap(
-                key: ValueKey('spatial-map-$scope'),
+                key: ValueKey(
+                  'spatial-map-$scope-${widget.lockMap}-${jsonEncode(record['selected_polygon'])}',
+                ),
                 options: MapOptions(
+                  interactionOptions: InteractionOptions(
+                    flags: widget.lockMap
+                        ? InteractiveFlag.none
+                        : InteractiveFlag.all,
+                  ),
                   initialCameraFit: CameraFit.coordinates(
                     coordinates: boundary,
                     padding: const EdgeInsets.all(25),

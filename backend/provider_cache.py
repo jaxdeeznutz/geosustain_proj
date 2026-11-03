@@ -4,6 +4,7 @@ from copy import deepcopy
 from threading import Lock
 from time import monotonic, perf_counter
 import logging
+import math
 
 _values = OrderedDict()
 _lock = Lock()
@@ -22,7 +23,13 @@ def retrieve(name, fn, lat, lon, ttl):
     started = perf_counter()
     try:
         value = fn(lat, lon)
-        if name == 'climate':
+        if name == 'humidity_current':
+            reading = value.get('value') if isinstance(value, dict) else None
+            valid = (not isinstance(reading, bool) and isinstance(reading, (int, float))
+                     and math.isfinite(reading) and 0 <= reading <= 100
+                     and value.get('unit') == '%' and value.get('period') == 'current'
+                     and value.get('quality') == 'modelled')
+        elif name == 'climate':
             valid = bool(value) and all(v.get('value') is not None for v in value.values())
         elif name == 'slope':
             valid = value is not None

@@ -298,7 +298,7 @@ class FarmerLiveMapGuide extends StatelessWidget {
   }
 }
 
-class _FarmerDisclosure extends StatefulWidget {
+class _FarmerDisclosure extends StatelessWidget {
   final String title;
   final IconData icon;
   final WidgetBuilder builder;
@@ -309,24 +309,18 @@ class _FarmerDisclosure extends StatefulWidget {
     required this.builder,
   });
   @override
-  State<_FarmerDisclosure> createState() => _FarmerDisclosureState();
-}
-
-class _FarmerDisclosureState extends State<_FarmerDisclosure> {
-  bool open = false;
-  @override
   Widget build(BuildContext context) => Card(
     elevation: 0,
     clipBehavior: Clip.antiAlias,
     child: ExpansionTile(
-      leading: Icon(widget.icon),
+      key: PageStorageKey<String>('farmer-disclosure-${key ?? title}'),
+      leading: Icon(icon),
       title: Text(
-        widget.title,
+        title,
         style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w700),
       ),
-      onExpansionChanged: (value) => setState(() => open = value),
       childrenPadding: const EdgeInsets.fromLTRB(12, 0, 12, 14),
-      children: [if (open) widget.builder(context)],
+      children: [Builder(builder: builder)],
     ),
   );
 }

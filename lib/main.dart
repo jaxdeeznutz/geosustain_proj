@@ -61,6 +61,7 @@ part 'screens/local_farm_page.dart';
 part 'screens/land_mapping_screen.dart';
 part 'screens/session_gate.dart';
 part 'screens/google_password_setup.dart';
+part 'screens/google_account_conflict.dart';
 part 'screens/password_recovery.dart';
 part 'screens/email_verification.dart';
 part 'screens/identity_settings.dart';
@@ -83,6 +84,7 @@ part 'web/widgets/web_analysis_evidence.dart';
 part 'web/widgets/web_portal_layout.dart';
 part 'web/widgets/analyst_design.dart';
 part 'web/widgets/admin_design.dart';
+part 'web/widgets/review_case_design.dart';
 part 'widgets/context_map.dart';
 part 'web/screens/web_dashboard_screen.dart';
 part 'web/screens/web_map_screen.dart';
@@ -531,6 +533,7 @@ class _LoginPageState extends State<LoginPage> {
 
   Future<void> googleLogin() async {
     if (loading) return;
+    var chooseAnother = false;
     setState(() => loading = true);
     try {
       await api.googleLogin(await FirebaseIdentity.googleProof());
@@ -540,7 +543,24 @@ class _LoginPageState extends State<LoginPage> {
         MaterialPageRoute(builder: (_) => const SessionGate()),
       );
     } catch (error) {
-      if (mounted) {
+      if (mounted && error is ApiException && error.statusCode == 409) {
+        final selectedEmail = FirebaseIdentity.googleEmail;
+        final choice = await showDialog<GoogleAccountConflictChoice>(
+          context: context,
+          builder: (_) => GoogleAccountConflictDialog(email: selectedEmail),
+        );
+        if (mounted && choice == GoogleAccountConflictChoice.password) {
+          if (selectedEmail != null) emailController.text = selectedEmail;
+          passwordController.clear();
+          setState(() {
+            emailError = null;
+            passwordError = null;
+          });
+        } else if (choice == GoogleAccountConflictChoice.anotherAccount) {
+          await FirebaseIdentity.signOut();
+          chooseAnother = true;
+        }
+      } else if (mounted) {
         showAuthFeedback(
           context,
           error is ApiException
@@ -551,6 +571,7 @@ class _LoginPageState extends State<LoginPage> {
     } finally {
       if (mounted) setState(() => loading = false);
     }
+    if (chooseAnother && mounted) unawaited(googleLogin());
   }
 
   @override
@@ -1062,6 +1083,9 @@ InputDecoration _fieldDecoration(BuildContext context, {String? hint}) =>
 String friendlyErrorMessage(Object error) {
   // HTTP status is authoritative; transport text cannot establish offline state.
   if (error is ApiException) {
+    if (error.modelInputUnavailable) {
+      return 'Weather or land readings are unavailable. Try again later.';
+    }
     if (error.statusCode == 401) {
       if (error.message.toLowerCase().contains('invalid email or password')) {
         return 'Incorrect email or password. Please try again.';
@@ -2307,7 +2331,15 @@ class AnalysisState extends ChangeNotifier {
       return 'This farm is saved on your device. Sync it from My Farms before analyzing online.';
     }
     if (offlineWorkspace) {
-      return 'Analysis requires an internet connection. Reconnect and sync your farms first.';
+      final epoch = _sessionEpoch, owner = currentUser?['id'];
+      await refreshFarms();
+      if (!_active(epoch, owner)) {
+        return 'Your session has changed. Sign in again.';
+      }
+      if (offlineWorkspace) {
+        return farmsError ??
+            'Analysis needs an internet connection. Try again when connected.';
+      }
     }
     if (loading) return 'Analysis is already running. Please wait.';
     focusFarm(farm);
@@ -2402,7 +2434,12 @@ class AnalysisState extends ChangeNotifier {
     } catch (error) {
       if (_active(epoch, owner) && selection == _selectionEpoch) {
         analysisError = friendlyErrorMessage(error);
-        analysisPending = error is ApiException && error.statusCode == 202;
+        analysisPending =
+            error is TimeoutException ||
+            error is http.ClientException ||
+            (error is ApiException &&
+                !error.modelInputUnavailable &&
+                [202, 502, 503, 504].contains(error.statusCode));
       }
       if (kDebugMode) debugPrint('Land analysis failed: ${error.runtimeType}');
       return friendlyErrorMessage(error);

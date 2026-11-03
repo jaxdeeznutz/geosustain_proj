@@ -7,6 +7,11 @@ import 'firebase_runtime.dart';
 
 class FirebaseIdentity {
   static Future<void>? _google;
+  static String? get googleEmail {
+    if (!Firebase.apps.any((app) => app.name == '[DEFAULT]')) return null;
+    return FirebaseAuth.instanceFor(app: Firebase.app()).currentUser?.email;
+  }
+
   static bool get configured => FirebaseRuntime.configured;
   static bool get googleConfigured =>
       configured && (kIsWeb || FirebaseRuntime.googleWebClientId.isNotEmpty);

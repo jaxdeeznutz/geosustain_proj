@@ -13,6 +13,12 @@ class ApiException implements Exception {
   final int statusCode;
   final String message;
   const ApiException(this.statusCode, this.message);
+  bool get modelInputUnavailable =>
+      statusCode == 503 &&
+      (message.startsWith(
+            'Required climate input unavailable or incompatible unit/time period:',
+          ) ||
+          message.startsWith('Required model inputs unavailable:'));
   @override
   String toString() => message;
 }
@@ -160,6 +166,23 @@ class ApiService {
     }
     throw lastError ??
         TimeoutException('Request timed out after $attempts attempts');
+  }
+
+  /// Retry safe reads after transient host/network failures. Never replay writes.
+  Future<http.Response> _readWithRecovery(
+    Future<http.Response> Function() request,
+    String? token,
+  ) async {
+    final response = await _withRenderWarmupRetry(() async {
+      if (await getToken() != token) {
+        throw const ApiException(401, 'Your session changed. Sign in again.');
+      }
+      return request();
+    }, timeout: const Duration(seconds: 30));
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session changed. Sign in again.');
+    }
+    return response;
   }
 
   Future<Map<String, dynamic>> login(String email, String password) async {
@@ -460,14 +483,15 @@ class ApiService {
     String requestId,
     String? token,
   ) async {
-    final response = await _client
-        .get(
-          Uri.parse(
-            '$baseUrl/api/mobile/analysis-requests/${Uri.encodeComponent(requestId)}',
-          ),
-          headers: {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 30));
+    final response = await _readWithRecovery(
+      () => _client.get(
+        Uri.parse(
+          '$baseUrl/api/mobile/analysis-requests/${Uri.encodeComponent(requestId)}',
+        ),
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+      token,
+    );
     final data = _decodeJson(response);
     if (response.statusCode == 404) {
       throw const ApiException(
@@ -578,6 +602,13 @@ class ApiService {
         if (response.statusCode == 202) {
           data = await _waitForAnalysis(key, token, data);
         }
+      } on ApiException catch (error) {
+        if (error.modelInputUnavailable) rethrow;
+        if (![502, 503, 504].contains(error.statusCode)) rethrow;
+        // A proxy may fail after the server accepted the write. Recover by key.
+        final status = await _analysisStatus(key, token);
+        if (!['processing', 'completed'].contains(status['status'])) rethrow;
+        data = await _waitForAnalysis(key, token, status);
       } on http.ClientException {
         final status = await _analysisStatus(key, token);
         if (status['status'] == 'not_found') rethrow;
@@ -612,12 +643,14 @@ class ApiService {
   }
 
   Future<Map<String, dynamic>> getFarm(int farmId) async {
-    final response = await _client
-        .get(
-          Uri.parse('$baseUrl/api/mobile/farms/$farmId'),
-          headers: {'Authorization': 'Bearer ${await getToken()}'},
-        )
-        .timeout(const Duration(seconds: 30));
+    final token = await getToken();
+    final response = await _readWithRecovery(
+      () => _client.get(
+        Uri.parse('$baseUrl/api/mobile/farms/$farmId'),
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+      token,
+    );
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw ApiException(
@@ -632,14 +665,15 @@ class ApiService {
     bool includeArchived = false,
   }) async {
     final token = await getToken();
-    final response = await _client
-        .get(
-          Uri.parse(
-            '$baseUrl/api/mobile/farms?include_archived=$includeArchived',
-          ),
-          headers: {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 60));
+    final response = await _readWithRecovery(
+      () => _client.get(
+        Uri.parse(
+          '$baseUrl/api/mobile/farms?include_archived=$includeArchived',
+        ),
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+      token,
+    );
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw ApiException(
@@ -1043,12 +1077,13 @@ class ApiService {
 
   Future<Map<String, dynamic>> getAnalysis(int sessionId) async {
     final token = await getToken();
-    final response = await _client
-        .get(
-          Uri.parse('$baseUrl/api/mobile/analyses/$sessionId'),
-          headers: {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 60));
+    final response = await _readWithRecovery(
+      () => _client.get(
+        Uri.parse('$baseUrl/api/mobile/analyses/$sessionId'),
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+      token,
+    );
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw ApiException(
@@ -1096,12 +1131,13 @@ class ApiService {
 
   Future<Map<String, dynamic>> getCounts() async {
     final token = await getToken();
-    final response = await _client
-        .get(
-          Uri.parse('$baseUrl/api/mobile/counts'),
-          headers: {'Authorization': 'Bearer $token'},
-        )
-        .timeout(const Duration(seconds: 60));
+    final response = await _readWithRecovery(
+      () => _client.get(
+        Uri.parse('$baseUrl/api/mobile/counts'),
+        headers: {'Authorization': 'Bearer $token'},
+      ),
+      token,
+    );
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw ApiException(
@@ -1124,14 +1160,15 @@ class ApiService {
     final rows = <dynamic>[];
     bool more = true;
     while (more) {
-      final response = await _client
-          .get(
-            Uri.parse(
-              '$baseUrl/api/mobile/history?offset=${rows.length}&limit=50${farmId == null ? '' : '&farm_id=$farmId'}',
-            ),
-            headers: {'Authorization': 'Bearer $token'},
-          )
-          .timeout(const Duration(seconds: 60));
+      final response = await _readWithRecovery(
+        () => _client.get(
+          Uri.parse(
+            '$baseUrl/api/mobile/history?offset=${rows.length}&limit=50${farmId == null ? '' : '&farm_id=$farmId'}',
+          ),
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+        token,
+      );
       final data = _decodeJson(response);
       if (response.statusCode >= 400) {
         throw ApiException(
@@ -1202,9 +1239,10 @@ class ApiService {
       final uri = Uri.parse('$baseUrl$path').replace(
         queryParameters: {...parameters, 'offset': '$offset', 'limit': '50'},
       );
-      final response = await _client
-          .get(uri, headers: {'Authorization': 'Bearer $token'})
-          .timeout(const Duration(seconds: 60));
+      final response = await _readWithRecovery(
+        () => _client.get(uri, headers: {'Authorization': 'Bearer $token'}),
+        token,
+      );
       final data = _decodeJson(response);
       if (response.statusCode >= 400) {
         throw ApiException(
@@ -1241,9 +1279,10 @@ class ApiService {
         ...parameters,
       },
     );
-    final response = await _client
-        .get(uri, headers: {'Authorization': 'Bearer $token'})
-        .timeout(const Duration(seconds: 60));
+    final response = await _readWithRecovery(
+      () => _client.get(uri, headers: {'Authorization': 'Bearer $token'}),
+      token,
+    );
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw ApiException(

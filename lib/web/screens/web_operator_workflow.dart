@@ -732,6 +732,7 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
                   ? WebAnalysisEvidence(
                       state: widget.state,
                       record: snapshot.data!,
+                      lockMaps: true,
                     )
                   : const Padding(
                       padding: EdgeInsets.all(32),
@@ -780,167 +781,201 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
           ),
         ),
       if (data != null) ...[
-        _WebCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Case #${c['id']} · ${reviewLabel(c['status'])}',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              Text(
-                'Current analysis #${c['current_session_id']} · case version ${c['version']} · ${reviewAge(c['submitted_at'])}',
-              ),
-              Text(
-                'Recorded boundary vs current farm: ${data!['geometry_matches_current'] == true
-                    ? 'same coordinates; farm metadata may have changed'
-                    : data!['geometry_matches_current'] == false
-                    ? 'CHANGED — this review uses the recorded boundary'
-                    : 'current farm unavailable'}. Current farm version ${data!['current_farm_version'] ?? 'unavailable'}.',
-              ),
-              const Text(
-                'Review the saved boundary, sources, dates, coverage and limitations before recording a decision. Accepting the assessment does not guarantee crop success or replace field and laboratory evidence.',
-              ),
-              if (c['farm_id'] == null)
-                const Text(
-                  'Historical submission without a saved-farm association. Preserve its original evidence and review history; do not infer a farm boundary.',
-                ),
-              if (ownSubmission)
-                const Text(
-                  'You cannot verify or reject your own submission. Another analyst must review it.',
-                ),
-              OutlinedButton.icon(
-                onPressed: loading || error != null
-                    ? null
-                    : () => _exportOperatorReport(context, data!),
-                icon: const Icon(Icons.picture_as_pdf),
-                label: const Text('Export case report'),
-              ),
-            ],
+        _ReviewCaseHeading(data: data!, state: widget.state),
+        const SizedBox(height: 16),
+        if (data!['geometry_matches_current'] == false)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: Text(
+              'The current farm boundary has changed. Review uses the saved analysis boundary.',
+            ),
           ),
+        if (c['farm_id'] == null)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: Text(
+              'Historical submission without a saved-farm association. Preserve its original evidence and review history; do not infer a farm boundary.',
+            ),
+          ),
+        if (ownSubmission)
+          const Padding(
+            padding: EdgeInsets.only(bottom: 12),
+            child: Text(
+              'You cannot verify or reject your own submission. Another analyst must review it.',
+            ),
+          ),
+        _ReviewEvidenceLayout(
+          key: ValueKey(
+            'review-evidence-${c['id']}-${c['current_session_id']}',
+          ),
+          data: data!,
         ),
         const SizedBox(height: 16),
-        OperatorEvidenceMap(record: analysisMapValue(data!['analysis'])),
-        const SizedBox(height: 16),
-        WebAnalysisEvidence(
+        ReferenceAnalysisContent(
+          key: ValueKey(
+            'review-analysis-${c['id']}-${c['current_session_id']}',
+          ),
           state: widget.state,
           record: analysisMapValue(data!['analysis']),
+          showActions: false,
+          reviewLayout: true,
+          lockMap: true,
+        ),
+        const SizedBox(height: 16),
+        _ReviewDecisionSummary(
+          data: data!,
+          exportCase: loading || busy || error != null
+              ? null
+              : () => _exportOperatorReport(context, data!),
+          exportAnalysis: loading || busy || error != null
+              ? null
+              : () async {
+                  try {
+                    await generateAnalysisPdf(
+                      analysisMapValue(data!['analysis']),
+                      state: widget.state,
+                    );
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(friendlyErrorMessage(e))),
+                      );
+                    }
+                  }
+                },
         ),
         const SizedBox(height: 16),
         _WebCard(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              const _AnalystSectionTitle(
                 'Review checklist and explanation',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                icon: Icons.fact_check_outlined,
               ),
-              for (final item in [
-                (
-                  'reference',
-                  'I reviewed the recorded date, data sources and reference context.',
+              const SizedBox(height: 14),
+              _AnalystColumns(
+                mainFlex: 1,
+                sideFlex: 1,
+                breakpoint: 850,
+                main: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (final item in [
+                      (
+                        'reference',
+                        'I reviewed the recorded date, data sources and reference context.',
+                      ),
+                      (
+                        'geometry',
+                        'I checked the recorded boundary and any change to the current farm.',
+                      ),
+                      (
+                        'coverage',
+                        'I checked coverage, preliminary status and unavailable measurements.',
+                      ),
+                      (
+                        'limitations',
+                        'I recorded or acknowledged limitations and the appropriate next step.',
+                      ),
+                    ])
+                      CheckboxListTile(
+                        value: checks[item.$1],
+                        onChanged:
+                            c['status'] != 'pending' ||
+                                busy ||
+                                loading ||
+                                ownSubmission
+                            ? null
+                            : (v) => setState(() => checks[item.$1] = v!),
+                        title: Text(item.$2),
+                        controlAffinity: ListTileControlAffinity.leading,
+                      ),
+                  ],
                 ),
-                (
-                  'geometry',
-                  'I checked the recorded boundary and any change to the current farm.',
-                ),
-                (
-                  'coverage',
-                  'I checked coverage, preliminary status and unavailable measurements.',
-                ),
-                (
-                  'limitations',
-                  'I recorded or acknowledged limitations and the appropriate next step.',
-                ),
-              ])
-                CheckboxListTile(
-                  value: checks[item.$1],
-                  onChanged:
-                      c['status'] != 'pending' ||
-                          busy ||
-                          loading ||
-                          ownSubmission
-                      ? null
-                      : (v) => setState(() => checks[item.$1] = v!),
-                  title: Text(item.$2),
-                  controlAffinity: ListTileControlAffinity.leading,
-                ),
-              TextField(
-                controller: notes,
-                maxLength: 500,
-                minLines: 3,
-                maxLines: 6,
-                decoration: const InputDecoration(
-                  labelText: 'Decision explanation / advisory note',
-                  helperText:
-                      'Required for information requests and rejection. Do not include passwords or unnecessary personal data.',
-                ),
-              ),
-              DropdownButtonFormField<String>(
-                initialValue: reason,
-                decoration: const InputDecoration(labelText: 'Reason'),
-                items: [
-                  for (final value in [
-                    'boundary_clarification',
-                    'missing_evidence',
-                    'coverage_limitation',
-                    'data_inconsistency',
-                    'other',
-                  ])
-                    DropdownMenuItem(
-                      value: value,
-                      child: Text(reviewLabel(value)),
+                side: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    TextField(
+                      controller: notes,
+                      maxLength: 500,
+                      minLines: 3,
+                      maxLines: 6,
+                      decoration: const InputDecoration(
+                        labelText: 'Decision explanation / advisory note',
+                        helperMaxLines: 3,
+                        helperText:
+                            'Required for information requests and rejection. Do not include passwords or unnecessary personal data.',
+                      ),
                     ),
-                ],
-                onChanged: (v) => setState(() => reason = v!),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 12,
-                children: [
-                  if (c['status'] == 'pending') ...[
-                    FilledButton(
-                      onPressed:
-                          busy ||
-                              loading ||
-                              ownSubmission ||
-                              !checks.values.every((v) => v)
-                          ? null
-                          : () => decide('verified'),
-                      child: const Text('Verify assessment'),
+                    DropdownButtonFormField<String>(
+                      initialValue: reason,
+                      decoration: const InputDecoration(labelText: 'Reason'),
+                      items: [
+                        for (final value in [
+                          'boundary_clarification',
+                          'missing_evidence',
+                          'coverage_limitation',
+                          'data_inconsistency',
+                          'other',
+                        ])
+                          DropdownMenuItem(
+                            value: value,
+                            child: Text(reviewLabel(value)),
+                          ),
+                      ],
+                      onChanged: (v) => setState(() => reason = v!),
                     ),
-                    OutlinedButton(
-                      onPressed: busy || loading || ownSubmission
-                          ? null
-                          : () => decide('needs_information'),
-                      child: const Text('Request information'),
-                    ),
-                    OutlinedButton(
-                      onPressed: busy || loading || ownSubmission
-                          ? null
-                          : () => decide('rejected'),
-                      child: const Text('Reject submission'),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        if (c['status'] == 'pending') ...[
+                          FilledButton(
+                            onPressed:
+                                busy ||
+                                    loading ||
+                                    ownSubmission ||
+                                    !checks.values.every((v) => v)
+                                ? null
+                                : () => decide('verified'),
+                            child: const Text('Verify assessment'),
+                          ),
+                          OutlinedButton(
+                            onPressed: busy || loading || ownSubmission
+                                ? null
+                                : () => decide('needs_information'),
+                            child: const Text('Request information'),
+                          ),
+                          OutlinedButton(
+                            onPressed: busy || loading || ownSubmission
+                                ? null
+                                : () => decide('rejected'),
+                            child: const Text('Reject submission'),
+                          ),
+                        ],
+                        OutlinedButton(
+                          onPressed: busy || loading
+                              ? null
+                              : () async {
+                                  if (notes.text.trim().isEmpty) {
+                                    setState(
+                                      () => error =
+                                          'Enter an advisory note first.',
+                                    );
+                                    return;
+                                  }
+                                  await action('notes', {
+                                    'notes': notes.text.trim(),
+                                  });
+                                },
+                          child: const Text('Send advisory note'),
+                        ),
+                      ],
                     ),
                   ],
-                  OutlinedButton(
-                    onPressed: busy || loading
-                        ? null
-                        : () async {
-                            if (notes.text.trim().isEmpty) {
-                              setState(
-                                () => error = 'Enter an advisory note first.',
-                              );
-                              return;
-                            }
-                            await action('notes', {'notes': notes.text.trim()});
-                          },
-                    child: const Text('Send advisory note'),
-                  ),
-                ],
+                ),
               ),
               if (busy) const LinearProgressIndicator(),
             ],
@@ -951,10 +986,11 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              const _AnalystSectionTitle(
                 'Revisions and decision timeline',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                icon: Icons.history,
               ),
+              const SizedBox(height: 12),
               Wrap(
                 spacing: 12,
                 children: [
@@ -972,14 +1008,7 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
               for (final e in analysisListValue(
                 data!['events'],
               ).map(analysisMapValue))
-                ListTile(
-                  title: Text(
-                    '${reviewLabel(e['kind'])} · ${analysisDateText(e['created_at'])}',
-                  ),
-                  subtitle: Text(
-                    '${e['actor_name'] ?? 'Recorded system event'} · analysis #${e['session_id']}\n${e['notes'] ?? ''}${e['reason'] == null ? '' : '\nReason: ${reviewLabel(e['reason'])}'}',
-                  ),
-                ),
+                _ReviewEventTile(event: e),
             ],
           ),
         ),
@@ -988,10 +1017,11 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
+              const _AnalystSectionTitle(
                 'Follow-up tasks',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                icon: Icons.playlist_add_check_outlined,
               ),
+              const SizedBox(height: 8),
               const Text(
                 'New tasks are assigned to you. Due reminders appear when Activity is refreshed; background delivery requires a configured provider.',
               ),
@@ -1085,7 +1115,7 @@ class _OperatorEvidenceMapState extends State<OperatorEvidenceMap> {
   @override
   Widget build(BuildContext context) {
     if (widget.record['spatial_assessment'] != null) {
-      return SpatialRasterCard(record: widget.record);
+      return SpatialRasterCard(record: widget.record, lockMap: true);
     }
     final labels = <String, String>{
       ..._OperatorEvidenceMapState.labels,
@@ -1123,10 +1153,11 @@ class _OperatorEvidenceMapState extends State<OperatorEvidenceMap> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const Text(
+          const _AnalystSectionTitle(
             'Recorded boundary and sampled measurements',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            icon: Icons.layers_outlined,
           ),
+          const SizedBox(height: 12),
           DropdownButtonFormField<String>(
             initialValue: layer,
             isExpanded: true,
@@ -1145,50 +1176,73 @@ class _OperatorEvidenceMapState extends State<OperatorEvidenceMap> {
           ),
           const SizedBox(height: 8),
           SizedBox(
-            height: 340,
-            child: ContextMap(
-              key: ValueKey(widget.record['session_id']),
-              options: MapOptions(initialCenter: center, initialZoom: 15),
-              children: [
-                if (polygon.length >= 3)
-                  PolygonLayer(
-                    polygons: [
-                      Polygon(
-                        points: polygon,
-                        color: Colors.blueGrey.withValues(alpha: .08),
-                        borderColor: Colors.blueGrey,
-                        borderStrokeWidth: 3,
-                      ),
-                    ],
+            height: 360,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: ContextMap(
+                key: ValueKey(
+                  'review-map-${widget.record['session_id']}-${jsonEncode(widget.record['selected_polygon'])}',
+                ),
+                options: MapOptions(
+                  initialCenter: center,
+                  initialZoom: 16,
+                  initialCameraFit: polygon.length >= 3
+                      ? CameraFit.coordinates(
+                          coordinates: polygon,
+                          padding: const EdgeInsets.all(48),
+                        )
+                      : null,
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.none,
                   ),
-                MarkerLayer(
-                  markers: [
-                    for (final r in grid)
-                      if (analysisNumber(r['lat']) != null &&
-                          analysisNumber(r['lng'] ?? r['lon']) != null)
-                        Marker(
-                          point: LatLng(
-                            analysisNumber(r['lat'])!,
-                            analysisNumber(r['lng'] ?? r['lon'])!,
-                          ),
-                          width: 22,
-                          height: 22,
-                          child: Tooltip(
-                            message:
-                                '${labels[layer]}: ${r[layer] ?? 'Unavailable'}',
-                            child: Container(
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: color(r[layer]),
-                                border: Border.all(color: Colors.black54),
+                ),
+                children: [
+                  if (polygon.length >= 3)
+                    PolygonLayer(
+                      polygons: [
+                        Polygon(
+                          points: polygon,
+                          color: Colors.blueGrey.withValues(alpha: .08),
+                          borderColor: Colors.blueGrey,
+                          borderStrokeWidth: 3,
+                        ),
+                      ],
+                    ),
+                  MarkerLayer(
+                    markers: [
+                      for (final r in grid)
+                        if (analysisNumber(r['lat']) != null &&
+                            analysisNumber(r['lng'] ?? r['lon']) != null)
+                          Marker(
+                            point: LatLng(
+                              analysisNumber(r['lat'])!,
+                              analysisNumber(r['lng'] ?? r['lon'])!,
+                            ),
+                            width: 22,
+                            height: 22,
+                            child: Tooltip(
+                              message:
+                                  '${labels[layer]}: ${r[layer] ?? 'Unavailable'}',
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: color(r[layer]),
+                                  border: Border.all(color: Colors.black54),
+                                ),
                               ),
                             ),
                           ),
-                        ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            polygon.length >= 3
+                ? 'Map fixed to the saved boundary. Use Map or Satellite to change the background.'
+                : 'Saved boundary unavailable. Map is locked; background imagery is context only.',
           ),
           const Text(
             'Basemap is navigation context. Samples and boundary come from this saved analysis; current imagery is not a new measurement.',

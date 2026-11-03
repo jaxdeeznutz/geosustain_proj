@@ -19,11 +19,14 @@ class ReferenceAnalysisContent extends StatefulWidget {
   final AnalysisState state;
   final Map<String, dynamic> record;
   final bool showActions;
+  final bool reviewLayout, lockMap;
   const ReferenceAnalysisContent({
     super.key,
     required this.state,
     required this.record,
     this.showActions = true,
+    this.reviewLayout = false,
+    this.lockMap = false,
   });
   @override
   State<ReferenceAnalysisContent> createState() =>
@@ -217,7 +220,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SeasonalContextCard(record: r),
+        if (!widget.reviewLayout) SeasonalContextCard(record: r),
         if (savedControlledRecords(r).isNotEmpty)
           SavedReferenceVersions(record: r),
         if (r['analysis_scope_notice'] != null)
@@ -230,30 +233,31 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             color: const Color(0xFFFFF4D6),
             child: Text('${r['preliminary_notice']}'),
           ),
-        Card(
-          child: Padding(
-            padding: const EdgeInsets.all(13),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                BoundaryThumbnail(r, size: 100),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      AnalysisIdentity(record: r, compact: true),
-                      const SizedBox(height: 7),
-                      VerificationStatusBadge(
-                        status: '${r['verification_status'] ?? 'draft'}',
-                      ),
-                    ],
+        if (!widget.reviewLayout)
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(13),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  BoundaryThumbnail(r, size: 100),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        AnalysisIdentity(record: r, compact: true),
+                        const SizedBox(height: 7),
+                        VerificationStatusBadge(
+                          status: '${r['verification_status'] ?? 'draft'}',
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
-        ),
         const SizedBox(height: 8),
         Container(
           decoration: BoxDecoration(
@@ -507,7 +511,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
           else if (tab == 2)
             _LegacyModelSummary(record: r),
         ],
-        if (tab == 3) SpatialRasterCard(record: r),
+        if (tab == 3) SpatialRasterCard(record: r, lockMap: widget.lockMap),
         if (tab == 0 && widget.showActions) ...[
           AnalysisReviewCard(state: widget.state, record: r),
           OutlinedButton.icon(
