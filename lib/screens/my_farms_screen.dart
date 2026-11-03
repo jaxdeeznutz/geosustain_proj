@@ -114,6 +114,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
       return;
     }
     if (widget.state.loading) return;
+    setState(() => _error = null);
     final error = await widget.state.analyzeSavedFarm(farm);
     if (!mounted) return;
     if (error != null) {
@@ -413,7 +414,10 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
 
   Future<void> _analyze() async {
     if (_busy) return;
-    setState(() => _busy = true);
+    setState(() {
+      _busy = true;
+      _notice = null;
+    });
     final error = await widget.state.analyzeSavedFarm(_farm);
     if (!mounted) return;
     setState(() {
@@ -640,8 +644,10 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
                   'Not analyzed yet',
                   style: TextStyle(color: Colors.black54),
                 ),
-              AnalysisCoverageCard(record: _farm),
-              CoverageExplorer(api: widget.state.api, points: points),
+              if (!farmCanAnalyze(_farm))
+                const _MappingNotice(
+                  'This boundary is outside supported analysis coverage.',
+                ),
               if (points.isNotEmpty)
                 _BoundaryMap(
                   key: ValueKey('${_farm['id']}-${_farm['boundary_version']}'),

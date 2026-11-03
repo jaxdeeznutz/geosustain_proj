@@ -3,10 +3,12 @@ part of '../../main.dart';
 class WebAnalysisEvidence extends StatelessWidget {
   final AnalysisState state;
   final Map<String, dynamic> record;
+  final bool lockMaps;
   const WebAnalysisEvidence({
     super.key,
     required this.state,
     required this.record,
+    this.lockMaps = false,
   });
   @override
   Widget build(BuildContext context) => Column(
@@ -20,6 +22,7 @@ class WebAnalysisEvidence extends StatelessWidget {
         ),
         state: state,
         record: record,
+        lockMap: lockMaps,
       ),
     ],
   );

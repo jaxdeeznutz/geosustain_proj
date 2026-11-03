@@ -293,6 +293,8 @@ def get_panabo_season():
 def get_live_weather(lat, lon):
     """Returns (humidity_pct, description, wind_speed_ms, cloud_cover_pct, quality).
     quality is 'measured' or 'fallback_default'."""
+    if not OPENWEATHER_KEY:
+        return 80, 'Condition unavailable', 0.0, 0, 'fallback_default'
     url = (f'https://api.openweathermap.org/data/2.5/weather'
            f'?lat={lat}&lon={lon}&appid={OPENWEATHER_KEY}&units=metric')
     try:
@@ -310,7 +312,7 @@ def get_live_weather(lat, lon):
 # GEE ACQUISITION
 # ---------------------------------------------------------------------------
 def _open_meteo_recent_monthly_rainfall(lat, lon):
-
+    from open_meteo_http import get
     headers = {"User-Agent": "GeoSustainCapstone/1.0"}
     end_date = datetime.utcnow().date() - timedelta(days=1)
     start_date = end_date - timedelta(days=29)
@@ -333,7 +335,7 @@ def _open_meteo_recent_monthly_rainfall(lat, lon):
 
     for url in urls:
         try:
-            resp = requests.get(url, headers=headers, timeout=15)
+            resp = get(url, headers=headers, timeout=15)
             if resp.status_code >= 400:
                 print(f"Open-Meteo rainfall HTTP {resp.status_code}: {resp.text[:180]}")
                 continue
