@@ -39,6 +39,7 @@ LAYERS = {
     'temperature_annual': {'label': 'Air temperature (5-year mean)', 'unit': 'C', 'native_resolution_m': 11132,
                            'source': 'ECMWF/ERA5_LAND/DAILY_AGGR', 'range': [-90, 65]},
 }
+ACTIVE_LAYERS = tuple(key for key in LAYERS if key != 'rainfall_30d')
 
 
 def now():
@@ -277,7 +278,7 @@ def build_spatial_assessment(polygon, provider=None):
         rasters = provider(polygon)
     except Exception:
         rasters = {}
-    for layer_id in LAYERS:
+    for layer_id in ACTIVE_LAYERS:
         raster = rasters.get(layer_id) or {}
         try:
             layer = (layer_from_raster(layer_id, polygon, raster) if raster.get('values') is not None

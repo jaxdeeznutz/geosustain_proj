@@ -1,0 +1,9 @@
+[
+  "temperature",
+  "humidity",
+  "ph",
+  "rainfall",
+  "ndvi",
+  "elevation",
+  "slope"
+]

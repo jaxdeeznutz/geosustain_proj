@@ -282,11 +282,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
-      for (final title in [
-        'More crop choices',
-        'Farm map',
-        'Full analysis details',
-      ]) {
+      for (final title in ['Farm map', 'Full analysis details']) {
         final disclosure = find.text(title);
         await tester.ensureVisible(disclosure);
         await tester.tap(disclosure);

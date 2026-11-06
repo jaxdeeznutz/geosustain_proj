@@ -1,0 +1,1553 @@
+{
+  "scoring_version": "panabo-annual-terrain-references-2026-11-06-v4",
+  "crop_config_version": "panabo-annual-terrain-references-2026-11-06-v4",
+  "environmental_measurements": {
+    "slope": {
+      "value": 5.83,
+      "unit": "%",
+      "period": "terrain",
+      "quality": "modelled",
+      "source": "Controlled software fixture; not a real farm"
+    }
+  },
+  "crop_assessments": [
+    {
+      "crop": "Banana",
+      "compatibility_pct": null,
+      "classification": "Insufficient data",
+      "rank": null,
+      "factors": [
+        {
+          "factor": "temperature",
+          "label": "Climate temperature",
+          "unit": "C",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=2483",
+              "title": "FAO EcoCrop: Musa sp.",
+              "section": "Ecology",
+              "scope": "Species-level tropical screening; no variety distinctions. Temperature is interpreted as climate mean for screening, not daily extremes."
+            },
+            "optimal": [
+              22,
+              32
+            ],
+            "absolute": [
+              13,
+              38
+            ],
+            "classes": null,
+            "limitations": "Species-level tropical screening; no variety distinctions. Temperature is interpreted as climate mean for screening, not daily extremes."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "rainfall",
+          "label": "Annual rainfall",
+          "unit": "mm/year",
+          "period": "annual_mean_total",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=2483",
+              "title": "FAO EcoCrop: Musa sp.",
+              "section": "Ecology",
+              "scope": "Species-level tropical screening; no variety distinctions. Temperature is interpreted as climate mean for screening, not daily extremes."
+            },
+            "optimal": [
+              2400,
+              2700
+            ],
+            "absolute": [
+              2000,
+              3500
+            ],
+            "classes": null,
+            "limitations": "Species-level tropical screening; no variety distinctions. Temperature is interpreted as climate mean for screening, not daily extremes."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "soil_ph",
+          "label": "Soil pH in water",
+          "unit": "pH",
+          "period": "soil_surface",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=2483",
+              "title": "FAO EcoCrop: Musa sp.",
+              "section": "Ecology",
+              "scope": "Species-level tropical screening; no variety distinctions. Temperature is interpreted as climate mean for screening, not daily extremes."
+            },
+            "optimal": [
+              5,
+              7
+            ],
+            "absolute": [
+              4.5,
+              7.5
+            ],
+            "classes": null,
+            "limitations": "Species-level tropical screening; no variety distinctions. Temperature is interpreted as climate mean for screening, not daily extremes."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "elevation",
+          "label": "Elevation",
+          "unit": "m",
+          "period": "terrain",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "slope",
+          "label": "Slope",
+          "unit": "%",
+          "period": "terrain",
+          "measurement": {
+            "value": 5.83,
+            "unit": "%",
+            "period": "terrain",
+            "quality": "modelled",
+            "source": "Controlled software fixture; not a real farm"
+          },
+          "value": 5.83,
+          "requirement": {
+            "source": {
+              "url": "https://publikasi.agroforestri.id/sites/all/modules/publication/data/softcopy/manual/MN0037-07.pdf",
+              "title": "Ritung et al. (2007), Land Suitability Evaluation",
+              "section": "Annex 11, printed p.33 / PDF p.40, Erosion hazard: slope (%)",
+              "scope": "Musa acuminata slope criteria from Indonesia, transferred for preliminary Panabo comparison; not locally validated or variety-specific. This slope factor does not establish soil depth, drainage, erosion rate or overall land suitability."
+            },
+            "optimal": [
+              0,
+              8
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  0,
+                  8
+                ]
+              ],
+              "S2": [
+                [
+                  8,
+                  16
+                ]
+              ],
+              "S3": [
+                [
+                  16,
+                  30
+                ]
+              ],
+              "N": [
+                [
+                  30,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Musa acuminata slope criteria from Indonesia, transferred for preliminary Panabo comparison; not locally validated or variety-specific. This slope factor does not establish soil depth, drainage, erosion rate or overall land suitability.",
+            "range_label": "S1 slope range (below 8%)"
+          },
+          "score": 100.0,
+          "result": "S1",
+          "weight": null,
+          "contribution": "limiting-factor minimum"
+        },
+        {
+          "factor": "humidity",
+          "label": "Climate humidity",
+          "unit": "%",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        }
+      ],
+      "assessed_count": 1,
+      "total_factors": 6,
+      "limiting_factors": [],
+      "supporting_factors": [
+        "Slope"
+      ],
+      "not_assessed": [
+        "Climate temperature",
+        "Annual rainfall",
+        "Soil pH in water",
+        "Elevation",
+        "Climate humidity"
+      ],
+      "explanation": "1/6 environmental factors assessed. Supporting conditions: Slope. Not assessed: Climate temperature, Annual rainfall, Soil pH in water, Elevation, Climate humidity. This is preliminary reference-based screening, not a yield forecast or model prediction.",
+      "scoring_version": "panabo-annual-terrain-references-2026-11-06-v4",
+      "method": "Minimum assessed factor score; no additive weights. Published factor classes map to project display indices S1=100, S2=67, S3=33, N=0. For range-only sources: inside preferred=100, inside absolute only=50, outside documented range=0 (a screening mismatch, not a published N class). At least three factors including soil pH and a climate factor are required. Rank by number of assessed factors first, then index; ties share rank. Unmeasured drainage, irrigation, hazards, soil depth and seasonal timing can change the outcome."
+    },
+    {
+      "crop": "Coconut",
+      "compatibility_pct": null,
+      "classification": "Insufficient data",
+      "rank": null,
+      "factors": [
+        {
+          "factor": "temperature",
+          "label": "Climate temperature",
+          "unit": "C",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://www.fao.org/4/af298e/af298E01.htm",
+              "title": "FAO: Pasture-Cattle-Coconut Systems",
+              "section": "1.2",
+              "scope": "General tropical coconut climate. Rainfall distribution also matters."
+            },
+            "optimal": [
+              27,
+              32
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "General tropical coconut climate. Rainfall distribution also matters."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "rainfall",
+          "label": "Annual rainfall",
+          "unit": "mm/year",
+          "period": "annual_mean_total",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://www.fao.org/4/af298e/af298E01.htm",
+              "title": "FAO: Pasture-Cattle-Coconut Systems",
+              "section": "1.2",
+              "scope": "General tropical coconut climate. Rainfall distribution also matters."
+            },
+            "optimal": [
+              1250,
+              2250
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "General tropical coconut climate. Rainfall distribution also matters."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "soil_ph",
+          "label": "Soil pH in water",
+          "unit": "pH",
+          "period": "soil_surface",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://apps.worldagroforestry.org/downloads/publications/PDFs/mn15224.pdf",
+              "title": "Ritung et al. (2007), Land Suitability Evaluation",
+              "section": "Annex 3, printed p.25 / PDF p.32",
+              "scope": "Indonesian coconut soil criteria; only pH used alongside general FAO climate ranges."
+            },
+            "optimal": [
+              5.2,
+              7.5
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  5.2,
+                  7.5
+                ]
+              ],
+              "S2": [
+                [
+                  4.8,
+                  5.2
+                ],
+                [
+                  7.5,
+                  8
+                ]
+              ],
+              "S3": [
+                [
+                  null,
+                  4.8
+                ],
+                [
+                  8,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Indonesian coconut soil criteria; only pH used alongside general FAO climate ranges."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "elevation",
+          "label": "Elevation",
+          "unit": "m",
+          "period": "terrain",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "slope",
+          "label": "Slope",
+          "unit": "%",
+          "period": "terrain",
+          "measurement": {
+            "value": 5.83,
+            "unit": "%",
+            "period": "terrain",
+            "quality": "modelled",
+            "source": "Controlled software fixture; not a real farm"
+          },
+          "value": 5.83,
+          "requirement": {
+            "source": {
+              "url": "https://publikasi.agroforestri.id/sites/all/modules/publication/data/softcopy/manual/MN0037-07.pdf",
+              "title": "Ritung et al. (2007), Land Suitability Evaluation",
+              "section": "Annex 3, printed p.25 / PDF p.32, Erosion hazard: slope (%)",
+              "scope": "Coconut slope criteria from Indonesia, transferred for preliminary Panabo comparison; not locally validated. Management, erosion protection, drainage and soil depth need separate assessment."
+            },
+            "optimal": [
+              0,
+              8
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  0,
+                  8
+                ]
+              ],
+              "S2": [
+                [
+                  8,
+                  16
+                ]
+              ],
+              "S3": [
+                [
+                  16,
+                  30
+                ]
+              ],
+              "N": [
+                [
+                  30,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Coconut slope criteria from Indonesia, transferred for preliminary Panabo comparison; not locally validated. Management, erosion protection, drainage and soil depth need separate assessment.",
+            "range_label": "S1 slope range (below 8%)"
+          },
+          "score": 100.0,
+          "result": "S1",
+          "weight": null,
+          "contribution": "limiting-factor minimum"
+        },
+        {
+          "factor": "humidity",
+          "label": "Climate humidity",
+          "unit": "%",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        }
+      ],
+      "assessed_count": 1,
+      "total_factors": 6,
+      "limiting_factors": [],
+      "supporting_factors": [
+        "Slope"
+      ],
+      "not_assessed": [
+        "Climate temperature",
+        "Annual rainfall",
+        "Soil pH in water",
+        "Elevation",
+        "Climate humidity"
+      ],
+      "explanation": "1/6 environmental factors assessed. Supporting conditions: Slope. Not assessed: Climate temperature, Annual rainfall, Soil pH in water, Elevation, Climate humidity. This is preliminary reference-based screening, not a yield forecast or model prediction.",
+      "scoring_version": "panabo-annual-terrain-references-2026-11-06-v4",
+      "method": "Minimum assessed factor score; no additive weights. Published factor classes map to project display indices S1=100, S2=67, S3=33, N=0. For range-only sources: inside preferred=100, inside absolute only=50, outside documented range=0 (a screening mismatch, not a published N class). At least three factors including soil pH and a climate factor are required. Rank by number of assessed factors first, then index; ties share rank. Unmeasured drainage, irrigation, hazards, soil depth and seasonal timing can change the outcome."
+    },
+    {
+      "crop": "Rice",
+      "compatibility_pct": null,
+      "classification": "Insufficient data",
+      "rank": null,
+      "factors": [
+        {
+          "factor": "temperature",
+          "label": "Climate temperature",
+          "unit": "C",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=1574",
+              "title": "FAO EcoCrop: Oryza sativa",
+              "section": "Ecology / wet-rice system",
+              "scope": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance."
+            },
+            "optimal": [
+              20,
+              30
+            ],
+            "absolute": [
+              10,
+              36
+            ],
+            "classes": null,
+            "limitations": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "rainfall",
+          "label": "Annual rainfall",
+          "unit": "mm/year",
+          "period": "annual_mean_total",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=1574",
+              "title": "FAO EcoCrop: Oryza sativa",
+              "section": "Ecology / wet-rice system",
+              "scope": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance."
+            },
+            "optimal": [
+              1500,
+              2000
+            ],
+            "absolute": [
+              1000,
+              4000
+            ],
+            "classes": null,
+            "limitations": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "soil_ph",
+          "label": "Soil pH in water",
+          "unit": "pH",
+          "period": "soil_surface",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=1574",
+              "title": "FAO EcoCrop: Oryza sativa",
+              "section": "Ecology / wet-rice system",
+              "scope": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance."
+            },
+            "optimal": [
+              5.5,
+              7
+            ],
+            "absolute": [
+              4.5,
+              9
+            ],
+            "classes": null,
+            "limitations": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "elevation",
+          "label": "Elevation",
+          "unit": "m",
+          "period": "terrain",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=1574",
+              "title": "FAO EcoCrop: Oryza sativa",
+              "section": "Ecology / wet-rice system",
+              "scope": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance."
+            },
+            "optimal": [
+              null,
+              2500
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance. EcoCrop gives only an absolute upper altitude of 2500 m, not an optimum. This checks that limit alone.",
+            "range_label": "Published altitude limit",
+            "range_basis": "absolute_limit"
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "slope",
+          "label": "Slope",
+          "unit": "%",
+          "period": "terrain",
+          "measurement": {
+            "value": 5.83,
+            "unit": "%",
+            "period": "terrain",
+            "quality": "modelled",
+            "source": "Controlled software fixture; not a real farm"
+          },
+          "value": 5.83,
+          "requirement": {
+            "source": {
+              "url": "https://www.bswm.da.gov.ph/wp-content/uploads/Davao-del-Norte_SUITABILITY-rice.pdf",
+              "title": "BSWM (2016): Davao del Norte Rice Suitability Map",
+              "section": "Sheet 1, Agronomic requirements, Terrain: slope (%)",
+              "scope": "Published rice slope classes for the province containing Panabo. This is one factor only; drainage, flooding, stoniness and soil depth are not assessed by slope."
+            },
+            "optimal": [
+              0,
+              3
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  0,
+                  3
+                ]
+              ],
+              "S2": [
+                [
+                  3,
+                  8
+                ]
+              ],
+              "S3": [
+                [
+                  8,
+                  18
+                ]
+              ],
+              "N": [
+                [
+                  18,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Published rice slope classes for the province containing Panabo. This is one factor only; drainage, flooding, stoniness and soil depth are not assessed by slope."
+          },
+          "score": 67.0,
+          "result": "S2",
+          "weight": null,
+          "contribution": "limiting-factor minimum"
+        },
+        {
+          "factor": "humidity",
+          "label": "Climate humidity",
+          "unit": "%",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        }
+      ],
+      "assessed_count": 1,
+      "total_factors": 6,
+      "limiting_factors": [
+        "Slope"
+      ],
+      "supporting_factors": [],
+      "not_assessed": [
+        "Climate temperature",
+        "Annual rainfall",
+        "Soil pH in water",
+        "Elevation",
+        "Climate humidity"
+      ],
+      "explanation": "1/6 environmental factors assessed. Limitations: Slope. Not assessed: Climate temperature, Annual rainfall, Soil pH in water, Elevation, Climate humidity. This is preliminary reference-based screening, not a yield forecast or model prediction.",
+      "scoring_version": "panabo-annual-terrain-references-2026-11-06-v4",
+      "method": "Minimum assessed factor score; no additive weights. Published factor classes map to project display indices S1=100, S2=67, S3=33, N=0. For range-only sources: inside preferred=100, inside absolute only=50, outside documented range=0 (a screening mismatch, not a published N class). At least three factors including soil pH and a climate factor are required. Rank by number of assessed factors first, then index; ties share rank. Unmeasured drainage, irrigation, hazards, soil depth and seasonal timing can change the outcome."
+    },
+    {
+      "crop": "Durian",
+      "compatibility_pct": null,
+      "classification": "Insufficient data",
+      "rank": null,
+      "factors": [
+        {
+          "factor": "temperature",
+          "label": "Climate temperature",
+          "unit": "C",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://apps.worldagroforestry.org/downloads/publications/PDFs/mn15224.pdf",
+              "title": "Ritung et al. (2007), Land Suitability Evaluation",
+              "section": "Annex 9, printed p.31 / PDF p.38",
+              "scope": "Indonesian criteria transferred for preliminary Panabo screening; not locally validated. Full land classes require additional drainage, soil and hazard assessments."
+            },
+            "optimal": [
+              25,
+              28
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  25,
+                  28
+                ]
+              ],
+              "S2": [
+                [
+                  22,
+                  25
+                ],
+                [
+                  28,
+                  32
+                ]
+              ],
+              "S3": [
+                [
+                  20,
+                  22
+                ],
+                [
+                  32,
+                  35
+                ]
+              ],
+              "N": [
+                [
+                  null,
+                  20
+                ],
+                [
+                  35,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Indonesian criteria transferred for preliminary Panabo screening; not locally validated. Full land classes require additional drainage, soil and hazard assessments."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "rainfall",
+          "label": "Annual rainfall",
+          "unit": "mm/year",
+          "period": "annual_mean_total",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://apps.worldagroforestry.org/treedb/AFTPDFS/Durio_zibethinus.PDF",
+              "title": "Orwa et al. (2009), Agroforestry Database 4.0: Durio zibethinus",
+              "section": "PDF page 2, Biophysical limits and Ecology",
+              "scope": "Published general annual rainfall interval, not a locally validated S1 class. Rainfall distribution, flowering dry spell, soil depth and drainage are not established by the annual total."
+            },
+            "optimal": [
+              1500,
+              2000
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "Published general annual rainfall interval, not a locally validated S1 class. Rainfall distribution, flowering dry spell, soil depth and drainage are not established by the annual total.",
+            "range_label": "Published annual range",
+            "range_basis": "general_biophysical_interval"
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "soil_ph",
+          "label": "Soil pH in water",
+          "unit": "pH",
+          "period": "soil_surface",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://apps.worldagroforestry.org/downloads/publications/PDFs/mn15224.pdf",
+              "title": "Ritung et al. (2007), Land Suitability Evaluation",
+              "section": "Annex 9, printed p.31 / PDF p.38",
+              "scope": "Indonesian criteria transferred for preliminary Panabo screening; not locally validated. Full land classes require additional drainage, soil and hazard assessments."
+            },
+            "optimal": [
+              5.5,
+              7.8
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  5.5,
+                  7.8
+                ]
+              ],
+              "S2": [
+                [
+                  5,
+                  5.5
+                ],
+                [
+                  7.8,
+                  8
+                ]
+              ],
+              "S3": [
+                [
+                  null,
+                  5
+                ],
+                [
+                  8,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Indonesian criteria transferred for preliminary Panabo screening; not locally validated. Full land classes require additional drainage, soil and hazard assessments."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "elevation",
+          "label": "Elevation",
+          "unit": "m",
+          "period": "terrain",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "slope",
+          "label": "Slope",
+          "unit": "%",
+          "period": "terrain",
+          "measurement": {
+            "value": 5.83,
+            "unit": "%",
+            "period": "terrain",
+            "quality": "modelled",
+            "source": "Controlled software fixture; not a real farm"
+          },
+          "value": 5.83,
+          "requirement": {
+            "source": {
+              "url": "https://apps.worldagroforestry.org/downloads/publications/PDFs/mn15224.pdf",
+              "title": "Ritung et al. (2007), Land Suitability Evaluation",
+              "section": "Annex 9, printed p.31 / PDF p.38",
+              "scope": "Indonesian criteria transferred for preliminary Panabo screening; not locally validated. Full land classes require additional drainage, soil and hazard assessments."
+            },
+            "optimal": [
+              0,
+              8
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  0,
+                  8
+                ]
+              ],
+              "S2": [
+                [
+                  8,
+                  16
+                ]
+              ],
+              "S3": [
+                [
+                  16,
+                  30
+                ]
+              ],
+              "N": [
+                [
+                  30,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Indonesian criteria transferred for preliminary Panabo screening; not locally validated. Full land classes require additional drainage, soil and hazard assessments."
+          },
+          "score": 100.0,
+          "result": "S1",
+          "weight": null,
+          "contribution": "limiting-factor minimum"
+        },
+        {
+          "factor": "humidity",
+          "label": "Climate humidity",
+          "unit": "%",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        }
+      ],
+      "assessed_count": 1,
+      "total_factors": 6,
+      "limiting_factors": [],
+      "supporting_factors": [
+        "Slope"
+      ],
+      "not_assessed": [
+        "Climate temperature",
+        "Annual rainfall",
+        "Soil pH in water",
+        "Elevation",
+        "Climate humidity"
+      ],
+      "explanation": "1/6 environmental factors assessed. Supporting conditions: Slope. Not assessed: Climate temperature, Annual rainfall, Soil pH in water, Elevation, Climate humidity. This is preliminary reference-based screening, not a yield forecast or model prediction.",
+      "scoring_version": "panabo-annual-terrain-references-2026-11-06-v4",
+      "method": "Minimum assessed factor score; no additive weights. Published factor classes map to project display indices S1=100, S2=67, S3=33, N=0. For range-only sources: inside preferred=100, inside absolute only=50, outside documented range=0 (a screening mismatch, not a published N class). At least three factors including soil pH and a climate factor are required. Rank by number of assessed factors first, then index; ties share rank. Unmeasured drainage, irrigation, hazards, soil depth and seasonal timing can change the outcome."
+    },
+    {
+      "crop": "Mango",
+      "compatibility_pct": null,
+      "classification": "Insufficient data",
+      "rank": null,
+      "factors": [
+        {
+          "factor": "temperature",
+          "label": "Climate temperature",
+          "unit": "C",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://www.da.gov.ph/wp-content/uploads/2023/05/Philippine-Mango-Industry-Roadmap.pdf",
+              "title": "Philippine Mango Industry Roadmap 2021\u20132025",
+              "section": "Table 29, printed p.76 / PDF p.97",
+              "scope": "Philippine mango. Distinct dry season is required but not assessed; the stated temperature interval is used only as a climate screening range."
+            },
+            "optimal": [
+              22,
+              34
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "Philippine mango. Distinct dry season is required but not assessed; the stated temperature interval is used only as a climate screening range."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "rainfall",
+          "label": "Annual rainfall",
+          "unit": "mm/year",
+          "period": "annual_mean_total",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=1416",
+              "title": "FAO EcoCrop: Mangifera indica",
+              "section": "Ecology, Rainfall (annual)",
+              "scope": "Global ecological annual rainfall ranges. The Philippine mango dry-period requirement remains separate and is not established by an annual total."
+            },
+            "optimal": [
+              600,
+              1500
+            ],
+            "absolute": [
+              300,
+              2600
+            ],
+            "classes": null,
+            "limitations": "Global ecological annual rainfall ranges. The Philippine mango dry-period requirement remains separate and is not established by an annual total."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "soil_ph",
+          "label": "Soil pH in water",
+          "unit": "pH",
+          "period": "soil_surface",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://www.da.gov.ph/wp-content/uploads/2023/05/Philippine-Mango-Industry-Roadmap.pdf",
+              "title": "Philippine Mango Industry Roadmap 2021\u20132025",
+              "section": "Table 29, printed p.76 / PDF p.97",
+              "scope": "Philippine mango. Distinct dry season is required but not assessed; the stated temperature interval is used only as a climate screening range."
+            },
+            "optimal": [
+              5.5,
+              7.5
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "Philippine mango. Distinct dry season is required but not assessed; the stated temperature interval is used only as a climate screening range."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "elevation",
+          "label": "Elevation",
+          "unit": "m",
+          "period": "terrain",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://www.da.gov.ph/wp-content/uploads/2023/05/Philippine-Mango-Industry-Roadmap.pdf",
+              "title": "Philippine Mango Industry Roadmap 2021\u20132025",
+              "section": "Table 29, printed p.76 / PDF p.97",
+              "scope": "Philippine mango. Distinct dry season is required but not assessed; the stated temperature interval is used only as a climate screening range."
+            },
+            "optimal": [
+              null,
+              600
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "Philippine mango. Distinct dry season is required but not assessed; the stated temperature interval is used only as a climate screening range."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "slope",
+          "label": "Slope",
+          "unit": "%",
+          "period": "terrain",
+          "measurement": {
+            "value": 5.83,
+            "unit": "%",
+            "period": "terrain",
+            "quality": "modelled",
+            "source": "Controlled software fixture; not a real farm"
+          },
+          "value": 5.83,
+          "requirement": {
+            "source": {
+              "url": "https://doi.org/10.3390/su15032619",
+              "title": "Salunkhe et al. (2023), Land Suitability Planning for Sustainable Mango Production in Vulnerable Region Using Geospatial Multi-Criteria Decision Model",
+              "section": "Table 1 continued, PDF p.7, Slope (%)",
+              "scope": "Published mango slope classes used in Ratnagiri, India, transferred for preliminary Panabo comparison; not locally validated for Philippine cultivars. Only the slope criterion is adopted, not the study AHP weights, climate ranges, conservation assumptions or reported accuracy."
+            },
+            "optimal": [
+              0,
+              8
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  0,
+                  8
+                ]
+              ],
+              "S2": [
+                [
+                  8,
+                  16
+                ]
+              ],
+              "S3": [
+                [
+                  16,
+                  30
+                ]
+              ],
+              "N": [
+                [
+                  30,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Published mango slope classes used in Ratnagiri, India, transferred for preliminary Panabo comparison; not locally validated for Philippine cultivars. Only the slope criterion is adopted, not the study AHP weights, climate ranges, conservation assumptions or reported accuracy.",
+            "range_label": "S1 slope range (below 8%)"
+          },
+          "score": 100.0,
+          "result": "S1",
+          "weight": null,
+          "contribution": "limiting-factor minimum"
+        },
+        {
+          "factor": "humidity",
+          "label": "Climate humidity",
+          "unit": "%",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        }
+      ],
+      "assessed_count": 1,
+      "total_factors": 6,
+      "limiting_factors": [],
+      "supporting_factors": [
+        "Slope"
+      ],
+      "not_assessed": [
+        "Climate temperature",
+        "Annual rainfall",
+        "Soil pH in water",
+        "Elevation",
+        "Climate humidity"
+      ],
+      "explanation": "1/6 environmental factors assessed. Supporting conditions: Slope. Not assessed: Climate temperature, Annual rainfall, Soil pH in water, Elevation, Climate humidity. This is preliminary reference-based screening, not a yield forecast or model prediction.",
+      "scoring_version": "panabo-annual-terrain-references-2026-11-06-v4",
+      "method": "Minimum assessed factor score; no additive weights. Published factor classes map to project display indices S1=100, S2=67, S3=33, N=0. For range-only sources: inside preferred=100, inside absolute only=50, outside documented range=0 (a screening mismatch, not a published N class). At least three factors including soil pH and a climate factor are required. Rank by number of assessed factors first, then index; ties share rank. Unmeasured drainage, irrigation, hazards, soil depth and seasonal timing can change the outcome."
+    },
+    {
+      "crop": "Rubber",
+      "compatibility_pct": null,
+      "classification": "Insufficient data",
+      "rank": null,
+      "factors": [
+        {
+          "factor": "temperature",
+          "label": "Climate temperature",
+          "unit": "C",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "rainfall",
+          "label": "Annual rainfall",
+          "unit": "mm/year",
+          "period": "annual_mean_total",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://apps.worldagroforestry.org/treedb/AFTPDFS/Hevea_brasiliensis.PDF",
+              "title": "Orwa et al. (2009), Agroforestry Database 4.0: Hevea brasiliensis",
+              "section": "PDF page 2, Biophysical limits and Ecology",
+              "scope": "Published general annual rainfall interval and upper maximum, not a locally validated S1 class. Drainage, rainfall distribution, soil depth and groundwater remain unassessed."
+            },
+            "optimal": [
+              1500,
+              3000
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "Published general annual rainfall interval and upper maximum, not a locally validated S1 class. Drainage, rainfall distribution, soil depth and groundwater remain unassessed.",
+            "range_label": "Published annual range",
+            "range_basis": "general_biophysical_interval",
+            "published_upper_extension": 4000
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "soil_ph",
+          "label": "Soil pH in water",
+          "unit": "pH",
+          "period": "soil_surface",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://bswm.da.gov.ph/wp-content/uploads/DAVAO_DEL_SUR_SUITABILITY_RUBBER.pdf",
+              "title": "BSWM (2019): Davao del Sur Land Suitability Map for Rubber",
+              "section": "Sheet 1, Agronomic requirement of rubber production",
+              "scope": "Philippine rubber criteria transferred from neighbouring province. Gaps between printed decimal/integer intervals remain unassessed; not interpolated."
+            },
+            "optimal": [
+              5.6,
+              7.2
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  5.6,
+                  7.2
+                ]
+              ],
+              "S2": [
+                [
+                  4.5,
+                  5.5
+                ],
+                [
+                  7.3,
+                  7.8
+                ]
+              ],
+              "S3": [
+                [
+                  null,
+                  4.5
+                ],
+                [
+                  7.9,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Philippine rubber criteria transferred from neighbouring province. Gaps between printed decimal/integer intervals remain unassessed; not interpolated."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "elevation",
+          "label": "Elevation",
+          "unit": "m",
+          "period": "terrain",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://bswm.da.gov.ph/wp-content/uploads/DAVAO_DEL_SUR_SUITABILITY_RUBBER.pdf",
+              "title": "BSWM (2019): Davao del Sur Land Suitability Map for Rubber",
+              "section": "Sheet 1, Agronomic requirement of rubber production",
+              "scope": "Philippine rubber criteria transferred from neighbouring province. Gaps between printed decimal/integer intervals remain unassessed; not interpolated."
+            },
+            "optimal": [
+              null,
+              500
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  null,
+                  500
+                ]
+              ],
+              "S2": [
+                [
+                  500,
+                  1000
+                ]
+              ],
+              "S3": [
+                [
+                  1000,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Philippine rubber criteria transferred from neighbouring province. Gaps between printed decimal/integer intervals remain unassessed; not interpolated."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "slope",
+          "label": "Slope",
+          "unit": "%",
+          "period": "terrain",
+          "measurement": {
+            "value": 5.83,
+            "unit": "%",
+            "period": "terrain",
+            "quality": "modelled",
+            "source": "Controlled software fixture; not a real farm"
+          },
+          "value": 5.83,
+          "requirement": {
+            "source": {
+              "url": "https://bswm.da.gov.ph/wp-content/uploads/DAVAO_DEL_SUR_SUITABILITY_RUBBER.pdf",
+              "title": "BSWM (2019): Davao del Sur Land Suitability Map for Rubber",
+              "section": "Sheet 1, Agronomic requirement of rubber production",
+              "scope": "Philippine rubber criteria transferred from neighbouring province. Gaps between printed decimal/integer intervals remain unassessed; not interpolated."
+            },
+            "optimal": [
+              0,
+              8
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  0,
+                  8
+                ]
+              ],
+              "S2": [
+                [
+                  8,
+                  30
+                ]
+              ],
+              "S3": [
+                [
+                  30,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Philippine rubber criteria transferred from neighbouring province. Gaps between printed decimal/integer intervals remain unassessed; not interpolated."
+          },
+          "score": 100.0,
+          "result": "S1",
+          "weight": null,
+          "contribution": "limiting-factor minimum"
+        },
+        {
+          "factor": "humidity",
+          "label": "Climate humidity",
+          "unit": "%",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        }
+      ],
+      "assessed_count": 1,
+      "total_factors": 6,
+      "limiting_factors": [],
+      "supporting_factors": [
+        "Slope"
+      ],
+      "not_assessed": [
+        "Climate temperature",
+        "Annual rainfall",
+        "Soil pH in water",
+        "Elevation",
+        "Climate humidity"
+      ],
+      "explanation": "1/6 environmental factors assessed. Supporting conditions: Slope. Not assessed: Climate temperature, Annual rainfall, Soil pH in water, Elevation, Climate humidity. This is preliminary reference-based screening, not a yield forecast or model prediction.",
+      "scoring_version": "panabo-annual-terrain-references-2026-11-06-v4",
+      "method": "Minimum assessed factor score; no additive weights. Published factor classes map to project display indices S1=100, S2=67, S3=33, N=0. For range-only sources: inside preferred=100, inside absolute only=50, outside documented range=0 (a screening mismatch, not a published N class). At least three factors including soil pH and a climate factor are required. Rank by number of assessed factors first, then index; ties share rank. Unmeasured drainage, irrigation, hazards, soil depth and seasonal timing can change the outcome."
+    },
+    {
+      "crop": "Cacao",
+      "compatibility_pct": null,
+      "classification": "Insufficient data",
+      "rank": null,
+      "factors": [
+        {
+          "factor": "temperature",
+          "label": "Climate temperature",
+          "unit": "C",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://faolex.fao.org/docs/pdf/phi229725.pdf",
+              "title": "Philippine Cacao Industry Roadmap 2021\u20132025",
+              "section": "Appendix 1, printed p.84",
+              "scope": "Philippine cacao. Uses narrative maximum 32 C. Elevation recommendation conflicts with the same page\u2019s up-to-700m note, so elevation remains unassessed. Shade, drainage and dry-season duration need field assessment."
+            },
+            "optimal": [
+              18,
+              32
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "Philippine cacao. Uses narrative maximum 32 C. Elevation recommendation conflicts with the same page\u2019s up-to-700m note, so elevation remains unassessed. Shade, drainage and dry-season duration need field assessment."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "rainfall",
+          "label": "Annual rainfall",
+          "unit": "mm/year",
+          "period": "annual_mean_total",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://faolex.fao.org/docs/pdf/phi229725.pdf",
+              "title": "Philippine Cacao Industry Roadmap 2021\u20132025",
+              "section": "Appendix 1, printed p.84",
+              "scope": "Philippine cacao. Uses narrative maximum 32 C. Elevation recommendation conflicts with the same page\u2019s up-to-700m note, so elevation remains unassessed. Shade, drainage and dry-season duration need field assessment."
+            },
+            "optimal": [
+              1250,
+              3000
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "Philippine cacao. Uses narrative maximum 32 C. Elevation recommendation conflicts with the same page\u2019s up-to-700m note, so elevation remains unassessed. Shade, drainage and dry-season duration need field assessment."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "soil_ph",
+          "label": "Soil pH in water",
+          "unit": "pH",
+          "period": "soil_surface",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://faolex.fao.org/docs/pdf/phi229725.pdf",
+              "title": "Philippine Cacao Industry Roadmap 2021\u20132025",
+              "section": "Appendix 1, printed p.84",
+              "scope": "Philippine cacao. Uses narrative maximum 32 C. Elevation recommendation conflicts with the same page\u2019s up-to-700m note, so elevation remains unassessed. Shade, drainage and dry-season duration need field assessment."
+            },
+            "optimal": [
+              5,
+              7.5
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "Philippine cacao. Uses narrative maximum 32 C. Elevation recommendation conflicts with the same page\u2019s up-to-700m note, so elevation remains unassessed. Shade, drainage and dry-season duration need field assessment."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "elevation",
+          "label": "Elevation",
+          "unit": "m",
+          "period": "terrain",
+          "measurement": {},
+          "value": null,
+          "requirement": null,
+          "score": null,
+          "result": "No verified criterion configured",
+          "weight": null,
+          "contribution": null
+        },
+        {
+          "factor": "slope",
+          "label": "Slope",
+          "unit": "%",
+          "period": "terrain",
+          "measurement": {
+            "value": 5.83,
+            "unit": "%",
+            "period": "terrain",
+            "quality": "modelled",
+            "source": "Controlled software fixture; not a real farm"
+          },
+          "value": 5.83,
+          "requirement": {
+            "source": {
+              "url": "https://www.bswm.da.gov.ph/wp-content/uploads/DAVAO_DEL_NORTE_SUITABILITY_CACAO.pdf",
+              "title": "BSWM: Davao del Norte Land Suitability Map for Cacao",
+              "section": "PDF p.3, Agronomic requirement of cacao production, Slope (%)",
+              "scope": "Published cacao slope classes for the province containing Panabo. Slope alone does not establish shade, soil depth, drainage, flooding or overall suitability. The source separately excludes existing forest, shrubland above 18% slope, irrigated paddy and miscellaneous land types; the slope grade does not override land-cover safeguards."
+            },
+            "optimal": [
+              0,
+              8
+            ],
+            "absolute": null,
+            "classes": {
+              "S1": [
+                [
+                  0,
+                  8
+                ]
+              ],
+              "S2": [
+                [
+                  8,
+                  30
+                ]
+              ],
+              "S3": [
+                [
+                  30,
+                  null
+                ]
+              ]
+            },
+            "limitations": "Published cacao slope classes for the province containing Panabo. Slope alone does not establish shade, soil depth, drainage, flooding or overall suitability. The source separately excludes existing forest, shrubland above 18% slope, irrigated paddy and miscellaneous land types; the slope grade does not override land-cover safeguards.",
+            "range_label": "S1 slope range (below 8%)"
+          },
+          "score": 100.0,
+          "result": "S1",
+          "weight": null,
+          "contribution": "limiting-factor minimum"
+        },
+        {
+          "factor": "humidity",
+          "label": "Climate humidity",
+          "unit": "%",
+          "period": "annual_mean",
+          "measurement": {},
+          "value": null,
+          "requirement": {
+            "source": {
+              "url": "https://faolex.fao.org/docs/pdf/phi229725.pdf",
+              "title": "Philippine Cacao Industry Roadmap 2021\u20132025",
+              "section": "Appendix 1, printed p.84",
+              "scope": "Philippine cacao. Uses narrative maximum 32 C. Elevation recommendation conflicts with the same page\u2019s up-to-700m note, so elevation remains unassessed. Shade, drainage and dry-season duration need field assessment."
+            },
+            "optimal": [
+              75,
+              90
+            ],
+            "absolute": null,
+            "classes": null,
+            "limitations": "Philippine cacao. Uses narrative maximum 32 C. Elevation recommendation conflicts with the same page\u2019s up-to-700m note, so elevation remains unassessed. Shade, drainage and dry-season duration need field assessment."
+          },
+          "score": null,
+          "result": "Measurement unavailable",
+          "weight": null,
+          "contribution": null
+        }
+      ],
+      "assessed_count": 1,
+      "total_factors": 6,
+      "limiting_factors": [],
+      "supporting_factors": [
+        "Slope"
+      ],
+      "not_assessed": [
+        "Climate temperature",
+        "Annual rainfall",
+        "Soil pH in water",
+        "Elevation",
+        "Climate humidity"
+      ],
+      "explanation": "1/6 environmental factors assessed. Supporting conditions: Slope. Not assessed: Climate temperature, Annual rainfall, Soil pH in water, Elevation, Climate humidity. This is preliminary reference-based screening, not a yield forecast or model prediction.",
+      "scoring_version": "panabo-annual-terrain-references-2026-11-06-v4",
+      "method": "Minimum assessed factor score; no additive weights. Published factor classes map to project display indices S1=100, S2=67, S3=33, N=0. For range-only sources: inside preferred=100, inside absolute only=50, outside documented range=0 (a screening mismatch, not a published N class). At least three factors including soil pH and a climate factor are required. Rank by number of assessed factors first, then index; ties share rank. Unmeasured drainage, irrigation, hazards, soil depth and seasonal timing can change the outcome."
+    }
+  ],
+  "top_crop_recommendations": [],
+  "alternative_crops": [],
+  "best_crop": null,
+  "predicted_crop": "Insufficient data",
+  "crop": null,
+  "crop_compatibility_pct": null,
+  "suitability_level": "Insufficient data",
+  "is_crop_recommended": false,
+  "recommendation_scoring": "Minimum assessed factor score; no additive weights. Published factor classes map to project display indices S1=100, S2=67, S3=33, N=0. For range-only sources: inside preferred=100, inside absolute only=50, outside documented range=0 (a screening mismatch, not a published N class). At least three factors including soil pH and a climate factor are required. Rank by number of assessed factors first, then index; ties share rank. Unmeasured drainage, irrigation, hazards, soil depth and seasonal timing can change the outcome.",
+  "analysis_summary": "Insufficient measured evidence to rank crops. All seven crops remain available with their missing factors.",
+  "xai_explanation": {
+    "scope": "suitability_calculation",
+    "method": "Minimum assessed factor score; no additive weights. Published factor classes map to project display indices S1=100, S2=67, S3=33, N=0. For range-only sources: inside preferred=100, inside absolute only=50, outside documented range=0 (a screening mismatch, not a published N class). At least three factors including soil pH and a climate factor are required. Rank by number of assessed factors first, then index; ties share rank. Unmeasured drainage, irrigation, hazards, soil depth and seasonal timing can change the outcome."
+  },
+  "recommendation": "Verify drainage, water supply, soil depth and seasonal conditions before planting.",
+  "fixture_notice": "Software fixture for seven crop slope displays; not field evidence."
+}

@@ -828,9 +828,9 @@ class WebWeatherEnvironmentScreen extends StatelessWidget {
                     child: _MetricTile(
                       compact: true,
                       icon: Icons.water_drop_rounded,
-                      label: 'Rainfall (30d)',
+                      label: 'Annual Rainfall (5-year mean)',
                       value:
-                          '${state.numText(d['rainfall_30d'] ?? d['rainfall_mm'] ?? w['rainfall_mm'])} mm',
+                          '${state.numText(annualRainfallFactorView({}, d).value)} mm/year',
                     ),
                   ),
                   SizedBox(width: 10),
@@ -1230,7 +1230,7 @@ class _WebEnvironmentPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     Theme.of(context);
     final d = state.result ?? {};
-    final rainfall = d['rainfall_30d_mm'] ?? d['rainfall_30d'];
+    final rainfall = annualRainfallFactorView({}, d).value;
     final slope = d['slope_pct'] ?? d['slope'];
     final elevation = d['elevation_m'] ?? d['elevation'];
     final ndviText = _num3(d['ndvi']);
@@ -1258,8 +1258,8 @@ class _WebEnvironmentPanel extends StatelessWidget {
           SizedBox(height: compact ? 6 : 12),
           _InfoLine(
             icon: Icons.water_drop_rounded,
-            title: 'Rainfall (30d)',
-            value: hasData ? '${state.numText(rainfall)} mm' : '--',
+            title: 'Annual Rainfall (5-year mean)',
+            value: hasData ? '${state.numText(rainfall)} mm/year' : '--',
           ),
           _InfoLine(
             icon: Icons.show_chart_rounded,

@@ -43,10 +43,12 @@ def test_no_inference_does_not_create_npk():
 
 @pytest.mark.parametrize('polygon', [False, True])
 @pytest.mark.parametrize('cover_state', ['eligible', 'unknown', 'unavailable'])
-def test_unmatched_panabo_area_runs_real_forest_with_estimated_npk(monkeypatch, polygon, cover_state):
+def test_unmatched_panabo_area_returns_annual_checks_without_unverified_forest(monkeypatch, polygon, cover_state):
     import environmental_pipeline as pipeline
     import fastapi_app as api
     import rainfallDatasets as env
+    from types import SimpleNamespace
+    monkeypatch.setattr(env, 'LOADED_MODEL', SimpleNamespace(metadata={}))
 
     assert env.MODEL is not None
     # All retrieval is explicit local test data; use the actual existing model.
@@ -74,7 +76,9 @@ def test_unmatched_panabo_area_runs_real_forest_with_estimated_npk(monkeypatch, 
         body['polygon'] = [{'lat': 7.29 + dy, 'lng': 125.62 + dx}
                            for dy, dx in [(0, 0), (0, .001), (.001, .001), (.001, 0)]]
     result, _ = api.build_analysis_result(body=body)
-    assert result['analysis_mode'] == 'legacy_model_estimates'
+    assert result['analysis_mode'] == 'preliminary_environmental'
+    assert result['reference_screening_reason'] == 'annual_model_pending'
+    assert result['rainfall_annual_mean_5y_mm'] == 2100
     assert result['analysis_coverage']['can_analyze']
     assert not result['analysis_coverage']['supported']
     assert result['analysis_coverage']['matches'] == []
@@ -82,23 +86,18 @@ def test_unmatched_panabo_area_runs_real_forest_with_estimated_npk(monkeypatch, 
     assert result['cagro_soil']['status'] == 'disabled'
     assert result['cagro_reference_enabled'] is False
     assert result['soil_nutrients_observed']['used_for_prediction'] is False
-    assert result['predicted_crop'] in ('Rice', 'Banana')
-    assert result['recommendation_basis'] == 'model_probability'
+    assert result['predicted_crop'] is None
+    assert result['recommendation_basis'] == 'environmental_reference_screening'
     screening = result['application_screening']
     assert screening['used_for_ranking'] is False
     for crop in screening['crops']:
-        assert crop['factors']['humidity']['status'] == 'suitable'
-        assert crop['factors']['ndvi']['status'] == 'suitable'
+        if crop['crop'] in ('Rice', 'Banana'):
+            assert crop['factors']['humidity']['status'] == 'suitable'
+            assert crop['factors']['ndvi']['status'] == 'suitable'
         assert set(crop['factors']) == {'humidity', 'ndvi'}
-    assert result['model_explanation']['model_version'] == env.MODEL_VERSION
-    p, k = env.estimate_phosphorus_potassium(.65, 6, 100)
-    assert (result['nitrogen'], result['phosphorus'], result['potassium']) == (80, p, k)
-    assert result['data_quality']['nitrogen']['quality'] == 'fallback_default'
-    samples = result['model_explanation']['samples']
-    assert len(samples) > 1 if polygon else len(samples) == 1
-    assert all(s['inputs']['N'] == 80 for s in samples)
-    assert result['model_nutrient_aggregation']['sample_count'] == len(samples)
-    assert result['model_nutrient_inputs']['status'] == 'recorded'
+    assert result['model_explanation'] is None
+    assert not any(result.get(key) is not None for key in ('nitrogen', 'phosphorus', 'potassium'))
+    assert result['model_ranking_status'] == 'unavailable'
     if cover_state != 'eligible':
         assert result['land_cover_notice']
         assert result['land_cover']['verification_status'] == 'unverified'

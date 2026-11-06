@@ -66,7 +66,12 @@ String _withUnit(String number, String unit) {
   return '$number $unit';
 }
 
-String _rangeText(double? low, double? high, String unit) {
+String _rangeText(
+  double? low,
+  double? high,
+  String unit, {
+  bool upperExclusive = false,
+}) {
   if (low == null && high == null) return 'No crop-specific range saved';
   if (low != null && high != null) {
     final suffix = unit.isEmpty
@@ -75,7 +80,7 @@ String _rangeText(double? low, double? high, String unit) {
     return '${_cropNum(low)} – ${_cropNum(high)}$suffix';
   }
   if (low != null) return '≥ ${_withUnit(_cropNum(low), unit)}';
-  return '≤ ${_withUnit(_cropNum(high), unit)}';
+  return '${upperExclusive ? '<' : '≤'} ${_withUnit(_cropNum(high), unit)}';
 }
 
 String ordinalRecommendation(int rank) {
@@ -120,6 +125,9 @@ class CropFactorView {
   final bool referenceBased;
   final bool applicationScreening;
   final String? valueText;
+  final String rangeLabel;
+  final String? statusLabel;
+  final bool upperExclusive;
   const CropFactorView({
     required this.key,
     required this.label,
@@ -133,6 +141,9 @@ class CropFactorView {
     this.referenceBased = false,
     this.applicationScreening = false,
     this.valueText,
+    this.rangeLabel = 'Preferred range comparison',
+    this.statusLabel,
+    this.upperExclusive = false,
   });
 }
 
@@ -146,6 +157,13 @@ List<CropFactorView> cropFactorViews(
   if (record['scoring_version'] != null) {
     for (final raw in analysisListValue(crop['factors']).whereType<Map>()) {
       final factor = Map<String, dynamic>.from(raw);
+      if (factor['factor'] == 'elevation') {
+        final reference = savedEnvironmentalReference('elevation', crop);
+        if (reference != null) {
+          views.add(reference);
+          continue;
+        }
+      }
       final requirement = analysisMapValue(factor['requirement']);
       final optimal = analysisListValue(requirement['optimal']);
       final score = analysisNumber(factor['score']);
@@ -429,6 +447,12 @@ CropFactorView? savedEnvironmentalReference(
         analysisNumber(observation['value']) != value) {
       continue;
     }
+    final altitudeLimit =
+        key == 'elevation' &&
+        [
+          'absolute_limit',
+          'published_altitude_limit',
+        ].contains(requirement['range_basis']);
     return CropFactorView(
       key: key,
       label: key == 'temperature'
@@ -444,8 +468,16 @@ CropFactorView? savedEnvironmentalReference(
           ? CropFactorState.outside
           : CropFactorState.near,
       referenceBased: true,
+      rangeLabel:
+          '${requirement['range_label'] ?? 'Preferred range comparison'}',
+      upperExclusive: requirement['optimal_upper_exclusive'] == true,
+      statusLabel: altitudeLimit
+          ? (score >= 100 ? 'Within limit' : 'Outside limit')
+          : null,
       interpretation: score >= 100
-          ? 'Within the documented preferred range for this factor.'
+          ? (altitudeLimit
+                ? 'Within the published altitude limit; this is not an optimum or a complete land suitability grade.'
+                : 'Within the documented range for this factor.')
           : score <= 0
           ? 'Outside the documented range for this factor.'
           : 'Within the documented accepted range, with limitations.',
@@ -526,122 +558,136 @@ List<CropFactorView> environmentalFactorViews(
 ) {
   final saved = cropFactorViews(crop, record);
   final soilRecords = cagroReferenceRecords(crop, record);
-  return environmentalFactorDefinitions.map((definition) {
-    final key = definition.$1;
-    if (['N', 'P', 'K'].contains(key) &&
-        soilRecords.isNotEmpty &&
-        record['nutrient_display_basis'] != 'legacy_model_estimates') {
-      final nutrient = {
-        'N': 'nitrogen',
-        'P': 'phosphorus',
-        'K': 'potassium',
-      }[key]!;
-      final name = {'N': 'Nitrogen', 'P': 'Phosphorus', 'K': 'Potassium'}[key]!;
-      Map<String, dynamic>? factor;
-      if (soilRecords.length == 1) {
-        for (final raw in analysisListValue(soilRecords.single['factors'])) {
-          final entry = analysisMapValue(raw);
-          if (entry['factor'] == nutrient) factor = entry;
+  return environmentalFactorDefinitions
+      .where(
+        (definition) =>
+            !isNoNpkModelRecord(record) ||
+            !['N', 'P', 'K'].contains(definition.$1),
+      )
+      .map((definition) {
+        final key = definition.$1;
+        if (['N', 'P', 'K'].contains(key) &&
+            soilRecords.isNotEmpty &&
+            record['nutrient_display_basis'] != 'legacy_model_estimates') {
+          final nutrient = {
+            'N': 'nitrogen',
+            'P': 'phosphorus',
+            'K': 'potassium',
+          }[key]!;
+          final name = {
+            'N': 'Nitrogen',
+            'P': 'Phosphorus',
+            'K': 'Potassium',
+          }[key]!;
+          Map<String, dynamic>? factor;
+          if (soilRecords.length == 1) {
+            for (final raw in analysisListValue(
+              soilRecords.single['factors'],
+            )) {
+              final entry = analysisMapValue(raw);
+              if (entry['factor'] == nutrient) factor = entry;
+            }
+          }
+          return cagroNutrientView(
+            key,
+            name,
+            factor,
+            multiple: soilRecords.length > 1,
+          );
         }
-      }
-      return cagroNutrientView(
-        key,
-        name,
-        factor,
-        multiple: soilRecords.length > 1,
-      );
-    }
-    if (key == 'annual_rainfall_mm') {
-      return annualRainfallFactorView(crop, record);
-    }
-    final application = savedApplicationScreening(key, crop, record);
-    if (application != null) return application;
-    final reference = savedEnvironmentalReference(key, crop);
-    if (reference != null) return reference;
-    final modelValue = recordedModelInput(record, key);
-    double? value = modelValue;
-    // A model snapshot with missing inputs must not be silently filled with
-    // readings from another source or date.
-    if (analysisListValue(
-      analysisMapValue(record['model_explanation'])['samples'],
-    ).isEmpty) {
-      for (final alias in definition.$4) {
-        value ??= analysisNumber(record[alias]);
-      }
-      for (final candidate in saved) {
-        if ((candidate.key == key || definition.$4.contains(candidate.key)) &&
-            candidate.unit == definition.$3) {
-          value ??= candidate.value;
+        if (key == 'annual_rainfall_mm') {
+          return annualRainfallFactorView(crop, record);
         }
-      }
-    }
-    CropFactorView? comparison;
-    for (final candidate in saved) {
-      // Current humidity cannot inherit annual reference ranges,
-      // even when the numbers happen to match. Old temperature periods are unknown.
-      if (key == 'humidity') continue;
-      if (key == 'temperature') {
-        final factors = analysisListValue(crop['factors']);
-        final hasClimatePeriod = factors.any((entry) {
-          final factor = analysisMapValue(entry);
-          return factor['factor'] == candidate.key &&
-              factor['period'] == 'annual_mean';
-        });
-        if (record['climate_contract_version'] != 'climate-periods-v1' ||
-            !hasClimatePeriod) {
-          continue;
+        final application = savedApplicationScreening(key, crop, record);
+        if (application != null) return application;
+        final reference = savedEnvironmentalReference(key, crop);
+        if (reference != null) return reference;
+        final modelValue = recordedModelInput(record, key);
+        double? value = modelValue;
+        // A model snapshot with missing inputs must not be silently filled with
+        // readings from another source or date.
+        if (analysisListValue(
+          analysisMapValue(record['model_explanation'])['samples'],
+        ).isEmpty) {
+          for (final alias in definition.$4) {
+            value ??= analysisNumber(record[alias]);
+          }
+          for (final candidate in saved) {
+            if ((candidate.key == key ||
+                    definition.$4.contains(candidate.key)) &&
+                candidate.unit == definition.$3) {
+              value ??= candidate.value;
+            }
+          }
         }
-      }
-      final matches =
-          candidate.key == key || definition.$4.contains(candidate.key);
-      if (matches &&
-          candidate.unit == definition.$3 &&
-          (candidate.value == value ||
-              ['ph', 'elevation', 'slope'].contains(key)) &&
-          value != null &&
-          (candidate.min != null || candidate.max != null)) {
-        comparison = candidate;
-        break;
-      }
-    }
-    final nutrient = ['N', 'P', 'K'].contains(key);
-    return CropFactorView(
-      key: key,
-      label: record['climate_contract_version'] == 'climate-periods-v1'
-          ? (key == 'temperature'
-                ? 'Air temperature (5-year mean)'
-                : key == 'humidity'
-                ? 'Humidity (current)'
-                : definition.$2)
-          : definition.$2,
-      unit: definition.$3,
-      value: value,
-      min: comparison?.min,
-      max: comparison?.max,
-      state: comparison == null
-          ? CropFactorState.unassessed
-          : comparison.value == value
-          ? comparison.state
-          : (comparison.min == null || value! >= comparison.min!) &&
-                (comparison.max == null || value! <= comparison.max!)
-          ? CropFactorState.suitable
-          : CropFactorState.outside,
-      usedByModel: modelValue != null,
-      interpretation: value == null
-          ? 'Not recorded for this analysis.'
-          : nutrient
-          ? 'Existing model estimate; not a soil test.'
-          : comparison != null && comparison.value != value
-          ? ((comparison.min == null || value >= comparison.min!) &&
-                    (comparison.max == null || value <= comparison.max!)
-                ? 'Within the recorded preferred range.'
-                : 'Outside the recorded preferred range.')
-          : comparison?.interpretation ??
-                (modelValue != null
-                    ? 'Used with the other inputs to predict crop rankings.'
-                    : 'Recorded observation; no comparable crop range recorded.'),
-    );
-  }).toList();
+        CropFactorView? comparison;
+        for (final candidate in saved) {
+          // Current humidity cannot inherit annual reference ranges,
+          // even when the numbers happen to match. Old temperature periods are unknown.
+          if (key == 'humidity') continue;
+          if (key == 'temperature') {
+            final factors = analysisListValue(crop['factors']);
+            final hasClimatePeriod = factors.any((entry) {
+              final factor = analysisMapValue(entry);
+              return factor['factor'] == candidate.key &&
+                  factor['period'] == 'annual_mean';
+            });
+            if (record['climate_contract_version'] != 'climate-periods-v1' ||
+                !hasClimatePeriod) {
+              continue;
+            }
+          }
+          final matches =
+              candidate.key == key || definition.$4.contains(candidate.key);
+          if (matches &&
+              candidate.unit == definition.$3 &&
+              (candidate.value == value ||
+                  ['ph', 'elevation', 'slope'].contains(key)) &&
+              value != null &&
+              (candidate.min != null || candidate.max != null)) {
+            comparison = candidate;
+            break;
+          }
+        }
+        final nutrient = ['N', 'P', 'K'].contains(key);
+        return CropFactorView(
+          key: key,
+          label: record['climate_contract_version'] == 'climate-periods-v1'
+              ? (key == 'temperature'
+                    ? 'Air temperature (5-year mean)'
+                    : key == 'humidity'
+                    ? 'Humidity (current)'
+                    : definition.$2)
+              : definition.$2,
+          unit: definition.$3,
+          value: value,
+          min: comparison?.min,
+          max: comparison?.max,
+          state: comparison == null
+              ? CropFactorState.unassessed
+              : comparison.value == value
+              ? comparison.state
+              : (comparison.min == null || value! >= comparison.min!) &&
+                    (comparison.max == null || value! <= comparison.max!)
+              ? CropFactorState.suitable
+              : CropFactorState.outside,
+          usedByModel: modelValue != null,
+          interpretation: value == null
+              ? 'Not recorded for this analysis.'
+              : nutrient
+              ? 'Existing model estimate; not a soil test.'
+              : comparison != null && comparison.value != value
+              ? ((comparison.min == null || value >= comparison.min!) &&
+                        (comparison.max == null || value <= comparison.max!)
+                    ? 'Within the recorded preferred range.'
+                    : 'Outside the recorded preferred range.')
+              : comparison?.interpretation ??
+                    (modelValue != null
+                        ? 'Used with the other inputs to predict crop rankings.'
+                        : 'Recorded observation; no comparable crop range recorded.'),
+        );
+      })
+      .toList();
 }
 
 /// Rank of the tapped crop: explicit argument, stored rank, else list position.
@@ -717,43 +763,56 @@ class CropSheetFrame extends StatelessWidget {
       constraints: BoxConstraints(
         maxHeight: MediaQuery.sizeOf(context).height * .92,
       ),
-      child: Material(
-        color: CropSheetStyle.surface,
-        clipBehavior: Clip.antiAlias,
-        shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(
-            top: Radius.circular(CropSheetStyle.topRadius),
+      child: Theme(
+        data: ThemeData.light(useMaterial3: true).copyWith(
+          colorScheme: ColorScheme.fromSeed(
+            seedColor: green,
+            brightness: Brightness.light,
+          ),
+          textTheme: ThemeData.light().textTheme.apply(
+            fontFamily: 'Roboto',
+            bodyColor: CropSheetStyle.ink,
+            displayColor: CropSheetStyle.ink,
           ),
         ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 10),
-            Container(
-              width: 44,
-              height: 5,
-              decoration: BoxDecoration(
-                color: const Color(0xFFC3CFC7),
-                borderRadius: BorderRadius.circular(3),
+        child: Material(
+          color: CropSheetStyle.surface,
+          clipBehavior: Clip.antiAlias,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(
+              top: Radius.circular(CropSheetStyle.topRadius),
+            ),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const SizedBox(height: 10),
+              Container(
+                width: 44,
+                height: 5,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFC3CFC7),
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(pad, 14, pad, 14),
-              child: header,
-            ),
-            Flexible(
-              child: SingleChildScrollView(
-                padding: EdgeInsets.fromLTRB(pad, 2, pad, 24 + bottomInset),
-                child: DefaultTextStyle.merge(
-                  style: const TextStyle(color: CropSheetStyle.ink),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: children,
+              Padding(
+                padding: const EdgeInsets.fromLTRB(pad, 14, pad, 14),
+                child: header,
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.fromLTRB(pad, 2, pad, 24 + bottomInset),
+                  child: DefaultTextStyle.merge(
+                    style: const TextStyle(color: CropSheetStyle.ink),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: children,
+                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -882,7 +941,8 @@ class RankingBadge extends StatelessWidget {
 /// Icon + status text for one environmental factor.
 class MatchStatusBadge extends StatelessWidget {
   final CropFactorState state;
-  const MatchStatusBadge({super.key, required this.state});
+  final String? labelOverride;
+  const MatchStatusBadge({super.key, required this.state, this.labelOverride});
   static Color colorFor(CropFactorState state) => switch (state) {
     CropFactorState.suitable => const Color(0xFF14833B),
     CropFactorState.near => CropSheetStyle.amber,
@@ -897,7 +957,10 @@ class MatchStatusBadge extends StatelessWidget {
   };
   @override
   Widget build(BuildContext context) {
-    final color = colorFor(state);
+    final baseColor = colorFor(state);
+    final color = Theme.of(context).brightness == Brightness.dark
+        ? Color.lerp(baseColor, Colors.white, .5)!
+        : baseColor;
     final (icon, label) = switch (state) {
       CropFactorState.suitable => (Icons.check_circle, 'Suitable'),
       CropFactorState.near => (Icons.error_outline, 'Limited'),
@@ -911,7 +974,7 @@ class MatchStatusBadge extends StatelessWidget {
         const SizedBox(width: 4),
         Flexible(
           child: Text(
-            label,
+            labelOverride ?? label,
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w700,
@@ -1170,7 +1233,7 @@ class EnvironmentalFactorCard extends StatelessWidget {
             factor.applicationScreening
                 ? 'Application screening'
                 : hasRange
-                ? 'Preferred range comparison'
+                ? factor.rangeLabel
                 : reference
                 ? 'Reference comparison'
                 : 'Assessment',
@@ -1179,7 +1242,12 @@ class EnvironmentalFactorCard extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             hasRange
-                ? _rangeText(factor.min, factor.max, factor.unit)
+                ? _rangeText(
+                    factor.min,
+                    factor.max,
+                    factor.unit,
+                    upperExclusive: factor.upperExclusive,
+                  )
                 : reference
                 ? 'No compatible documented range saved'
                 : factor.value == null
@@ -1194,7 +1262,10 @@ class EnvironmentalFactorCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          MatchStatusBadge(state: factor.state),
+          MatchStatusBadge(
+            state: factor.state,
+            labelOverride: factor.statusLabel,
+          ),
           if (factor.state == CropFactorState.unassessed) ...[
             const SizedBox(height: 4),
             Text(
@@ -1202,7 +1273,7 @@ class EnvironmentalFactorCard extends StatelessWidget {
                   ? 'A compatible annual observation and crop range are needed.'
                   : factor.applicationScreening
                   ? 'A compatible observation and application range are needed.'
-                  : 'A matching observation and documented crop range are needed before grading this factor.',
+                  : 'No compatible crop range is saved.',
               style: const TextStyle(fontSize: 12, color: CropSheetStyle.muted),
             ),
           ],

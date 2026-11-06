@@ -9,7 +9,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart' show SemanticsBinding, SemanticsHandle;
 import 'package:flutter/services.dart'
-    show SystemUiOverlayStyle, FilteringTextInputFormatter, rootBundle;
+    show
+        SystemUiOverlayStyle,
+        FilteringTextInputFormatter,
+        rootBundle,
+        Clipboard,
+        ClipboardData;
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart' hide Path;
 import 'package:geolocator/geolocator.dart';
@@ -1261,7 +1266,8 @@ class AnalysisState extends ChangeNotifier {
     if (id == null) return 'This analysis has no saved record.';
     final epoch = _sessionEpoch, selection = ++_selectionEpoch;
     final owner = currentUser?['id'];
-    result = null;
+    // Keep the currently labelled result visible until the replacement loads.
+    // A failed refresh must not erase an already completed analysis.
     notifyListeners();
     try {
       final selected = await api.getAnalysis(id);
@@ -2390,6 +2396,16 @@ class AnalysisState extends ChangeNotifier {
     return err;
   }
 
+  Future<String?> checkPendingAnalysis() {
+    if (loading) {
+      return Future.value('Analysis is already running. Please wait.');
+    }
+    return run(
+      () => api.recoverPendingAnalysis(farmId: selectedFarmId),
+      locationType: selectedFarmId == null ? 'Point' : 'Saved Farm Boundary',
+    );
+  }
+
   Future<String?> run(
     Future<Map<String, dynamic>> Function() job, {
     double? lat,
@@ -2425,11 +2441,14 @@ class AnalysisState extends ChangeNotifier {
       analysisError = null;
       analysisPending = false;
       _addRecentAnalysis(result!, lat: lat, lon: lon);
+      // Publish the saved result immediately. Optional history/report refreshes
+      // must not leave the analysis screen busy while the service reconnects.
+      _stopLoadingFlow();
       if (analysisKey != null) {
         _lastAnalysisKey = analysisKey;
         _lastAnalysisAt = DateTime.now();
       }
-      await Future.wait([refreshHistoryData(), refreshFarms()]);
+      unawaited(Future.wait([refreshHistoryData(), refreshFarms()]));
       return null;
     } catch (error) {
       if (_active(epoch, owner) && selection == _selectionEpoch) {

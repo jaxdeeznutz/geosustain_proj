@@ -33,7 +33,13 @@ def factor_result(value, rule, factor):
                     if None in interval and value in interval: continue
                     return CLASS_SCORE[label], label
         return None, 'Unassessed: no published class for this value'
-    if within(value, rule['optimal']): return 100.0, 'Within documented range'
+    inside = within(value, rule['optimal'])
+    if rule.get('optimal_upper_exclusive') and rule['optimal'][1] is not None:
+        inside = inside and value < rule['optimal'][1]
+    if inside: return 100.0, 'Within documented range'
+    upper = rule.get('published_upper_extension')
+    if upper is not None and rule['optimal'][1] < value <= upper:
+        return 50.0, 'Above the main published interval; within the published upper maximum'
     if rule.get('absolute') and within(value, rule['absolute']):
         return 50.0, 'Within absolute range only'
     return 0.0, 'Outside documented range'
@@ -103,7 +109,7 @@ def attach_assessment(result, measurements, active_crops=None):
     return result
 
 
-def mark_preliminary(result):
+def mark_preliminary(result, *, reason=None):
     """Keep factor evidence without exporting a complete recommendation/rank."""
     for crop in result.get('crop_assessments', []):
         crop.update(reference_condition_index=crop.get('compatibility_pct'),
@@ -118,4 +124,17 @@ def mark_preliminary(result):
         recommendation_title='Preliminary environmental screening',
         analysis_summary='Preliminary environmental comparisons only. CAGRO NPK is unavailable; inspect individual factors and obtain a reviewed soil assessment before a complete crop recommendation.',
         preliminary_notice='Preliminary environmental comparison. CAGRO NPK unavailable; not a complete soil suitability assessment.')
+    if reason == 'annual_model_pending':
+        result.update(reference_screening_reason=reason,
+            assessment_scope='online_environmental_reference_screening',
+            npk_assessment={'status': 'not_assessed', 'pending_source': 'PAGRO',
+                'note': 'Requested PAGRO NPK data is not yet available in this project.'},
+            model_ranking_status='unavailable',
+            model_ranking_reason='The deployed model is not documented for five-year mean annual rainfall and the seven-crop catalog.',
+            recommendation_title='Annual environmental condition checks',
+            analysis_summary='Available online environmental observations are compared with documented crop references. NPK is not assessed; requested PAGRO data is pending in this project.',
+            preliminary_notice='Environmental checks use online datasets and research references. PAGRO NPK data is pending.',
+            nutrient_basis='No model nutrient inputs used in this environmental comparison.',
+            local_model_explanation={'schema_version': 1, 'status': 'unavailable',
+                'reason': 'Model ranking was not run because its documented climate input periods do not match the annual analysis.'})
     return result

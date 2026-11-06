@@ -9,7 +9,7 @@ from datetime import datetime, timedelta, timezone
 import io
 import json
 
-from spatial_analysis import LAYERS, grid_for_polygon, now
+from spatial_analysis import LAYERS, ACTIVE_LAYERS, grid_for_polygon, now
 
 
 def limited_body(response, limit=2*1024*1024):
@@ -38,17 +38,23 @@ def image_for_layer(ee, layer_id, polygon, today):
         return image.multiply(.1), image.projection(), {'start': '1950-01-01', 'end_exclusive': '2018-01-01',
                                                        'period': 'Static soil model; catalog coverage, not a pixel sampling date', 'method': 'b0 (0 cm) multiplied by catalog scale 0.1'}
     if layer_id == 'ndvi':
-        start, end = (today-timedelta(days=548)).isoformat(), today.isoformat()
+        start, end = (today-timedelta(days=90)).isoformat(), today.isoformat()
         collection = (ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED').filterBounds(geometry).filterDate(start, end)
-                      .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20)).sort('system:time_start', False))
+                      .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 80)).sort('system:time_start', False).limit(12))
         scene = ee.Image(collection.first())
-        scl = scene.select('SCL')
-        mask = scl.neq(0).And(scl.neq(1)).And(scl.neq(3)).And(scl.neq(8)).And(scl.neq(9)).And(scl.neq(10)).And(scl.neq(11))
-        ndvi = scene.normalizedDifference(['B8', 'B4']).updateMask(mask)
+        def usable_ndvi(image):
+            scl = image.select('SCL')
+            mask = scl.neq(0).And(scl.neq(1)).And(scl.neq(2)).And(scl.neq(3)).And(scl.neq(8)).And(scl.neq(9)).And(scl.neq(10)).And(scl.neq(11))
+            return image.normalizedDifference(['B8', 'B4']).updateMask(mask).copyProperties(image, ['system:time_start'])
+        # Ascending order: mosaic gives the newest UNMASKED pixel priority.
+        # A cloudy latest scene must not hide usable observations from the
+        # other bounded recent scenes. Missing pixels remain masked.
+        ndvi = collection.map(usable_ndvi).sort('system:time_start').mosaic()
         return ndvi, scene.select('B8').projection(), {
-            'start': start, 'end_exclusive': end, 'period': 'Latest qualifying scene in completed 548-day search window',
-            'observation_date': scene.date().format('YYYY-MM-dd'), 'scene_id': scene.get('system:index'),
-            'method': '(B8-B4)/(B8+B4); scene clouds <20%; SCL cloud/shadow/snow/nodata mask (20 m mask, nearest resampling)',
+            'start': start, 'end_exclusive': end, 'period': 'Latest usable pixels across at most 12 scenes in completed 90-day window',
+            'newest_scene_date': scene.date().format('YYYY-MM-dd'), 'scene_count': collection.size(),
+            'observation_date': 'Mixed dates within the recorded window; not one acquisition date',
+            'method': '(B8-B4)/(B8+B4); newest-valid-pixel mosaic; scene clouds <80%; per-pixel SCL dark/cloud/shadow/snow/nodata mask (20 m mask, nearest resampling)',
         }
     end = today.isoformat() if layer_id == 'rainfall_30d' else f'{today.year}-01-01'
     start = ((today-timedelta(days=30)).isoformat() if layer_id == 'rainfall_30d' else f'{today.year-5}-01-01')
@@ -129,4 +135,4 @@ def fetch_rasters(polygon):
     # At most two sources in flight, two bounded requests per layer, seven
     # configured layers, and one credential refresh before starting workers.
     with ThreadPoolExecutor(max_workers=2) as executor:
-        return dict(executor.map(retrieve, LAYERS))
+        return dict(executor.map(retrieve, ACTIVE_LAYERS))

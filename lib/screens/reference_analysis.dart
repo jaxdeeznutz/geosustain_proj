@@ -19,7 +19,7 @@ class ReferenceAnalysisContent extends StatefulWidget {
   final AnalysisState state;
   final Map<String, dynamic> record;
   final bool showActions;
-  final bool reviewLayout, lockMap;
+  final bool reviewLayout, lockMap, farmerDetails;
   const ReferenceAnalysisContent({
     super.key,
     required this.state,
@@ -27,6 +27,7 @@ class ReferenceAnalysisContent extends StatefulWidget {
     this.showActions = true,
     this.reviewLayout = false,
     this.lockMap = false,
+    this.farmerDetails = false,
   });
   @override
   State<ReferenceAnalysisContent> createState() =>
@@ -39,6 +40,8 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
   Widget build(BuildContext context) {
     final r = widget.record;
     final preliminary = r['analysis_mode'] == 'preliminary_environmental';
+    final annualCheck =
+        r['reference_screening_reason'] == 'annual_model_pending';
     final crops =
         preliminary && analysisListValue(r['crop_assessments']).isNotEmpty
         ? analysisListValue(r['crop_assessments'])
@@ -156,7 +159,10 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             ),
           ),
           CagroSoilObservationsCard(record: r),
-          SeasonalContextCard(record: r),
+          SeasonalContextCard(
+            record: r,
+            simple: !kIsWeb && widget.state.accountRole == 'farmer',
+          ),
           const GeoResultCard(
             child: Text(
               'This is a partial assessment, not a crop recommendation. You can ask an analyst to review the available evidence or retry online when coverage is available.',
@@ -220,10 +226,16 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!widget.reviewLayout) SeasonalContextCard(record: r),
+        if (!widget.farmerDetails && isAnnualPrototypeRecord(r))
+          AnnualPrototypeNotice(record: r),
+        if (!widget.reviewLayout)
+          SeasonalContextCard(
+            record: r,
+            simple: !kIsWeb && widget.state.accountRole == 'farmer',
+          ),
         if (savedControlledRecords(r).isNotEmpty)
           SavedReferenceVersions(record: r),
-        if (r['analysis_scope_notice'] != null)
+        if (!widget.farmerDetails && r['analysis_scope_notice'] != null)
           Padding(
             padding: const EdgeInsets.only(bottom: 12),
             child: Text('${r['analysis_scope_notice']}'),
@@ -233,7 +245,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             color: const Color(0xFFFFF4D6),
             child: Text('${r['preliminary_notice']}'),
           ),
-        if (!widget.reviewLayout)
+        if (!widget.reviewLayout && !widget.farmerDetails)
           Card(
             child: Padding(
               padding: const EdgeInsets.all(13),
@@ -259,64 +271,69 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             ),
           ),
         const SizedBox(height: 8),
-        Container(
-          decoration: BoxDecoration(
-            color: geoPanelColor(context),
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: const Color(0xFFD7EBDF)),
-          ),
-          child: Row(
-            children: [
-              for (final item in [
-                (Icons.bar_chart, 'Overview'),
-                (
-                  Icons.eco_outlined,
-                  preliminary ? 'Comparisons' : 'Recommended',
-                ),
-                (Icons.list, 'Key Factors'),
-                (Icons.map_outlined, 'Map'),
-              ].indexed)
-                Expanded(
-                  child: InkWell(
-                    onTap: () => setState(() => tab = item.$1),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 12,
-                        horizontal: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: tab == item.$1 ? green : Colors.transparent,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: Column(
-                        children: [
-                          Icon(
-                            item.$2.$1,
-                            color: tab == item.$1 ? Colors.white : darkGreen,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            item.$2.$2,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              fontSize: 10,
+        if (!widget.farmerDetails)
+          Container(
+            decoration: BoxDecoration(
+              color: geoPanelColor(context),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xFFD7EBDF)),
+            ),
+            child: Row(
+              children: [
+                for (final item in [
+                  (Icons.bar_chart, 'Overview'),
+                  (
+                    Icons.eco_outlined,
+                    preliminary ? 'Comparisons' : 'Recommended',
+                  ),
+                  (Icons.list, 'Key Factors'),
+                  (Icons.map_outlined, 'Map'),
+                ].indexed)
+                  Expanded(
+                    child: InkWell(
+                      onTap: () => setState(() => tab = item.$1),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 12,
+                          horizontal: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: tab == item.$1 ? green : Colors.transparent,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Column(
+                          children: [
+                            Icon(
+                              item.$2.$1,
                               color: tab == item.$1 ? Colors.white : darkGreen,
                             ),
-                          ),
-                        ],
+                            const SizedBox(height: 4),
+                            Text(
+                              item.$2.$2,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: tab == item.$1
+                                    ? Colors.white
+                                    : darkGreen,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
-        if (tab == 0)
+        if (tab == 0 && !widget.farmerDetails)
           _AnalysisSection(
             title: modelRanked
                 ? 'Top model recommendation'
                 : preliminary
-                ? 'Preliminary environmental screening'
+                ? annualCheck
+                      ? 'Annual environmental condition checks'
+                      : 'Preliminary environmental screening'
                 : 'Land suitability',
             icon: Icons.spa_outlined,
             children: [
@@ -384,12 +401,14 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                 ),
               if (modelRanked)
                 Text(
-                  'Model class score, not a harvest probability. Nutrient inputs include estimates.',
+                  'Model score, not harvest odds. Soil inputs include estimates.',
                   style: TextStyle(fontSize: 12),
                 )
               else if (preliminary)
-                const Text(
-                  'Compare individual conditions below. Missing CAGRO NPK prevents a complete soil suitability assessment.',
+                Text(
+                  annualCheck
+                      ? 'These comparisons use available environmental evidence. NPK is not assessed.'
+                      : 'Compare individual conditions below. Missing CAGRO NPK prevents a complete soil suitability assessment.',
                   style: TextStyle(fontSize: 12),
                 )
               else if (modern)
@@ -401,7 +420,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
           ),
         if (tab == 0 && modelRanked && !preliminary)
           LocalExplanationCard(record: r),
-        if (tab == 0 || tab == 1)
+        if (!widget.farmerDetails && (tab == 0 || tab == 1))
           _AnalysisSection(
             title: preliminary
                 ? 'Crop condition comparisons'
@@ -423,7 +442,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             ],
           ),
         if (tab == 0 || tab == 2) ...[
-          AnalysisCoverageCard(record: r),
+          if (!widget.farmerDetails) AnalysisCoverageCard(record: r),
           CagroSoilObservationsCard(record: r),
           _AnalysisSection(
             title: modelRanked
@@ -437,7 +456,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF5FAF7),
+                        color: geoPanelColor(context, const Color(0xFFF5FAF7)),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFEDF2EF)),
                       ),
@@ -446,11 +465,17 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                         children: [
                           Icon(
                             _factorIcon(factor.key).$1,
-                            color: green,
+                            color: Theme.of(context).colorScheme.primary,
                             size: 21,
                           ),
                           const SizedBox(height: 5),
-                          Text(factor.label, style: TextStyle(fontSize: 12)),
+                          Text(
+                            factor.label,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
                           Text(
                             factor.value == null
                                 ? 'Unavailable'
@@ -461,18 +486,28 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                             style: TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.w700,
-                              color: green,
+                              color: Theme.of(context).colorScheme.primary,
                             ),
                           ),
                           if (['N', 'P', 'K'].contains(factor.key))
                             Text(
                               'Existing model estimate; not a soil test',
-                              style: TextStyle(fontSize: 10),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           if (factor.applicationScreening) ...[
                             Text(
                               'Application screening',
-                              style: TextStyle(fontSize: 10),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                             ),
                             const SizedBox(height: 4),
                             MatchStatusBadge(state: factor.state),
@@ -481,12 +516,22 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                               !factor.applicationScreening)
                             Text(
                               'Vegetation only; not crop suitability',
-                              style: TextStyle(fontSize: 10),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           if (factor.key == 'humidity')
                             Text(
                               'Not a climate average',
-                              style: TextStyle(fontSize: 10),
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Theme.of(
+                                  context,
+                                ).colorScheme.onSurfaceVariant,
+                              ),
                             ),
                         ],
                       ),
@@ -661,7 +706,12 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                         child: Text(
                           label.$2,
                           textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 10),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ),

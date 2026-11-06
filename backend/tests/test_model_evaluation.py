@@ -205,9 +205,9 @@ def test_scientific_contract_rejects_incompatible_known_units_without_conversion
     contract.update(purpose='scientific_evaluation', data_basis='documented_independent_records',
                     measurement_review={'status': 'documented_compatible', 'reference': 'test-only review',
                                         'reviewer': 'fixture validator', 'date': '2026-10-29'},
-                    climate_sources={'test-source': {'rainfall': 'rolling_30_days', 'temperature': 'annual_mean', 'humidity': 'current'}})
+                    climate_sources={'test-source': {'rainfall': 'annual_mean_total', 'temperature': 'annual_mean', 'humidity': 'current'}})
     units = {'N': 'documented_nutrient_unit', 'P': 'documented_nutrient_unit', 'K': 'documented_nutrient_unit',
-             'rainfall': 'mm', 'temperature': 'C', 'humidity': '%', 'ph': 'pH', 'ndvi': 'index', 'elevation': 'm', 'slope': '%'}
+             'rainfall': 'mm/year', 'temperature': 'C', 'humidity': '%', 'ph': 'pH', 'ndvi': 'index', 'elevation': 'm', 'slope': '%'}
     for name, item in contract['features'].items():
         item.update(unit=units[name], method='Recorded source measurement protocol', period='source_period')
     for name, period in contract['climate_sources']['test-source'].items():

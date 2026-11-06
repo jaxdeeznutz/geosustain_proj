@@ -1,15 +1,16 @@
 """Server-owned city screening and separate CAGRO soil coverage policy."""
 from copy import deepcopy
 import os
+import sys
 
 import cagro_soil as cagro
 from geometry import normalize_polygon, polygon_centroid, polygon_area_m2
 
 VERSION = 'panabo-estimated-npk-v4'
 MESSAGE = 'Select an area inside the supported Panabo City reference boundary.'
-MODEL_NOTE = ('Model analysis is available using estimated NPK inputs. CAGRO historical '
-              'soil observations are optional reference evidence, not model inputs or '
-              'a requirement for crop ranking. Estimates are not a current farm soil test.')
+MODEL_NOTE = ('Environmental model analysis is available. The saved result records '
+              'which inputs the selected model uses. CAGRO historical soil observations '
+              'are optional reference evidence, not a requirement for crop ranking.')
 HISTORICAL_NOTE = ('CAGRO nutrient records provide locally available historical soil information '
                    'for supported Panabo City locations. They may not represent the current exact '
                    'soil condition of every point within the farm and should be supplemented by '
@@ -31,7 +32,7 @@ def soil_reference(polygon):
         return cagro.lookup_soil_observations(polygon)
     return {'version': cagro.VERSION, 'status': 'disabled', 'observations': [],
             'used_for_prediction': False,
-            'message': 'Historical local soil reference is temporarily disabled. Analysis uses estimated model NPK.'}
+            'message': 'Historical local soil reference is temporarily disabled. Environmental model analysis remains available.'}
 
 
 def coverage_from_soil(soil):
@@ -42,7 +43,7 @@ def coverage_from_soil(soil):
         'latitude', 'longitude', 'coordinate_precision', 'confidence',
         'original_cagro_gps', 'coordinate_source', 'source', 'source_file', 'source_row', 'match')}
         for row in rows]
-    return {'schema_version': VERSION, 'supported': bool(rows),
+    result = {'schema_version': VERSION, 'supported': bool(rows),
             'cagro_enabled': soil.get('status') != 'disabled',
             'reason': 'CAGRO soil data available' if rows else 'No CAGRO soil data available for this farm location',
             'message': HISTORICAL_NOTE if rows else MESSAGE,
@@ -50,6 +51,14 @@ def coverage_from_soil(soil):
             'locality_ids': sorted({r['locality_id'] for r in rows}),
             'nutrient_source': 'Panabo City CAGRO historical soil record' if rows else None,
             'used_for_model_prediction': False}
+    # Read an already loaded contract only; preflight never runs inference or
+    # initializes external providers. Historical snapshots are not rewritten.
+    engine = sys.modules.get('rainfallDatasets')
+    model = getattr(engine, 'MODEL', None)
+    names = vars(model).get('feature_names_in_') if model is not None else None
+    if names is not None:
+        result['npk_used'] = any(name in names for name in ('N', 'P', 'K'))
+    return result
 
 
 def check_coverage(polygon):
@@ -121,7 +130,7 @@ def coverage_catalog():
               'city_boundary': __import__('city_boundary').reference(),
               'note': 'Reference markers are reconstructed locality anchors, not barangay boundaries or original sample GPS. Full farm geometry is checked by the server.'}
     if not result['cagro_enabled']:
-        result['note'] = 'Panabo City analysis boundary. Soil nutrients use model estimates; historical local soil reference is temporarily disabled.'
+        result['note'] = 'Panabo City analysis boundary. Historical local soil reference is temporarily disabled; nutrient use is recorded in each model result.'
         return result
     try:
         rows = cagro._read(cagro.DATA / 'cagro_observations.json')

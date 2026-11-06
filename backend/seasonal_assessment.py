@@ -146,7 +146,7 @@ def attach_seasonal_assessment(result, baseline, month):
                   'unavailable': 'unavailable; no seasonal suitability conclusion is made.'}[status])
     summary += ' This is retrospective context, not a forecast. Model scores and crop order are unchanged.'
     separate = []
-    for field in ('rainfall_annual_mean_5y_mm', 'temperature_mean_5y_c', 'rainfall_30d_mm', 'humidity_current_pct'):
+    for field in ('rainfall_annual_mean_5y_mm', 'temperature_mean_5y_c', 'humidity_current_pct'):
         metadata = deepcopy((result.get('climate_field_metadata') or {}).get(field) or {})
         separate.append({'field': field, 'value': result.get(field), **metadata})
     result['intended_planting_month'] = month
@@ -159,7 +159,7 @@ def attach_seasonal_assessment(result, baseline, month):
                      'reason': 'No reviewed local crop planting calendar with traceable source and validity scope is configured; no In season label is assigned.'},
         'summary': summary,
         'limitations': [*monthly.get('limitations', []),
-                        'Annual climate references, selected-month climate, completed 30-day rainfall and current humidity describe different periods; they are not blended or compared as equivalent totals.',
+                        'Five-year annual climate references, selected-month climate and current humidity describe different periods; they are not blended or compared as equivalent totals.',
                         'Historical grid conditions do not establish irrigation, soil moisture, planting safety or future weather. Verify local conditions before planting.'],
         'ranking_effect': 'none',
     }

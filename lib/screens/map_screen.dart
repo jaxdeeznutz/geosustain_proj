@@ -39,10 +39,10 @@ class _LiveFieldMapState extends State<LiveFieldMap> {
         jsonEncode(FarmGeometry.payload(boundary))) {
       return [];
     }
-    final layer = const {
+    final layer = {
       'NDVI': 'ndvi',
       'Soil pH': 'soil_ph',
-      'Rainfall': 'rainfall_30d',
+      'Rainfall': rainfallLayerForRecord(result),
       'Elevation': 'elevation',
       'Slope': 'slope',
     }[state.heatmapLayer];
@@ -92,7 +92,7 @@ class _LiveFieldMapState extends State<LiveFieldMap> {
             polygons: [
               Polygon(
                 points: points,
-                color: heatCells.isNotEmpty
+                color: heatCells.isNotEmpty || s.heatmapLayer == 'Boundary only'
                     ? Colors.transparent
                     : Colors.blueGrey.withValues(alpha: .18),
                 borderColor: Colors.white,
@@ -217,14 +217,17 @@ class HeroMapCard extends StatelessWidget {
                       (state.result?['heatmap_grid'] as List).isNotEmpty)
                     ...[
                       'NDVI',
-                      'Suitability',
+                      'Boundary only',
                       'Soil pH',
-                      'Rainfall',
+                      if (spatialLayers(
+                        state.result ?? {},
+                      ).any((layer) => layer['id'] == 'rainfall_annual'))
+                        'Rainfall',
                       'Elevation',
                       'Slope',
                     ].map(
                       (layer) => MiniPill(
-                        text: layer,
+                        text: layer == 'Rainfall' ? 'Annual rainfall' : layer,
                         icon: state.heatmapLayer == layer
                             ? Icons.check_circle
                             : Icons.circle_outlined,
@@ -430,7 +433,9 @@ class _MapAnalyzePageState extends State<MapAnalyzePage> {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      '${state.heatmapLayer} heatmap is active. Use the layer chips above the map to switch data.',
+                      state.heatmapLayer == 'Boundary only'
+                          ? 'Boundary only. No heatmap is shown.'
+                          : '${state.heatmapLayer} layer selected. Colors require saved raster readings.',
                       style: const TextStyle(
                         fontSize: 12,
                         color: green,

@@ -18,11 +18,11 @@ def observations():
 
 
 @pytest.mark.parametrize('key,field,value', [
-    ('rainfall_recent', 'period', 'annual_mean_total'),
-    ('rainfall_recent', 'unit', 'mm/year'),
+    ('rainfall', 'period', 'rolling_30_days'),
+    ('rainfall', 'unit', 'mm'),
     ('temperature', 'period', 'current'),
     ('humidity_current', 'period', 'annual_mean'),
-    ('rainfall_recent', 'value', None),
+    ('rainfall', 'value', None),
     ('temperature', 'quality', 'fallback_default'),
 ])
 def test_inference_rejects_wrong_period_unit_or_missing_data(key, field, value):
@@ -32,13 +32,14 @@ def test_inference_rejects_wrong_period_unit_or_missing_data(key, field, value):
         model_climate_inputs(data)
 
 
-def test_inference_and_api_keep_recent_and_annual_separate():
+def test_inference_uses_annual_and_does_not_relabel_recent_aliases():
     data = observations()
     values, records = model_climate_inputs(data)
-    assert values == {'rainfall': 100, 'temperature': 27, 'humidity': 80}
+    assert values == {'rainfall': 2100, 'temperature': 27, 'humidity': 80}
+    assert records['rainfall']['api_field'] == 'rainfall_annual_mean_5y_mm'
     assert records['humidity']['period'] == 'current'
     result = attach_climate_fields({}, data)
-    assert result['rainfall_30d_mm'] == result['rainfall_mm'] == 100
+    assert 'rainfall_30d_mm' not in result and result['rainfall_mm'] is None
     assert result['rainfall_annual_mean_5y_mm'] == result['annual_rainfall_mm'] == 2100
     assert result['temperature_mean_5y_c'] == result['temperature_c'] == 27
     assert result['climate_training_compatibility'] == 'unverified'
@@ -65,8 +66,9 @@ def test_polygon_does_not_average_mismatched_periods_or_windows(field, value):
 def test_current_training_cannot_overwrite_model_with_unverified_periods():
     with pytest.raises(ValueError, match='unresolved'):
         validate_training_periods()
+    validate_training_periods({'test-only': {'rainfall': 'annual_mean_total', 'temperature': 'annual_mean', 'humidity': 'current'}})
     with pytest.raises(ValueError, match='unresolved'):
-        validate_training_periods({'test-only': {'rainfall': 'annual_mean_total', 'temperature': 'annual_mean', 'humidity': 'current'}})
+        validate_training_periods({'old-source': {'rainfall': 'rolling_30_days', 'temperature': 'annual_mean', 'humidity': 'current'}})
 
 
 def test_polygon_humidity_alias_is_mean_not_first_sample(monkeypatch):

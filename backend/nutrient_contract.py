@@ -66,6 +66,11 @@ def model_values(nutrients):
 
 def recorded_inputs(samples, model_version=None):
     """Expose only contracts actually recorded at inference; never backfill history."""
+    if samples and all(s.get('npk_used') is False for s in samples):
+        return {'schema_version': 1, 'model_version': model_version, 'status': 'not_used',
+                'samples': [], 'used_for_prediction': False, 'pending_source': 'PAGRO',
+                'scientific_compatibility': 'not_applicable',
+                'note': 'The seven-input model excludes NPK.'}
     return {
         'schema_version': 1, 'contract_version': VERSION, 'model_version': model_version,
         'compatibility_scope': 'legacy_adapter_representation_only',
@@ -81,6 +86,13 @@ def attach_display_estimates(result):
     """Expose actual inference inputs; parcel means never become soil measurements."""
     samples = (result.get('model_explanation') or {}).get('samples', [])
     if not samples:
+        return result
+    if samples and all(s.get('npk_used') is False for s in samples):
+        for alias in ('nitrogen', 'phosphorus', 'potassium'):
+            result[alias] = None
+        result['nutrient_display_basis'] = 'not_used_by_model'
+        result['model_nutrient_aggregation'] = {'sample_count': 0, 'status': 'not_used',
+            'method': 'NPK excluded from model inputs', 'pending_source': 'PAGRO'}
         return result
     quality = result.setdefault('data_quality', {})
     for key, alias in [('N', 'nitrogen'), ('P', 'phosphorus'), ('K', 'potassium')]:

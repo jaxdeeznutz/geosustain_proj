@@ -118,7 +118,7 @@ def validate_contract(contract, data_hash):
         for name in ('rainfall', 'temperature', 'humidity'):
             if any(periods[name] != metadata[name]['period'] for periods in sources.values()):
                 raise EvaluationError(f'{name} feature period disagrees with its source periods.')
-        known_units = {'rainfall': 'mm', 'temperature': 'C', 'humidity': '%',
+        known_units = {'rainfall': 'mm/year', 'temperature': 'C', 'humidity': '%',
                        'ph': 'pH', 'ndvi': 'index', 'elevation': 'm', 'slope': '%'}
         for name, expected in known_units.items():
             if metadata[name]['unit'] != expected:

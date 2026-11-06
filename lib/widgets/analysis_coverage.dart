@@ -10,25 +10,58 @@ bool farmCanAnalyze(Map<String, dynamic> farm) {
 const cagroHistoricalNotice =
     'CAGRO nutrient records provide locally available historical soil information for supported Panabo City locations. They may not represent the current exact soil condition of every point within the farm and should be supplemented by field or laboratory assessment when necessary.';
 const cagroCoverageNotice =
-    'Land analysis is available within the Panabo City reference boundary using estimated nitrogen, phosphorus and potassium. These are model inputs, not a current farm soil test.';
+    'Land analysis is available within the Panabo City reference boundary. Nutrient availability and model inputs are recorded separately for each analysis.';
+
+class AnnualPrototypeNotice extends StatelessWidget {
+  final Map<String, dynamic> record;
+  const AnnualPrototypeNotice({super.key, required this.record});
+
+  @override
+  Widget build(BuildContext context) {
+    if (!isAnnualPrototypeRecord(record)) return const SizedBox.shrink();
+    return GeoResultCard(
+      key: const ValueKey('annual-prototype-notice'),
+      color: const Color(0xFFFFF4D6),
+      child: const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Experimental model',
+            style: TextStyle(fontWeight: FontWeight.w800),
+          ),
+          SizedBox(height: 6),
+          Text(annualPrototypeShortNotice),
+        ],
+      ),
+    );
+  }
+}
 
 /// Shared Farmer, Analyst and report provenance; never reconstruct an old match.
 List<String> analysisCoverageLines(Map<String, dynamic> record) {
   final coverage = analysisMapValue(record['analysis_coverage']);
+  final noNpk = isNoNpkModelRecord(record) || coverage['npk_used'] == false;
   final cagroDisabled =
       coverage['cagro_enabled'] == false ||
       record['cagro_reference_enabled'] == false ||
       analysisMapValue(record['cagro_soil'])['status'] == 'disabled';
   final estimated =
-      record['nutrient_display_basis'] == 'legacy_model_estimates' ||
-      coverage['analysis_mode'] == 'legacy_model_estimates';
+      record['reference_screening_reason'] != 'annual_model_pending' &&
+      (record['nutrient_display_basis'] == 'legacy_model_estimates' ||
+          coverage['analysis_mode'] == 'legacy_model_estimates');
   final lines = <String>[
     'Analyzed Farm Location',
+    if (isAnnualPrototypeRecord(record))
+      'Experimental seven-crop model. $annualPrototypeShortNotice',
     'Farm center latitude: ${record['center_lat'] ?? record['lat'] ?? 'Not recorded'}',
     'Farm center longitude: ${record['center_lon'] ?? record['lon'] ?? 'Not recorded'}',
     'Approximate area: ${analysisAreaText(record)}',
     'Farm center is not a soil sample coordinate.',
-    if (cagroDisabled)
+    if (noNpk)
+      'Analysis coverage: Seven environmental model inputs; NPK excluded. PAGRO data pending.'
+    else if (record['reference_screening_reason'] == 'annual_model_pending')
+      'Analysis coverage: Annual environmental condition checks; crop model pending compatible training data'
+    else if (cagroDisabled)
       'Analysis coverage: ${coverage['can_analyze'] == false ? 'Outside supported Panabo City boundary' : 'Estimated NPK analysis within Panabo City'}'
     else
       'CAGRO coverage: ${coverage.isEmpty
@@ -43,6 +76,12 @@ List<String> analysisCoverageLines(Map<String, dynamic> record) {
           ? 'Outside supported Panabo City boundary'
           : 'Location not supported for formal analysis'}',
   ];
+  if (noNpk) {
+    if (record['land_cover_notice'] != null) {
+      lines.add('Land-cover note: ${record['land_cover_notice']}');
+    }
+    return lines;
+  }
   if (estimated) {
     lines.add(
       cagroDisabled

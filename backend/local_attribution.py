@@ -280,7 +280,9 @@ def bind_local_explanation(result, snapshot, feature_labels):
                 'units': 'Probability in stored arrays; display signed contributions as percentage points (x100), not percent change.',
                 'aggregation': f'Arithmetic mean of the same {len(samples)} recorded sample class decompositions used for crop ranking. No centroid/mean-input model prediction.',
                 'baseline_definition': cores[0]['baseline_definition'], 'tolerance_probability': TOLERANCE,
-                'limitations': LIMITATIONS}
+                'limitations': ([item for item in LIMITATIONS if not item.startswith('N/P/K')]
+                    + ['NPK is excluded from this model; there are no nutrient contributions.']
+                    if not any(name in order for name in ('N', 'P', 'K')) else LIMITATIONS)}
         body['snapshot_hash'] = aggregate_hash(body)
         result['local_model_explanation'] = body
     except Exception:

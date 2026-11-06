@@ -21,42 +21,63 @@ class GeoBottomNav extends StatelessWidget {
         ],
       ),
       clipBehavior: Clip.antiAlias,
-      child: NavigationBar(
-        backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        selectedIndex: index,
-        height: 76,
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        indicatorColor: softGreen,
-        onDestinationSelected: onTap,
-        destinations: const [
-          NavigationDestination(
-            icon: Icon(Icons.home_outlined),
-            selectedIcon: Icon(Icons.home, color: green),
-            label: 'Home',
+      child: NavigationBarTheme(
+        data: NavigationBarThemeData(
+          labelTextStyle: WidgetStateProperty.resolveWith(
+            (states) => TextStyle(
+              fontFamily: 'Roboto',
+              fontSize: 11,
+              fontWeight: states.contains(WidgetState.selected)
+                  ? FontWeight.w700
+                  : FontWeight.w500,
+              color: states.contains(WidgetState.selected)
+                  ? Theme.of(context).colorScheme.onSurface
+                  : Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.map_outlined),
-            selectedIcon: Icon(Icons.map, color: green),
-            label: 'My Farms',
+          iconTheme: WidgetStatePropertyAll(
+            IconThemeData(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
-          NavigationDestination(
-            icon: Icon(Icons.center_focus_strong_outlined),
-            selectedIcon: Icon(Icons.center_focus_strong, color: green),
-            label: 'Analysis',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.history_outlined),
-            selectedIcon: Icon(Icons.history, color: green),
-            label: 'History',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: green),
-            label: 'Profile',
-          ),
-        ],
+        ),
+        child: NavigationBar(
+          backgroundColor: Theme.of(context).colorScheme.surfaceContainer,
+          surfaceTintColor: Colors.transparent,
+          elevation: 0,
+          selectedIndex: index,
+          height: 76,
+          labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+          indicatorColor: softGreen,
+          onDestinationSelected: onTap,
+          destinations: const [
+            NavigationDestination(
+              icon: Icon(Icons.home_outlined),
+              selectedIcon: Icon(Icons.home, color: green),
+              label: 'Home',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.map_outlined),
+              selectedIcon: Icon(Icons.map, color: green),
+              label: 'My Farms',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.center_focus_strong_outlined),
+              selectedIcon: Icon(Icons.center_focus_strong, color: green),
+              label: 'Analysis',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.history_outlined),
+              selectedIcon: Icon(Icons.history, color: green),
+              label: 'History',
+            ),
+            NavigationDestination(
+              icon: Icon(Icons.person_outline),
+              selectedIcon: Icon(Icons.person, color: green),
+              label: 'Profile',
+            ),
+          ],
+        ),
       ),
     ),
   );

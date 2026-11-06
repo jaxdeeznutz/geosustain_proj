@@ -105,7 +105,7 @@ def test_rate_limit_never_fills_missing_humidity_or_bypasses_model_gate(monkeypa
     assert get.call_count == 1
     measurements = {
         'temperature': {'value': 27, 'unit': 'C', 'period': 'annual_mean', 'quality': 'modelled'},
-        'rainfall_recent': {'value': 110, 'unit': 'mm', 'period': 'rolling_30_days', 'quality': 'modelled'},
+        'rainfall': {'value': 2100, 'unit': 'mm/year', 'period': 'annual_mean_total', 'quality': 'modelled'},
         'humidity_current': missing,
     }
     with pytest.raises(ModelRankingUnavailable, match='humidity'):

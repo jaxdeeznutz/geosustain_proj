@@ -43,22 +43,25 @@ def test_weather_uses_upcoming_hours_and_correct_days(monkeypatch, weather_paylo
     assert data['rain_next_3h_mm'] == 3
     assert data['rain_probability_next_6h'] == 55
     assert data['rainfall_today_mm'] == 7
-    assert data['rainfall_30d_mm'] == 30
+    assert 'rainfall_30d_mm' not in data
     assert data['temperature_current_c'] == data['temperature_c'] == 28
     assert data['humidity_current_pct'] == data['live_humidity'] == 80
     assert data['climate_field_metadata']['temperature_current_c']['period'] == 'current'
-    assert data['climate_field_metadata']['rainfall_30d_mm']['period'] == 'rolling_30_days'
+    assert 'rainfall_30d_mm' not in data['climate_field_metadata']
     assert data['wind_speed_ms'] == 10
     assert data['wind_speed_kmh'] == 36
     assert data['weather_codes_next_6h'] == [61] * 6
     assert get.call_args.kwargs['params']['forecast_days'] == 2
+    assert get.call_args.kwargs['params']['past_days'] == 0
     response.raise_for_status.assert_called_once()
 
 
 def test_missing_rainfall_is_not_reported_as_dry_weather(monkeypatch, weather_payload):
-    weather_payload['daily']['precipitation_sum'][0] = None
+    weather_payload['daily']['precipitation_sum'][30] = None
     monkeypatch.setattr(api.requests, 'get', lambda *a, **k: Mock(json=lambda: weather_payload))
-    assert api.fetch_open_meteo_weather(7.3, 125.6)['rainfall_30d_mm'] is None
+    data = api.fetch_open_meteo_weather(7.3, 125.6)
+    assert data['rainfall_today_mm'] is None
+    assert 'rainfall_30d_mm' not in data
 
 
 def test_empty_provider_payload_is_not_a_success(monkeypatch):

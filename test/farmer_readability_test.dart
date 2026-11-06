@@ -165,7 +165,10 @@ void main() {
       expect(find.text('Explainable AI'), findsNothing);
       await _show(tester, 'Full analysis details');
       expect(find.text('Explainable AI'), findsOneWidget);
-      expect(find.text('Key Factors'), findsOneWidget);
+      expect(find.text('Key Factors'), findsNothing);
+      expect(find.text('Recommended crops'), findsNothing);
+      expect(find.text('Analyzed Farm Location'), findsNothing);
+      expect(find.text('Top model recommendation'), findsNothing);
       expect(find.byType(AnalysisReviewCard), findsOneWidget);
       expect(find.text('Export analysis report'), findsNothing);
       expect(find.text('Save report (PDF)'), findsOneWidget);

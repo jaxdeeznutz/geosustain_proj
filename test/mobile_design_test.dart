@@ -162,51 +162,27 @@ void main() {
         target,
         list: find.byKey(const PageStorageKey('mobile-analysis-scroll')),
       );
-      // Farmer overview stays short; the existing detailed journey is opt-in.
+      // The farmer sees one ranking; details contain evidence, not another ranking.
       await revealAnalysis(find.text('Full analysis details'));
       await tester.tap(find.text('Full analysis details'));
       await tester.pumpAndSettle();
-      await revealAnalysis(find.text('See more'));
-      await tester.tap(find.text('See more').first);
-      await tester.pumpAndSettle();
+      expect(find.text('Top model recommendation'), findsNothing);
+      expect(find.text('Analyzed Farm Location'), findsNothing);
       await capture('analysis-expanded');
-      await revealAnalysis(find.text('See less'));
-      await tester.tap(find.text('See less').first);
-      await tester.pumpAndSettle();
       await revealAnalysis(find.textContaining('1. Rice'));
       await tester.tap(find.textContaining('1. Rice').first);
       await tester.pumpAndSettle();
       await capture('crop-details');
       await tester.tap(find.byTooltip('Close'));
       await tester.pumpAndSettle();
-      await revealAnalysis(find.text('Key Factors'));
-      await tester.tap(find.text('Key Factors'));
+      await revealAnalysis(find.text('See all details'));
+      await capture('land-conditions');
+      await tester.tap(find.text('See all details'));
       await tester.pumpAndSettle();
-      await revealAnalysis(find.text('View detailed explanation'));
-      await capture('analysis-chart');
-      await tester.tap(find.text('View detailed explanation'));
-      await tester.pumpAndSettle();
-      expect(
-        find.textContaining('normalized decreases in Gini impurity'),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
+      expect(find.text('Data sources and limitations'), findsOneWidget);
       await capture('analysis-details');
       await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();
-      await revealAnalysis(find.text('Recommended'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Recommended'));
-      await tester.pumpAndSettle();
-      await tester.pumpAndSettle();
-      await capture('other-crops');
-      await revealAnalysis(find.text('Key Factors'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Key Factors'));
-      await tester.pumpAndSettle();
-      await tester.pumpAndSettle();
-      await capture('land-conditions');
-      expect(state.result?['session_id'], record['session_id']);
       await tab('History');
       await tester.scrollUntilVisible(
         find.text('Unnamed area'),

@@ -1119,6 +1119,9 @@ class _OperatorEvidenceMapState extends State<OperatorEvidenceMap> {
     }
     final labels = <String, String>{
       ..._OperatorEvidenceMapState.labels,
+      if (widget.record['climate_contract_version'] ==
+          'climate-annual-five-year-v2')
+        'rainfall': 'Annual rainfall (5-year mean, mm/year)',
       'slope': analysisNumber(widget.record['slope_pct']) != null
           ? 'Slope (%)'
           : 'Slope (unit not recorded)',

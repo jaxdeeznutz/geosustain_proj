@@ -965,7 +965,17 @@ def enrich_history_rows(rows):
         restored['analysis_status'] = 'completed'
         restored['lat'] = restored.get('center_lat')
         restored['lon'] = restored.get('center_lon')
-        restored['crop_compatibility_pct'] = restored.get('compatibility_pct', snapshot.get('crop_compatibility_pct'))
+        # The SQL projection rounds compatibility_pct to NUMERIC precision.
+        # Keep the exact inference output that its saved attribution is bound to.
+        # Never replace prediction provenance with today's model or rounded joins.
+        if 'crop_compatibility_pct' in snapshot:
+            restored['crop_compatibility_pct'] = snapshot['crop_compatibility_pct']
+            restored['compatibility_pct'] = snapshot['crop_compatibility_pct']
+        else:
+            restored['crop_compatibility_pct'] = item.get('compatibility_pct', item.get('crop_compatibility_pct'))
+        for key in ('predicted_crop', 'model_version', 'prediction_context_id'):
+            if key in snapshot:
+                restored[key] = snapshot[key]
         enriched.append(restored)
     return enriched
 

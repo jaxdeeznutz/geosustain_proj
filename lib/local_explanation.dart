@@ -6,6 +6,17 @@ import 'package:crypto/crypto.dart' as crypto;
 const localAttributionMethod = 'random_forest_tree_path_probability';
 const localAttributionVersion = 'rf-path-probability-v1';
 const localAttributionTolerance = 1e-9;
+const annualPrototypeMode = 'seven_crop_raw_annual_prototype_v1';
+const noNpkPrototypeMode = 'seven_crop_no_npk_raw_annual_prototype_v1';
+const annualPrototypeShortNotice =
+    'Annual inputs are not validated for this model. Ask an analyst before planting.';
+
+bool isAnnualPrototypeRecord(Map<String, dynamic> record) =>
+    [annualPrototypeMode, noNpkPrototypeMode].contains(record['model_usage']);
+
+bool isNoNpkModelRecord(Map<String, dynamic> record) =>
+    record['model_usage'] == noNpkPrototypeMode &&
+    record['model_npk_status'] == 'excluded';
 
 Map<String, dynamic> localObject(dynamic raw) {
   if (raw is String) {
@@ -145,10 +156,21 @@ Map<String, dynamic> _aggregateMetadata(Map<String, dynamic> body) => {
 };
 
 /// Validate saved data only. Never retrieve the current model or fill old results.
-Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
+Map<String, dynamic> verifiedLocalExplanation(
+  Map<String, dynamic> record, {
+  void Function(String code)? onRejected,
+}) {
+  Map<String, dynamic> reject(String code) {
+    onRejected?.call(code);
+    return {};
+  }
+
   try {
     final body = localObject(record['local_model_explanation']);
     final snapshot = localObject(record['model_explanation']);
+    if (body.isEmpty) return reject('not_saved');
+    if (body['status'] == 'unavailable') return reject('server_unavailable');
+    if (snapshot.isEmpty) return reject('sample_context_missing');
     final version = body['model_version'];
     if (body['schema_version'] != 1 ||
         body['status'] != 'available' ||
@@ -166,7 +188,7 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
         body['input_snapshot_hash'] != snapshot['input_snapshot_hash'] ||
         body['selected_output'] != record['predicted_crop'] ||
         body['selected_score'] != record['crop_compatibility_pct']) {
-      return {};
+      return reject('context_mismatch');
     }
     final features = _localStrings(body['feature_order'], 32);
     final classes = _localStrings(body['class_order'], 64);
@@ -179,7 +201,7 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
         samples.length > 64 ||
         samples.length != body['sample_count'] ||
         samples.length != (snapshot['samples'] as List).length) {
-      return {};
+      return reject('sample_count_mismatch');
     }
     final inputHashes = <String>[], attributionHashes = <String>[];
     final means = List.generate(c, (_) => List.filled(f, 0.0));
@@ -196,7 +218,7 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
           !_localSame(core['class_order'], classes) ||
           localInputHash(version, features, localObject(sample['inputs'])) !=
               core['input_hash']) {
-        return {};
+        return reject('sample_input_mismatch');
       }
       final values = _coreValues(core, c, f);
       final hash = localNumericHash(
@@ -205,7 +227,7 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
         values,
       );
       if (hash != core['attribution_hash']) {
-        return {};
+        return reject('sample_checksum_mismatch');
       }
       inputHashes.add(core['input_hash'] as String);
       attributionHashes.add(hash);
@@ -222,7 +244,7 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
             ]),
             1,
           )) {
-        return {};
+        return reject('sample_probabilities_invalid');
       }
       for (var k = 0; k < c; k++) {
         final probability = (probabilities[classes[k]] as num).toDouble();
@@ -234,7 +256,7 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
               sampleBase[k] + _localSum(sampleMatrix[k]),
               sampleScores[k],
             )) {
-          return {};
+          return reject('sample_output_mismatch');
         }
         baseMeans[k] += sampleBase[k] / samples.length;
         scoreMeans[k] += sampleScores[k] / samples.length;
@@ -245,31 +267,31 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
     }
     if (!_localSame(inputHashes, body['sample_input_hashes']) ||
         !_localSame(attributionHashes, body['sample_attribution_hashes'])) {
-      return {};
+      return reject('sample_binding_mismatch');
     }
     for (var k = 0; k < c; k++) {
       if (!_localClose(baseMeans[k], base[k]) ||
           !_localClose(scoreMeans[k], scores[k]) ||
           !_localClose(base[k] + _localSum(matrix[k]), scores[k])) {
-        return {};
+        return reject('aggregate_output_mismatch');
       }
       for (var j = 0; j < f; j++) {
         if (!_localClose(means[k][j], matrix[k][j])) {
-          return {};
+          return reject('aggregate_contribution_mismatch');
         }
       }
     }
     final inputs = localRows(body['feature_inputs']);
     final definitions = localRows(body['feature_definitions']);
     if (inputs.length != f || definitions.length != f) {
-      return {};
+      return reject('feature_count_mismatch');
     }
     for (var j = 0; j < f; j++) {
       if (inputs[j]['feature'] != features[j] ||
           definitions[j]['feature'] != features[j] ||
           definitions[j]['label'] is! String ||
           definitions[j]['unit'] is! String) {
-        return {};
+        return reject('feature_metadata_mismatch');
       }
       final values = [
         for (final sample in samples)
@@ -283,7 +305,7 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
       for (final key in expected.keys) {
         if (inputs[j][key] is! num ||
             !_localClose(inputs[j][key] as num, expected[key]!)) {
-          return {};
+          return reject('feature_summary_mismatch');
         }
       }
     }
@@ -293,7 +315,7 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
         bindings.length != crops.length ||
         bindings.length > c ||
         bindings.map((v) => v['crop']).toSet().length != bindings.length) {
-      return {};
+      return reject('crop_count_mismatch');
     }
     for (final binding in bindings) {
       final index = binding['class_index'];
@@ -309,7 +331,7 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
             (crop['compatibility_pct'] as num) / 100,
             scores[index],
           )) {
-        return {};
+        return reject('crop_score_mismatch');
       }
     }
     final selected = bindings
@@ -321,7 +343,7 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
           (record['crop_compatibility_pct'] as num) / 100,
           scores[selected['class_index'] as int],
         )) {
-      return {};
+      return reject('selected_score_mismatch');
     }
     final signedValues = [
       ...base,
@@ -337,12 +359,49 @@ Map<String, dynamic> verifiedLocalExplanation(Map<String, dynamic> record) {
           signedValues,
         ) !=
         body['snapshot_hash']) {
-      return {};
+      return reject('aggregate_checksum_mismatch');
     }
     return body;
   } catch (_) {
-    return {};
+    return reject('invalid_snapshot');
   }
+}
+
+/// Small support receipt; excludes locations, identities and model input values.
+Map<String, dynamic> localExplanationDiagnostics(Map<String, dynamic> record) {
+  String? issue;
+  final verified = verifiedLocalExplanation(
+    record,
+    onRejected: (code) => issue = code,
+  );
+  final body = localObject(record['local_model_explanation']);
+  final snapshot = localObject(record['model_explanation']);
+  final samples = localRows(snapshot['samples']);
+  return {
+    'check': verified.isNotEmpty ? 'verified' : issue ?? 'invalid_snapshot',
+    'saved_explanation_status': body['status'] ?? 'missing',
+    'saved_sample_count': localRows(snapshot['samples']).length,
+    'trained_class_count': samples.isEmpty
+        ? null
+        : localObject(samples.first['class_probabilities']).length,
+    'declared_sample_count': body['sample_count'],
+    'saved_crop_count': localRows(record['crop_assessments']).length,
+    'explanation_crop_count': localRows(body['crop_classes']).length,
+    'model_version_matches':
+        body['model_version'] != null &&
+        body['model_version'] == record['model_version'] &&
+        body['model_version'] == snapshot['model_version'],
+    'prediction_context_matches':
+        body['prediction_context_id'] != null &&
+        body['prediction_context_id'] == record['prediction_context_id'] &&
+        body['prediction_context_id'] == snapshot['prediction_context_id'],
+    'selected_crop_matches':
+        body['selected_output'] != null &&
+        body['selected_output'] == record['predicted_crop'],
+    'selected_score_matches':
+        body['selected_score'] != null &&
+        body['selected_score'] == record['crop_compatibility_pct'],
+  };
 }
 
 Map<String, dynamic> localCropView(Map<String, dynamic> body, String crop) {
@@ -437,6 +496,8 @@ List<String> localExplanationLines(Map<String, dynamic> record) {
   }
   return [
     'Explainable AI: ${body['method_label']}',
+    if (isAnnualPrototypeRecord(record))
+      'Experimental seven-crop model. $annualPrototypeShortNotice',
     'Method/version: ${body['method']} / ${body['method_version']}',
     'Model SHA-256: ${body['model_version']}',
     'Analysis context: ${body['prediction_context_id']}',
