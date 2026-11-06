@@ -25,7 +25,10 @@ def attach_model_ranking(result, snapshots, active_crops=None):
     if len(versions) != 1 or None in versions or len(samples) != len(snapshots):
         raise ModelRankingUnavailable('Model provenance is incomplete. Please retry the analysis.')
     labels = set(samples[0].get('class_probabilities', {}))
+    feature_order = list(samples[0].get('inputs', {}))
     for sample in samples:
+        if list(sample.get('inputs', {})) != feature_order:
+            raise ModelRankingUnavailable('Model samples use different feature contracts.')
         probabilities = sample.get('class_probabilities', {})
         if set(probabilities) != labels or not probabilities:
             raise ModelRankingUnavailable('The model returned inconsistent crop classes.')
@@ -62,6 +65,7 @@ def attach_model_ranking(result, snapshots, active_crops=None):
     snapshot.update(samples=deepcopy(samples), aggregation=METHOD, role='crop_ranking')
     result.update(
         scoring_version=VERSION, recommendation_basis='model_probability',
+        model_input_features=list(samples[0].get('inputs', {})),
         model_explanation=snapshot, crop_assessments=crops,
         top_crop_recommendations=top, alternative_crops=top[1:], best_crop=best,
         predicted_crop=best['crop'], crop=best['crop'],
@@ -73,4 +77,6 @@ def attach_model_ranking(result, snapshots, active_crops=None):
     )
     result.pop('legacy_model_explanation', None)
     result.pop('legacy_model_samples', None)
+    if not any(n in samples[0].get('inputs', {}) for n in ('N', 'P', 'K')):
+        result['model_score_note'] = 'Model class scores are not harvest probabilities. Training includes synthetic GIS features. NPK is excluded from this model.'
     return finalize_explanation(result)

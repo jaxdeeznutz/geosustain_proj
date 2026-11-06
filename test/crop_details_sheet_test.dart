@@ -143,7 +143,9 @@ void main() {
     expect(find.text('Explainable AI'), findsOneWidget);
     expect(find.text('Recorded model class score'), findsOneWidget);
     expect(
-      find.textContaining('not saved or could not be verified'),
+      find.text(
+        'An explanation was not saved with this result. Scores are unchanged.',
+      ),
       findsOneWidget,
     );
     expect(find.textContaining('36.49%. This is separate'), findsOneWidget);

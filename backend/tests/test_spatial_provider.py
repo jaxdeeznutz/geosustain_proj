@@ -11,7 +11,7 @@ import numpy as np
 import pytest
 
 import spatial_provider as provider
-from spatial_analysis import LAYERS
+from spatial_analysis import LAYERS, ACTIVE_LAYERS
 
 
 class Response:
@@ -53,6 +53,18 @@ class TestEarthEngineWireContract(ApiTestCase):
             metadata = ee.serializer.encode(ee.Dictionary({'crs': native.crs(), 'transform': native.transform(), 'period': ee.Dictionary(period)}))
             assert metadata['result']
 
+    def test_ndvi_uses_recent_masked_pixels_instead_of_only_the_latest_scene(self):
+        polygon = [{'lat': 7.29, 'lng': 125.62}, {'lat': 7.291, 'lng': 125.62},
+                   {'lat': 7.291, 'lng': 125.621}, {'lat': 7.29, 'lng': 125.62}]
+        image, _, period = provider.image_for_layer(ee, 'ndvi', polygon, date(2026, 11, 6))
+        graph = json.dumps(ee.serializer.encode(image))
+        assert 'ImageCollection.mosaic' in graph
+        assert 'Image.updateMask' in graph
+        assert period['start'] == '2026-08-08'
+        assert period['end_exclusive'] == '2026-11-06'
+        assert '12 scenes' in period['period']
+        assert 'Mixed dates' in period['observation_date']
+
     def test_bounded_rest_pixel_grid_and_mask_roundtrip(self):
         import rainfallDatasets as env
         polygon = [{'lat': 7.29, 'lng': 125.62}, {'lat': 7.291, 'lng': 125.62},
@@ -91,8 +103,9 @@ class TestEarthEngineWireContract(ApiTestCase):
               patch.object(ee.data, 'get_persistent_credentials', lambda: SimpleNamespace(valid=True)),
               patch('google.auth.transport.requests.AuthorizedSession', Session)):
             rasters = provider.fetch_rasters(polygon)
-        assert set(rasters) == set(LAYERS)
-        assert len(calls) == len(LAYERS)*2
+        assert set(rasters) == set(ACTIVE_LAYERS)
+        assert 'rainfall_30d' not in rasters and 'rainfall_annual' in rasters
+        assert len(calls) == len(ACTIVE_LAYERS)*2
         for raster in rasters.values():
             assert raster['values'][0][0] is None
             assert raster['native_projection']['nominal_scale_m'] == 30

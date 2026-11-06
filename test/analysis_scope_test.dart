@@ -187,6 +187,32 @@ void main() {
   });
 
   test(
+    'completed analysis is usable before optional history refresh finishes',
+    () async {
+      final api = ScopeApi()..history = Completer<List<dynamic>>();
+      final state = stateWith(api);
+      addTearDown(state.dispose);
+      final outcome = await state.analyzeSavedFarm(farm(1));
+      expect(outcome, isNull);
+      expect(state.loading, isFalse);
+      expect(state.result?['session_id'], 9);
+      expect(state.historyLoading, isTrue);
+      api.history!.complete([]);
+      await state.refreshHistoryData();
+    },
+  );
+
+  test('failed replacement keeps the previous labelled result', () async {
+    final api = ScopeApi()..detail = Completer<Map<String, dynamic>>();
+    final state = stateWith(api)..result = analysis(8, 1);
+    addTearDown(state.dispose);
+    final request = state.selectAnalysis(analysis(9, 1));
+    api.detail!.completeError(http.ClientException('network disconnected'));
+    expect(await request, isNotNull);
+    expect(state.result?['session_id'], 8);
+  });
+
+  test(
     'lost POST response recovers saved analysis with no duplicate POST',
     () async {
       int gets = 0, posts = 0;

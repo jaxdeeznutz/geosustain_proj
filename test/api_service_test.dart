@@ -39,6 +39,58 @@ Map<String, dynamic> weatherFixture() => {
 };
 
 void main() {
+  test(
+    'checking an interrupted farm analysis reads its saved key without a POST',
+    () async {
+      SharedPreferences.setMockInitialValues({
+        'token': 'test-token',
+        'account_id': '1',
+        'geosustain_pending_1_analysis': jsonEncode({
+          'requests': [
+            {
+              'body': jsonEncode({'farm_id': 4}),
+              'key': 'saved-request',
+            },
+            {
+              'body': jsonEncode({'farm_id': 5}),
+              'key': 'other-farm',
+            },
+          ],
+        }),
+      });
+      var calls = 0;
+      final api = ApiService(
+        client: MockClient((request) async {
+          calls++;
+          expect(request.method, 'GET');
+          expect(request.url.path, endsWith('/saved-request'));
+          return http.Response(
+            jsonEncode({
+              'status': 'completed',
+              'analysis': {
+                'session_id': 42,
+                'farm_id': 4,
+                'analysis_status': 'completed',
+              },
+            }),
+            200,
+          );
+        }),
+      );
+      addTearDown(api.close);
+      expect((await api.recoverPendingAnalysis(farmId: 4))['session_id'], 42);
+      expect(calls, 1);
+      final prefs = await SharedPreferences.getInstance();
+      expect(
+        prefs.getString('geosustain_pending_1_analysis'),
+        contains('other-farm'),
+      );
+      expect(
+        prefs.getString('geosustain_pending_1_analysis'),
+        isNot(contains('saved-request')),
+      );
+    },
+  );
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() => SharedPreferences.setMockInitialValues({}));
 
@@ -162,6 +214,7 @@ void main() {
       final api = ApiService(
         client: MockClient((request) async {
           expect(request.url.queryParameters['forecast_days'], '2');
+          expect(request.url.queryParameters['past_days'], '0');
           return http.Response(jsonEncode(weatherFixture()), 200);
         }),
       );
@@ -170,7 +223,7 @@ void main() {
       expect(result['rain_next_6h_mm'], 6);
       expect(result['rain_next_3h_mm'], 3);
       expect(result['rainfall_today_mm'], 7);
-      expect(result['rainfall_30d_mm'], 30);
+      expect(result.containsKey('rainfall_30d_mm'), isFalse);
       expect(result['wind_speed_kmh'], 36);
       expect(result['wind_speed_ms'], 10);
     },

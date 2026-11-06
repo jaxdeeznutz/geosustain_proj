@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "model_version": "55ee230b370ea90071df7d32dcb209f916b2dcfa77a6522dd264d10e830f7eaf",
+  "model_type": "RandomForestClassifier",
+  "feature_names": [
+    "N",
+    "P",
+    "K",
+    "temperature",
+    "humidity",
+    "ph",
+    "rainfall",
+    "ndvi",
+    "elevation",
+    "slope"
+  ],
+  "classes": [
+    "banana",
+    "cacao",
+    "coconut",
+    "durian",
+    "mango",
+    "rice",
+    "rubber"
+  ],
+  "training": {
+    "status": "candidate_unvalidated",
+    "report": "training_report.json",
+    "production_promotion_allowed": false
+  }
+}

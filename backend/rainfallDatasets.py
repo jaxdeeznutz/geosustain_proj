@@ -15,6 +15,7 @@ from datetime import datetime, timedelta
 from google.oauth2 import service_account
 from model_explainability import forest_snapshot, content_hash
 from model_artifacts import load_model_artifact
+from model_ranking import ModelRankingUnavailable
 
 GEE_PROJECT = os.getenv('GEE_PROJECT_ID') or os.getenv('GEE_PROJECT') or 'capstone-493314'
 GEE_SERVICE_ACCOUNT_JSON = os.getenv('GEE_SERVICE_ACCOUNT_JSON')
@@ -767,16 +768,23 @@ def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope,
     ML_WEIGHT = 0.50
     ENV_WEIGHT = 0.50
 
-    if nutrient_inputs is None:
-        nutrient_inputs = legacy_inputs(n, p, k, 'estimated_proxy', 'Legacy numeric caller; provenance undocumented')
-    values = model_values(nutrient_inputs)
-    if values != {'N': n, 'P': p, 'K': k}:
-        raise ValueError('Nutrient contract does not match supplied model inputs')
+    try:
+        names = list(MODEL.feature_names_in_)
+    except (AttributeError, TypeError) as exc:
+        raise ModelRankingUnavailable('The model feature contract is unavailable.') from exc
+    values = {}
+    uses_npk = any(name in names for name in ('N', 'P', 'K'))
+    if uses_npk:
+        if nutrient_inputs is None:
+            nutrient_inputs = legacy_inputs(n, p, k, 'estimated_proxy', 'Legacy numeric caller; provenance undocumented')
+        values = model_values(nutrient_inputs)
+        if values != {'N': n, 'P': p, 'K': k}:
+            raise ValueError('Nutrient contract does not match supplied model inputs')
     input_df = pd.DataFrame([{
         **values,
         'temperature': temp, 'humidity': humidity, 'ph': ph, 'rainfall': rain,
         'ndvi': ndvi, 'elevation': elevation, 'slope': slope,
-    }])
+    }], columns=names)
     raw_prediction = MODEL.predict(input_df)[0]
 
     baseline_rain = float(PANABO_CONFIG.get('rainfall_monthly_mm', 105.0))
@@ -810,7 +818,10 @@ def get_ai_prediction(n, p, k, temp, humidity, ph, rain, ndvi, elevation, slope,
         {key: float(value) for key, value in input_df.iloc[0].items()},
         raw_prediction, probabilities,
     )
-    snapshot['samples'][0]['model_nutrient_inputs'] = deepcopy(nutrient_inputs)
+    if uses_npk:
+        snapshot['samples'][0]['model_nutrient_inputs'] = deepcopy(nutrient_inputs)
+    else:
+        snapshot['samples'][0]['npk_used'] = False
     if inference_context is not None:
         inference_context.update(snapshot)
 
@@ -1153,6 +1164,12 @@ def analyze_location(lat, lon, active_crops=None):
     cached    = ANALYSIS_CACHE.get(cache_key)
     if cached and now_ts - cached['ts'] < CACHE_TTL_SECONDS:
         return deepcopy(cached['data'])
+
+    # The new seven-input artifact uses the annual environmental path. Never
+    # fetch/estimate nutrients or use legacy recent-rain blending for this model.
+    if list(getattr(MODEL, 'feature_names_in_', [])) == ['temperature', 'humidity', 'ph', 'rainfall', 'ndvi', 'elevation', 'slope']:
+        from environmental_pipeline import analyze_location as analyze_environmental
+        return analyze_environmental(lat, lon, active_crops)
 
     with ThreadPoolExecutor(max_workers=7) as ex:
         weather_f  = ex.submit(get_live_weather,  lat, lon)

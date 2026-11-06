@@ -24,6 +24,59 @@ Map<String, dynamic> summaryFactor(
     .firstWhere((row) => row['factor'] == factor);
 
 final summaryCases = <String, void Function()>{
+  'published annual ranges retain source meaning without changing model output':
+      () {
+        final record = summaryFixture();
+        final beforeScore = record['crop_compatibility_pct'];
+        final beforeExplanation = jsonEncode(record['local_model_explanation']);
+        final factor = summaryFactor(record, 'rainfall', 'Mango');
+        factor.addAll({
+          'value': 1000,
+          'unit': 'mm/year',
+          'period': 'annual_mean_total',
+          'score': 100,
+          'measurement': {
+            'value': 1000,
+            'unit': 'mm/year',
+            'period': 'annual_mean_total',
+            'quality': 'modelled',
+          },
+          'requirement': {
+            'optimal': [600, 1500],
+            'absolute': [300, 2600],
+            'range_label': 'Published annual range',
+            'source': {
+              'title': 'FAO EcoCrop: Mangifera indica',
+              'url':
+                  'https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=1416',
+            },
+          },
+        });
+        final fit = savedReferenceFit(
+          record,
+          'Mango',
+        ).firstWhere((r) => r['factor'] == 'rainfall');
+        checkSummary(
+          fit['status'] == 'fits',
+          'Annual reference was not assessed',
+        );
+        checkSummary(
+          '${fit['text']}'.contains('Published annual range'),
+          'Changed published interval into an optimal class',
+        );
+        checkSummary(
+          '${fit['source']['url']}'.endsWith('id=1416'),
+          'Lost saved source',
+        );
+        checkSummary(
+          record['crop_compatibility_pct'] == beforeScore,
+          'Reference changed model score',
+        );
+        checkSummary(
+          jsonEncode(record['local_model_explanation']) == beforeExplanation,
+          'Reference changed attribution',
+        );
+      },
   'explains first place with the saved runner-up and signed factor differences':
       () {
         final record = summaryFixture();

@@ -275,9 +275,14 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
       _error = null;
     });
     try {
+      if (widget.state.analysisPending) {
+        final failure = await widget.state.checkPendingAnalysis();
+        if (!mounted) return;
+        _error = failure;
+      }
       await widget.state.refreshHistoryData();
       if (!mounted) return;
-      _error = widget.state.historyError;
+      _error ??= widget.state.historyError;
     } catch (e) {
       _error = friendlyErrorMessage(e);
     } finally {
@@ -347,13 +352,23 @@ class _MobileAnalysisPageState extends State<MobileAnalysisPage> {
                     ),
                   ),
                 ),
+              if (error != null && !busy)
+                OutlinedButton.icon(
+                  onPressed: _refresh,
+                  icon: const Icon(Icons.refresh),
+                  label: Text(
+                    state.analysisPending
+                        ? 'Check analysis'
+                        : 'Retry connection',
+                  ),
+                ),
               if (result != null) ...[
                 MobileAnalysisResult(
                   key: ValueKey('analysis-${result['session_id']}'),
                   state: state,
                   record: result,
                 ),
-              ] else if (!busy && error == null && state.historyLoaded) ...[
+              ] else if (!busy && state.historyLoaded) ...[
                 if (state.selectedFarm != null)
                   Padding(
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -500,10 +515,18 @@ class AnalysisIndicatorsCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final quality = analysisMapValue(record['data_quality']);
-    const indicators = [
+    final annual =
+        record.containsKey('rainfall_annual_mean_5y_mm') ||
+        record.containsKey('annual_rainfall_mm');
+    final rainfall = annualRainfallFactorView({}, record);
+    final values = {...record, '_annual_rainfall_display': rainfall.value};
+    final indicators = [
       ('ndvi', 'Plant cover (NDVI)', '', 'ndvi'),
       ('soil_ph', 'Soil pH', '', 'soil_ph'),
-      ('rainfall_mm', '30-day rainfall', 'mm', 'rainfall'),
+      if (annual)
+        ('_annual_rainfall_display', rainfall.label, 'mm/year', 'rainfall')
+      else
+        ('rainfall_mm', 'Recorded rainfall (legacy period)', 'mm', 'rainfall'),
       ('temperature_c', 'Temperature', '°C', 'temperature'),
       ('live_humidity', 'Humidity', '%', 'humidity'),
       ('elevation_m', 'Elevation', 'm', 'elevation'),
@@ -513,7 +536,7 @@ class AnalysisIndicatorsCard extends StatelessWidget {
       ('potassium', 'Potassium', '', 'potassium'),
     ];
     final present = indicators
-        .where((item) => analysisNumber(record[item.$1]) != null)
+        .where((item) => analysisNumber(values[item.$1]) != null)
         .toList();
     final warnings = analysisListValue(record['data_quality_warnings']);
     return _AnalysisSection(
@@ -555,7 +578,7 @@ class AnalysisIndicatorsCard extends StatelessWidget {
                     const SizedBox(width: 12),
                     Flexible(
                       child: Text(
-                        '${analysisNumber(record[item.$1])!.toStringAsFixed(item.$1 == 'ndvi' ? 3 : 1)}${item.$3.isEmpty ? '' : ' ${item.$3}'}',
+                        '${analysisNumber(values[item.$1])!.toStringAsFixed(item.$1 == 'ndvi' ? 3 : 1)}${item.$3.isEmpty ? '' : ' ${item.$3}'}',
                         textAlign: TextAlign.end,
                         style: TextStyle(fontWeight: FontWeight.w800),
                       ),

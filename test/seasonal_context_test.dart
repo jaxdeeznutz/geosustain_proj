@@ -68,6 +68,75 @@ Map<String, dynamic> savedSeasonalRecord() => {
 };
 
 void main() {
+  for (final scale in [1.0, 2.0]) {
+    testWidgets('farmer seasonal summary stays short at text scale $scale', (
+      tester,
+    ) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final record = savedSeasonalRecord();
+      final before = jsonEncode(record);
+      await tester.pumpWidget(
+        MaterialApp(
+          builder: (context, child) => MediaQuery(
+            data: MediaQuery.of(
+              context,
+            ).copyWith(textScaler: TextScaler.linear(scale)),
+            child: child!,
+          ),
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: SeasonalContextCard(record: record, simple: true),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Past weather in February'), findsOneWidget);
+      expect(find.text('56.5 mm'), findsOneWidget);
+      expect(find.text('Not available'), findsNWidgets(2));
+      expect(find.textContaining('Saved seasonal context:'), findsNothing);
+      expect(find.textContaining('No reviewed local calendar'), findsNothing);
+      final details = find.text('Source & details');
+      await tester.ensureVisible(details);
+      await tester.tap(details);
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Source: Fixture NASA POWER'), findsOneWidget);
+      expect(find.textContaining('No reviewed local calendar'), findsOneWidget);
+      expect(jsonEncode(record), before);
+      expect(tester.takeException(), isNull);
+    });
+  }
+
+  testWidgets(
+    'partial monthly data stays labelled and missing values stay missing',
+    (tester) async {
+      final record = savedSeasonalRecord();
+      final metrics =
+          (record['seasonal_assessment'] as Map)['monthly_climate']['metrics']
+              as Map;
+      metrics['rainfall']['status'] = 'partial';
+      metrics['temperature'] = {
+        'value': 80,
+        'status': 'available',
+        'unit': 'F',
+      };
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SeasonalContextCard(record: record, simple: true),
+          ),
+        ),
+      );
+      expect(find.text('56.5 mm (limited)'), findsOneWidget);
+      expect(find.text('Not available'), findsNWidgets(2));
+      expect(find.textContaining('80.0'), findsNothing);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   setUp(
     () => SharedPreferences.setMockInitialValues({'token': 'fixture-token'}),
   );

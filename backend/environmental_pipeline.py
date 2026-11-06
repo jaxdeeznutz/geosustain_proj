@@ -6,10 +6,11 @@ from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 from copy import deepcopy
 from suitability import attach_assessment, mark_preliminary, number
-from model_explainability import forest_snapshot
+from model_explainability import forest_snapshot, FEATURE_LABELS
 from model_ranking import attach_model_ranking, ModelRankingUnavailable
 from nutrient_contract import legacy_inputs, model_values
-from climate_contract import attach_climate_fields, model_climate_inputs, same_period
+from climate_contract import (attach_climate_fields, model_climate_inputs, same_period,
+                              annual_model_ready, annual_prototype_policy, mark_annual_prototype)
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -83,15 +84,19 @@ def terrain_slope(lat, lon):
 def analyze_location(lat, lon, active_crops=None, *, preliminary=False):
     import rainfallDatasets as env
     logger.info('Environmental retrieval started')
+    metadata = getattr(getattr(env, 'LOADED_MODEL', None), 'metadata', {})
+    prototype = env.MODEL is not None and annual_prototype_policy(metadata, env.MODEL.classes_)
+    model_ready = annual_model_ready(env.MODEL, metadata) or prototype
+    uses_npk = env.MODEL is not None and any(n in list(env.MODEL.feature_names_in_) for n in ('N', 'P', 'K')) if model_ready else False
     measurements, raw, quality = {}, {}, {}
     tasks = {'soil_ph': env.get_soil_ph, 'elevation': env.get_elevation,
-             'ndvi': env.get_ndvi, 'rainfall_recent': env.get_rainfall,
+             'ndvi': env.get_ndvi,
              'climate': climate_normals, 'slope': terrain_slope, 'weather': env.get_live_weather, 'nitrogen': env.get_soil_nitrogen}
-    if preliminary:
+    if preliminary or not model_ready or not uses_npk:
         tasks.pop('nitrogen')
     with ThreadPoolExecutor(max_workers=4) as pool:
         ttls = {'soil_ph': 86400, 'elevation': 86400, 'slope': 86400,
-                'climate': 21600, 'ndvi': 3600, 'rainfall_recent': 900,
+                'climate': 21600, 'ndvi': 3600,
                 'weather': 300, 'nitrogen': 86400}
         futures = {key:pool.submit(retrieve,key,fn,lat,lon,ttls[key]) for key,fn in tasks.items()}
         for key, future in futures.items():
@@ -101,7 +106,7 @@ def analyze_location(lat, lon, active_crops=None, *, preliminary=False):
     logger.info('Environmental retrieval completed available_sources=%s requested_sources=%s', len(raw), len(tasks))
     measurements.update(raw.get('climate') or {})
     for key, unit, period in [('soil_ph','pH','soil_surface'),('elevation','m','terrain'),
-                              ('ndvi','index','latest_scene'),('rainfall_recent','mm','rolling_30_days')]:
+                              ('ndvi','index','latest_scene')]:
         value, flag, source = raw.get(key, (None,'unavailable','Source unavailable'))
         value = number(value) if flag == 'measured' else None
         measurements[key] = {'value':value,'unit':unit,'period':period,'quality':'modelled' if value is not None else 'unavailable','source':source}
@@ -114,11 +119,12 @@ def analyze_location(lat, lon, active_crops=None, *, preliminary=False):
     for key, m in measurements.items():
         quality[key] = {'quality':m['quality'], 'source':m.get('source'), 'unit':m['unit'], 'period':m['period']}
     result = {'lat':lat,'lon':lon,'environmental_measurements':measurements,'data_quality':quality,
-        'data_quality_warnings':['Missing environmental measurements remain unavailable. Model nutrient inputs are estimates and may use a labelled regional nitrogen default. Field verification is required.'],
+        'data_quality_warnings':['Missing environmental measurements remain unavailable. ' +
+            ('Model nutrient inputs are estimates and may use a labelled regional nitrogen default. ' if uses_npk else 'NPK is not used for model prediction. ') + 'Field verification is required.'],
         'soil_ph': measurements['soil_ph']['value'], 'elevation_m':measurements['elevation']['value'],
         'slope_pct':measurements['slope']['value'], 'ndvi':measurements['ndvi']['value'],
         'temperature_c':(measurements.get('temperature') or {}).get('value'),
-        'rainfall_mm':measurements['rainfall_recent']['value'],
+        'rainfall_mm':None,
         'annual_rainfall_mm':(measurements.get('rainfall') or {}).get('value'),
         'live_humidity':measurements['humidity_current']['value'],
         'land_type':'Vegetation observation only', 'land_status':'Environmental screening',
@@ -127,18 +133,23 @@ def analyze_location(lat, lon, active_crops=None, *, preliminary=False):
     if preliminary:
         assessed = attach_assessment(result, measurements, active_crops)
         return mark_preliminary(assessed)
+    if not model_ready:
+        return mark_preliminary(attach_assessment(result, measurements, active_crops),
+                                reason='annual_model_pending')
     # Rank with the existing model; retain input quality and training limitations.
     snapshot = None
     try:
         if env.MODEL is not None:
             logger.info('Crop model loaded version=%s', env.MODEL_VERSION)
             # Reuse the same observations already fetched for this sample.
-            n, nitrogen_quality, nitrogen_source = raw.get('nitrogen', (None, 'unavailable', 'Unavailable'))
-            p,k = env.estimate_phosphorus_potassium(result['ndvi'], result['soil_ph'], result['elevation_m'])
-            nutrients = legacy_inputs(n, p, k, nitrogen_quality, nitrogen_source)
-            nutrient_values = model_values(nutrients)
-            nq = {'nitrogen': nutrients['N']['quality'], 'nitrogen_source': nitrogen_source,
-                  'phosphorus': 'estimated_proxy', 'potassium': 'estimated_proxy'}
+            nutrients, nutrient_values, nq = {}, {}, {}
+            if uses_npk:
+                n, nitrogen_quality, nitrogen_source = raw.get('nitrogen', (None, 'unavailable', 'Unavailable'))
+                p,k = env.estimate_phosphorus_potassium(result['ndvi'], result['soil_ph'], result['elevation_m'])
+                nutrients = legacy_inputs(n, p, k, nitrogen_quality, nitrogen_source)
+                nutrient_values = model_values(nutrients)
+                nq = {'nitrogen': nutrients['N']['quality'], 'nitrogen_source': nitrogen_source,
+                      'phosphorus': 'estimated_proxy', 'potassium': 'estimated_proxy'}
             climate_values, climate_records = model_climate_inputs(measurements)
             inputs = {**nutrient_values, **climate_values, 'ph': result['soil_ph'],
                       'ndvi': result['ndvi'],
@@ -157,12 +168,21 @@ def analyze_location(lat, lon, active_crops=None, *, preliminary=False):
                 prediction = env.MODEL.predict(frame)[0]
                 logger.info('Crop model prediction completed')
                 snapshot = forest_snapshot(env.MODEL, env.MODEL_VERSION, inputs,
-                    prediction, {str(c):float(p) for c,p in zip(env.MODEL.classes_,probabilities)})
+                    prediction, {str(c):float(p) for c,p in zip(env.MODEL.classes_,probabilities)},
+                    feature_labels={**FEATURE_LABELS,
+                                    'rainfall': ('Annual rainfall (5-year mean)', 'mm/year')})
                 snapshot['role'] = 'crop_ranking'
                 snapshot['training_provenance'] = 'Kaggle crop data plus synthetic GIS features and local rows; no Panabo field validation established.'
+                if prototype:
+                    snapshot['runtime_input_policy'] = deepcopy(metadata['runtime_input_policy'])
                 snapshot['samples'][0].update(location={'lat':lat,'lon':lon},data_quality=deepcopy(quality),nutrient_quality=nq)
-                snapshot['samples'][0]['model_nutrient_inputs'] = nutrients
+                if uses_npk:
+                    snapshot['samples'][0]['model_nutrient_inputs'] = nutrients
+                else:
+                    snapshot['samples'][0]['npk_used'] = False
                 snapshot['samples'][0]['model_climate_inputs'] = climate_records
+                if prototype:
+                    snapshot['samples'][0]['runtime_input_policy'] = deepcopy(metadata['runtime_input_policy'])
     except ModelRankingUnavailable:
         raise
     except Exception as exc:
@@ -172,7 +192,8 @@ def analyze_location(lat, lon, active_crops=None, *, preliminary=False):
         raise ModelRankingUnavailable('The trained model or one of its required inputs is unavailable. Please retry when environmental services are available.')
     assessed = attach_assessment(result,measurements,active_crops)
     logger.info('Model ranking completed')
-    return attach_model_ranking(assessed, [snapshot], active_crops)
+    ranked = attach_model_ranking(assessed, [snapshot], active_crops)
+    return mark_annual_prototype(ranked) if prototype else ranked
 
 def merge_results(samples, active_crops=None):
     """Assess parcel mean inputs; preserve samples and expose spatial limitations."""
@@ -190,10 +211,16 @@ def merge_results(samples, active_crops=None):
     result['environmental_samples'] = [s['environmental_measurements'] for s in samples]
     snapshots = [s.get('model_explanation') for s in samples]
     for field,key in [('soil_ph','soil_ph'),('temperature_c','temperature'),('annual_rainfall_mm','rainfall'),
-                      ('rainfall_mm','rainfall_recent'),('elevation_m','elevation'),('slope_pct','slope'),('ndvi','ndvi')]:
+                      ('elevation_m','elevation'),('slope_pct','slope'),('ndvi','ndvi')]:
         result[field] = measurements.get(key,{}).get('value')
     attach_climate_fields(result, measurements)
     assessed = attach_assessment(result,measurements,active_crops)
+    if any(s.get('reference_screening_reason') == 'annual_model_pending' for s in samples):
+        return mark_preliminary(assessed, reason='annual_model_pending')
     if all(s.get('analysis_mode') == 'preliminary_environmental' for s in samples):
         return mark_preliminary(assessed)
-    return attach_model_ranking(assessed, snapshots, active_crops)
+    prototype_modes = {s.get('model_usage') for s in samples}
+    if any(s.get('model_validation_status') == 'unvalidated' for s in samples) and len(prototype_modes) != 1:
+        raise ModelRankingUnavailable('Prototype and other model samples cannot be mixed.')
+    ranked = attach_model_ranking(assessed, snapshots, active_crops)
+    return mark_annual_prototype(ranked) if result.get('model_validation_status') == 'unvalidated' else ranked

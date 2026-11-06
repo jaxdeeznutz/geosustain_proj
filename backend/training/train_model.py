@@ -198,16 +198,13 @@ local_df = _build_local_rows()
 df = pd.concat([df, local_df], ignore_index=True)
 print(f'Added localized crop rows: {len(local_df)}')
 
-# Keep the model focused on crops that GeoSustain can reasonably recommend
-# for Panabo/Mindanao — exactly the finalized, approved local crop set
-# (Section 9): rice, corn, banana, watermelon, papaya, abaca, coconut,
-# cacao, durian, cassava, sweet potato, rubber, pomelo. This is not
-# rule-based prediction; it only prevents non-local/unapproved classes
-# (e.g. mango, mungbean, pigeonpeas, blackgram — previously included here
-# by mistake, with no equivalent in the approved crop list) from diluting
-# Random Forest training or ever appearing as a learned class.
+# The seven supported labels come from the same catalog used by serving:
+# banana, coconut, rice, durian, mango, rubber and cacao.
+# Filtering training targets does not establish compatible input measurements.
 SUPPORTED_LABELS = APPROVED_LABELS
 df = df[df['label'].astype(str).str.lower().isin(SUPPORTED_LABELS)].copy()
+if set(df['label'].astype(str).str.lower()) != SUPPORTED_LABELS:
+    raise ValueError('Training data must cover every approved catalog crop exactly.')
 print(f'Focused training rows after local crop filter: {len(df)}')
 print('Training class counts:')
 print(df['label'].value_counts().sort_index())

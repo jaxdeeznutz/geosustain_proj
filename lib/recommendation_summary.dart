@@ -37,6 +37,7 @@ Map<String, dynamic> _referenceFactor(Map<String, dynamic> factor) {
   final rule = localObject(factor['requirement']);
   final source = localObject(rule['source']);
   final bounds = rule['optimal'];
+  final rangeLabel = '${rule['range_label'] ?? 'preferred'}';
   final value = _finite(factor['value']), score = _finite(factor['score']);
   final unit = '${factor['unit'] ?? ''}', period = '${factor['period'] ?? ''}';
   final url = Uri.tryParse('${source['url'] ?? ''}');
@@ -91,10 +92,11 @@ Map<String, dynamic> _referenceFactor(Map<String, dynamic> factor) {
     'period': period,
     'quality': observation['quality'],
     'preferred': compatible ? List<dynamic>.from(bounds) : null,
+    'range_label': rangeLabel,
     'source': compatible ? source : <String, dynamic>{},
     'text': !compatible
         ? 'Not assessed: a compatible observation and cited criterion are required.'
-        : '${summaryNumber(value)} ${_displayUnit(unit)}; preferred ${_interval(bounds, _displayUnit(unit))}.',
+        : '${summaryNumber(value)} ${_displayUnit(unit)}; $rangeLabel ${_interval(bounds, _displayUnit(unit))}.',
     'interpretation': compatible ? factor['result'] : null,
     'limitations': compatible ? rule['limitations'] : null,
   };

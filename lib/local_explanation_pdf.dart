@@ -27,6 +27,8 @@ List<pw.Widget> buildLocalExplanationPdfWidgets(Map<String, dynamic> record) {
       style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
     ),
     pw.SizedBox(height: 10),
+    if (isAnnualPrototypeRecord(record))
+      text('Experimental seven-crop model. $annualPrototypeShortNotice'),
     text('Method: ${body['method_label']} / ${body['method_version']}'),
     text('${body['baseline_definition']}. ${body['aggregation']}'),
     text('Model SHA-256: ${body['model_version']}'),

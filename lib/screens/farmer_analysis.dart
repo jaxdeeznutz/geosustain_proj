@@ -13,12 +13,16 @@ class FarmerAnalysisContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final preliminary = WebAnalysisMetrics.preliminary(record);
+    final annualCheck =
+        record['reference_screening_reason'] == 'annual_model_pending';
     final crops = preliminary || record['is_crop_recommended'] == false
         ? <Map<String, dynamic>>[]
         : rankedCropRecommendations(record);
     final model = isModelRanked(record);
     final cover = analysisMapValue(record['land_cover']);
-    final headline = preliminary
+    final headline = annualCheck
+        ? 'Annual land check'
+        : preliminary
         ? 'More data needed'
         : crops.isNotEmpty
         ? 'Crop choices for your farm'
@@ -33,6 +37,8 @@ class FarmerAnalysisContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         GeoResultCard(child: AnalysisIdentity(record: record, compact: true)),
+        if (isAnnualPrototypeRecord(record))
+          AnnualPrototypeNotice(record: record),
         GeoResultCard(
           key: const ValueKey('farmer-result-summary'),
           child: Column(
@@ -47,12 +53,14 @@ class FarmerAnalysisContent extends StatelessWidget {
               ),
               const SizedBox(height: 8),
               Text(
-                preliminary
+                annualCheck
+                    ? 'Five-year climate and terrain checks. NPK is not yet assessed.'
+                    : preliminary
                     ? 'Land check only. Soil data is incomplete.'
                     : crops.isEmpty
                     ? 'Ask an analyst to check the available land data.'
                     : model
-                    ? 'Model scores rank crops. They are not the chance of a successful harvest.'
+                    ? 'Model scores rank approved crops, not harvest success.'
                     : 'These choices use the saved condition checks.',
               ),
               if (_farmerUsesEstimates(record)) ...[
@@ -62,25 +70,33 @@ class FarmerAnalysisContent extends StatelessWidget {
                   style: TextStyle(fontSize: 12),
                 ),
               ],
-              for (var i = 0; i < math.min(3, crops.length); i++)
-                _FarmerCropRow(crop: crops[i], record: record, rank: i + 1),
-              if (crops.length > 3)
-                _FarmerDisclosure(
-                  key: ValueKey('farmer-more-crops-$scope'),
-                  title: 'More crop choices',
-                  icon: Icons.spa_outlined,
-                  builder: (_) => Column(
-                    children: [
-                      for (var i = 3; i < crops.length; i++)
-                        _FarmerCropRow(
-                          crop: crops[i],
-                          record: record,
-                          rank: i + 1,
-                        ),
-                    ],
-                  ),
+              if (isNoNpkModelRecord(record)) ...[
+                const SizedBox(height: 8),
+                const Text(
+                  'NPK not used. PAGRO soil data pending.',
+                  style: TextStyle(fontSize: 12),
                 ),
+              ],
+              for (var i = 0; i < crops.length; i++)
+                _FarmerCropRow(crop: crops[i], record: record, rank: i + 1),
             ],
+          ),
+        ),
+        _FarmerDisclosure(
+          key: ValueKey('farmer-map-$scope'),
+          title: 'Farm map',
+          icon: Icons.map_outlined,
+          builder: (_) => SpatialRasterCard(record: record, simple: true),
+        ),
+        _FarmerDisclosure(
+          key: ValueKey('farmer-details-$scope'),
+          title: 'Full analysis details',
+          icon: Icons.info_outline,
+          builder: (_) => ReferenceAnalysisContent(
+            state: state,
+            record: record,
+            showActions: false,
+            farmerDetails: true,
           ),
         ),
         AnalysisReviewCard(
@@ -122,22 +138,6 @@ class FarmerAnalysisContent extends StatelessWidget {
           child: Text(
             'Approved means reviewed, not guaranteed crop success.',
             style: TextStyle(fontSize: 12),
-          ),
-        ),
-        _FarmerDisclosure(
-          key: ValueKey('farmer-map-$scope'),
-          title: 'Farm map',
-          icon: Icons.map_outlined,
-          builder: (_) => SpatialRasterCard(record: record, simple: true),
-        ),
-        _FarmerDisclosure(
-          key: ValueKey('farmer-details-$scope'),
-          title: 'Full analysis details',
-          icon: Icons.info_outline,
-          builder: (_) => ReferenceAnalysisContent(
-            state: state,
-            record: record,
-            showActions: false,
           ),
         ),
         const SizedBox(height: 12),
@@ -204,7 +204,13 @@ class FarmerLegend extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(item.icon, color: item.color, size: 17),
+                Icon(
+                  item.icon,
+                  color: Theme.of(context).brightness == Brightness.dark
+                      ? Color.lerp(item.color, Colors.white, .5)
+                      : item.color,
+                  size: 17,
+                ),
                 const SizedBox(width: 6),
                 Flexible(
                   child: Text(
@@ -230,10 +236,10 @@ class FarmerLiveMapGuide extends StatelessWidget {
     final saved = record == null
         ? <LatLng>[]
         : FarmGeometry.fromPayload(record['selected_polygon']);
-    final layerId = const {
+    final layerId = {
       'NDVI': 'ndvi',
       'Soil pH': 'soil_ph',
-      'Rainfall': 'rainfall_30d',
+      'Rainfall': rainfallLayerForRecord(record ?? {}),
       'Elevation': 'elevation',
       'Slope': 'slope',
     }[state.heatmapLayer];
@@ -352,7 +358,22 @@ class _FarmerCropRow extends StatelessWidget {
         '$rank. $name',
         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
       ),
-      subtitle: Text(label, style: const TextStyle(fontSize: 12)),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(fontSize: 12)),
+          if (score != null) ...[
+            const SizedBox(height: 5),
+            LinearProgressIndicator(
+              value: (score / 100).clamp(0, 1),
+              minHeight: 5,
+              backgroundColor: Theme.of(
+                context,
+              ).colorScheme.surfaceContainerHighest,
+            ),
+          ],
+        ],
+      ),
       trailing: const Icon(Icons.chevron_right),
       onTap: () => showModalBottomSheet<void>(
         context: context,
@@ -549,7 +570,7 @@ class _FarmerFactorRow extends StatelessWidget {
                     color: MatchStatusBadge.colorFor(factor.state),
                   ),
                   const SizedBox(width: 5),
-                  Flexible(child: Text(label)),
+                  Flexible(child: Text(factor.statusLabel ?? label)),
                 ],
               ),
             ],

@@ -21,8 +21,8 @@ from model_artifacts import (APPROVED_LABELS, BACKEND_DIR, FEATURES, METADATA_FI
 def release(tmp_path, monkeypatch):
     monkeypatch.delenv('GEOSUSTAIN_EXPECTED_MODEL_VERSION', raising=False)
     # Numeric values only exercise serialization/contracts, not agronomic profiles.
-    frame = pd.DataFrame(np.arange(520).reshape(52, 10), columns=FEATURES)
     labels = sorted(APPROVED_LABELS) * 4
+    frame = pd.DataFrame(np.arange(len(labels) * len(FEATURES)).reshape(len(labels), len(FEATURES)), columns=FEATURES)
     forest = RandomForestClassifier(n_estimators=2, random_state=42).fit(frame, labels)
     training = {
         'status': 'recorded', 'timestamp_utc': '2026-10-22T00:00:00+00:00',
@@ -152,15 +152,21 @@ def test_backend_health_and_snapshot_prove_actual_repository_artifact(monkeypatc
     monkeypatch.setattr(api, 'init_db', lambda: None)
     expected = artifact_version((BACKEND_DIR / 'crop_model.pkl').read_bytes())
     assert engine.MODEL_VERSION == expected
+    from model_artifacts import ENVIRONMENTAL_FEATURES
+    names = list(engine.MODEL.feature_names_in_)
+    assert names in (FEATURES, ENVIRONMENTAL_FEATURES)
     with TestClient(api.app) as client:
         for route in ('/health', '/api/health'):
             health = client.get(route).json()
             assert health['model']['model_version'] == expected
             assert health['model']['artifact_version_on_disk'] == expected
-            assert health['model']['feature_contract']['names'] == FEATURES
-            assert health['model']['metadata_status'] == 'legacy_unverified'
+            assert health['model']['feature_contract']['names'] == names
+            assert health['model']['metadata_status'] == 'experimental_prototype'
+            assert health['model']['trained_class_count'] == 7
+            assert health['model']['runtime_input_policy']['annual_input_compatibility'] == 'unverified'
     inputs = dict(zip(FEATURES, [80, 47, 50, 27.5, 80, 6, 105, .6, 25, 2]))
-    frame = pd.DataFrame([inputs], columns=FEATURES)
+    inputs = {name: inputs[name] for name in names}
+    frame = pd.DataFrame([inputs], columns=names)
     probabilities = dict(zip(engine.MODEL.classes_, engine.MODEL.predict_proba(frame)[0]))
     snapshot = forest_snapshot(engine.MODEL, engine.MODEL_VERSION, inputs,
                                engine.MODEL.predict(frame)[0], probabilities)

@@ -45,9 +45,12 @@ def test_missing_or_invalid_model_output_never_falls_back_to_rule_ranking(snapsh
 
 
 @pytest.mark.parametrize('weather_available', [True, False])
-def test_real_model_drives_pipeline_and_polygon_aggregation(monkeypatch, weather_available):
+def test_legacy_model_is_not_reused_for_annual_pipeline_and_polygon_aggregation(monkeypatch, weather_available):
     import rainfallDatasets as env
     import environmental_pipeline as pipeline
+    from types import SimpleNamespace
+    # Without an explicit prototype policy, unproven metadata stays blocked.
+    monkeypatch.setattr(env, 'LOADED_MODEL', SimpleNamespace(metadata={}))
     assert env.MODEL is not None
     for function, value in [('get_soil_ph', 6), ('get_elevation', 100), ('get_ndvi', .65), ('get_rainfall', 110)]:
         monkeypatch.setattr(env, function, lambda *args, value=value: (value, 'measured', 'test provider'))
@@ -63,16 +66,15 @@ def test_real_model_drives_pipeline_and_polygon_aggregation(monkeypatch, weather
         'temperature': {'value': 27, 'unit': 'C', 'period': 'annual_mean', 'quality': 'modelled'},
         'rainfall': {'value': 2100, 'unit': 'mm/year', 'period': 'annual_mean_total', 'quality': 'modelled'}})
     point = pipeline.analyze_location(7.29, 125.62)
-    sample = point['model_explanation']['samples'][0]
-    from nutrient_contract import model_values
-    assert model_values(sample['model_nutrient_inputs']) == {k: sample['inputs'][k] for k in ('N', 'P', 'K')}
-    assert len(point['top_crop_recommendations']) == 5
-    raw = point['model_explanation']['samples'][0]['class_probabilities']
-    for crop in point['top_crop_recommendations']:
-        assert crop['compatibility_pct'] == pytest.approx(raw[crop['crop'].lower()] * 100)
+    assert point['model_explanation'] is None
+    assert point['reference_screening_reason'] == 'annual_model_pending'
+    assert point['rainfall_annual_mean_5y_mm'] == 2100
+    assert point['top_crop_recommendations'] == []
+    assert len(point['crop_assessments']) == 7
     parcel = pipeline.merge_results([point, deepcopy(point)])
     assert [c['compatibility_pct'] for c in parcel['top_crop_recommendations']] == [c['compatibility_pct'] for c in point['top_crop_recommendations']]
-    assert len(parcel['model_explanation']['samples']) == 2
+    assert parcel['model_explanation'] is None
+    assert parcel['reference_screening_reason'] == 'annual_model_pending'
     assert set(c['crop'] for c in parcel['crop_assessments']) <= set(REQUIREMENTS)
 
 

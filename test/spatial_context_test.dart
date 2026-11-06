@@ -21,6 +21,39 @@ void main() {
     addTearDown(() => HttpOverrides.global = original);
   });
 
+  testWidgets(
+    'boundary-only mode removes raster fill and hides the retired rain option',
+    (tester) async {
+      final record = spatialRecord();
+      final original = jsonEncode(record);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: SpatialRasterCard(record: record, simple: true),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byType(DropdownButtonFormField<String>));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('Rainfall (completed 30 days)'), findsNothing);
+      await tester.tap(find.text('Boundary only (no heatmap)').last);
+      await tester.pumpAndSettle();
+      final polygons = tester
+          .widgetList<PolygonLayer>(find.byType(PolygonLayer))
+          .expand((layer) => layer.polygons)
+          .toList();
+      expect(polygons, hasLength(1));
+      expect(polygons.single.color, Colors.transparent);
+      expect(find.text('Map color guide'), findsNothing);
+      expect(jsonEncode(record), original);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox.shrink());
+    },
+  );
+
   test(
     'saved raster statistics expose coverage, coarse pixels and unavailable source',
     () {

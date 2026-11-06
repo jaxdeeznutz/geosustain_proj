@@ -349,7 +349,7 @@ def fetch_open_meteo_weather(lat: float, lon: float) -> Dict[str, Any]:
         "current": "temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m",
         "hourly": "temperature_2m,precipitation,precipitation_probability,weather_code,wind_speed_10m",
         "daily": "precipitation_sum",
-        "past_days": 30,
+        "past_days": 0,
         "forecast_days": 2,  # Include the next morning when requested late at night.
         "wind_speed_unit": "kmh",
         "timezone": "Asia/Manila",
@@ -382,8 +382,6 @@ def fetch_open_meteo_weather(lat: float, lon: float) -> Dict[str, Any]:
     by_day = dict(zip(daily_times, daily_rain))
     today = now.date()
     today_rain = by_day.get(today.isoformat())
-    past_rain = [by_day.get((today - timedelta(days=i)).isoformat()) for i in range(1, 31)]
-    monthly_rain = round(sum(float(v) for v in past_rain), 2) if all(v is not None for v in past_rain) else None
     next_6h_rain = sum(window("precipitation"))
     max_rain_prob = max(window("precipitation_probability"), default=0)
     rainfall_status = "Low"
@@ -402,14 +400,8 @@ def fetch_open_meteo_weather(lat: float, lon: float) -> Dict[str, Any]:
         "climate_field_metadata": {
             "temperature_current_c": {"unit": "C", "period": "current", "source": "Open-Meteo", "quality": "modelled"},
             "humidity_current_pct": {"unit": "%", "period": "current", "source": "Open-Meteo", "quality": "modelled"},
-            "rainfall_30d_mm": {"unit": "mm", "period": "rolling_30_days", "source": "Open-Meteo", "quality": "modelled",
-                                "start": (today - timedelta(days=30)).isoformat(), "end_exclusive": today.isoformat()},
         },
         "live_humidity": current.get("relative_humidity_2m"),
-        "rainfall_mm": monthly_rain,
-        "rainfall_monthly_mm": monthly_rain,
-        "monthly_rainfall_mm": monthly_rain,
-        "rainfall_30d_mm": monthly_rain,
         "rainfall_today_mm": today_rain,
         "today_rainfall_mm": today_rain,
         "daily_rainfall_mm": today_rain,
@@ -997,7 +989,7 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
                 "ndvi": sample.get("ndvi"),
                 "crop_suitability": sample.get("crop_compatibility_pct") if sample.get("crop_compatibility_pct") is not None else sample.get("suitability_pct"),
                 "soil_ph": sample.get("soil_ph"),
-                "rainfall": sample.get("rainfall_mm"),
+                "rainfall": sample.get("rainfall_annual_mean_5y_mm"),
                 "elevation": sample.get("elevation_m"),
                 "slope": sample.get("slope_pct") if sample.get("slope_pct") is not None else sample.get("slope"),
             })
@@ -1010,8 +1002,13 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
         result['land_cover_notice'] = cover['analysis_warning']
         result.setdefault('data_quality_warnings', []).append(cover['analysis_warning'])
     result["cagro_soil"] = matched_soil
+    if result.get('model_npk_status') == 'excluded':
+        coverage = {**coverage, 'analysis_mode': 'environmental_model_no_npk',
+                    'reason': 'Seven-input environmental model; NPK excluded',
+                    'message': 'Environmental model analysis within Panabo City. NPK is not used; PAGRO data pending.'}
     result['cagro_reference_enabled'] = coverage['cagro_enabled']
-    result['analysis_mode'] = coverage['analysis_mode']
+    result['analysis_mode'] = (result.get('analysis_mode')
+        if result.get('reference_screening_reason') == 'annual_model_pending' else coverage['analysis_mode'])
     if preliminary:
         result['preliminary_notice'] = 'Preliminary environmental screening. CAGRO NPK unavailable for this farm; no complete soil suitability claim is made.'
     result.update(analysis_schema_version=COVERAGE_VERSION, analysis_coverage=coverage,
@@ -1020,6 +1017,10 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
                   historical_soil_notice=HISTORICAL_NOTE if coverage['cagro_enabled'] else None,
                   centroid_method=('Area-weighted polygon centroid; not a soil sample coordinate' if polygon
                                    else 'Selected point; not a farm centroid or soil sample coordinate'))
+    if result.get('model_npk_status') == 'excluded':
+        result['nutrient_basis'] = 'NPK excluded from model training and prediction; PAGRO data pending.'
+    elif result.get('reference_screening_reason') == 'annual_model_pending':
+        result['nutrient_basis'] = 'No model nutrient inputs used in this environmental comparison.'
     attach_display_estimates(result)
     result.update(nutrient_layers(result["cagro_soil"], result))
     attach_application_screening(result)

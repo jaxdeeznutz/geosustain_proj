@@ -13,6 +13,34 @@ Map<String, dynamic> localRecord() => Map<String, dynamic>.from(
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+  test(
+    'explanation checks distinguish missing generation and invalid saved context',
+    () {
+      final record = localRecord();
+      final before = jsonEncode(record);
+      expect(localExplanationDiagnostics(record)['check'], 'verified');
+      expect(jsonEncode(record), before);
+      record.remove('local_model_explanation');
+      expect(localExplanationDiagnostics(record)['check'], 'not_saved');
+      record['local_model_explanation'] = {
+        'status': 'unavailable',
+        'reason': 'Synthetic provider failure',
+      };
+      expect(
+        localExplanationDiagnostics(record)['check'],
+        'server_unavailable',
+      );
+      final mismatched = localRecord()
+        ..['prediction_context_id'] = 'different-saved-context';
+      final diagnostic = localExplanationDiagnostics(mismatched);
+      expect(diagnostic['check'], 'context_mismatch');
+      expect(diagnostic['prediction_context_matches'], isFalse);
+      expect(verifiedLocalExplanation(mismatched), isEmpty);
+      expect(diagnostic.containsKey('inputs'), isFalse);
+      expect(diagnostic.containsKey('location'), isFalse);
+    },
+  );
+
   test('binary hashes match Python, including tiny and negative numbers', () {
     expect(
       localNumericHash('domain', {'z': 1, 'a': 'test'}, [1e-20, -4.5, 0.0]),
@@ -154,6 +182,14 @@ void main() {
     expect(find.text('Explainable AI'), findsOneWidget);
     expect(find.byType(DropdownButtonFormField<String>), findsNothing);
     expect(find.textContaining('not saved'), findsOneWidget);
+    await tester.tap(find.text('Explanation details'));
+    await tester.pumpAndSettle();
+    expect(
+      find.widgetWithText(SelectableText, 'Check: not_saved'),
+      findsOneWidget,
+    );
+    expect(find.text('Copy check details'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
   test('farmer and analyst export the same saved local explanations', () async {
     final record = localRecord();

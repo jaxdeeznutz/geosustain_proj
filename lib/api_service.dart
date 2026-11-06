@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'recoverable_http_client.dart';
 import 'session_token_store.dart';
 import 'boundary_draft_store.dart';
 import 'offline_farm_store.dart';
@@ -47,8 +48,14 @@ class ApiService {
   }
 
   // Injectable transport permits API contract tests without a live account.
-  ApiService({http.Client? client}) : _client = client ?? http.Client();
+  ApiService({http.Client? client})
+    : _client = client ?? RecoverableHttpClient();
   final http.Client _client;
+
+  void _renewTransport() {
+    final client = _client;
+    if (client is RecoverableHttpClient) client.renew();
+  }
 
   void close() => _client.close();
 
@@ -154,11 +161,13 @@ class ApiService {
         return value;
       } on http.ClientException catch (e) {
         lastError = e;
+        _renewTransport();
         if (attempt < attempts - 1) {
           await Future<void>.delayed(Duration(seconds: 2 + attempt * 2));
         }
       } on TimeoutException catch (e) {
         lastError = e;
+        _renewTransport();
         if (attempt < attempts - 1) {
           await Future<void>.delayed(Duration(seconds: 2 + attempt * 2));
         }
@@ -508,6 +517,44 @@ class ApiService {
     return data;
   }
 
+  /// Read an interrupted request by its saved key; this never sends a POST.
+  Future<Map<String, dynamic>> recoverPendingAnalysis({int? farmId}) async {
+    final token = await getToken();
+    final prefs = await SharedPreferences.getInstance();
+    final entries = _pendingRequests(
+      prefs.getString(
+        'geosustain_pending_${prefs.getString('account_id') ?? 'session'}_analysis',
+      ),
+    );
+    for (final entry in entries.reversed) {
+      final payload = jsonDecode(entry['body'] as String) as Map;
+      if ('${payload['farm_id']}' != '$farmId') continue;
+      final key = entry['key'] as String;
+      final status = await _analysisStatus(key, token);
+      if (!['completed', 'processing'].contains(status['status'])) {
+        throw const ApiException(
+          409,
+          'No completed result was found. Open your farm to retry the analysis.',
+        );
+      }
+      final data = await _waitForAnalysis(key, token, status);
+      if (await getToken() != token) {
+        throw const ApiException(401, 'Your session changed. Sign in again.');
+      }
+      if (data['session_id'] == null || '${data['farm_id']}' != '$farmId') {
+        throw const FormatException(
+          'The recovered result does not match this farm.',
+        );
+      }
+      await _completeRequest('analysis', key, token);
+      return data;
+    }
+    throw const ApiException(
+      404,
+      'No interrupted analysis was found. Open your farm to analyze it.',
+    );
+  }
+
   Future<Map<String, dynamic>> _waitForAnalysis(
     String key,
     String? token,
@@ -610,10 +657,12 @@ class ApiService {
         if (!['processing', 'completed'].contains(status['status'])) rethrow;
         data = await _waitForAnalysis(key, token, status);
       } on http.ClientException {
+        _renewTransport();
         final status = await _analysisStatus(key, token);
         if (status['status'] == 'not_found') rethrow;
         data = await _waitForAnalysis(key, token, status);
       } on TimeoutException {
+        _renewTransport();
         final status = await _analysisStatus(key, token);
         if (status['status'] == 'not_found') rethrow;
         data = await _waitForAnalysis(key, token, status);
@@ -851,7 +900,7 @@ class ApiService {
         'https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon'
         '&current=temperature_2m,relative_humidity_2m,precipitation,rain,weather_code,cloud_cover,wind_speed_10m'
         '&hourly=temperature_2m,precipitation,precipitation_probability,weather_code,wind_speed_10m'
-        '&daily=precipitation_sum&past_days=30&forecast_days=2&wind_speed_unit=kmh&timezone=Asia%2FManila',
+        '&daily=precipitation_sum&past_days=0&forecast_days=2&wind_speed_unit=kmh&timezone=Asia%2FManila',
       );
       final response = await _client
           .get(uri)
@@ -883,16 +932,6 @@ class ApiService {
       final todayIndex = dailyTimes.indexOf(currentTime.substring(0, 10));
       final todayRain = todayIndex >= 0 && todayIndex < dailyVals.length
           ? _toDouble(dailyVals[todayIndex])
-          : null;
-      final pastRain = todayIndex >= 30 && todayIndex <= dailyVals.length
-          ? dailyVals
-                .take(todayIndex)
-                .skip(todayIndex - 30)
-                .map(_toDouble)
-                .toList()
-          : <double?>[];
-      final monthly = pastRain.length == 30 && pastRain.every((v) => v != null)
-          ? pastRain.fold<double>(0, (sum, v) => sum + v!)
           : null;
       final hTime = hourly['time'] is List ? hourly['time'] as List : const [];
       final hRain = hourly['precipitation'] is List
@@ -932,18 +971,6 @@ class ApiService {
         'daily_rainfall_mm': todayRain == null
             ? null
             : double.parse(todayRain.toStringAsFixed(2)),
-        'rainfall_mm': monthly == null
-            ? null
-            : double.parse(monthly.toStringAsFixed(2)),
-        'rainfall_monthly_mm': monthly == null
-            ? null
-            : double.parse(monthly.toStringAsFixed(2)),
-        'monthly_rainfall_mm': monthly == null
-            ? null
-            : double.parse(monthly.toStringAsFixed(2)),
-        'rainfall_30d_mm': monthly == null
-            ? null
-            : double.parse(monthly.toStringAsFixed(2)),
         'current_precipitation_mm': current['precipitation'] ?? current['rain'],
         'rain_next_6h_mm': double.parse(next6.toStringAsFixed(2)),
         'wind_speed_kmh': current['wind_speed_10m'],

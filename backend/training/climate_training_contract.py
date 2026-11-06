@@ -4,7 +4,7 @@ TRAINING_SOURCES = {
     'Crop_recommendation.csv': {'rainfall': None, 'temperature': None, 'humidity': None},
     'LOCAL_CROP_PROFILES': {'rainfall': 'rolling_30_days', 'temperature': None, 'humidity': None},
 }
-INFERENCE_PERIODS = {'rainfall': 'rolling_30_days', 'temperature': 'annual_mean', 'humidity': 'current'}
+INFERENCE_PERIODS = {'rainfall': 'annual_mean_total', 'temperature': 'annual_mean', 'humidity': 'current'}
 
 
 def validate_training_periods(sources=TRAINING_SOURCES):

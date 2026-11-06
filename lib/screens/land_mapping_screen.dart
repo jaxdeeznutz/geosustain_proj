@@ -586,7 +586,6 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
               padding: const EdgeInsets.all(16),
               children: [
                 const _BoundaryBanner(gps: true),
-                CoverageExplorer(api: widget.state.api, points: _points),
                 const SizedBox(height: 12),
                 _BoundaryMap(
                   controller: _controller,
@@ -1084,7 +1083,6 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
             padding: const EdgeInsets.all(16),
             children: [
               const _BoundaryBanner(),
-              CoverageExplorer(api: widget.state.api, points: _points),
               const SizedBox(height: 12),
               _BoundaryMap(
                 controller: _controller,

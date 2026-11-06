@@ -1144,18 +1144,21 @@ class MetricItem {
 
 List<MetricItem> geeItems(AnalysisState state) {
   final d = state.result;
+  final rainfall = annualRainfallFactorView({}, d ?? {});
   return [
     MetricItem(
       Icons.water_drop_outlined,
       Colors.blue,
-      'Rainfall (monthly)',
-      '${state.numText(d?['rainfall_monthly_mm'] ?? d?['monthly_rainfall_mm'] ?? d?['rainfall_30d_mm'] ?? d?['rainfall_mm'])} mm',
+      rainfall.label,
+      '${state.numText(rainfall.value)} mm/year',
     ),
     MetricItem(
       Icons.thermostat,
       Colors.orange,
-      'Surface Temp',
-      '${state.numText(d?['surface_temp_c'] ?? d?['temperature_c'])} °C',
+      d?.containsKey('temperature_mean_5y_c') == true
+          ? 'Air Temp (5-year mean)'
+          : 'Recorded Air Temp',
+      '${state.numText(d?['temperature_mean_5y_c'] ?? d?['temperature_c'])} °C',
     ),
     MetricItem(
       Icons.opacity,

@@ -1,23 +1,713 @@
 {
   "schema_version": 1,
-  "model_version": "6dee915ad58e55e376bcfb5a74ecee9db086491cf5fe29a1b3149f5b45be9278",
+  "model_version": "6cefb5545173c05521a5c1fe71e5cb654b2a17161a1e1399d88f93afa867c8cd",
   "model_type": "RandomForestClassifier",
-  "feature_names": ["N", "P", "K", "temperature", "humidity", "ph", "rainfall", "ndvi", "elevation", "slope"],
-  "classes": ["abaca", "banana", "blackgram", "cacao", "cassava", "coconut", "durian", "maize", "mango", "mungbean", "papaya", "pigeonpeas", "pomelo", "rice", "rubber", "sweet potato", "watermelon"],
+  "feature_names": [
+    "temperature",
+    "humidity",
+    "ph",
+    "rainfall",
+    "ndvi",
+    "elevation",
+    "slope"
+  ],
+  "classes": [
+    "banana",
+    "cacao",
+    "coconut",
+    "durian",
+    "mango",
+    "rice",
+    "rubber"
+  ],
   "training": {
-    "status": "legacy_unverified",
-    "timestamp_utc": null,
+    "status": "experimental_prototype",
+    "timestamp_utc": "2026-11-06T08:07:12.723479+00:00",
     "random_seed": 42,
-    "script_sha256": null,
-    "dataset_sha256": null,
+    "script_sha256": "46c2352260577497d6c83e3da662cba35b4f3e86d62a262e3ac1dfff8a4be12e",
+    "dataset_sha256": "bfd1f5b9c2a1b745b62f93f16e95464f3d2bb7e81f4bbaeb3621a986c134c3c1",
     "provenance": {
-      "basis": "Audit of existing pickle attributes and repository code, not a retraining record.",
-      "documented_pipeline": "Repository describes Kaggle Crop_recommendation.csv plus synthetic GIS proxies and LOCAL_CROP_PROFILES; linkage of these exact sources to this artifact is unverified.",
-      "climate_compatibility": "Base CSV periods undocumented; local rainfall rolling_30_days, local temperature/humidity periods unspecified. Existing training guard blocks retraining.",
-      "nutrient_compatibility": "Physical units/method compatibility unverified; CAGRO historical reference data is not an approved model input.",
-      "class_mismatch": "17 artifact classes versus 13 current approved training labels. Existing ranking filters unapproved labels.",
-      "field_validation": "No Panabo field validation established."
+      "source": "research/colab-training-runs/20261106T080700Z-3adeb48c/input_dataset.csv",
+      "colab_run_id": "20261106T080700Z-3adeb48c",
+      "execution_platform_reported": "google_colab",
+      "basis": "Owner Colab run; existing Kaggle-based augmented rows and generated crop/GIS profiles; NPK excluded.",
+      "climate_sources": {
+        "original_kaggle_rows": {
+          "rainfall": null,
+          "temperature": null,
+          "humidity": null
+        },
+        "legacy_profile_rows": {
+          "rainfall": "rolling_30_days",
+          "temperature": null,
+          "humidity": null
+        }
+      },
+      "annual_input_compatibility": "unverified",
+      "npk_used": false,
+      "field_validation": "Not established",
+      "source_limitations": [
+        "Research comparison on existing augmented data; not independent farm accuracy.",
+        "Original Kaggle rows cover banana, coconut, mango and rice only. Cacao, durian and rubber use existing generated profiles.",
+        "GIS predictors in this legacy dataset were generated using crop profiles; their label dependence can inflate evaluation.",
+        "Rainfall periods and temperature aggregation in the labelled rows are unresolved. No annual conversion or relabelling is performed.",
+        "Exact duplicates are removed before splitting; independent farm/source groups are unknown, so a row split cannot establish farm generalization.",
+        "N, P and K are excluded. Received PAGRO measurements require compatible methods/units and matched crop-labelled records before retraining.",
+        "This seven-input candidate cannot replace the current ten-input application model without integration and input-contract review."
+      ]
     },
-    "evaluation": null
+    "evaluation": {
+      "basis": "Held-out legacy augmented rows without NPK; not annual-input or farm accuracy",
+      "holdout_rows": 279,
+      "train_rows": 1115,
+      "comparison": [
+        {
+          "model": "decision_tree",
+          "cv_accuracy_mean": 0.695067264573991,
+          "cv_precision_macro_mean": 0.6664412452916846,
+          "cv_recall_macro_mean": 0.6647952634198737,
+          "cv_f1_macro_mean": 0.6588438097921803,
+          "cv_f1_macro_std": 0.02619522099709084,
+          "fit_seconds": 0.010089682000000266,
+          "holdout_accuracy": 0.7168458781362007,
+          "holdout_precision_macro": 0.6809178833485927,
+          "holdout_recall_macro": 0.6716634814460901,
+          "holdout_f1_macro": 0.6725587146513051,
+          "holdout_f1_weighted": 0.7214006064679754,
+          "selected_by_cv": false
+        },
+        {
+          "model": "svm",
+          "cv_accuracy_mean": 0.7452914798206278,
+          "cv_precision_macro_mean": 0.7172833857481532,
+          "cv_recall_macro_mean": 0.7061602903891553,
+          "cv_f1_macro_mean": 0.7086372218081269,
+          "cv_f1_macro_std": 0.01570275787572208,
+          "fit_seconds": 0.024652309000003925,
+          "holdout_accuracy": 0.7347670250896058,
+          "holdout_precision_macro": 0.693259216775443,
+          "holdout_recall_macro": 0.6779542920847269,
+          "holdout_f1_macro": 0.6826442615260194,
+          "holdout_f1_weighted": 0.7351056151108857,
+          "selected_by_cv": false
+        },
+        {
+          "model": "random_forest",
+          "cv_accuracy_mean": 0.7802690582959642,
+          "cv_precision_macro_mean": 0.7690534471283976,
+          "cv_recall_macro_mean": 0.7546674467818792,
+          "cv_f1_macro_mean": 0.7561943510306385,
+          "cv_f1_macro_std": 0.020985466956896584,
+          "fit_seconds": 1.7483080720000146,
+          "holdout_accuracy": 0.7849462365591398,
+          "holdout_precision_macro": 0.7430525030525031,
+          "holdout_recall_macro": 0.7262900143334925,
+          "holdout_f1_macro": 0.7312814222984428,
+          "holdout_f1_weighted": 0.7856669543589946,
+          "selected_by_cv": true
+        }
+      ],
+      "selection": {
+        "rule": "Highest mean training-only CV macro F1; alphabetical model-name tie break.",
+        "selected_model": "random_forest",
+        "production_model_changed": false
+      }
+    }
+  },
+  "runtime_input_policy": {
+    "mode": "seven_crop_no_npk_raw_annual_prototype_v1",
+    "model_version": "6cefb5545173c05521a5c1fe71e5cb654b2a17161a1e1399d88f93afa867c8cd",
+    "climate_contract_version": "climate-annual-five-year-v2",
+    "feature_order": [
+      "temperature",
+      "humidity",
+      "ph",
+      "rainfall",
+      "ndvi",
+      "elevation",
+      "slope"
+    ],
+    "npk_used": false,
+    "annual_input_compatibility": "unverified",
+    "use_raw_annual_values": true,
+    "validation_claim": "experimental_only",
+    "owner_instruction_date": "2026-11-06",
+    "basis": "Owner requested integration of the verified Colab model while PAGRO NPK remains pending."
+  },
+  "reference_requirements": {
+    "version": "panabo-annual-terrain-references-2026-11-06-v5",
+    "scope": "annual_rainfall_reference_checks",
+    "affects_fitted_model": false,
+    "model_accuracy_validation": "not_established",
+    "crops": {
+      "banana": {
+        "source": {
+          "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=2483",
+          "title": "FAO EcoCrop: Musa sp.",
+          "section": "Ecology",
+          "scope": "Species-level tropical screening; no variety distinctions. Temperature is interpreted as climate mean for screening, not daily extremes."
+        },
+        "optimal": [
+          2400,
+          2700
+        ],
+        "absolute": [
+          2000,
+          3500
+        ],
+        "classes": null,
+        "limitations": "Species-level tropical screening; no variety distinctions. Temperature is interpreted as climate mean for screening, not daily extremes."
+      },
+      "coconut": {
+        "source": {
+          "url": "https://www.fao.org/4/af298e/af298E01.htm",
+          "title": "FAO: Pasture-Cattle-Coconut Systems",
+          "section": "1.2",
+          "scope": "General tropical coconut climate. Rainfall distribution also matters."
+        },
+        "optimal": [
+          1250,
+          2250
+        ],
+        "absolute": null,
+        "classes": null,
+        "limitations": "General tropical coconut climate. Rainfall distribution also matters."
+      },
+      "rice": {
+        "source": {
+          "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=1574",
+          "title": "FAO EcoCrop: Oryza sativa",
+          "section": "Ecology / wet-rice system",
+          "scope": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance."
+        },
+        "optimal": [
+          1500,
+          2000
+        ],
+        "absolute": [
+          1000,
+          4000
+        ],
+        "classes": null,
+        "limitations": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance."
+      },
+      "durian": {
+        "source": {
+          "url": "https://apps.worldagroforestry.org/treedb/AFTPDFS/Durio_zibethinus.PDF",
+          "title": "Orwa et al. (2009), Agroforestry Database 4.0: Durio zibethinus",
+          "section": "PDF page 2, Biophysical limits and Ecology",
+          "scope": "Published general annual rainfall interval, not a locally validated S1 class. Rainfall distribution, flowering dry spell, soil depth and drainage are not established by the annual total."
+        },
+        "optimal": [
+          1500,
+          2000
+        ],
+        "absolute": null,
+        "classes": null,
+        "limitations": "Published general annual rainfall interval, not a locally validated S1 class. Rainfall distribution, flowering dry spell, soil depth and drainage are not established by the annual total.",
+        "range_label": "Published annual range",
+        "range_basis": "general_biophysical_interval"
+      },
+      "mango": {
+        "source": {
+          "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=1416",
+          "title": "FAO EcoCrop: Mangifera indica",
+          "section": "Ecology, Rainfall (annual)",
+          "scope": "Global ecological annual rainfall ranges. The Philippine mango dry-period requirement remains separate and is not established by an annual total."
+        },
+        "optimal": [
+          600,
+          1500
+        ],
+        "absolute": [
+          300,
+          2600
+        ],
+        "classes": null,
+        "limitations": "Global ecological annual rainfall ranges. The Philippine mango dry-period requirement remains separate and is not established by an annual total."
+      },
+      "rubber": {
+        "source": {
+          "url": "https://apps.worldagroforestry.org/treedb/AFTPDFS/Hevea_brasiliensis.PDF",
+          "title": "Orwa et al. (2009), Agroforestry Database 4.0: Hevea brasiliensis",
+          "section": "PDF page 2, Biophysical limits and Ecology",
+          "scope": "Published general annual rainfall interval and upper maximum, not a locally validated S1 class. Drainage, rainfall distribution, soil depth and groundwater remain unassessed."
+        },
+        "optimal": [
+          1500,
+          3000
+        ],
+        "absolute": null,
+        "classes": null,
+        "limitations": "Published general annual rainfall interval and upper maximum, not a locally validated S1 class. Drainage, rainfall distribution, soil depth and groundwater remain unassessed.",
+        "range_label": "Published annual range",
+        "range_basis": "general_biophysical_interval",
+        "published_upper_extension": 4000
+      },
+      "cacao": {
+        "source": {
+          "url": "https://faolex.fao.org/docs/pdf/phi229725.pdf",
+          "title": "Philippine Cacao Industry Roadmap 2021\u20132025",
+          "section": "Appendix 1, printed p.84",
+          "scope": "Philippine cacao. Uses narrative maximum 32 C. Conflicting elevation recommendations on this page are not used; a separately cited provincial BSWM elevation criterion is configured. Shade, drainage and dry-season duration need field assessment."
+        },
+        "optimal": [
+          1250,
+          3000
+        ],
+        "absolute": null,
+        "classes": null,
+        "limitations": "Philippine cacao. Uses narrative maximum 32 C. Conflicting elevation recommendations on this page are not used; a separately cited provincial BSWM elevation criterion is configured. Shade, drainage and dry-season duration need field assessment."
+      }
+    }
+  },
+  "slope_reference_requirements": {
+    "version": "panabo-annual-terrain-references-2026-11-06-v5",
+    "scope": "crop_specific_slope_reference_checks",
+    "unit": "%",
+    "period": "terrain",
+    "affects_fitted_model": false,
+    "crops": {
+      "banana": {
+        "source": {
+          "url": "https://publikasi.agroforestri.id/sites/all/modules/publication/data/softcopy/manual/MN0037-07.pdf",
+          "title": "Ritung et al. (2007), Land Suitability Evaluation",
+          "section": "Annex 11, printed p.33 / PDF p.40, Erosion hazard: slope (%)",
+          "scope": "Musa acuminata slope criteria from Indonesia, transferred for preliminary Panabo comparison; not locally validated or variety-specific. This slope factor does not establish soil depth, drainage, erosion rate or overall land suitability."
+        },
+        "optimal": [
+          0,
+          8
+        ],
+        "absolute": null,
+        "classes": {
+          "S1": [
+            [
+              0,
+              8
+            ]
+          ],
+          "S2": [
+            [
+              8,
+              16
+            ]
+          ],
+          "S3": [
+            [
+              16,
+              30
+            ]
+          ],
+          "N": [
+            [
+              30,
+              null
+            ]
+          ]
+        },
+        "limitations": "Musa acuminata slope criteria from Indonesia, transferred for preliminary Panabo comparison; not locally validated or variety-specific. This slope factor does not establish soil depth, drainage, erosion rate or overall land suitability.",
+        "range_label": "S1 slope range (below 8%)"
+      },
+      "coconut": {
+        "source": {
+          "url": "https://publikasi.agroforestri.id/sites/all/modules/publication/data/softcopy/manual/MN0037-07.pdf",
+          "title": "Ritung et al. (2007), Land Suitability Evaluation",
+          "section": "Annex 3, printed p.25 / PDF p.32, Erosion hazard: slope (%)",
+          "scope": "Coconut slope criteria from Indonesia, transferred for preliminary Panabo comparison; not locally validated. Management, erosion protection, drainage and soil depth need separate assessment."
+        },
+        "optimal": [
+          0,
+          8
+        ],
+        "absolute": null,
+        "classes": {
+          "S1": [
+            [
+              0,
+              8
+            ]
+          ],
+          "S2": [
+            [
+              8,
+              16
+            ]
+          ],
+          "S3": [
+            [
+              16,
+              30
+            ]
+          ],
+          "N": [
+            [
+              30,
+              null
+            ]
+          ]
+        },
+        "limitations": "Coconut slope criteria from Indonesia, transferred for preliminary Panabo comparison; not locally validated. Management, erosion protection, drainage and soil depth need separate assessment.",
+        "range_label": "S1 slope range (below 8%)"
+      },
+      "rice": {
+        "source": {
+          "url": "https://www.bswm.da.gov.ph/wp-content/uploads/Davao-del-Norte_SUITABILITY-rice.pdf",
+          "title": "BSWM (2016): Davao del Norte Rice Suitability Map",
+          "section": "Sheet 1, Agronomic requirements, Terrain: slope (%)",
+          "scope": "Published rice slope classes for the province containing Panabo. This is one factor only; drainage, flooding, stoniness and soil depth are not assessed by slope."
+        },
+        "optimal": [
+          0,
+          3
+        ],
+        "absolute": null,
+        "classes": {
+          "S1": [
+            [
+              0,
+              3
+            ]
+          ],
+          "S2": [
+            [
+              3,
+              8
+            ]
+          ],
+          "S3": [
+            [
+              8,
+              18
+            ]
+          ],
+          "N": [
+            [
+              18,
+              null
+            ]
+          ]
+        },
+        "limitations": "Published rice slope classes for the province containing Panabo. This is one factor only; drainage, flooding, stoniness and soil depth are not assessed by slope."
+      },
+      "durian": {
+        "source": {
+          "url": "https://apps.worldagroforestry.org/downloads/publications/PDFs/mn15224.pdf",
+          "title": "Ritung et al. (2007), Land Suitability Evaluation",
+          "section": "Annex 9, printed p.31 / PDF p.38",
+          "scope": "Indonesian criteria transferred for preliminary Panabo screening; not locally validated. Full land classes require additional drainage, soil and hazard assessments."
+        },
+        "optimal": [
+          0,
+          8
+        ],
+        "absolute": null,
+        "classes": {
+          "S1": [
+            [
+              0,
+              8
+            ]
+          ],
+          "S2": [
+            [
+              8,
+              16
+            ]
+          ],
+          "S3": [
+            [
+              16,
+              30
+            ]
+          ],
+          "N": [
+            [
+              30,
+              null
+            ]
+          ]
+        },
+        "limitations": "Indonesian criteria transferred for preliminary Panabo screening; not locally validated. Full land classes require additional drainage, soil and hazard assessments."
+      },
+      "mango": {
+        "source": {
+          "url": "https://doi.org/10.3390/su15032619",
+          "title": "Salunkhe et al. (2023), Land Suitability Planning for Sustainable Mango Production in Vulnerable Region Using Geospatial Multi-Criteria Decision Model",
+          "section": "Table 1 continued, PDF p.7, Slope (%)",
+          "scope": "Published mango slope classes used in Ratnagiri, India, transferred for preliminary Panabo comparison; not locally validated for Philippine cultivars. Only the slope criterion is adopted, not the study AHP weights, climate ranges, conservation assumptions or reported accuracy."
+        },
+        "optimal": [
+          0,
+          8
+        ],
+        "absolute": null,
+        "classes": {
+          "S1": [
+            [
+              0,
+              8
+            ]
+          ],
+          "S2": [
+            [
+              8,
+              16
+            ]
+          ],
+          "S3": [
+            [
+              16,
+              30
+            ]
+          ],
+          "N": [
+            [
+              30,
+              null
+            ]
+          ]
+        },
+        "limitations": "Published mango slope classes used in Ratnagiri, India, transferred for preliminary Panabo comparison; not locally validated for Philippine cultivars. Only the slope criterion is adopted, not the study AHP weights, climate ranges, conservation assumptions or reported accuracy.",
+        "range_label": "S1 slope range (below 8%)"
+      },
+      "rubber": {
+        "source": {
+          "url": "https://bswm.da.gov.ph/wp-content/uploads/DAVAO_DEL_SUR_SUITABILITY_RUBBER.pdf",
+          "title": "BSWM (2019): Davao del Sur Land Suitability Map for Rubber",
+          "section": "Sheet 1, Agronomic requirement of rubber production",
+          "scope": "Philippine rubber criteria transferred from neighbouring province. Gaps between printed decimal/integer intervals remain unassessed; not interpolated."
+        },
+        "optimal": [
+          0,
+          8
+        ],
+        "absolute": null,
+        "classes": {
+          "S1": [
+            [
+              0,
+              8
+            ]
+          ],
+          "S2": [
+            [
+              8,
+              30
+            ]
+          ],
+          "S3": [
+            [
+              30,
+              null
+            ]
+          ]
+        },
+        "limitations": "Philippine rubber criteria transferred from neighbouring province. Gaps between printed decimal/integer intervals remain unassessed; not interpolated."
+      },
+      "cacao": {
+        "source": {
+          "url": "https://www.bswm.da.gov.ph/wp-content/uploads/DAVAO_DEL_NORTE_SUITABILITY_CACAO.pdf",
+          "title": "BSWM: Davao del Norte Land Suitability Map for Cacao",
+          "section": "PDF p.3, Agronomic requirement of cacao production, Slope (%)",
+          "scope": "Published cacao slope classes for the province containing Panabo. Slope alone does not establish shade, soil depth, drainage, flooding or overall suitability. The source separately excludes existing forest, shrubland above 18% slope, irrigated paddy and miscellaneous land types; the slope grade does not override land-cover safeguards."
+        },
+        "optimal": [
+          0,
+          8
+        ],
+        "absolute": null,
+        "classes": {
+          "S1": [
+            [
+              0,
+              8
+            ]
+          ],
+          "S2": [
+            [
+              8,
+              30
+            ]
+          ],
+          "S3": [
+            [
+              30,
+              null
+            ]
+          ]
+        },
+        "limitations": "Published cacao slope classes for the province containing Panabo. Slope alone does not establish shade, soil depth, drainage, flooding or overall suitability. The source separately excludes existing forest, shrubland above 18% slope, irrigated paddy and miscellaneous land types; the slope grade does not override land-cover safeguards.",
+        "range_label": "S1 slope range (below 8%)"
+      }
+    }
+  },
+  "elevation_reference_requirements": {
+    "version": "panabo-annual-terrain-references-2026-11-06-v5",
+    "scope": "crop_specific_elevation_reference_checks",
+    "unit": "m",
+    "period": "terrain",
+    "affects_fitted_model": false,
+    "crops": {
+      "banana": {
+        "source": {
+          "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=2483",
+          "title": "FAO EcoCrop: Musa sp.",
+          "section": "Ecology",
+          "scope": "Species-level tropical screening; no variety distinctions. Temperature is interpreted as climate mean for screening, not daily extremes."
+        },
+        "optimal": [
+          null,
+          2400
+        ],
+        "absolute": null,
+        "classes": null,
+        "limitations": "Species-level tropical screening; no variety distinctions. Temperature is interpreted as climate mean for screening, not daily extremes. EcoCrop gives only an absolute upper altitude of 2400 m, not an optimum. This checks that limit alone; a coconut-banana intercropping altitude is not substituted as a universal banana limit.",
+        "range_label": "Published altitude limit",
+        "range_basis": "absolute_limit"
+      },
+      "coconut": {
+        "source": {
+          "url": "https://ati2.da.gov.ph/ati-7/content/sites/default/files/2023-09/Coconut%20Specialist%20Course%20%28ISBN%29.pdf",
+          "title": "DA Agricultural Training Institute (2022), Coconut Specialist Course Facilitators Guide",
+          "section": "Table 6, printed p.80 / PDF p.93, Altitude (MASL), coconut column",
+          "scope": "Published coconut growing-condition recommendation from a coconut-based farming guide, citing DA/PCA Davao Research Center. Below 600 m is a recommendation, not a universal survival limit or a complete suitability class. Cultivar, climate, soil depth, drainage and management need separate assessment."
+        },
+        "optimal": [
+          null,
+          600
+        ],
+        "absolute": null,
+        "classes": null,
+        "limitations": "Published coconut growing-condition recommendation from a coconut-based farming guide, citing DA/PCA Davao Research Center. Below 600 m is a recommendation, not a universal survival limit or a complete suitability class. Cultivar, climate, soil depth, drainage and management need separate assessment.",
+        "range_label": "Published altitude recommendation",
+        "range_basis": "published_altitude_limit",
+        "optimal_upper_exclusive": true
+      },
+      "rice": {
+        "source": {
+          "url": "https://ecocrop.apps.fao.org/ecocrop/srv/en/dataSheet?id=1574",
+          "title": "FAO EcoCrop: Oryza sativa",
+          "section": "Ecology / wet-rice system",
+          "scope": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance."
+        },
+        "optimal": [
+          null,
+          2500
+        ],
+        "absolute": null,
+        "classes": null,
+        "limitations": "Wet rice. Annual rainfall does not establish irrigation availability or growing-season water balance. EcoCrop gives only an absolute upper altitude of 2500 m, not an optimum. This checks that limit alone.",
+        "range_label": "Published altitude limit",
+        "range_basis": "absolute_limit"
+      },
+      "durian": {
+        "source": {
+          "url": "https://hvcdp.da.gov.ph/wp-content/uploads/2022/05/Durian-Production-Guide-koronadal-new.pdf",
+          "title": "Department of Agriculture, Durian Production Guide",
+          "section": "PDF p.3, introductory growing conditions",
+          "scope": "Philippine production guide recommends areas below 800 m; no optimum lower altitude or S1/S2/S3 classes are supplied. This altitude check alone does not assess temperature, drainage, soil depth, water supply or cultivar."
+        },
+        "optimal": [
+          null,
+          800
+        ],
+        "absolute": null,
+        "classes": null,
+        "limitations": "Philippine production guide recommends areas below 800 m; no optimum lower altitude or S1/S2/S3 classes are supplied. This altitude check alone does not assess temperature, drainage, soil depth, water supply or cultivar.",
+        "range_label": "Published altitude recommendation",
+        "range_basis": "published_altitude_limit",
+        "optimal_upper_exclusive": true
+      },
+      "mango": {
+        "source": {
+          "url": "https://www.da.gov.ph/wp-content/uploads/2023/05/Philippine-Mango-Industry-Roadmap.pdf",
+          "title": "Philippine Mango Industry Roadmap 2021\u20132025",
+          "section": "Table 29, printed p.76 / PDF p.97",
+          "scope": "Philippine mango. Distinct dry season is required but not assessed; the stated temperature interval is used only as a climate screening range."
+        },
+        "optimal": [
+          null,
+          600
+        ],
+        "absolute": null,
+        "classes": null,
+        "limitations": "Philippine mango. Distinct dry season is required but not assessed; the stated temperature interval is used only as a climate screening range.",
+        "range_label": "Published altitude recommendation",
+        "range_basis": "published_altitude_limit"
+      },
+      "rubber": {
+        "source": {
+          "url": "https://bswm.da.gov.ph/wp-content/uploads/DAVAO_DEL_SUR_SUITABILITY_RUBBER.pdf",
+          "title": "BSWM (2019): Davao del Sur Land Suitability Map for Rubber",
+          "section": "Sheet 1, Agronomic requirement of rubber production",
+          "scope": "Philippine rubber criteria transferred from neighbouring province. Gaps between printed decimal/integer intervals remain unassessed; not interpolated."
+        },
+        "optimal": [
+          null,
+          500
+        ],
+        "absolute": null,
+        "classes": {
+          "S1": [
+            [
+              null,
+              500
+            ]
+          ],
+          "S2": [
+            [
+              500,
+              1000
+            ]
+          ],
+          "S3": [
+            [
+              1000,
+              null
+            ]
+          ]
+        },
+        "limitations": "Philippine rubber criteria transferred from neighbouring province. Gaps between printed decimal/integer intervals remain unassessed; not interpolated.",
+        "range_label": "S1 altitude range (below 500 m)",
+        "optimal_upper_exclusive": true
+      },
+      "cacao": {
+        "source": {
+          "url": "https://www.bswm.da.gov.ph/wp-content/uploads/DAVAO_DEL_NORTE_SUITABILITY_CACAO.pdf",
+          "title": "BSWM: Davao del Norte Land Suitability Map for Cacao",
+          "section": "PDF p.3, Agronomic requirement of cacao production, Elevation (masl)",
+          "scope": "Provincial BSWM altitude classes selected for Panabo; the conflicting altitude wording in the cacao roadmap is not combined with these classes. This is one factor, not a complete land suitability grade. Shade, drainage, soil depth and land-cover exclusions remain separate."
+        },
+        "optimal": [
+          null,
+          1000
+        ],
+        "absolute": null,
+        "classes": {
+          "S1": [
+            [
+              null,
+              1000
+            ]
+          ],
+          "S2": [
+            [
+              1000,
+              1500
+            ]
+          ],
+          "S3": [
+            [
+              1500,
+              null
+            ]
+          ]
+        },
+        "limitations": "Provincial BSWM altitude classes selected for Panabo; the conflicting altitude wording in the cacao roadmap is not combined with these classes. This is one factor, not a complete land suitability grade. Shade, drainage, soil depth and land-cover exclusions remain separate.",
+        "range_label": "S1 altitude range (below 1000 m)",
+        "optimal_upper_exclusive": true
+      }
+    }
   }
 }

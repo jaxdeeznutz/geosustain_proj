@@ -241,6 +241,7 @@ def nutrient_layers(soil, analysis):
     explanation = analysis.get("model_explanation") or {}
     explanation = explanation if isinstance(explanation, dict) else {}
     samples = explanation.get("samples", [])
+    no_npk = analysis.get('model_npk_status') == 'excluded'
     return {
         "soil_nutrient_reference": screen_soil_nutrients(soil),
         "soil_nutrients_observed": {"schema_version": 1, "status": soil.get("status", "unavailable"),
@@ -248,13 +249,13 @@ def nutrient_layers(soil, analysis):
         "soil_location_match": {"status": soil.get("status", "unavailable"), "records": matches},
         "model_nutrient_inputs": recorded_inputs(samples, explanation.get('model_version')),
         "legacy_model_nutrient_inputs": {
-            "representation": "legacy_training_scale", "compatible_with_cagro": False,
+            "representation": 'not_used' if no_npk else "legacy_training_scale", "compatible_with_cagro": False,
             "samples": [{"sample_index": i, **{"model_" + k: sample.get("inputs", {}).get(k)
                          for k in ("N", "P", "K")}}
-                        for i, sample in enumerate(samples)],
+                        for i, sample in enumerate(samples) if not no_npk],
             "note": "Recorded inference inputs only; empty samples mean no recorded model inputs."
         },
-        "soil_model_warning": (MODEL_WARNING if soil.get('status') != 'disabled' else
+        "soil_model_warning": ('NPK is excluded from this model. PAGRO measurements are pending.' if no_npk else MODEL_WARNING if soil.get('status') != 'disabled' else
                                'N/P/K are recorded model estimates or labelled regional defaults, not laboratory measurements. '
                                'Physical units and analytical-method compatibility with the training data are unverified.'),
     }

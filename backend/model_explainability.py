@@ -30,8 +30,9 @@ def content_hash(value):
                                     separators=(',', ':')).encode()).hexdigest()
 
 
-def forest_snapshot(model, version, inputs, raw_prediction, probabilities):
+def forest_snapshot(model, version, inputs, raw_prediction, probabilities, feature_labels=None):
     """Called at inference, using the same frame and probability output."""
+    labels = feature_labels or FEATURE_LABELS
     sample = {
         'model_version': version, 'inputs': inputs,
         'raw_prediction': str(raw_prediction), 'class_probabilities': probabilities,
@@ -55,8 +56,8 @@ def forest_snapshot(model, version, inputs, raw_prediction, probabilities):
         if not all(math.isfinite(v) and v >= 0 for v in values):
             raise ValueError('Invalid importance values')
         result['features'] = [
-            {'feature': name, 'label': FEATURE_LABELS.get(name, (name, ''))[0],
-             'unit': FEATURE_LABELS.get(name, (name, ''))[1], 'importance': value}
+            {'feature': name, 'label': labels.get(name, (name, ''))[0],
+             'unit': labels.get(name, (name, ''))[1], 'importance': value}
             for name, value in zip(names, values)
         ]
         result['status'] = 'available'
@@ -108,4 +109,8 @@ def finalize_explanation(result):
     snapshot['input_snapshot_hash'] = content_hash(snapshot.get('samples', []))
     snapshot['ranking'] = deepcopy(result.get('top_crop_recommendations') or [])
     result['model_explanation'] = snapshot
-    return bind_local_explanation(result, snapshot, FEATURE_LABELS)
+    labels = dict(FEATURE_LABELS)
+    samples = snapshot.get('samples') or []
+    if samples and all((sample.get('model_climate_inputs') or {}).get('rainfall', {}).get('period') == 'annual_mean_total' for sample in samples):
+        labels['rainfall'] = ('Annual rainfall (5-year mean)', 'mm/year')
+    return bind_local_explanation(result, snapshot, labels)

@@ -30,7 +30,11 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
   @override
   Widget build(BuildContext context) {
     final record = widget.record;
-    final body = verifiedLocalExplanation(record);
+    String? issue;
+    final body = verifiedLocalExplanation(
+      record,
+      onRejected: (code) => issue = code,
+    );
     if (body.isEmpty) {
       final raw = localObject(record['local_model_explanation']);
       return _AnalysisSection(
@@ -39,9 +43,66 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
         surface: const Color(0xFFEAF3FA),
         children: [
           Text(
-            raw['status'] == 'unavailable'
-                ? '${raw['reason']}'
-                : 'A matching local explanation was not saved or could not be verified for this analysis. Run a new farm analysis to record it. Saved scores remain unchanged.',
+            issue == 'not_saved'
+                ? 'An explanation was not saved with this result. Scores are unchanged.'
+                : issue == 'server_unavailable'
+                ? 'The explanation could not be generated. Scores are unchanged.'
+                : 'The saved explanation could not be verified. Scores are unchanged.',
+          ),
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              onPressed: () => showDialog<void>(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Explanation details'),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'No model factors are shown until the saved explanation matches the result.',
+                        ),
+                        if (raw['status'] == 'unavailable' &&
+                            raw['reason'] != null) ...[
+                          const SizedBox(height: 12),
+                          Text('${raw['reason']}'),
+                        ],
+                        const SizedBox(height: 12),
+                        SelectableText('Check: ${issue ?? 'invalid_snapshot'}'),
+                      ],
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () async {
+                        await Clipboard.setData(
+                          ClipboardData(
+                            text: const JsonEncoder.withIndent(
+                              '  ',
+                            ).convert(localExplanationDiagnostics(record)),
+                          ),
+                        );
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Check details copied.'),
+                            ),
+                          );
+                        }
+                      },
+                      child: const Text('Copy check details'),
+                    ),
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
+              ),
+              child: const Text('Explanation details'),
+            ),
           ),
         ],
       );
@@ -85,6 +146,8 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
       ),
     );
     final modelWidgets = <Widget>[
+      if (isAnnualPrototypeRecord(record))
+        const Text('Experimental model. $annualPrototypeShortNotice'),
       Text(
         '${summary['heading']}',
         style: const TextStyle(fontWeight: FontWeight.w800),
