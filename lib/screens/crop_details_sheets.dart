@@ -6,6 +6,7 @@ part of '../main.dart';
 // UI only. Everything shown comes from the crop object / analysis record that
 // was already saved; nothing is recalculated and no value is guessed. When a
 // value is missing a plain "unavailable" message is shown instead.
+// General variety profiles are separately labelled reference information.
 //
 //   rank 1      -> RecommendedCropDetailsSheet  (environmental factors)
 //   rank 2..N   -> SecondaryCropDetailsSheet    (model explanation)
@@ -1485,6 +1486,8 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
                 ? 'Highest mean Random Forest class probability across the farm samples. Environmental comparisons below do not change this ranking.'
                 : 'The explanation below shows the measured conditions that contributed most to that result.',
           ),
+        SeasonalPlantingAdvice(record: record, crop: name),
+        CropVarietyReference(crop: name),
         _gap(CropSheetStyle.sectionGap),
         if (isModelRanked(record) && !preliminary)
           LocalExplanationCard(
@@ -1606,6 +1609,8 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
                 ? 'Ranked by mean Random Forest class probability across farm samples. This is not a probability of a successful harvest.'
                 : cropMatchDescription(score),
           ),
+        SeasonalPlantingAdvice(record: record, crop: name),
+        CropVarietyReference(crop: name),
         _gap(CropSheetStyle.cardGap),
         if (modelRanked && !preliminary)
           LocalExplanationCard(

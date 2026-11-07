@@ -31,6 +31,34 @@ class PortalRoutes {
     if (kIsWeb) unawaited(publishPortalRoute(Uri.parse(path)));
   }
 
+  static String? signInLanding(dynamic role) =>
+      const {
+        'analyst',
+        'planner',
+        'agricultural_planning_analyst',
+      }.contains('$role'.trim().toLowerCase())
+      ? '/operator/dashboard'
+      : null;
+
+  /// Retired independent-assessment screens never remain reachable via old URLs.
+  /// Submitted-case links still resolve through the protected review workflow.
+  static Uri analystRoute(Uri uri) {
+    if (uri.path == '/operator/analyze') {
+      return Uri(path: '/operator/dashboard');
+    }
+    if (uri.path == '/operator/history') {
+      final session = uri.queryParameters['session'];
+      return Uri(
+        path: '/operator/queue',
+        queryParameters: {
+          'session': ?session,
+          if (uri.queryParameters['q'] != null) 'q': uri.queryParameters['q']!,
+        },
+      );
+    }
+    return uri;
+  }
+
   static int pageFor(List<String> pages, String role) {
     final uri = current.value;
     if (!uri.path.startsWith('/$role/')) return 0;

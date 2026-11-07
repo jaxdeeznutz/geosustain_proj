@@ -39,6 +39,41 @@ List<String> seasonalAssessmentLines(Map<String, dynamic> record) {
   lines.add(
     'Planting calendar: ${object(saved['calendar'])['reason'] ?? 'Unavailable'}',
   );
+  final planting = object(saved['planting_assessment']);
+  if (planting.isNotEmpty) {
+    lines.add('Seasonal planting assessment: ${planting['basis']}');
+    lines.add('${planting['window_description']}');
+    lines.add('${planting['water_supply_assumption']}');
+    lines.add('${planting['local_validation']}');
+    lines.add('Moisture method: ${planting['moisture_method']}');
+    for (final row
+        in (planting['crops'] is List ? planting['crops'] as List : [])) {
+      final crop = object(row);
+      lines.add('${crop['crop']}: ${crop['label']}');
+      for (final reason
+          in (crop['reasons'] is List ? crop['reasons'] as List : [])) {
+        lines.add('  $reason');
+      }
+    }
+    for (final row
+        in (climate['monthly_cycle'] is List
+            ? climate['monthly_cycle'] as List
+            : [])) {
+      final item = object(row);
+      String amount(dynamic value) => value is num && value.isFinite
+          ? value.toStringAsFixed(1)
+          : 'Unavailable';
+      lines.add(
+        '${item['month_name']}: rain ${amount(item['rainfall_mm'])} mm/month; estimated reference ETo ${amount(item['reference_eto_mm'])} mm/month; moisture ${item['moisture_status']}; ${(item['paired_valid_years'] is List ? item['paired_valid_years'] as List : []).length}/${item['expected_years']} paired years',
+      );
+    }
+    for (final entry in object(planting['sources']).entries) {
+      final source = object(entry.value);
+      lines.add(
+        'Seasonal source: ${source['title']}. ${source['criterion']} ${source['url']}',
+      );
+    }
+  }
   for (final item
       in (saved['limitations'] is List ? saved['limitations'] as List : [])) {
     lines.add('$item');

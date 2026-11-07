@@ -410,34 +410,6 @@ def init_db():
                     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
                 )
             """)
-            # Seed with the finalized approved crop set (Section 9) exactly once —
-            # ON CONFLICT DO NOTHING means re-running this never overwrites a
-            # Super Administrator's later edits.
-            cur.execute("""
-                INSERT INTO crop_reference (crop_key, label, growth_cycle, est_yield, suitability_note)
-                VALUES
-                    ('banana (cavendish/lakatan)', 'Cavendish Variety (Export Grade)', '9-12 Months', '35 Tons / Ha', 'Thrives in Panabo''s high humidity and warm temperature.'),
-                    ('banana (saba)', 'Saba Variety (Cooking Banana)', '10-12 Months', '28 Tons / Ha', 'Well-suited for Panabo''s soil and rainfall profile.'),
-                    ('coconut', 'Coconut Palm', '36-48 Months (first harvest)', '4-6 Tons Copra / Ha', 'Thrives in coastal and lowland areas of Davao del Norte.'),
-                    ('cacao', 'Cacao Plantation', '24-36 Months', '0.8 Tons / Ha', 'High-value crop suited for shaded agroforestry systems.'),
-                    ('papaya', 'Papaya (Solo / Red Lady)', '6-9 Months', '40 Tons / Ha', 'Fast-growing; ideal for loamy soils with good drainage.'),
-                    ('abaca', 'Abaca (Fiber Crop)', '18-24 Months', '1.2 Tons / Ha', 'Davao Region is the top abaca producer in the Philippines.'),
-                    ('rice', 'Rice (Lowland Variety)', '3-4 Months', '4-5 Tons / Ha', 'Suitable for low-lying, high-rainfall areas of Panabo.'),
-                    ('corn (white/yellow)', 'Corn (White/Yellow Variety)', '3 Months', '5-7 Tons / Ha', 'Commonly grown in Davao del Norte upland barangays.'),
-                    ('watermelon', 'Watermelon (Local/Hybrid)', '2-3 Months', '20-25 Tons / Ha', 'Grows well during dry season with irrigation support.'),
-                    ('durian', 'Durian (Davao Variety)', '4-6 Years (first harvest)', '8-15 Tons / Ha', 'High-value Mindanao fruit crop suited to warm, humid, well-drained areas.'),
-                    ('cassava', 'Cassava / Kamoteng Kahoy', '8-12 Months', '15-25 Tons / Ha', 'Tolerates drier and less fertile soils; useful for food and feed production.'),
-                    ('sweet potato', 'Sweet Potato / Kamote', '3-5 Months', '8-15 Tons / Ha', 'Short-cycle root crop suited for diversified lowland and upland farming.'),
-                    ('rubber', 'Rubber Tree', '5-7 Years (tapping starts)', '1-2 Tons Dry Rubber / Ha', 'Suitable for humid Mindanao areas with stable rainfall and well-drained soils.'),
-                    ('pomelo', 'Pomelo', '3-5 Years (first harvest)', '10-20 Tons / Ha', 'A Davao-associated fruit crop suited for warm areas with moderate rainfall.')
-                ON CONFLICT (crop_key) DO NOTHING
-            """)
-
-            # Add the new catalog without deleting historical crops or snapshots.
-            from crop_requirements import REQUIREMENTS
-            for name in REQUIREMENTS:
-                cur.execute("INSERT INTO crop_reference (crop_key,label) VALUES (%s,%s) ON CONFLICT (crop_key) DO NOTHING", (name.lower(),name))
-
             # --- Super Administrator: audit log for security-sensitive actions ---
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS audit_logs (
@@ -454,6 +426,7 @@ def init_db():
             cur.execute("CREATE INDEX IF NOT EXISTS idx_history_user_order ON analysis_sessions (user_id, analyzed_at DESC, id DESC)")
             cur.execute("CREATE INDEX IF NOT EXISTS idx_queue_order ON analysis_sessions (verification_status, analyzed_at DESC, id DESC)")
             cur.execute("ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS actor_reference TEXT")
+            reconcile_supported_crop_catalog(cur)
             cur.execute("UPDATE audit_logs SET actor_reference='account:' || actor_user_id WHERE actor_reference IS NULL AND actor_user_id IS NOT NULL")
             cur.execute("""CREATE TABLE IF NOT EXISTS revoked_sessions (
                 session_hash CHAR(64) PRIMARY KEY, expires_at TIMESTAMPTZ NOT NULL)""")
@@ -1660,11 +1633,40 @@ def admin_list_analyses(limit: int = 200, offset: int = 0, q: str = ""):
 # ---------------------------------------------------------------------------
 # Super Administrator: crop reference management (Section 17)
 # ---------------------------------------------------------------------------
+def supported_crop_keys():
+    """Current recommendation catalogue, shared with reference assessment and ranking."""
+    from crop_requirements import REQUIREMENTS
+    return {name.lower() for name in REQUIREMENTS}
+
+
+def reconcile_supported_crop_catalog(cur):
+    """Seed supported crops and retire legacy toggles without deleting saved data.
+
+    Existing supported-row edits and intentional deactivation remain unchanged.
+    Run inside the schema transaction after the audit table is available.
+    """
+    from crop_requirements import REQUIREMENTS
+    cur.execute("SELECT pg_advisory_xact_lock(hashtextextended('supported-crop-catalog-v1', 0))")
+    for name in REQUIREMENTS:
+        cur.execute("INSERT INTO crop_reference (crop_key,label) VALUES (%s,%s) ON CONFLICT (crop_key) DO NOTHING", (name.lower(), name))
+    cur.execute("""UPDATE crop_reference SET is_active=FALSE, updated_at=NOW()
+        WHERE is_active=TRUE AND NOT (crop_key=ANY(%s)) RETURNING id,crop_key""",
+        (sorted(supported_crop_keys()),))
+    retired = [dict(row) for row in cur.fetchall()]
+    for row in retired:
+        audit_in_transaction(cur, None, 'system_migration', 'crop_catalog_reconciled',
+            'crop_reference', row['id'], {'crop_key': row['crop_key'],
+                'before': {'is_active': True}, 'after': {'is_active': False},
+                'reason': 'Outside the supported seven-crop catalogue; historical records retained.'})
+    return retired
+
+
 def list_crop_reference():
+    from crop_varieties import with_variety_reference
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT * FROM crop_reference ORDER BY label ASC")
-            return [dict(r) for r in cur.fetchall()]
+            cur.execute("SELECT * FROM crop_reference WHERE crop_key=ANY(%s) ORDER BY label ASC", (sorted(supported_crop_keys()),))
+            return [with_variety_reference(r) for r in cur.fetchall()]
 
 
 def get_active_crop_keys():
@@ -1674,7 +1676,7 @@ def get_active_crop_keys():
     """
     with get_conn() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT crop_key FROM crop_reference WHERE is_active = TRUE")
+            cur.execute("SELECT crop_key FROM crop_reference WHERE is_active = TRUE AND crop_key=ANY(%s)", (sorted(supported_crop_keys()),))
             return {r['crop_key'] for r in cur.fetchall()}
 
 
@@ -1685,6 +1687,9 @@ def update_crop_reference(crop_key: str, label=None, growth_cycle=None, est_yiel
     it cannot add a new crop_key (no INSERT path here) or change the
     environmental scoring ranges, so this cannot be used to reintroduce an
     unapproved crop or corrupt the ML-adjacent scoring logic."""
+    if crop_key not in supported_crop_keys():
+        return None
+    from crop_varieties import with_variety_reference
     sets = []; vals = []
     for col, val in [('label', label), ('growth_cycle', growth_cycle), ('est_yield', est_yield),
                       ('suitability_note', suitability_note)]:
@@ -1697,7 +1702,7 @@ def update_crop_reference(crop_key: str, label=None, growth_cycle=None, est_yiel
             with conn.cursor() as cur:
                 cur.execute("SELECT * FROM crop_reference WHERE crop_key=%s", (crop_key,))
                 row = cur.fetchone()
-                return dict(row) if row else None
+                return with_variety_reference(row) if row else None
     sets.append('updated_by=%s'); vals.append(actor_user_id)
     sets.append('updated_at=NOW()')
     vals.append(crop_key)
@@ -1716,7 +1721,7 @@ def update_crop_reference(crop_key: str, label=None, growth_cycle=None, est_yiel
                      'before': {key: previous[key] for key in ('label','growth_cycle','est_yield','suitability_note','is_active')} if previous else None,
                      'after': {key: row[key] for key in ('label','growth_cycle','est_yield','suitability_note','is_active')}})
             conn.commit()
-    updated = dict(row) if row else None
+    updated = with_variety_reference(row) if row else None
     return updated
 
 

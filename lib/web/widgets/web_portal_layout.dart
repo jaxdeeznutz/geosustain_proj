@@ -145,8 +145,10 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
                 child: TextField(
                   key: const ValueKey('portal-analysis-search'),
                   textInputAction: TextInputAction.search,
-                  decoration: const InputDecoration(
-                    hintText: 'Search my analyses...',
+                  decoration: InputDecoration(
+                    hintText: state.isPlanner
+                        ? 'Search submitted cases...'
+                        : 'Search my analyses...',
                     prefixIcon: Icon(Icons.search, size: 20),
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(
@@ -155,7 +157,7 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
                     ),
                   ),
                   onSubmitted: (value) => PortalRoutes.go(
-                    '/operator/history?q=${Uri.encodeQueryComponent(value.trim())}',
+                    '/operator/${state.isPlanner ? 'queue' : 'history'}?q=${Uri.encodeQueryComponent(value.trim())}',
                   ),
                 ),
               ),
@@ -278,24 +280,26 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
     );
     return Theme(
       data: theme.copyWith(
-        textTheme: theme.textTheme.copyWith(
-          bodyMedium: TextStyle(
-            fontSize: 13,
-            height: 1.4,
-            color: WebPortalColors.ink,
-          ),
-          bodySmall: TextStyle(
-            fontSize: 11,
-            height: 1.35,
-            color: WebPortalColors.muted,
-          ),
-          bodyLarge: TextStyle(fontSize: 14, color: WebPortalColors.ink),
-          titleMedium: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            color: WebPortalColors.ink,
-          ),
-        ),
+        textTheme: theme.textTheme
+            .copyWith(
+              bodyMedium: TextStyle(
+                fontSize: 13,
+                height: 1.4,
+                color: WebPortalColors.ink,
+              ),
+              bodySmall: TextStyle(
+                fontSize: 11,
+                height: 1.35,
+                color: WebPortalColors.muted,
+              ),
+              bodyLarge: TextStyle(fontSize: 14, color: WebPortalColors.ink),
+              titleMedium: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+                color: WebPortalColors.ink,
+              ),
+            )
+            .apply(fontFamily: 'Roboto'),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: WebPortalColors.surface,
@@ -316,6 +320,7 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
             textStyle: const TextStyle(
+              fontFamily: 'Roboto',
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -332,6 +337,7 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 15),
             textStyle: const TextStyle(
+              fontFamily: 'Roboto',
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),

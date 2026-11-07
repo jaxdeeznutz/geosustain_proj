@@ -464,7 +464,7 @@ class ModelExplanationCard extends StatelessWidget {
         const SizedBox(height: 8),
         if (sampleNames.isNotEmpty)
           Text(
-            'Recorded model output${sampleNames.contains(',') ? 's' : ''}: $sampleNames. ${record['seasonal_assessment'] != null ? 'Monthly climate context does not change model scores or crop order.' : 'See the saved scoring method and any recorded seasonal adjustment for this result.'}',
+            'Recorded model output${sampleNames.contains(',') ? 's' : ''}: $sampleNames. ${record['seasonal_assessment'] != null ? 'Seasonal planting advice is separate from model scores and crop order.' : 'See the saved scoring method and any recorded seasonal adjustment for this result.'}',
           ),
         if (explanation.isNotEmpty)
           TextButton.icon(

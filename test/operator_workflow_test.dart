@@ -222,7 +222,10 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(count, 1);
+      expect(
+        count,
+        2,
+      ); // One queue page and one scoped overview; no page sweep.
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       c.dispose();

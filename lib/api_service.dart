@@ -180,14 +180,20 @@ class ApiService {
   /// Retry safe reads after transient host/network failures. Never replay writes.
   Future<http.Response> _readWithRecovery(
     Future<http.Response> Function() request,
-    String? token,
-  ) async {
-    final response = await _withRenderWarmupRetry(() async {
-      if (await getToken() != token) {
-        throw const ApiException(401, 'Your session changed. Sign in again.');
-      }
-      return request();
-    }, timeout: const Duration(seconds: 30));
+    String? token, {
+    int attempts = 3,
+    Duration timeout = const Duration(seconds: 30),
+  }) async {
+    final response = await _withRenderWarmupRetry(
+      () async {
+        if (await getToken() != token) {
+          throw const ApiException(401, 'Your session changed. Sign in again.');
+        }
+        return request();
+      },
+      timeout: timeout,
+      attempts: attempts,
+    );
     if (await getToken() != token) {
       throw const ApiException(401, 'Your session changed. Sign in again.');
     }
@@ -1296,6 +1302,8 @@ class ApiService {
     int offset = 0,
     String search = '',
     Map<String, String> parameters = const {},
+    Duration requestTimeout = const Duration(seconds: 30),
+    int recoveryAttempts = 3,
   }) async {
     final token = await getToken();
     final uri = Uri.parse('$baseUrl$path').replace(
@@ -1309,6 +1317,8 @@ class ApiService {
     final response = await _readWithRecovery(
       () => _client.get(uri, headers: {'Authorization': 'Bearer $token'}),
       token,
+      timeout: requestTimeout,
+      attempts: recoveryAttempts,
     );
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {

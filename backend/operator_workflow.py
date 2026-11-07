@@ -102,6 +102,7 @@ def conditions(status='all', q='', place='', start=None, end=None, view='all'):
     if view=='preliminary':where+=" AND s.result_snapshot->>'analysis_mode'='preliminary_environmental'"
     elif view=='reviewed_week':where+=" AND c.status IN ('verified','rejected') AND c.updated_at>=NOW()-INTERVAL '7 days'"
     elif view=='followups_due':where+=" AND EXISTS(SELECT 1 FROM review_followups f WHERE f.case_id=c.id AND f.completed_at IS NULL AND f.due_on<=CURRENT_DATE)"
+    elif view=='decisions':where+=" AND c.status IN ('verified','rejected')"
     elif view!='all':raise HTTPException(422,'Unknown workload view.')
     return where,values
 
@@ -112,7 +113,7 @@ FROM = ''' FROM review_cases c JOIN analysis_sessions s ON s.id=c.current_sessio
       WHERE session_id=s.id ORDER BY id DESC LIMIT 1) crop ON TRUE '''
 FIELDS = '''c.id AS case_id,c.current_session_id AS session_id,c.status AS verification_status,c.version AS review_version,
     c.farm_id,c.submitted_at,c.updated_at,s.farm_name_snapshot AS farm_name,s.place_name,s.analyzed_at,
-    s.area_hectares,s.center_lat,s.center_lon,u.username AS farmer_name,
+    s.area_hectares,s.center_lat,s.center_lon,s.selected_polygon,u.username AS farmer_name,
     s.result_snapshot->>'analysis_mode' AS analysis_mode,crop.predicted_crop,crop.is_crop_recommended,crop.land_type,
     CASE WHEN COALESCE(s.result_snapshot->>'analysis_mode','')<>'preliminary_environmental'
       AND crop.is_crop_recommended IS TRUE AND COALESCE(crop.land_type,'arable')='arable'
@@ -127,7 +128,7 @@ def inbox(status='pending',q='',place='',start=None,end=None,offset=0,limit=20,s
         where+=' AND s.center_lon BETWEEN %s AND %s AND s.center_lat BETWEEN %s AND %s';values += [west,east,south,north]
     order='c.submitted_at '+('DESC' if sort=='newest' else 'ASC')+',c.id '+('DESC' if sort=='newest' else 'ASC')
     with closing(db.get_conn()) as conn,conn.cursor() as cur:
-        cur.execute('SELECT '+FIELDS+(',s.selected_polygon' if map_view else '')+FROM+' WHERE '+where+' ORDER BY '+order+' LIMIT %s OFFSET %s',(*values,limit+1,offset))
+        cur.execute('SELECT '+FIELDS+FROM+' WHERE '+where+' ORDER BY '+order+' LIMIT %s OFFSET %s',(*values,limit+1,offset))
         rows=[dict(r) for r in cur.fetchall()]
     return {'queue':rows[:limit],'has_more':len(rows)>limit,'scope':'Submitted review cases; authorized project records only. Map bounds filter parcel centers.'}
 

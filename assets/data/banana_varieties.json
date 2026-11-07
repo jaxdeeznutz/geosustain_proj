@@ -1,0 +1,54 @@
+{
+  "version": "banana-variety-reference-v1",
+  "crop_key": "banana",
+  "prediction_scope": "crop_group_only",
+  "note": "The model ranks Banana as one crop group. These profiles describe varieties; separate variety predictions are not available.",
+  "profiles": [
+    {
+      "variety_key": "cavendish",
+      "label": "Cavendish",
+      "description": "Fresh fruit and export banana. TADECO documents Cavendish production in Panabo.",
+      "sources": [
+        {
+          "title": "ANFLOCOR: TADECO",
+          "url": "https://www.anflocor.com/tadeco"
+        },
+        {
+          "title": "DOST-PCAARRD: Banana industry profile",
+          "url": "https://ispweb.pcaarrd.dost.gov.ph/isp-commodities/banana/"
+        }
+      ]
+    },
+    {
+      "variety_key": "lakatan",
+      "label": "Lakatan",
+      "description": "Fresh-eating dessert banana.",
+      "sources": [
+        {
+          "title": "DOST-PCAARRD: Banana industry profile",
+          "url": "https://ispweb.pcaarrd.dost.gov.ph/isp-commodities/banana/"
+        },
+        {
+          "title": "DA-BAFS Technical Bulletin OAD-08 (2023): Banana industry introduction",
+          "url": "https://bafs.da.gov.ph/wp-content/uploads/2025/04/v3.0-Paviso_Techncial-bulletin_Template_11172023.-Final.pdf"
+        }
+      ]
+    },
+    {
+      "variety_key": "saba",
+      "label": "Saba",
+      "description": "Cooking and processing banana.",
+      "sources": [
+        {
+          "title": "DOST-PCAARRD: Banana industry profile",
+          "url": "https://ispweb.pcaarrd.dost.gov.ph/isp-commodities/banana/"
+        },
+        {
+          "title": "DA-BAFS Technical Bulletin OAD-08 (2023): Banana industry introduction",
+          "url": "https://bafs.da.gov.ph/wp-content/uploads/2025/04/v3.0-Paviso_Techncial-bulletin_Template_11172023.-Final.pdf"
+        }
+      ]
+    }
+  ],
+  "local_scope_note": "Cavendish production is documented in Panabo. Lakatan and Saba are national variety references; current Panabo production shares were not established."
+}

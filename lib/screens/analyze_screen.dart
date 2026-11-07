@@ -498,6 +498,13 @@ class ResultSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final data = state.result;
     final cropFlag = data?['is_crop_recommended'];
+    final seasonal = analysisMapValue(data?['seasonal_assessment']);
+    final seasonalStatus = analysisMapValue(
+      seasonal['planting_assessment'],
+    )['status'];
+    final seasonalText = seasonalStatus == 'available'
+        ? 'Available'
+        : 'Check details';
     final isCrop = cropFlag is bool
         ? cropFlag
         : !['false', '0'].contains('$cropFlag'.trim().toLowerCase()) &&
@@ -668,9 +675,13 @@ class ResultSummaryCard extends StatelessWidget {
               const SizedBox(width: 10),
               Expanded(
                 child: GreenMetric(
-                  label: 'Season-adjusted',
+                  label: seasonal.isNotEmpty
+                      ? 'Seasonal advice'
+                      : 'Season-adjusted',
                   value: isCrop
-                      ? '${state.numText(data?['season_adjusted_score'] ?? data?['crop_compatibility_pct'])}%'
+                      ? (seasonal.isNotEmpty
+                            ? seasonalText
+                            : '${state.numText(data?['season_adjusted_score'] ?? data?['crop_compatibility_pct'])}%')
                       : '--',
                 ),
               ),

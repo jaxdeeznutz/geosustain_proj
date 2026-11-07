@@ -441,6 +441,8 @@ class _FarmerCropSheet extends StatelessWidget {
         ],
       ),
       children: [
+        SeasonalPlantingAdvice(record: record, crop: name),
+        CropVarietyReference(crop: name),
         Text(
           screening ? 'Land checks' : 'Growing conditions',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),

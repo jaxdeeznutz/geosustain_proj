@@ -257,11 +257,11 @@ void main() {
       );
       expect(find.text('No review cases found'), findsOneWidget);
       expect(
-        find.widgetWithText(TextFormField, 'From submission date'),
+        find.widgetWithText(TextField, 'From submission date'),
         findsOneWidget,
       );
       expect(
-        find.widgetWithText(TextFormField, 'Through submission date'),
+        find.widgetWithText(TextField, 'Through submission date'),
         findsOneWidget,
       );
       await tester.tap(
@@ -269,6 +269,8 @@ void main() {
       );
       await tester.pumpAndSettle();
       await tester.tap(find.text('Accepted').last);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Apply Filters'));
       await tester.pumpAndSettle();
       expect(
         requests
@@ -414,7 +416,7 @@ void main() {
   );
 
   testWidgets(
-    'empty report action opens the analysis workspace without creating a report',
+    'empty report action opens the review inbox without creating a report',
     (tester) async {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
@@ -425,7 +427,7 @@ void main() {
       await tester.ensureVisible(action);
       await tester.tap(action);
       await tester.pumpAndSettle();
-      expect(PortalRoutes.current.value.path, '/operator/analyze');
+      expect(PortalRoutes.current.value.path, '/operator/queue');
       expect(requests.where((r) => r.method != 'GET'), isEmpty);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
@@ -465,18 +467,12 @@ void main() {
           }
 
           if (page == 'dashboard') {
-            expect(
-              rect('overview-start-panel').top,
-              closeTo(rect('overview-actions-panel').top, .1),
-            );
-            expect(
-              rect('overview-start-panel').bottom,
-              closeTo(rect('overview-weather-panel').bottom, .1),
-            );
-            aligned('overview-analyses-panel', 'overview-reports-panel');
-            aligned('overview-analyses-panel', 'overview-area-panel');
-            aligned('metric-Total Analyses', 'metric-Average Model Score');
-            aligned('metric-Total Analyses', 'metric-Cumulative Analysis Area');
+            expect(find.text('Review farmer submissions'), findsOneWidget);
+            expect(find.text('Map of submitted cases'), findsOneWidget);
+            expect(find.text('Review workload'), findsOneWidget);
+            expect(find.text('Start Analysis'), findsNothing);
+            expect(find.text('Analysis Workspace'), findsNothing);
+            expect(find.text('My Analyses'), findsNothing);
           } else {
             aligned('patterns-frequency-panel', 'patterns-distribution-panel');
             aligned('patterns-trend-panel', 'patterns-insights-panel');
@@ -653,62 +649,27 @@ void main() {
   );
 
   testWidgets(
-    'history search is account scoped and page filters, sorting and view toggles work',
+    'retired history opens inbox and global search targets submitted cases',
     (tester) async {
       addTearDown(tester.view.resetPhysicalSize);
       addTearDown(tester.view.resetDevicePixelRatio);
       final requests = <http.Request>[];
       final state = await _fixture(requests);
       await _pumpPortal(tester, state, 'history', const Size(1440, 1100));
-      expect(find.byType(DataTable), findsOneWidget);
-      await tester.tap(find.byTooltip('Grid view'));
+      expect(PortalRoutes.current.value.path, '/operator/queue');
+      expect(find.text('Analysis Workspace'), findsNothing);
+      expect(find.text('My Analyses'), findsNothing);
+      final field = find.widgetWithText(TextField, 'Search submitted cases...');
+      await tester.enterText(field, 'South');
+      await tester.testTextInput.receiveAction(TextInputAction.search);
       await tester.pumpAndSettle();
-      expect(find.byType(DataTable), findsNothing);
-      await tester.tap(find.byTooltip('List view'));
-      await tester.pumpAndSettle();
-      expect(find.byType(DataTable), findsOneWidget);
-      final type = find.widgetWithText(
-        DropdownButtonFormField<String>,
-        'Analysis type',
-      );
-      await tester.tap(type);
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Land assessment').last);
-      await tester.pumpAndSettle();
-      final table = find.descendant(
-        of: find.byType(DataTable),
-        matching: find.text('Synthetic West parcel'),
-      );
-      expect(table, findsOneWidget);
-      expect(
-        find.descendant(
-          of: find.byType(DataTable),
-          matching: find.text('Synthetic North parcel'),
-        ),
-        findsNothing,
-      );
-      await tester.enterText(
-        find.widgetWithText(TextField, 'Search all records'),
-        'South',
-      );
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.pumpAndSettle();
+      expect(PortalRoutes.current.value.queryParameters['q'], 'South');
       expect(
         requests
-            .lastWhere((r) => r.url.path.endsWith('/history'))
+            .lastWhere((r) => r.url.path.endsWith('/inbox'))
             .url
             .queryParameters['q'],
         'South',
-      );
-      await tester.tap(find.text('Reset'));
-      await tester.pump(const Duration(milliseconds: 400));
-      await tester.pumpAndSettle();
-      expect(
-        find.descendant(
-          of: find.byType(DataTable),
-          matching: find.text('Synthetic North parcel'),
-        ),
-        findsOneWidget,
       );
       expect(requests.where((r) => r.method != 'GET'), isEmpty);
       expect(tester.takeException(), isNull);

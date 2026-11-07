@@ -41,7 +41,7 @@ def install(app,get_user,require_planner):
     def inbox(planner=Depends(require_planner),f=Depends(filters),
               status: str=Query('pending',pattern='^(all|pending|needs_information|verified|rejected)$'),
               offset: int=Query(0,ge=0),limit: int=Query(20,ge=1,le=100),sort: str=Query('oldest',pattern='^(oldest|newest)$'),
-              view:str=Query('all',pattern='^(all|preliminary|reviewed_week|followups_due)$')):
+              view:str=Query('all',pattern='^(all|preliminary|reviewed_week|followups_due|decisions)$')):
         return workflow.inbox(status=status,offset=offset,limit=limit,sort=sort,view=view,**f)
 
     @app.get('/api/operator/map')

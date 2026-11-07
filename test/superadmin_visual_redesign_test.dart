@@ -504,6 +504,69 @@ void main() {
   });
 
   testWidgets(
+    'banana varieties remain under one of seven crop groups and search by variety finds the parent',
+    (tester) async {
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final fixture = _AdminFixture();
+      final reference =
+          jsonDecode(
+                File('assets/data/banana_varieties.json').readAsStringSync(),
+              )
+              as Map;
+      fixture.crops
+        ..clear()
+        ..addAll([
+          for (final key in [
+            'banana',
+            'cacao',
+            'coconut',
+            'durian',
+            'mango',
+            'rice',
+            'rubber',
+          ])
+            {
+              'crop_key': key,
+              'label': key == 'banana' ? 'Banana' : key,
+              'is_active': true,
+              if (key == 'banana') 'varieties': reference['profiles'],
+            },
+        ]);
+      await _pumpAdmin(tester, fixture, 'crops', size: const Size(1440, 1100));
+      expect(find.text('Approved Crop Groups'), findsOneWidget);
+      expect(find.byType(Switch), findsNWidgets(7));
+      final search = find.byKey(const ValueKey('admin-crop-search'));
+      await tester.ensureVisible(search);
+      await tester.pumpAndSettle();
+      await tester.enterText(search, 'lakatan');
+      await tester.pumpAndSettle();
+      expect(find.byType(Switch), findsOneWidget);
+      expect(find.byKey(const ValueKey('admin-crop-banana')), findsOneWidget);
+      final profiles = find.byKey(const ValueKey('banana-variety-reference'));
+      await tester.ensureVisible(profiles);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Banana varieties'));
+      await tester.pumpAndSettle();
+      for (final name in ['Cavendish', 'Lakatan', 'Saba']) {
+        expect(find.text(name), findsOneWidget);
+      }
+      await tester.ensureVisible(
+        find.byKey(const ValueKey('admin-crop-banana')),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const ValueKey('admin-crop-banana')));
+      await tester.pumpAndSettle();
+      final request = fixture.requests.lastWhere((r) => r.method == 'PATCH');
+      expect(request.url.path, endsWith('/crops/banana'));
+      expect(jsonDecode(request.body), {'is_active': false});
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      fixture.api.close();
+    },
+  );
+
+  testWidgets(
     'audit filter details and monitoring use real records without inventing health',
     (tester) async {
       addTearDown(tester.view.resetPhysicalSize);
