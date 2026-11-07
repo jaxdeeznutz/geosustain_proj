@@ -20,4 +20,5 @@ def with_variety_reference(row):
         result['variety_reference_version'] = reference['version']
         result['variety_prediction_scope'] = reference['prediction_scope']
         result['variety_reference_note'] = reference['note']
+        result['variety_guidance_scope_note'] = reference.get('guidance_scope_note')
     return result

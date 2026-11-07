@@ -30,54 +30,17 @@ class WebDashboardScreen extends StatelessWidget {
     Theme.of(context);
     final name =
         '${state.currentUser?['username'] ?? state.currentUser?['name'] ?? 'Analyst'}';
-    if (state.isPlanner) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _DashboardWelcomeRow(
-            name: name,
-            state: state,
-            weather: state.liveWeather ?? {},
-          ),
-          const SizedBox(height: 18),
-          WebAdaptiveRow(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _AnalystWorkflowCard(
-                  icon: Icons.fact_check_rounded,
-                  title: 'Review farmer submissions',
-                  description:
-                      'Inspect saved boundaries, crop results and seasonal advice, then record a review decision.',
-                  steps: 'Review evidence → Record decision → Export report',
-                  action: 'Open Review Inbox',
-                  onPressed: () => PortalRoutes.go('/operator/queue'),
-                ),
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: _AnalystWorkflowCard(
-                  icon: Icons.map_rounded,
-                  title: 'Map of submitted cases',
-                  description:
-                      'Locate submitted farms and open a case to review its recorded evidence.',
-                  steps: 'Open map → Select a case → Inspect evidence',
-                  action: 'Open submitted case map',
-                  onPressed: onOpenMapAnalysis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          WebOperatorOverview(state: state),
-        ],
-      );
-    }
-    final records = state.historyRecords
-        .map((e) => Map<String, dynamic>.from(e))
-        .toList();
+    final records = state.isPlanner
+        ? analysisListValue(
+            state.currentModelSummary?['recent_records'],
+          ).map((e) => Map<String, dynamic>.from(e as Map)).toList()
+        : state.historyRecords
+              .map((e) => Map<String, dynamic>.from(e))
+              .toList();
     final metrics = WebAnalysisMetrics(records);
-    final summary = state.webSummary;
+    final summary = state.isPlanner
+        ? state.currentModelSummary
+        : state.webSummary;
     final summaryReady = summary != null;
     final avg = summaryReady
         ? analysisNumber(summary['average_model_score'])
@@ -103,7 +66,9 @@ class WebDashboardScreen extends StatelessWidget {
           Padding(
             padding: EdgeInsets.only(bottom: 12),
             child: Text(
-              'Summary of currently loaded records only. Whole-account statistics are not available yet.',
+              state.isPlanner
+                  ? 'Current-model summary is loading or unavailable. Refresh to retry.'
+                  : 'Summary of currently loaded records only. Whole-account statistics are not available yet.',
             ),
           ),
         if (state.historyError != null || state.resourceErrors.isNotEmpty)
@@ -117,7 +82,9 @@ class WebDashboardScreen extends StatelessWidget {
               title: 'Total Analyses',
               value: '${summary?['analysis_count'] ?? records.length}',
               subtitle: summaryReady
-                  ? 'Across all saved areas'
+                  ? (state.isPlanner
+                        ? 'Submitted cases \u00b7 current model'
+                        : 'Across all saved areas')
                   : 'Currently loaded records',
               warning:
                   (analysisNumber(summary?['analysis_count']) ??
@@ -160,7 +127,12 @@ class WebDashboardScreen extends StatelessWidget {
           sideFlex: 3,
           breakpoint: 900,
           equalHeight: true,
-          main: _DashboardGettingStarted(onStartAnalyze: onStartAnalyze),
+          main: _DashboardGettingStarted(
+            analyst: state.isPlanner,
+            onStartAnalyze: state.isPlanner
+                ? () => PortalRoutes.go('/operator/queue')
+                : onStartAnalyze,
+          ),
           side: WebStretchCards(
             children: [
               _DashboardQuickActions(
@@ -456,7 +428,11 @@ class _DashboardKpi extends StatelessWidget {
 
 class _DashboardGettingStarted extends StatelessWidget {
   final VoidCallback onStartAnalyze;
-  const _DashboardGettingStarted({required this.onStartAnalyze});
+  final bool analyst;
+  const _DashboardGettingStarted({
+    required this.onStartAnalyze,
+    this.analyst = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -474,7 +450,9 @@ class _DashboardGettingStarted extends StatelessWidget {
             ),
             SizedBox(height: 8),
             Text(
-              'Begin a land analysis to receive crop recommendations, land assessments, and planning insights.',
+              analyst
+                  ? 'Review submitted farm results, inspect their evidence and prepare your report.'
+                  : 'Begin a land analysis to receive crop recommendations, land assessments, and planning insights.',
               style: TextStyle(color: WebPortalColors.muted),
             ),
             SizedBox(height: 26),
@@ -483,28 +461,54 @@ class _DashboardGettingStarted extends StatelessWidget {
                 spacing: 16,
                 runSpacing: 20,
                 children: [
-                  for (final step in const [
-                    _DashboardStep(
-                      icon: Icons.location_on_rounded,
-                      title: 'Select Area',
-                      subtitle: 'Choose a point or draw a polygon',
-                    ),
-                    _DashboardStep(
-                      icon: Icons.layers_rounded,
-                      title: 'Analyze Land',
-                      subtitle: 'Evaluate soil, weather, terrain, and NDVI',
-                    ),
-                    _DashboardStep(
-                      icon: Icons.eco_rounded,
-                      title: 'Get Results',
-                      subtitle: 'Receive a crop or land-use assessment',
-                    ),
-                    _DashboardStep(
-                      icon: Icons.description_rounded,
-                      title: 'Generate Report',
-                      subtitle: 'Save and export your assessment',
-                    ),
-                  ])
+                  for (final step
+                      in (analyst
+                          ? const [
+                              _DashboardStep(
+                                icon: Icons.inbox_rounded,
+                                title: "Open Case",
+                                subtitle: "Choose a farmer submission",
+                              ),
+                              _DashboardStep(
+                                icon: Icons.layers_rounded,
+                                title: "Review Evidence",
+                                subtitle: "Inspect saved results and sources",
+                              ),
+                              _DashboardStep(
+                                icon: Icons.fact_check_rounded,
+                                title: "Record Decision",
+                                subtitle: "Review or request information",
+                              ),
+                              _DashboardStep(
+                                icon: Icons.description_rounded,
+                                title: "Generate Report",
+                                subtitle: "Export your reviewed assessment",
+                              ),
+                            ]
+                          : const [
+                              _DashboardStep(
+                                icon: Icons.location_on_rounded,
+                                title: 'Select Area',
+                                subtitle: 'Choose a point or draw a polygon',
+                              ),
+                              _DashboardStep(
+                                icon: Icons.layers_rounded,
+                                title: 'Analyze Land',
+                                subtitle:
+                                    'Evaluate soil, weather, terrain, and NDVI',
+                              ),
+                              _DashboardStep(
+                                icon: Icons.eco_rounded,
+                                title: 'Get Results',
+                                subtitle:
+                                    'Receive a crop or land-use assessment',
+                              ),
+                              _DashboardStep(
+                                icon: Icons.description_rounded,
+                                title: 'Generate Report',
+                                subtitle: 'Save and export your assessment',
+                              ),
+                            ]))
                     SizedBox(
                       width: box.maxWidth < 500
                           ? (box.maxWidth - 16) / 2
@@ -527,7 +531,9 @@ class _DashboardGettingStarted extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: onStartAnalyze,
                       icon: Icon(Icons.add_location_alt_rounded),
-                      label: Text('Start New Analysis'),
+                      label: Text(
+                        analyst ? 'Open Review Inbox' : 'Start New Analysis',
+                      ),
                     ),
                   ),
                   SizedBox(
@@ -643,9 +649,21 @@ class _DashboardQuickActions extends StatelessWidget {
             builder: (_, box) {
               final columns = box.maxWidth >= 260 ? 2 : 1;
               final actions = [
-                (Icons.eco_rounded, 'Start New Analysis', onStartAnalyze),
+                (
+                  Icons.eco_rounded,
+                  analyst ? 'Review Inbox' : 'Start New Analysis',
+                  analyst
+                      ? () => PortalRoutes.go('/operator/queue')
+                      : onStartAnalyze,
+                ),
                 (Icons.map_outlined, 'View Map', onOpenMapAnalysis),
-                (Icons.history_rounded, 'Analysis History', onOpenHistory),
+                (
+                  Icons.history_rounded,
+                  analyst ? 'Decision History' : 'Analysis History',
+                  analyst
+                      ? () => PortalRoutes.go('/operator/queue?view=decisions')
+                      : onOpenHistory,
+                ),
                 (Icons.description_rounded, 'Reports', onOpenReports),
               ];
               return Wrap(
@@ -827,7 +845,7 @@ class _DashboardRecentAnalyses extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Recent Analyses',
+                  state.isPlanner ? 'Recent Submissions' : 'Recent Analyses',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
                 ),
               ),
@@ -860,7 +878,9 @@ class _DashboardRecentAnalyses extends StatelessWidget {
                   SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: onOpenHistory,
-                    child: Text('Open History'),
+                    child: Text(
+                      state.isPlanner ? 'View submissions' : 'Open History',
+                    ),
                   ),
                 ],
               ),
@@ -869,7 +889,11 @@ class _DashboardRecentAnalyses extends StatelessWidget {
             ...records.map((row) {
               final crop = isCrop(row);
               return InkWell(
-                onTap: onOpenHistory,
+                onTap: state.isPlanner && row['case_id'] != null
+                    ? () => PortalRoutes.go(
+                        '/operator/queue?case=${row['case_id']}',
+                      )
+                    : onOpenHistory,
                 borderRadius: BorderRadius.circular(13),
                 child: Container(
                   margin: EdgeInsets.only(bottom: 9),

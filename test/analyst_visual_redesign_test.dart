@@ -63,6 +63,38 @@ final _cases = <Map<String, dynamic>>[
   },
 ];
 
+final _patternSummary = <String, dynamic>{
+  'model_scope': 'current',
+  'current_model_version': 'synthetic-current-model',
+  'classes': [
+    'banana',
+    'cacao',
+    'coconut',
+    'durian',
+    'mango',
+    'rice',
+    'rubber',
+  ],
+  'analysis_count': 3,
+  'archived_count': 2,
+  'average_model_score': 50,
+  'cumulative_area_ha': 4.25,
+  'scored_count': 2,
+  'high_count': 1,
+  'medium_count': 0,
+  'low_count': 0,
+  'very_low_count': 1,
+  'frequencies': [
+    {'crop': 'Rice', 'count': 1},
+    {'crop': 'Mango', 'count': 1},
+  ],
+  'monthly': [
+    {'month': '2026-09', 'count': 1},
+    {'month': '2026-10', 'count': 1},
+  ],
+  'recent_records': _records,
+};
+
 Future<AnalysisState> _fixture(
   List<http.Request> requests, {
   List<Map<String, dynamic>> reportRows = const [],
@@ -73,6 +105,9 @@ Future<AnalysisState> _fixture(
     client: MockClient((request) async {
       requests.add(request);
       final path = request.url.path;
+      if (path.endsWith('/recommendation-patterns')) {
+        return http.Response(jsonEncode(_patternSummary), 200);
+      }
       if (path.endsWith('/activity/read-all')) {
         activityRead = true;
         return http.Response('{}', 200);
@@ -158,6 +193,7 @@ Future<AnalysisState> _fixture(
       'humidity_pct': 77,
       'condition': 'Synthetic weather',
     }
+    ..currentModelSummary = _patternSummary
     ..webSummary = {
       'analysis_count': 3,
       'average_model_score': 50,
@@ -477,13 +513,10 @@ void main() {
             aligned('patterns-frequency-panel', 'patterns-distribution-panel');
             aligned('patterns-trend-panel', 'patterns-insights-panel');
             aligned(
-              'metric-Total Saved Analyses',
+              'metric-Submitted Analyses',
               'metric-Most Recommended Crop',
             );
-            aligned(
-              'metric-Total Saved Analyses',
-              'metric-Average Model Score',
-            );
+            aligned('metric-Submitted Analyses', 'metric-Average Model Score');
           }
           expect(tester.takeException(), isNull);
         }

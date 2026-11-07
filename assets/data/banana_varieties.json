@@ -1,5 +1,5 @@
 {
-  "version": "banana-variety-reference-v1",
+  "version": "banana-variety-reference-v2-published-evidence",
   "crop_key": "banana",
   "prediction_scope": "crop_group_only",
   "note": "The model ranks Banana as one crop group. These profiles describe varieties; separate variety predictions are not available.",
@@ -7,7 +7,7 @@
     {
       "variety_key": "cavendish",
       "label": "Cavendish",
-      "description": "Fresh fruit and export banana. TADECO documents Cavendish production in Panabo.",
+      "description": "Fresh fruit and export banana.",
       "sources": [
         {
           "title": "ANFLOCOR: TADECO",
@@ -17,7 +17,12 @@
           "title": "DOST-PCAARRD: Banana industry profile",
           "url": "https://ispweb.pcaarrd.dost.gov.ph/isp-commodities/banana/"
         }
-      ]
+      ],
+      "guidance_lines": [
+        "Documented production: A.O. Floirendo, Panabo."
+      ],
+      "environmental_references": [],
+      "published_trial_record_ids": []
     },
     {
       "variety_key": "lakatan",
@@ -31,7 +36,63 @@
         {
           "title": "DA-BAFS Technical Bulletin OAD-08 (2023): Banana industry introduction",
           "url": "https://bafs.da.gov.ph/wp-content/uploads/2025/04/v3.0-Paviso_Techncial-bulletin_Template_11172023.-Final.pdf"
+        },
+        {
+          "title": "Davao del Norte Provincial Development and Physical Framework Plan, 2008-2022",
+          "url": "https://davaodelnorte.gov.ph/images/jf/docs/plans_programs/pdpfp_2008-2022/davnor_pdpfp2008-2022.pdf"
+        },
+        {
+          "title": "BPI trial reports in Evaluating bananas: a global partnership. Results of IMTP Phase II",
+          "url": "https://www.musalit.org/viewPdf.php?file=IN000103_eng.pdf&id=5704"
+        },
+        {
+          "title": "DA RFU XI / SMIARC: Practical Lakatan Production and Management for the Local Market",
+          "url": "https://www.yumpu.com/en/document/view/45523019/practical-lakatan-production-management-for-the-local-market"
         }
+      ],
+      "guidance_lines": [
+        "Guide: soil pH 4.5-7.5; growing temperature 15-35 C.",
+        "Guide: elevation 1.5-1,000 m. Avoid standing water."
+      ],
+      "environmental_references": [
+        {
+          "factor": "ph",
+          "min": 4.5,
+          "max": 7.5,
+          "preferred_value": 6.5,
+          "unit": "pH",
+          "period": "soil_method_and_depth_not_specified",
+          "source_id": "lakatan_smiarc_2007"
+        },
+        {
+          "factor": "temperature",
+          "min": 15,
+          "max": 35,
+          "unit": "C",
+          "period": "growing_conditions_not_five_year_mean",
+          "source_id": "lakatan_smiarc_2007"
+        },
+        {
+          "factor": "elevation",
+          "min": 1.5,
+          "max": 1000,
+          "unit": "m",
+          "period": "terrain",
+          "source_id": "lakatan_smiarc_2007"
+        },
+        {
+          "factor": "rainfall",
+          "value": 100,
+          "unit": "mm/month",
+          "period": "monthly_guidance",
+          "original_value": 10,
+          "original_unit": "cm/month",
+          "annual_conversion_performed": false,
+          "source_id": "lakatan_smiarc_2007"
+        }
+      ],
+      "published_trial_record_ids": [
+        "bpi-bago-oshiro-lakatan"
       ]
     },
     {
@@ -46,9 +107,59 @@
         {
           "title": "DA-BAFS Technical Bulletin OAD-08 (2023): Banana industry introduction",
           "url": "https://bafs.da.gov.ph/wp-content/uploads/2025/04/v3.0-Paviso_Techncial-bulletin_Template_11172023.-Final.pdf"
+        },
+        {
+          "title": "Davao del Norte Provincial Development and Physical Framework Plan, 2008-2022",
+          "url": "https://davaodelnorte.gov.ph/images/jf/docs/plans_programs/pdpfp_2008-2022/davnor_pdpfp2008-2022.pdf"
+        },
+        {
+          "title": "BPI trial reports in Evaluating bananas: a global partnership. Results of IMTP Phase II",
+          "url": "https://www.musalit.org/viewPdf.php?file=IN000103_eng.pdf&id=5704"
+        },
+        {
+          "title": "DA/BPI Saba Banana Production Guide",
+          "url": "https://cagayandeoro.da.gov.ph/wp-content/uploads/2013/04/SABA-BANANA-PRODUCTION-GUIDE.pdf"
         }
+      ],
+      "guidance_lines": [
+        "Guide: soil pH 4.5-7.5; favourable growing temperature 27-30 C.",
+        "Guide: at least 1,524 mm/year, with rainfall distribution and irrigation considered."
+      ],
+      "environmental_references": [
+        {
+          "factor": "ph",
+          "min": 4.5,
+          "max": 7.5,
+          "unit": "pH",
+          "period": "soil_method_and_depth_not_specified",
+          "source_id": "saba_da_guide"
+        },
+        {
+          "factor": "temperature",
+          "min": 27,
+          "max": 30,
+          "unit": "C",
+          "period": "favourable_growing_conditions_not_five_year_mean",
+          "source_id": "saba_da_guide"
+        },
+        {
+          "factor": "rainfall",
+          "min": 1524,
+          "unit": "mm/year",
+          "period": "annual",
+          "original_value": 60,
+          "original_unit": "inches/year",
+          "conversion": "60 * 25.4",
+          "condition": "Even rainfall distribution; dry periods may require viable irrigation.",
+          "source_id": "saba_da_guide"
+        }
+      ],
+      "published_trial_record_ids": [
+        "bpi-bago-oshiro-saba",
+        "bpi-santo-tomas-saba"
       ]
     }
   ],
-  "local_scope_note": "Cavendish production is documented in Panabo. Lakatan and Saba are national variety references; current Panabo production shares were not established."
+  "local_scope_note": "Cavendish production is documented in Panabo. A historical Davao del Norte plan also identifies Lakatan and Saba in the province. BPI trial sites are in Davao City and Santo Tomas; current Panabo variety shares were not established.",
+  "guidance_scope_note": "Published guide values and trial context are reference information. They do not create separate variety model scores or verified Panabo suitability limits."
 }

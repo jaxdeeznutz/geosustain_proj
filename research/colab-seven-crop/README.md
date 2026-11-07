@@ -35,7 +35,7 @@ are identified as local and are not represented as your Colab execution.
 | Models | Decision Tree, SVM, Random Forest |
 | Evaluation | Common 80/20 stratified row split; five-fold CV on training rows |
 | Output | Research candidates and reproducible training evidence |
-| App integration | Separate work: deployed model still expects ten predictors |
+| App integration | Separate review: app uses seven predictors; new runs are not automatically activated |
 
 The dataset is filtered from the project's **existing augmented CSV**. Original
 Kaggle feature-row matches exist for banana, coconut, mango and rice. Durian,

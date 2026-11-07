@@ -387,6 +387,8 @@ class _WebOperatorOverviewState extends State<WebOperatorOverview> {
       final value = await widget.state.api.getRecordPage(
         '/api/operator/overview',
         parameters: {'place': filterPlace},
+        requestTimeout: const Duration(seconds: 20),
+        recoveryAttempts: 1,
       );
       if (mounted && request == generation) {
         setState(() {

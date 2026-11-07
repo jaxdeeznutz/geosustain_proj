@@ -1,174 +1,259 @@
 part of '../../main.dart';
 
-class WebCropTrendsScreen extends StatelessWidget {
+class WebCropTrendsScreen extends StatefulWidget {
   final AnalysisState state;
   const WebCropTrendsScreen({super.key, required this.state});
+  @override
+  State<WebCropTrendsScreen> createState() => _WebCropTrendsScreenState();
+}
 
-  String _topCropFromRecord(Map<String, dynamic> r) {
-    final direct =
-        r['crop_recommendation'] ??
-        r['recommended_crop'] ??
-        r['predicted_crop'] ??
-        r['crop'];
-    if (direct != null && '$direct'.trim().isNotEmpty && '$direct' != '--') {
-      return '$direct';
-    }
-    final top = r['top_crop_recommendations'];
-    if (top is List && top.isNotEmpty && top.first is Map) {
-      final first = top.first as Map;
-      final name = first['crop'] ?? first['name'];
-      if (name != null && '$name'.trim().isNotEmpty) return '$name';
-    }
-    return 'Unknown';
+class _WebCropTrendsScreenState extends State<WebCropTrendsScreen> {
+  String scope = 'current';
+  Map<String, dynamic>? loaded;
+  bool loading = false;
+  String? error;
+  int generation = 0;
+  @override
+  void initState() {
+    super.initState();
+    if (widget.state.currentModelSummary == null) unawaited(load());
   }
 
-  double? _scoreFromRecord(Map<String, dynamic> r) =>
-      WebAnalysisMetrics.modelScore(r);
-
-  DateTime? _dateFromRecord(Map<String, dynamic> r) {
-    final raw =
-        r['date'] ??
-        r['analyzed_at'] ??
-        r['saved_at'] ??
-        r['report_created_at'] ??
-        r['created_at'] ??
-        r['analysis_date'] ??
-        r['timestamp'];
-    return raw == null ? null : DateTime.tryParse('$raw');
+  Future<void> load() async {
+    final request = ++generation;
+    final selectedScope = scope;
+    final owner = widget.state.currentUser?['id'];
+    setState(() {
+      loading = true;
+      error = null;
+      loaded = null;
+    });
+    try {
+      final value = await widget.state.api.getRecommendationPatterns(
+        submitted: widget.state.isPlanner,
+        modelScope: selectedScope,
+      );
+      if (value['current_model_version'] == null ||
+          value['model_scope'] != selectedScope) {
+        throw Exception(
+          'The model summary is unavailable. Deploy the matching backend and refresh.',
+        );
+      }
+      if (mounted &&
+          request == generation &&
+          owner == widget.state.currentUser?['id']) {
+        setState(() => loaded = value);
+      }
+    } catch (e) {
+      if (mounted && request == generation) {
+        setState(() => error = friendlyErrorMessage(e));
+      }
+    } finally {
+      if (mounted && request == generation) setState(() => loading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     Theme.of(context);
+    final summary =
+        loaded ??
+        (scope == 'current' && !loading && error == null
+            ? widget.state.currentModelSummary
+            : null);
     final counts = <String, int>{};
-    final monthly = <DateTime, int>{};
-    double totalScore = 0;
-    int scored = 0;
-    int high = 0, medium = 0, low = 0, veryLow = 0;
-
-    final trendRecords = WebAnalysisMetrics(
-      state.officialTrendRecords,
-    ).records.where(WebAnalysisMetrics.isCrop).toList();
-    for (final r in trendRecords) {
-      final crop = _topCropFromRecord(r);
-      counts[crop] = (counts[crop] ?? 0) + 1;
-      final score = _scoreFromRecord(r);
-      if (score != null && score >= 0 && score.isFinite) {
-        totalScore += score;
-        scored++;
-        if (score >= 75) {
-          high++;
-        } else if (score >= 50) {
-          medium++;
-        } else if (score >= 25) {
-          low++;
-        } else {
-          veryLow++;
-        }
-      }
-      final date = _dateFromRecord(r);
-      if (date != null) {
-        final key = DateTime(date.year, date.month);
-        monthly[key] = (monthly[key] ?? 0) + 1;
+    for (final raw in analysisListValue(summary?['frequencies'])) {
+      final row = analysisMapValue(raw);
+      final count = analysisNumber(row['count']);
+      if (row['crop'] != null && count != null) {
+        counts['${row['crop']}'] = count.toInt();
       }
     }
-
-    final summary = state.webSummary;
-    if (summary != null) {
-      counts.clear();
-      monthly.clear();
-      for (final raw in analysisListValue(summary['frequencies'])) {
-        final row = analysisMapValue(raw);
-        counts['${row['crop']}'] = (row['count'] as num).toInt();
+    if (scope == 'current' && summary != null) {
+      for (final name in analysisListValue(summary['classes'])) {
+        final label = '${name[0]}'.toUpperCase() + '$name'.substring(1);
+        counts.putIfAbsent(label, () => 0);
       }
-      for (final raw in analysisListValue(summary['monthly'])) {
-        final row = analysisMapValue(raw);
-        final date = DateTime.tryParse('${row['month']}-01');
-        if (date != null) monthly[date] = (row['count'] as num).toInt();
-      }
-      scored = (summary['scored_count'] as num?)?.toInt() ?? 0;
-      totalScore =
-          (analysisNumber(summary['average_model_score']) ?? 0) * scored;
-      high = (summary['high_count'] as num?)?.toInt() ?? 0;
-      medium = (summary['medium_count'] as num?)?.toInt() ?? 0;
-      low = (summary['low_count'] as num?)?.toInt() ?? 0;
-      veryLow = (summary['very_low_count'] as num?)?.toInt() ?? 0;
     }
     final entries = counts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final topCrop = entries.isEmpty ? 'No data' : entries.first.key;
+      ..sort((a, b) {
+        final order = b.value.compareTo(a.value);
+        return order == 0 ? a.key.compareTo(b.key) : order;
+      });
+    final monthly = <MapEntry<DateTime, int>>[];
+    for (final raw in analysisListValue(summary?['monthly'])) {
+      final row = analysisMapValue(raw);
+      final month = DateTime.tryParse('${row['month']}-01');
+      final count = analysisNumber(row['count']);
+      if (month != null && count != null) {
+        monthly.add(MapEntry(month, count.toInt()));
+      }
+    }
+    monthly.sort((a, b) => a.key.compareTo(b.key));
+    final scored = (analysisNumber(summary?['scored_count']) ?? 0).toInt();
+    final distribution = [
+      for (final name in [
+        'high_count',
+        'medium_count',
+        'low_count',
+        'very_low_count',
+      ])
+        (analysisNumber(summary?[name]) ?? 0).toInt(),
+    ];
     final topCount = entries.isEmpty ? 0 : entries.first.value;
-    final average = scored == 0 ? 0.0 : totalScore / scored;
-    final distribution = [high, medium, low, veryLow];
-    final total =
-        (summary?['analysis_count'] as num?)?.toInt() ?? trendRecords.length;
-    final monthEntries = monthly.entries.toList()
-      ..sort((a, b) => a.key.compareTo(b.key));
-    final recentMonths = monthEntries.length <= 6
-        ? monthEntries
-        : monthEntries.sublist(monthEntries.length - 6);
-
+    final topCrop = topCount == 0 ? 'No data' : entries.first.key;
+    final archived = (analysisNumber(summary?['archived_count']) ?? 0).toInt();
     return Padding(
       padding: const EdgeInsets.only(bottom: 28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _AnalystMetricGrid(
-            children: [
-              _AnalystMetric(
-                icon: Icons.article_rounded,
-                label: 'Total Saved Analyses',
-                value: '$total',
-                series: recentMonths.map((e) => e.value.toDouble()).toList(),
-                caption: summary == null
-                    ? 'Loaded recommendations only'
-                    : 'All analyses owned by this account',
-              ),
-              _AnalystMetric(
-                icon: Icons.emoji_events_rounded,
-                label: 'Most Recommended Crop',
-                value: topCrop,
-                caption: topCount == 0
-                    ? 'No recommendations yet'
-                    : 'Recommended $topCount ${topCount == 1 ? 'time' : 'times'}',
-              ),
-              _AnalystMetric(
-                icon: Icons.speed_rounded,
-                label: 'Average Model Score',
-                value: scored == 0
-                    ? 'Not assessed'
-                    : '${average.toStringAsFixed(1)}%',
-                caption: 'Across all crop recommendations',
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          _AnalystColumns(
-            mainFlex: 3,
-            sideFlex: 2,
-            breakpoint: 880,
-            equalHeight: true,
-            main: _CropFrequencyCard(entries: entries),
-            side: _SuitabilityDistributionCard(
-              values: distribution,
-              total: scored,
+          _WebCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Wrap(
+                  spacing: 16,
+                  runSpacing: 12,
+                  crossAxisAlignment: WrapCrossAlignment.center,
+                  children: [
+                    SizedBox(
+                      width: 280,
+                      child: DropdownButtonFormField<String>(
+                        key: const ValueKey('patterns-model-scope'),
+                        isExpanded: true,
+                        initialValue: scope,
+                        decoration: const InputDecoration(
+                          labelText: 'Model results',
+                        ),
+                        items: const [
+                          DropdownMenuItem(
+                            value: 'current',
+                            child: Text('Current seven-crop model'),
+                          ),
+                          DropdownMenuItem(
+                            value: 'all',
+                            child: Text('All model versions (historical)'),
+                          ),
+                        ],
+                        onChanged: loading
+                            ? null
+                            : (value) {
+                                if (value != null) {
+                                  setState(() => scope = value);
+                                  unawaited(load());
+                                }
+                              },
+                      ),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: loading ? null : load,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh patterns'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  scope == 'current'
+                      ? 'Current model only. $archived older or unversioned results are excluded.'
+                      : 'Historical results include older models and crop labels. Their scores are not directly comparable.',
+                ),
+                Text(
+                  widget.state.isPlanner
+                      ? 'Submitted farmer cases ? latest revision of each case.'
+                      : 'Your saved analyses.',
+                ),
+                if (loading)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child: LinearProgressIndicator(),
+                  ),
+                if (error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12),
+                    child: Text(
+                      error!,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                    ),
+                  ),
+                if (!loading && error == null && summary == null)
+                  const Text(
+                    'No model summary is available. Refresh to retry.',
+                  ),
+              ],
             ),
           ),
           const SizedBox(height: 18),
-          _AnalystColumns(
-            mainFlex: 3,
-            sideFlex: 2,
-            breakpoint: 880,
-            equalHeight: true,
-            main: _RecentTrendCard(entries: recentMonths),
-            side: _TrendInsightsCard(
-              topCrop: topCrop,
-              topCount: topCount,
-              high: high,
-              total: scored,
-              monthly: recentMonths,
+          if (summary != null) ...[
+            _AnalystMetricGrid(
+              children: [
+                _AnalystMetric(
+                  icon: Icons.article_rounded,
+                  label: widget.state.isPlanner
+                      ? 'Submitted Analyses'
+                      : 'Saved Analyses',
+                  value: '${summary['analysis_count'] ?? 0}',
+                  series: monthly.map((e) => e.value.toDouble()).toList(),
+                  caption: scope == 'current'
+                      ? 'Current model version'
+                      : 'All model versions',
+                ),
+                _AnalystMetric(
+                  icon: Icons.emoji_events_rounded,
+                  label: 'Most Recommended Crop',
+                  value: topCrop,
+                  caption: topCount == 0
+                      ? 'No recommendations yet'
+                      : 'Recommended $topCount times',
+                ),
+                _AnalystMetric(
+                  icon: Icons.speed_rounded,
+                  label: 'Average Model Score',
+                  value: scored == 0
+                      ? 'Not assessed'
+                      : '${(analysisNumber(summary['average_model_score']) ?? 0).toStringAsFixed(1)}%',
+                  caption: '$scored saved top-crop scores',
+                ),
+              ],
             ),
-          ),
+            if (topCount == 0)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 18),
+                child: Text(
+                  'No saved recommendations from this model yet. Submit a new analysis to populate these charts.',
+                ),
+              ),
+            const SizedBox(height: 18),
+            _AnalystColumns(
+              mainFlex: 3,
+              sideFlex: 2,
+              breakpoint: 880,
+              equalHeight: true,
+              main: _CropFrequencyCard(entries: entries),
+              side: _SuitabilityDistributionCard(
+                values: distribution,
+                total: scored,
+              ),
+            ),
+            const SizedBox(height: 18),
+            _AnalystColumns(
+              mainFlex: 3,
+              sideFlex: 2,
+              breakpoint: 880,
+              equalHeight: true,
+              main: _RecentTrendCard(entries: monthly),
+              side: _TrendInsightsCard(
+                topCrop: topCrop,
+                topCount: topCount,
+                high: distribution[0],
+                total: scored,
+                monthly: monthly,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -181,8 +266,10 @@ class _CropFrequencyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     Theme.of(context);
-    final shown = entries.take(6).toList();
-    final maxValue = shown.isEmpty ? 1 : shown.first.value;
+    final shown = entries.take(7).toList();
+    final maxValue = shown.isEmpty || shown.first.value == 0
+        ? 1
+        : shown.first.value;
     return _WebCard(
       key: const ValueKey('patterns-frequency-panel'),
       child: Column(
@@ -200,7 +287,7 @@ class _CropFrequencyCard extends StatelessWidget {
               height: 210,
               child: Center(
                 child: Text(
-                  'Run analyses to populate crop trends.',
+                  'No saved crop recommendations in this scope.',
                   style: TextStyle(color: WebPortalColors.muted),
                 ),
               ),
@@ -414,12 +501,13 @@ class _RecentTrendCard extends StatelessWidget {
         const _AnalystChartHeading(
           title: 'Recent Trend',
           subtitle: 'Number of recommendations over time',
-          scope: 'Last 6 recorded months',
+          scope: 'Latest 6 calendar months',
           scopeIcon: Icons.date_range_rounded,
         ),
         SizedBox(height: 18),
         SizedBox(
           height: 190,
+          width: double.infinity,
           child: entries.isEmpty
               ? Center(
                   child: Text(
@@ -475,7 +563,9 @@ class _TrendInsightsCard extends StatelessWidget {
           SizedBox(height: 16),
           _InsightRow(
             icon: Icons.bar_chart_rounded,
-            title: 'High model-score records account for $highPct%',
+            title: total == 0
+                ? 'No saved model scores yet.'
+                : 'High model-score records account for $highPct%',
             subtitle: 'of all scored recommendations.',
           ),
           SizedBox(height: 16),
@@ -614,7 +704,8 @@ class _TrendLinePainter extends CustomPainter {
       ..color = Color(0xFFE6ECE8)
       ..strokeWidth = 1;
     final label = TextPainter(textDirection: TextDirection.ltr);
-    for (var i = 0; i <= maxY; i++) {
+    final step = (maxY / 4).ceil();
+    for (var i = 0; i <= maxY; i += step) {
       final y = chart.bottom - chart.height * i / maxY;
       canvas.drawLine(Offset(chart.left, y), Offset(chart.right, y), grid);
       label.text = TextSpan(

@@ -61,6 +61,12 @@ def install(app,get_user,require_planner):
     def overview(planner=Depends(require_planner),f=Depends(filters)):
         return workflow.overview(**f)
 
+    @app.get('/api/operator/recommendation-patterns')
+    def recommendation_patterns(planner=Depends(require_planner),
+                                model_scope: Literal['current','all']='current'):
+        from recommendation_patterns import patterns
+        return patterns(planner['id'], submitted=True, model_scope=model_scope)
+
     @app.get('/api/operator/cases/by-session/{session_id}')
     def by_session(session_id:int,planner=Depends(require_planner)):
         with closing(db.get_conn()) as conn,conn.cursor() as cur:
