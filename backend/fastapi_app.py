@@ -1043,7 +1043,7 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
     result['spatial_assessment'] = build_spatial_assessment(polygon)
     baseline = fetch_multi_year_monthly_baseline(float(lat), float(lon), planting_month)
     result["historical_climate_baseline"] = baseline
-    attach_seasonal_assessment(result, baseline, planting_month)
+    attach_seasonal_assessment(result, baseline, planting_month, active_crops)
     # A selected-month baseline and rolling air-temperature mean are different
     # temporal variables. Keep evidence separate; do not synthesize a blend.
     result["temperature_method"] = "Historical monthly baseline and analysis temperature retained separately; no cross-period blend"

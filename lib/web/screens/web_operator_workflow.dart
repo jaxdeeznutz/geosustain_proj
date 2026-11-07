@@ -56,12 +56,7 @@ String reviewAge(dynamic value) {
 class _OperatorFilters extends StatefulWidget {
   final WebRecordController controller;
   final bool dense;
-  final bool separateDates;
-  const _OperatorFilters(
-    this.controller, {
-    this.dense = false,
-    this.separateDates = false,
-  });
+  const _OperatorFilters(this.controller, {this.dense = false});
   @override
   State<_OperatorFilters> createState() => _OperatorFiltersState();
 }
@@ -85,7 +80,7 @@ class _OperatorFiltersState extends State<_OperatorFilters> {
       ),
     ),
     child: _WebFilterRows(
-      separateDates: widget.separateDates,
+      separateDates: false,
       children: [
         SizedBox(
           width: widget.dense ? 190 : 260,
@@ -260,11 +255,13 @@ class _OperatorPageState extends StatelessWidget {
   final String noun;
   final Widget Function(Map<String, dynamic>) row;
   final bool illustrateEmpty;
+  final Widget Function(List<Map<String, dynamic>>)? rowsBuilder;
   const _OperatorPageState(
     this.controller, {
     required this.row,
     this.noun = 'review cases',
     this.illustrateEmpty = false,
+    this.rowsBuilder,
   });
   @override
   Widget build(BuildContext context) {
@@ -315,11 +312,13 @@ class _OperatorPageState extends StatelessWidget {
                 'No records match these filters. Change or clear the filters to see other records.',
               ),
             ),
-        for (final value in controller.rows)
-          Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: row(value),
-          ),
+        if (rowsBuilder != null) rowsBuilder!(controller.rows),
+        if (rowsBuilder == null)
+          for (final value in controller.rows)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: row(value),
+            ),
         if (illustrateEmpty && empty) ...[scope, const SizedBox(height: 16)],
         Wrap(
           spacing: 12,
@@ -348,61 +347,6 @@ class _OperatorPageState extends StatelessWidget {
       ],
     );
   }
-}
-
-class WebOperatorInbox extends StatelessWidget {
-  final WebRecordController controller;
-  const WebOperatorInbox({super.key, required this.controller});
-  @override
-  Widget build(BuildContext context) => ListenableBuilder(
-    listenable: controller,
-    builder: (_, _) => Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _WebCard(
-          key: const ValueKey('review-filters-panel'),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _AnalystSectionTitle(
-                'Submitted cases',
-                icon: Icons.description_outlined,
-                subtitle:
-                    'Open a case → Inspect its saved boundary and evidence → Record a decision. Oldest submissions appear first. Verification describes the assessment review, not guaranteed land suitability or crop success.',
-              ),
-              const SizedBox(height: 22),
-              _OperatorFilters(controller, dense: true, separateDates: true),
-            ],
-          ),
-        ),
-        const SizedBox(height: 16),
-        _WebCard(
-          key: const ValueKey('review-results-panel'),
-          padding: const EdgeInsets.all(22),
-          child: _OperatorPageState(
-            controller,
-            illustrateEmpty: true,
-            row: (r) => Card(
-              child: ListTile(
-                contentPadding: const EdgeInsets.all(18),
-                isThreeLine: true,
-                title: Text(
-                  'Case #${r['case_id']} · ${r['farm_name'] ?? r['place_name'] ?? 'Unnamed farm'}',
-                ),
-                subtitle: Text(
-                  '${r['farmer_name']} · ${reviewLabel(r['verification_status'])}\nSubmitted ${analysisDateText(r['submitted_at'])} · ${reviewAge(r['submitted_at'])}\n'
-                  '${r['analysis_mode'] == 'preliminary_environmental' ? 'Preliminary screening · model score unavailable' : 'Model score: ${r['compatibility_pct'] == null ? 'unavailable' : '${r['compatibility_pct']}%'}'} · analyzed ${analysisDateText(r['analyzed_at'])}',
-                ),
-                trailing: const Icon(Icons.arrow_forward, size: 20),
-                onTap: () =>
-                    PortalRoutes.go('/operator/queue?case=${r['case_id']}'),
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
 }
 
 class WebOperatorOverview extends StatefulWidget {
@@ -617,6 +561,17 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
   }
 
   @override
+  void didUpdateWidget(WebReviewWorkbench oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.reference != widget.reference ||
+        oldWidget.bySession != widget.bySession) {
+      data = null;
+      notes.clear();
+      load();
+    }
+  }
+
+  @override
   void dispose() {
     generation++;
     notes.dispose();
@@ -633,7 +588,14 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
     try {
       final value = await widget.state.api.getRecordPage(
         '/api/operator/cases/${widget.bySession ? 'by-session/' : ''}${widget.reference}',
+        requestTimeout: const Duration(seconds: 20),
+        recoveryAttempts: 1,
       );
+      if (value['case'] is! Map || value['analysis'] is! Map) {
+        throw const FormatException(
+          'The server returned incomplete case details. Retry loading this case.',
+        );
+      }
       if (mounted && request == generation) {
         setState(() {
           data = value;
@@ -642,7 +604,11 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
       }
     } catch (e) {
       if (mounted && request == generation) {
-        setState(() => error = friendlyErrorMessage(e));
+        setState(
+          () => error = e is TimeoutException
+              ? 'Case loading took too long. Retry loading this case, or return to the inbox.'
+              : friendlyErrorMessage(e),
+        );
       }
     } finally {
       if (mounted && request == generation) setState(() => loading = false);
@@ -715,6 +681,11 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
   }
 
   Future<void> revision(Map<String, dynamic> r) async {
+    final request = widget.state.api.getRecordPage(
+      '$base/revisions/${r['session_id']}',
+      requestTimeout: const Duration(seconds: 20),
+      recoveryAttempts: 1,
+    );
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
@@ -722,9 +693,7 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
         content: SizedBox(
           width: 760,
           child: FutureBuilder<Map<String, dynamic>>(
-            future: widget.state.api.getRecordPage(
-              '$base/revisions/${r['session_id']}',
-            ),
+            future: request,
             builder: (context, snapshot) => SingleChildScrollView(
               child: snapshot.hasError
                   ? Text(friendlyErrorMessage(snapshot.error!))
@@ -765,7 +734,9 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
           ),
           OutlinedButton(
             onPressed: loading || busy ? null : load,
-            child: const Text('Reload current case'),
+            child: Text(
+              error != null ? 'Retry loading case' : 'Reload current case',
+            ),
           ),
         ],
       ),
@@ -1311,6 +1282,51 @@ class _WebOperatorMapState extends State<WebOperatorMap> {
     analysisNumber(r['center_lon']) ?? panaboCenter.longitude,
   );
 
+  void openCases(List<Map<String, dynamic>> cases) {
+    if (cases.length == 1) {
+      PortalRoutes.go('/operator/queue?case=${cases.single['case_id']}');
+      return;
+    }
+    showDialog<void>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Cases at this location'),
+        content: SizedBox(
+          width: 420,
+          child: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                for (final row in cases)
+                  ListTile(
+                    leading: Icon(
+                      Icons.location_on,
+                      color: reviewColor(row['verification_status']),
+                    ),
+                    title: Text(
+                      'Case #${row['case_id']} · ${row['farm_name'] ?? 'Submitted farm'}',
+                    ),
+                    subtitle: Text(reviewLabel(row['verification_status'])),
+                    trailing: const Icon(Icons.chevron_right),
+                    onTap: () {
+                      Navigator.pop(context);
+                      PortalRoutes.go('/operator/queue?case=${row['case_id']}');
+                    },
+                  ),
+              ],
+            ),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _layer(
     String label,
     IconData icon,
@@ -1335,6 +1351,13 @@ class _WebOperatorMapState extends State<WebOperatorMap> {
   Widget build(BuildContext context) => ListenableBuilder(
     listenable: records,
     builder: (_, _) {
+      final markerGroups = <String, List<Map<String, dynamic>>>{};
+      for (final row in records.rows) {
+        final point = center(row);
+        final key =
+            '${point.latitude.toStringAsFixed(6)},${point.longitude.toStringAsFixed(6)}';
+        markerGroups.putIfAbsent(key, () => []).add(row);
+      }
       final polygons = records.rows
           .where(
             (r) => FarmGeometry.fromPayload(r['selected_polygon']).length >= 3,
@@ -1534,23 +1557,23 @@ class _WebOperatorMapState extends State<WebOperatorMap> {
                             if (_markers)
                               MarkerLayer(
                                 markers: [
-                                  for (final r in records.rows)
+                                  for (final group in markerGroups.values)
                                     Marker(
-                                      point: center(r),
-                                      width: 48,
-                                      height: 48,
-                                      child: IconButton(
-                                        tooltip:
-                                            'Case #${r['case_id']} · ${reviewLabel(r['verification_status'])}',
-                                        icon: Icon(
-                                          Icons.location_on,
-                                          color: reviewColor(
-                                            r['verification_status'],
-                                          ),
-                                        ),
-                                        onPressed: () => PortalRoutes.go(
-                                          '/operator/queue?case=${r['case_id']}',
-                                        ),
+                                      point: center(group.first),
+                                      width: 72,
+                                      height: 72,
+                                      alignment: Marker.computePixelAlignment(
+                                        width: 72,
+                                        height: 72,
+                                        left: 36,
+                                        top: 60,
+                                      ),
+                                      child: ReviewCaseMapMarker(
+                                        caseId: '${group.first['case_id']}',
+                                        status:
+                                            '${group.first['verification_status']}',
+                                        count: group.length,
+                                        onTap: () => openCases(group),
                                       ),
                                     ),
                                 ],

@@ -1107,6 +1107,8 @@ class _WebReportsScreenState extends State<WebReportsScreen> {
                   : 'No reports generated yet',
               message: filtered
                   ? 'Change or clear the filters to see other reports.'
+                  : widget.state.isPlanner
+                  ? 'Open a submitted case in the Review Inbox to inspect its evidence and export a report.'
                   : 'Your assessment reports will appear here once you export them. Open the Analysis Workspace to generate a report.',
               icon: Icons.description_outlined,
               asset: 'assets/images/dashboard/report_illustration.png',
@@ -1116,7 +1118,11 @@ class _WebReportsScreenState extends State<WebReportsScreen> {
                       child: const Text('Clear report filters'),
                     )
                   : FilledButton.icon(
-                      onPressed: () => PortalRoutes.go('/operator/analyze'),
+                      onPressed: () => PortalRoutes.go(
+                        widget.state.isPlanner
+                            ? '/operator/queue'
+                            : '/operator/analyze',
+                      ),
                       icon: const Icon(Icons.description_outlined, size: 18),
                       label: const Text('Generate a report'),
                     ),

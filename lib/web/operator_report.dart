@@ -135,7 +135,7 @@ Future<Uint8List> buildOperatorReport(
             'This report records review decisions and evidence references. Open the linked analysis in GeoSustain for the full saved measurements, data provenance and limitations. An accepted review does not certify missing measurements. NPK and soil pH methods are outside this workflow change.',
             style: const pw.TextStyle(fontSize: 10),
           ),
-          heading('Saved seasonal context'),
+          heading('Saved seasonal planting assessment and climate'),
           for (final line in seasonalAssessmentLines(a))
             pw.Padding(
               padding: const pw.EdgeInsets.only(bottom: 6),

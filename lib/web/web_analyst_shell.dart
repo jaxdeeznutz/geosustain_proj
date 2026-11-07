@@ -76,6 +76,12 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
   void initState() {
     super.initState();
     PortalRoutes.start();
+    if (state.isPlanner) {
+      final canonical = PortalRoutes.analystRoute(PortalRoutes.current.value);
+      if (canonical != PortalRoutes.current.value) {
+        PortalRoutes.go('$canonical');
+      }
+    }
     page = PortalRoutes.pageFor(routePages, 'operator');
     PortalRoutes.current.addListener(_routeChanged);
     if (state.isPlanner) _loadInboxRoute();
@@ -84,6 +90,13 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
 
   void _routeChanged() {
     if (!mounted) return;
+    if (state.isPlanner) {
+      final canonical = PortalRoutes.analystRoute(PortalRoutes.current.value);
+      if (canonical != PortalRoutes.current.value) {
+        PortalRoutes.go('$canonical');
+        return;
+      }
+    }
     final previousPage = page;
     setState(() => page = PortalRoutes.pageFor(routePages, 'operator'));
     if (state.isPlanner) _loadInboxRoute();
@@ -109,15 +122,20 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
       return;
     }
     // Returning from a case keeps the inbox page and applied filters.
-    if (uri.path.endsWith('/queue') &&
-        uri.queryParameters.containsKey('status')) {
+    if (uri.path.endsWith('/queue') && uri.queryParameters.isNotEmpty) {
       final signature = uri.query;
       if (signature != _lastInboxFilter) {
         _lastInboxFilter = signature;
+        reviewInbox.query = uri.queryParameters['q'] ?? '';
         reviewInbox.filter({
-          'status': uri.queryParameters['status']!,
+          'status': uri.queryParameters['status'] ?? 'pending',
           'place': uri.queryParameters['place'] ?? '',
           'view': uri.queryParameters['view'] ?? 'all',
+          'sort': uri.queryParameters['sort'] ?? 'oldest',
+          if (uri.queryParameters['start'] != null)
+            'start': uri.queryParameters['start']!,
+          if (uri.queryParameters['end'] != null)
+            'end': uri.queryParameters['end']!,
         });
       }
     } else if (!reviewInbox.loaded && !reviewInbox.loading) {
@@ -227,8 +245,9 @@ class _WebSidebar extends StatelessWidget {
   static List<(int, IconData, String)> itemsFor(bool isPlanner) => [
     (0, Icons.dashboard_rounded, 'Overview'),
     (1, Icons.map_rounded, 'Planning Map'),
-    (2, Icons.center_focus_strong_rounded, 'Analysis Workspace'),
-    (3, Icons.history_rounded, 'My Analyses'),
+    if (!isPlanner)
+      (2, Icons.center_focus_strong_rounded, 'Analysis Workspace'),
+    if (!isPlanner) (3, Icons.history_rounded, 'My Analyses'),
     (4, Icons.picture_as_pdf_rounded, 'Reports'),
     (5, Icons.show_chart_rounded, 'Recommendation Patterns'),
     if (isPlanner) (6, Icons.fact_check_rounded, 'Review Inbox'),
@@ -241,168 +260,189 @@ class _WebSidebar extends StatelessWidget {
     Theme.of(context);
     final name =
         '${state.currentUser?['username'] ?? state.currentUser?['name'] ?? 'Analyst'}';
-    return Container(
-      width: 224,
-      decoration: const BoxDecoration(
-        color: Color(0xFF003D32),
-        image: DecorationImage(
-          image: AssetImage('assets/images/web/analyst_sidebar_valley.png'),
-          alignment: Alignment.bottomCenter,
-          fit: BoxFit.fitWidth,
+    return Material(
+      color: const Color(0xFF003D32),
+      child: Container(
+        width: 224,
+        decoration: const BoxDecoration(
+          color: Color(0xFF003D32),
+          image: DecorationImage(
+            image: AssetImage('assets/images/web/analyst_sidebar_valley.png'),
+            alignment: Alignment.bottomCenter,
+            fit: BoxFit.fitWidth,
+          ),
         ),
-      ),
-      child: ListView(
-        primary: false,
-        padding: const EdgeInsets.fromLTRB(14, 22, 14, 180),
-        children: [
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.eco_rounded,
-                  color: Color(0xFF76D99D),
-                  size: 32,
-                ),
-                const SizedBox(width: 8),
-                const Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'GeoSustain',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 23,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      Text(
-                        'Agricultural Insights Platform',
-                        style: TextStyle(color: Color(0xFFCEE3DB), fontSize: 9),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 30),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 21,
-                  backgroundColor: const Color(0xFF2D8068),
-                  child: Text(
-                    name.isEmpty ? 'A' : name[0].toUpperCase(),
-                    style: const TextStyle(color: Colors.white, fontSize: 17),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const Text(
-                        'Agricultural Planning Analyst',
-                        style: TextStyle(
-                          color: Color(0xFFCEE3DB),
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 25),
-          for (final item in itemsFor(state.isPlanner)) ...[
-            if (item.$3 == 'Settings')
-              const Divider(color: Colors.white24, height: 24),
+        child: ListView(
+          primary: false,
+          padding: const EdgeInsets.fromLTRB(14, 22, 14, 180),
+          children: [
             Padding(
-              padding: const EdgeInsets.only(bottom: 5),
-              child: Semantics(
-                selected: selectedIndex == item.$1,
-                child: Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(10),
-                    onTap: () {
-                      if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
-                        Navigator.pop(context);
-                      }
-                      onSelect(item.$1);
-                    },
-                    child: Container(
-                      constraints: const BoxConstraints(minHeight: 44),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.eco_rounded,
+                    color: Color(0xFF76D99D),
+                    size: 32,
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'GeoSustain',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            color: Colors.white,
+                            fontSize: 23,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Text(
+                          'Agricultural Insights Platform',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            color: Color(0xFFCEE3DB),
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 30),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 6),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 21,
+                    backgroundColor: const Color(0xFF2D8068),
+                    child: Text(
+                      name.isEmpty ? 'A' : name[0].toUpperCase(),
+                      style: const TextStyle(
+                        fontFamily: 'Roboto',
+                        color: Colors.white,
+                        fontSize: 17,
                       ),
-                      decoration: BoxDecoration(
-                        gradient: selectedIndex == item.$1
-                            ? const LinearGradient(
-                                colors: [Color(0xFF16784F), Color(0xFF237F56)],
-                              )
-                            : null,
-                        borderRadius: BorderRadius.circular(10),
-                        border: selectedIndex == item.$1
-                            ? Border.all(
-                                color: const Color(0xFF7DD7A4),
-                                width: .6,
-                              )
-                            : null,
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(item.$2, color: Colors.white, size: 20),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Text(
-                              item.$3,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 12,
-                                fontWeight: selectedIndex == item.$1
-                                    ? FontWeight.w700
-                                    : FontWeight.w500,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontFamily: 'Roboto',
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const Text(
+                          'Agricultural Planning Analyst',
+                          style: TextStyle(
+                            fontFamily: 'Roboto',
+                            color: Color(0xFFCEE3DB),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 25),
+            for (final item in itemsFor(state.isPlanner)) ...[
+              if (item.$3 == 'Settings')
+                const Divider(color: Colors.white24, height: 24),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 5),
+                child: Semantics(
+                  selected: selectedIndex == item.$1,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(10),
+                      onTap: () {
+                        if (Scaffold.maybeOf(context)?.isDrawerOpen == true) {
+                          Navigator.pop(context);
+                        }
+                        onSelect(item.$1);
+                      },
+                      child: Container(
+                        constraints: const BoxConstraints(minHeight: 44),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: selectedIndex == item.$1
+                              ? const LinearGradient(
+                                  colors: [
+                                    Color(0xFF16784F),
+                                    Color(0xFF237F56),
+                                  ],
+                                )
+                              : null,
+                          borderRadius: BorderRadius.circular(10),
+                          border: selectedIndex == item.$1
+                              ? Border.all(
+                                  color: const Color(0xFF7DD7A4),
+                                  width: .6,
+                                )
+                              : null,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(item.$2, color: Colors.white, size: 20),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Text(
+                                item.$3,
+                                style: TextStyle(
+                                  fontFamily: 'Roboto',
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: selectedIndex == item.$1
+                                      ? FontWeight.w700
+                                      : FontWeight.w500,
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ),
               ),
+            ],
+            TextButton.icon(
+              onPressed: logout,
+              icon: const Icon(Icons.logout_rounded, size: 20),
+              label: const Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Logout'),
+              ),
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 16,
+                ),
+              ),
             ),
           ],
-          TextButton.icon(
-            onPressed: logout,
-            icon: const Icon(Icons.logout_rounded, size: 20),
-            label: const Align(
-              alignment: Alignment.centerLeft,
-              child: Text('Logout'),
-            ),
-            style: TextButton.styleFrom(
-              foregroundColor: Colors.white,
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }

@@ -262,6 +262,9 @@ class _WebAnalyzeInputPanel extends StatelessWidget {
           decoration: InputDecoration(
             labelText: 'Intended Planting Month',
             prefixIcon: Icon(Icons.calendar_month_rounded),
+            helperText:
+                'Seasonal planting guidance; historical climate, not a forecast.',
+            helperMaxLines: 2,
           ),
           items: List.generate(12, (index) {
             final month = index + 1;
@@ -350,23 +353,23 @@ class _WebSeasonLegend extends StatelessWidget {
             children: [
               chip(
                 Color(0xFF168A4A),
-                'In season',
-                'Inside the preferred local planting window.',
+                'Moisture favorable',
+                'Seasonal historical moisture checks are met.',
               ),
               chip(
                 Color(0xFF57A96B),
                 'Establishment',
-                'Preferred period for establishing perennial crops.',
+                'Advice concerns young plants, not flowering or harvest.',
               ),
               chip(
                 Color(0xFFE6A21A),
-                'Managed',
-                'Possible year-round with irrigation or moisture management.',
+                'Check conditions',
+                'Confirm water supply and crop-specific conditions.',
               ),
               chip(
                 Color(0xFFD9534F),
-                'Out of season',
-                'Seasonal penalty is applied to the crop score.',
+                'Water support',
+                'Dry period indicated; annual AI scores are unchanged.',
               ),
             ],
           ),

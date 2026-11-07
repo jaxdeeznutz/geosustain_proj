@@ -724,6 +724,11 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+                    SeasonalPlantingAdvice(
+                      record: widget.record,
+                      crop: '${crop['crop']}',
+                    ),
+                    CropVarietyReference(crop: '${crop['crop']}'),
                     if (tab == 0)
                       _AnalysisSection(
                         title: 'Crop overview',

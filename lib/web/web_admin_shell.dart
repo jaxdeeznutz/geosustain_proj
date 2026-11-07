@@ -1500,9 +1500,10 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     final filtered =
         crops
             .where(
-              (c) => '${c['label']} ${c['crop_key']}'.toLowerCase().contains(
-                cropQuery.toLowerCase(),
-              ),
+              (c) =>
+                  "${c['label']} ${c['crop_key']} ${analysisListValue(c['varieties']).map((v) => analysisMapValue(v)['label']).join(' ')}"
+                      .toLowerCase()
+                      .contains(cropQuery.toLowerCase()),
             )
             .toList()
           ..sort(
@@ -1521,20 +1522,20 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         const SizedBox(height: 20),
         _metrics([
           _metric(
-            'Approved Crops',
+            'Approved Crop Groups',
             crops.length,
             Icons.spa_rounded,
             'Approved reference set',
           ),
           _metric(
-            'Active Crops',
+            'Active Crop Groups',
             crops.where((c) => c['is_active'] == true).length,
             Icons.check_circle_rounded,
             'Available for new recommendations',
             const Color(0xFF197BD1),
           ),
           _metric(
-            'Inactive Crops',
+            'Inactive Crop Groups',
             crops.where((c) => c['is_active'] != true).length,
             Icons.pause_circle_outline,
             'Excluded from new recommendations',
@@ -1621,7 +1622,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                         onChanged: (value) => setState(() => cropQuery = value),
                         decoration: const InputDecoration(
                           prefixIcon: Icon(Icons.search, size: 18),
-                          hintText: 'Search crops...',
+                          hintText: 'Search crops or varieties...',
                         ),
                       ),
                     ),
@@ -1771,7 +1772,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
             ),
           ],
         );
-        return box.maxWidth < 460 ||
+        final header =
+            box.maxWidth < 460 ||
                 MediaQuery.textScalerOf(context).scale(14) > 20
             ? Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -1787,6 +1789,14 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                   actions,
                 ],
               );
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            header,
+            if (c['crop_key'] == 'banana')
+              const CropVarietyReference(crop: 'banana'),
+          ],
+        );
       },
     ),
   );

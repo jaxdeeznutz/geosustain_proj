@@ -54,6 +54,7 @@ part 'widgets/geo_result_widgets.dart';
 part 'widgets/cagro_soil_card.dart';
 part 'widgets/analysis_coverage.dart';
 part 'widgets/seasonal_context.dart';
+part 'widgets/crop_varieties.dart';
 part 'widgets/spatial_context.dart';
 part 'widgets/local_explanation.dart';
 part 'widgets/controlled_reference_versions.dart';
@@ -90,6 +91,7 @@ part 'web/widgets/web_portal_layout.dart';
 part 'web/widgets/analyst_design.dart';
 part 'web/widgets/admin_design.dart';
 part 'web/widgets/review_case_design.dart';
+part 'web/widgets/review_inbox_design.dart';
 part 'widgets/context_map.dart';
 part 'web/screens/web_dashboard_screen.dart';
 part 'web/screens/web_map_screen.dart';
@@ -515,7 +517,11 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => loading = true);
 
     try {
-      await api.login(email, password);
+      final signedIn = await api.login(email, password);
+      final landing = PortalRoutes.signInLanding(
+        analysisMapValue(signedIn['user'])['role'],
+      );
+      if (kIsWeb && landing != null) PortalRoutes.go(landing);
       // The authenticated role selects the appropriate shell.
 
       if (!mounted) return;
@@ -541,7 +547,13 @@ class _LoginPageState extends State<LoginPage> {
     var chooseAnother = false;
     setState(() => loading = true);
     try {
-      await api.googleLogin(await FirebaseIdentity.googleProof());
+      final signedIn = await api.googleLogin(
+        await FirebaseIdentity.googleProof(),
+      );
+      final landing = PortalRoutes.signInLanding(
+        analysisMapValue(signedIn['user'])['role'],
+      );
+      if (kIsWeb && landing != null) PortalRoutes.go(landing);
       if (!mounted) return;
       Navigator.pushReplacement(
         context,

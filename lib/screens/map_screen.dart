@@ -536,7 +536,7 @@ class _MapAnalyzePageState extends State<MapAnalyzePage> {
                       labelText: 'Intended Planting Month',
                       prefixIcon: Icon(Icons.calendar_month_rounded),
                       helperText:
-                          'Historical monthly context is shown separately from crop ranking; it is not a forecast.',
+                          'Seasonal planting guidance uses historical climate. Annual AI ranking is separate.',
                     ),
                     items: List.generate(12, (index) {
                       final month = index + 1;
@@ -649,9 +649,9 @@ class _SeasonLegend extends StatelessWidget {
           Expanded(
             child: RichText(
               text: TextSpan(
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11.5,
-                  color: Colors.black87,
+                  color: Theme.of(context).colorScheme.onSurface,
                   height: 1.3,
                 ),
                 children: [
@@ -671,7 +671,7 @@ class _SeasonLegend extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFFF7FAF7),
+        color: Theme.of(context).colorScheme.surfaceContainerLow,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: const Color(0xFFDDE9DF)),
       ),
@@ -695,23 +695,23 @@ class _SeasonLegend extends StatelessWidget {
           const SizedBox(height: 9),
           item(
             const Color(0xFF168A4A),
-            'In season',
-            'month is inside the preferred local planting window.',
+            'Seasonal moisture favorable',
+            'historical rainfall supports the defined moisture checks.',
           ),
           item(
             const Color(0xFF57A96B),
-            'Preferred establishment',
-            'best month for establishing a perennial crop.',
+            'Historical establishment advice',
+            'guidance concerns young plants, not flowering or harvest.',
           ),
           item(
             const Color(0xFFE6A21A),
-            'Year-round with management',
-            'crop may be planted, but irrigation or moisture management is important.',
+            'Check conditions',
+            'water supply or crop-specific conditions need confirmation.',
           ),
           item(
             const Color(0xFFD9534F),
-            'Outside preferred season',
-            'score is reduced; consider the suggested planting window.',
+            'Seasonal water support needed',
+            'a dry period is indicated; model scores are unchanged.',
           ),
         ],
       ),

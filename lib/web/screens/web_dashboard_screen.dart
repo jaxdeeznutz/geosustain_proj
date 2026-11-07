@@ -30,6 +30,49 @@ class WebDashboardScreen extends StatelessWidget {
     Theme.of(context);
     final name =
         '${state.currentUser?['username'] ?? state.currentUser?['name'] ?? 'Analyst'}';
+    if (state.isPlanner) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _DashboardWelcomeRow(
+            name: name,
+            state: state,
+            weather: state.liveWeather ?? {},
+          ),
+          const SizedBox(height: 18),
+          WebAdaptiveRow(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: _AnalystWorkflowCard(
+                  icon: Icons.fact_check_rounded,
+                  title: 'Review farmer submissions',
+                  description:
+                      'Inspect saved boundaries, crop results and seasonal advice, then record a review decision.',
+                  steps: 'Review evidence → Record decision → Export report',
+                  action: 'Open Review Inbox',
+                  onPressed: () => PortalRoutes.go('/operator/queue'),
+                ),
+              ),
+              const SizedBox(width: 18),
+              Expanded(
+                child: _AnalystWorkflowCard(
+                  icon: Icons.map_rounded,
+                  title: 'Map of submitted cases',
+                  description:
+                      'Locate submitted farms and open a case to review its recorded evidence.',
+                  steps: 'Open map → Select a case → Inspect evidence',
+                  action: 'Open submitted case map',
+                  onPressed: onOpenMapAnalysis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 18),
+          WebOperatorOverview(state: state),
+        ],
+      );
+    }
     final records = state.historyRecords
         .map((e) => Map<String, dynamic>.from(e))
         .toList();

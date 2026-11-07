@@ -191,17 +191,15 @@ void main() {
       await tester.pumpAndSettle();
       final caption = tester.widget<Text>(
         find.text(
-          'Review Inbox → Inspect evidence → Verify, request information, or reject',
+          'Review evidence \u2192 Record decision \u2192 Export report',
         ),
       );
       expect(caption.style?.color, WebPortalColors.muted);
-      final kpi = tester.widget<Text>(
-        find.text('No recorded model scores yet'),
-      );
-      expect(kpi.style?.color, WebPortalColors.accent);
-      expect(find.text('Choose a point or draw a polygon'), findsOneWidget);
-      expect(find.text('Start New Analysis'), findsWidgets);
-      expect(find.text('Open Review Inbox'), findsWidgets);
+      expect(find.text('Review farmer submissions'), findsOneWidget);
+      expect(find.text('Review workload'), findsOneWidget);
+      expect(find.text('Choose a point or draw a polygon'), findsNothing);
+      expect(find.text('Start New Analysis'), findsNothing);
+      expect(find.text('Open Review Inbox'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       state.dispose();
