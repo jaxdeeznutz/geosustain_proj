@@ -36,7 +36,7 @@ LIMITATIONS = [
     'Rainfall periods and temperature aggregation in the labelled rows are unresolved. No annual conversion or relabelling is performed.',
     'Exact duplicates are removed before splitting; independent farm/source groups are unknown, so a row split cannot establish farm generalization.',
     'N, P and K are excluded. Received PAGRO measurements require compatible methods/units and matched crop-labelled records before retraining.',
-    'This seven-input candidate cannot replace the current ten-input application model without integration and input-contract review.',
+    'The app currently uses a seven-input experimental model. A fresh candidate still requires explicit integration, explanation replay and input-contract review before replacement.',
 ]
 
 
@@ -240,7 +240,7 @@ def run_training(dataset, manifest_path, output_parent, *, seed=42, trees=500, c
         f'Selected by training-only CV macro F1: {selected}\n'
         'Keep the executed notebook with its outputs as the record of your own Colab run.\n'
         'Timestamps and this JSON are reproducibility records, not independent proof of execution location.\n'
-        'Do not copy these seven-input models into the current ten-input app.\n\n'
+        'Do not automatically overwrite the installed seven-input model; review the candidate, metadata and saved-explanation binding first.\n\n'
         + '\n'.join('- ' + item for item in LIMITATIONS) + '\n', encoding='utf-8')
     # Bundle exact input bytes as well as cleaned rows, so the audit can be replayed.
     (output / 'input_dataset.csv').write_bytes(Path(dataset).read_bytes())

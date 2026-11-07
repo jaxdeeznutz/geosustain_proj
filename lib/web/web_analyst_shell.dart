@@ -76,6 +76,7 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
   void initState() {
     super.initState();
     PortalRoutes.start();
+    unawaited(state.refreshCurrentModelSummary());
     if (state.isPlanner) {
       final canonical = PortalRoutes.analystRoute(PortalRoutes.current.value);
       if (canonical != PortalRoutes.current.value) {

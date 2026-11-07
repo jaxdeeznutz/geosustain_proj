@@ -72,6 +72,8 @@ void main() {
             findsOneWidget,
           );
           expect(find.textContaining('%'), findsNothing);
+          expect(find.textContaining('1,524 mm/year'), findsOneWidget);
+          expect(find.textContaining('1.5-1,000 m'), findsOneWidget);
           expect(jsonEncode(record), before);
           expect(tester.takeException(), isNull);
           if (scale == 1) {

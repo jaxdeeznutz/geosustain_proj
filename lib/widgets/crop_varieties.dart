@@ -85,6 +85,19 @@ class _CropVarietyReferenceState extends State<CropVarietyReference> {
                         '${profile['description']}',
                         style: const TextStyle(fontSize: 12),
                       ),
+                      for (final line in analysisListValue(
+                        profile['guidance_lines'],
+                      ))
+                        Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '$line',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: colors.onSurfaceVariant,
+                            ),
+                          ),
+                        ),
                     ],
                   ),
                 ),
@@ -120,6 +133,13 @@ class _CropVarietyReferenceState extends State<CropVarietyReference> {
                                   '${data['local_scope_note']}',
                                   style: const TextStyle(fontSize: 12),
                                 ),
+                                if (data['guidance_scope_note'] != null) ...[
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    '${data['guidance_scope_note']}',
+                                    style: const TextStyle(fontSize: 12),
+                                  ),
+                                ],
                                 const SizedBox(height: 16),
                                 for (final source in sources.values)
                                   Padding(

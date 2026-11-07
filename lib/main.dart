@@ -1328,6 +1328,8 @@ class AnalysisState extends ChangeNotifier {
     historyLoaded = false;
     historyLoading = false;
     webSummary = null;
+    currentModelSummary = null;
+    _patternsRefresh = null;
     resourceErrors.clear();
     userLoaded = false;
     _weatherRefreshTimer?.cancel();
@@ -1388,6 +1390,8 @@ class AnalysisState extends ChangeNotifier {
   Map<String, dynamic>? liveWeather;
   Map<String, dynamic>? currentUser;
   Map<String, dynamic>? webSummary;
+  Map<String, dynamic>? currentModelSummary;
+  Future<void>? _patternsRefresh;
   final resourceErrors = <String, String>{};
   bool get webOperator => kIsWeb && (isAnalystRole || isSuperAdmin);
   bool get hasWorkspaceAccess =>
@@ -1672,6 +1676,37 @@ class AnalysisState extends ChangeNotifier {
     });
   }
 
+  Future<void> refreshCurrentModelSummary() {
+    final epoch = _sessionEpoch;
+    return _patternsRefresh ??= _refreshCurrentModelSummary().whenComplete(() {
+      if (epoch == _sessionEpoch) _patternsRefresh = null;
+    });
+  }
+
+  Future<void> _refreshCurrentModelSummary() async {
+    final epoch = _sessionEpoch;
+    final owner = currentUser?['id'];
+    if (owner == null) return;
+    try {
+      final summary = await api.getRecommendationPatterns(submitted: isPlanner);
+      if (summary['current_model_version'] == null ||
+          summary['model_scope'] != 'current') {
+        throw Exception(
+          'Current-model summary is unavailable. Deploy the matching backend and refresh.',
+        );
+      }
+      if (_active(epoch, owner)) {
+        currentModelSummary = summary;
+        resourceErrors.remove('patterns');
+      }
+    } catch (error) {
+      if (_active(epoch, owner)) {
+        resourceErrors['patterns'] = friendlyErrorMessage(error);
+      }
+    }
+    if (_active(epoch, owner)) notifyListeners();
+  }
+
   Future<void> _refreshHistory() async {
     final epoch = _sessionEpoch;
     final owner = currentUser?['id'];
@@ -1726,6 +1761,7 @@ class AnalysisState extends ChangeNotifier {
     // Coalesce simultaneous tab refreshes and fetch each account resource once.
     resourceErrors.clear();
     await Future.wait([
+      if (webOperator) refreshCurrentModelSummary(),
       if (webOperator)
         () async {
           try {

@@ -1711,6 +1711,12 @@ def web_history_summary(user=Depends(get_api_user)):
     return summary(user['id'])
 
 
+@app.get('/api/web/recommendation-patterns')
+def web_recommendation_patterns(user=Depends(get_api_user), model_scope: str = Query('current', pattern='^(current|all)$')):
+    from recommendation_patterns import patterns
+    return patterns(user['id'], model_scope=model_scope)
+
+
 @app.get('/api/mobile/analyses/{session_id}')
 def mobile_analysis_detail(session_id: int, user=Depends(get_api_user)):
     item=get_user_analysis(user['id'],session_id)

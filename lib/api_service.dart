@@ -1186,6 +1186,18 @@ class ApiService {
   Future<Map<String, dynamic>> getWebSummary() =>
       getRecordPage('/api/web/summary');
 
+  Future<Map<String, dynamic>> getRecommendationPatterns({
+    bool submitted = false,
+    String modelScope = 'current',
+  }) => getRecordPage(
+    submitted
+        ? '/api/operator/recommendation-patterns'
+        : '/api/web/recommendation-patterns',
+    parameters: {'model_scope': modelScope},
+    requestTimeout: const Duration(seconds: 20),
+    recoveryAttempts: 1,
+  );
+
   Future<List<dynamic>> getFarmHistory(int farmId) => _history(farmId: farmId);
 
   Future<List<dynamic>> _history({int? farmId}) async {

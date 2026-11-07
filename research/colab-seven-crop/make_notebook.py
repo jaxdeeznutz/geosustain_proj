@@ -132,7 +132,7 @@ def build():
          'Keep this run as the **no-NPK baseline**. Check PAGRO units, test methods, soil depth, date/location and '
          'matching crop-labelled observations. Build a new versioned dataset and retrain all three models. '
          'Do not attach unrelated NPK values to existing rows. Adding three predictors changes the model input contract.\n\n'
-         '**App integration is separate:** this seven-input candidate does not replace the current ten-input deployed model. '
+         '**App integration is separate:** a fresh training run does not automatically replace the installed seven-input experimental model. '
          'The annual-input compatibility and field-validation gaps remain.\n\n'
          'References: [Colab FAQ](https://research.google.com/colaboratory/faq.html), '
          '[scikit-learn leakage guidance](https://scikit-learn.org/1.8/common_pitfalls.html), '

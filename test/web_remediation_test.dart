@@ -190,16 +190,14 @@ void main() {
       appThemeMode.value = ThemeMode.dark;
       await tester.pumpAndSettle();
       final caption = tester.widget<Text>(
-        find.text(
-          'Review evidence \u2192 Record decision \u2192 Export report',
-        ),
+        find.text('Inspect saved results and sources'),
       );
       expect(caption.style?.color, WebPortalColors.muted);
       expect(find.text('Review farmer submissions'), findsOneWidget);
       expect(find.text('Review workload'), findsOneWidget);
       expect(find.text('Choose a point or draw a polygon'), findsNothing);
       expect(find.text('Start New Analysis'), findsNothing);
-      expect(find.text('Open Review Inbox'), findsOneWidget);
+      expect(find.text('Open Review Inbox'), findsNWidgets(2));
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       state.dispose();
