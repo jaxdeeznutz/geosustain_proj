@@ -1,3 +1,28 @@
+/// A selected month's moisture class, never inferred from its calendar name.
+String seasonalMoistureLabel(Map<String, dynamic> record) {
+  Map<String, dynamic> object(dynamic value) =>
+      value is Map ? Map<String, dynamic>.from(value) : {};
+  final saved = object(record['seasonal_assessment']);
+  final cycle = object(saved['monthly_climate'])['monthly_cycle'];
+  final month = int.tryParse('${saved['selected_month']}');
+  String? status;
+  if (month != null && month >= 1 && month <= 12 && cycle is List) {
+    for (final row in cycle) {
+      final item = object(row);
+      if (int.tryParse('${item['month']}') == month) {
+        status = '${item['moisture_status']}';
+        break;
+      }
+    }
+  }
+  return switch (status) {
+    'humid' => 'Wet conditions',
+    'dry' => 'Dry conditions',
+    'intermediate' => 'Transitional conditions',
+    _ => 'Seasonal conditions unavailable',
+  };
+}
+
 /// Shared saved-snapshot text for farmer, analyst and exported reports.
 /// Never fetch or reconstruct climate evidence when reopening old records.
 List<String> seasonalAssessmentLines(Map<String, dynamic> record) {
@@ -16,6 +41,7 @@ List<String> seasonalAssessmentLines(Map<String, dynamic> record) {
   final metrics = object(climate['metrics']);
   final lines = <String>[
     'Selected planting month: ${saved['selected_month_name']}',
+    '${seasonalMoistureLabel(record)} (historical moisture estimate, not a forecast or official season declaration)',
     '${saved['summary']}',
     'Saved seasonal context: ${saved['captured_at']}; version: ${saved['version']}',
     'Source: ${climate['source_name'] ?? 'Unavailable'}; baseline: ${climate['baseline_start_year'] ?? 'Unknown'}-${climate['baseline_end_year'] ?? 'Unknown'}',

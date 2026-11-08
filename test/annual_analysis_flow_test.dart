@@ -3,57 +3,58 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:geosustain_clean_arranged/main.dart';
 
 void main() {
-  testWidgets('experimental annual scores remain visibly unvalidated', (
-    tester,
-  ) async {
-    tester.view.physicalSize = const Size(360, 800);
-    tester.view.devicePixelRatio = 1;
-    addTearDown(tester.view.resetPhysicalSize);
-    addTearDown(tester.view.resetDevicePixelRatio);
-    final state = AnalysisState()..currentUser = {'id': 2, 'role': 'farmer'};
-    addTearDown(state.dispose);
-    final record = <String, dynamic>{
-      'session_id': 7,
-      'farm_id': 3,
-      'owner_id': 2,
-      'farm_name_snapshot': 'Prototype fixture farm',
-      'model_usage': 'seven_crop_raw_annual_prototype_v1',
-      'model_validation_status': 'unvalidated',
-      'analysis_status': 'completed',
-      'verification_status': 'draft',
-      'analysis_mode': 'legacy_model_estimates',
-      'recommendation_basis': 'model_probability',
-      'is_crop_recommended': true,
-      'predicted_crop': 'Rice',
-      'crop_compatibility_pct': 30.0,
-      'top_crop_recommendations': [
-        {'crop': 'Rice', 'compatibility_pct': 30.0, 'rank': 1, 'factors': []},
-      ],
-    };
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: SingleChildScrollView(
-            child: FarmerAnalysisContent(state: state, record: record),
+  testWidgets(
+    'annual notice stays in provenance without a repeated summary box',
+    (tester) async {
+      tester.view.physicalSize = const Size(360, 800);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final state = AnalysisState()..currentUser = {'id': 2, 'role': 'farmer'};
+      addTearDown(state.dispose);
+      final record = <String, dynamic>{
+        'session_id': 7,
+        'farm_id': 3,
+        'owner_id': 2,
+        'farm_name_snapshot': 'Prototype fixture farm',
+        'model_usage': 'seven_crop_raw_annual_prototype_v1',
+        'model_validation_status': 'unvalidated',
+        'analysis_status': 'completed',
+        'verification_status': 'draft',
+        'analysis_mode': 'legacy_model_estimates',
+        'recommendation_basis': 'model_probability',
+        'is_crop_recommended': true,
+        'predicted_crop': 'Rice',
+        'crop_compatibility_pct': 30.0,
+        'top_crop_recommendations': [
+          {'crop': 'Rice', 'compatibility_pct': 30.0, 'rank': 1, 'factors': []},
+        ],
+      };
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: FarmerAnalysisContent(state: state, record: record),
+            ),
           ),
         ),
-      ),
-    );
-    await tester.pumpAndSettle();
-    expect(find.text('Experimental model'), findsOneWidget);
-    expect(
-      find.text(
-        'Annual inputs are not validated for this model. Ask an analyst before planting.',
-      ),
-      findsOneWidget,
-    );
-    expect(
-      analysisCoverageLines(record).join(' '),
-      contains('Experimental seven-crop model'),
-    );
-    expect(tester.takeException(), isNull);
-    await tester.pumpWidget(const SizedBox());
-  });
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Experimental model'), findsNothing);
+      expect(
+        find.text(
+          'Annual inputs are not validated for this model. Ask an analyst before planting.',
+        ),
+        findsNothing,
+      );
+      expect(
+        analysisCoverageLines(record).join(' '),
+        contains('Experimental seven-crop model'),
+      );
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+    },
+  );
 
   testWidgets(
     'annual reference result explains pending model without a crop score',
@@ -119,10 +120,7 @@ void main() {
       await tester.ensureVisible(details);
       await tester.tap(details);
       await tester.pumpAndSettle();
-      expect(
-        find.text('Environmental factors (10)'),
-        findsOneWidget,
-      );
+      expect(find.text('Environmental factors (10)'), findsOneWidget);
       expect(find.text('Annual environmental condition checks'), findsNothing);
       expect(find.textContaining('Missing CAGRO NPK prevents'), findsNothing);
       expect(tester.takeException(), isNull);

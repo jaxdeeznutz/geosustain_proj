@@ -4,7 +4,7 @@ from copy import deepcopy
 import pytest
 
 import seasonal_assessment as seasonal
-from seasonal_planting import CROPS, SOURCES, assess_crop, eto_month, longest_dry_run
+from seasonal_planting import CROPS, SOURCES, assess_crop, eto_month, longest_dry_run, planting_assessment
 
 
 def climate_payload():
@@ -18,6 +18,23 @@ def climate_payload():
 
 def cycle(status='humid', rainfall=300):
     return [{'month': m, 'rainfall_status': 'available', 'rainfall_mm': rainfall, 'moisture_status': status} for m in range(1, 13)]
+
+
+@pytest.mark.parametrize('status,label', [
+    ('humid', 'Wet conditions'), ('dry', 'Dry conditions'),
+    ('intermediate', 'Transitional conditions'),
+    ('unavailable', 'Seasonal conditions unavailable'),
+])
+def test_season_description_uses_selected_month_not_four_month_outcome(status, label):
+    months = cycle()
+    months[10]['moisture_status'] = status
+    result = planting_assessment({'monthly_cycle': months}, 11)
+    assert result['selected_month_moisture']['label'] == label
+    assert 'not an official' in result['selected_month_moisture']['basis']
+    assert result['model_ranking_effect'] == 'none'
+    rice = next(row for row in result['crops'] if row['crop'] == 'Rice')
+    if status == 'humid':
+        assert rice['label'] == 'Check irrigation and planting schedule'
 
 
 def test_eto_radiation_water_equivalent_and_polar_and_invalid_inputs():

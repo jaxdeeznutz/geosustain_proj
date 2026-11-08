@@ -172,8 +172,10 @@ def assess_crop(crop, cycle, month):
     elif crop == 'Mango':
         reasons.append('This advice is for establishing young trees. Dry-weather flowering requirements of mature mango trees are a separate assessment.')
     reasons.append(SOURCES[crop.lower()]['criterion'])
-    labels = {'favorable_moisture': 'Seasonal moisture favorable', 'conditional': 'Seasonal planting: check conditions',
+    labels = {'favorable_moisture': 'Moisture supports planting', 'conditional': 'Check water and planting conditions',
               'water_support_needed': 'Seasonal water support needed', 'unavailable': 'Seasonal assessment unavailable'}
+    if crop == 'Rice' and status == 'conditional':
+        labels['conditional'] = 'Check irrigation and planting schedule'
     return {'crop': crop, 'status': status, 'label': labels[status], 'selected_month': month,
             'reasons': reasons, 'reference_checks': checks, 'source_ids': source_keys,
             'window_months': [(month - 1 + offset) % 12 + 1 for offset in range(WINDOW_MONTHS)],
@@ -185,12 +187,20 @@ def planting_assessment(baseline, month, enabled_crops=None):
     enabled = {str(c).lower() for c in enabled_crops} if enabled_crops is not None else None
     names = [c for c in CROPS if enabled is None or c.lower() in enabled]
     crops = [assess_crop(crop, cycle, month) for crop in names]
+    selected = next((row for row in cycle if row.get('month') == month), {})
+    moisture = selected.get('moisture_status', 'unavailable')
     for crop in crops:
         # Monthly candidates meet only the defined moisture checks. They are
         # neither an official planting calendar nor a new crop ranking.
         crop['moisture_supported_months'] = [m for m in range(1, 13) if assess_crop(crop['crop'], cycle, m)['status'] == 'favorable_moisture']
     return {
         'version': VERSION, 'title': 'Seasonal planting assessment',
+        'selected_month_moisture': {
+            'status': moisture,
+            'label': {'humid': 'Wet conditions', 'dry': 'Dry conditions',
+                      'intermediate': 'Transitional conditions'}.get(moisture, 'Seasonal conditions unavailable'),
+            'basis': 'Historical monthly rainfall versus estimated reference evapotranspiration; not an official wet/dry season declaration or forecast.',
+        },
         'status': 'available' if crops and all(c['status'] != 'unavailable' for c in crops) else 'partial' if any(c['status'] != 'unavailable' for c in crops) else 'unavailable',
         'basis': 'Published-reference seasonal moisture screening using historical monthly climate; not a trained seasonal prediction',
         'window_description': 'Selected month plus the next three calendar months; application screening horizon, not crop maturity duration',

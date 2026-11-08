@@ -70,7 +70,7 @@ void main() {
   );
 
   testWidgets(
-    'farmer result identifies no-NPK model and retains the experimental notice',
+    'farmer result identifies no-NPK model without a repeated notice box',
     (tester) async {
       tester.view.physicalSize = const Size(360, 800);
       tester.view.devicePixelRatio = 1;
@@ -97,7 +97,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Experimental model'), findsOneWidget);
+      expect(find.text('Experimental model'), findsNothing);
       expect(
         find.text('NPK not used. PAGRO soil data pending.'),
         findsOneWidget,

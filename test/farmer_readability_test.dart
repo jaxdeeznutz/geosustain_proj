@@ -139,10 +139,11 @@ void main() {
         expect(find.text('Review color guide'), findsOneWidget);
         expect(find.text('Send for review'), findsOneWidget);
         await _show(tester, '1. Rice');
-        expect(find.text('Condition color guide'), findsOneWidget);
-        expect(find.text('Gray: Not assessed'), findsOneWidget);
-        expect(find.text('Green: Fits range'), findsOneWidget);
-        expect(find.text('Full explanation and sources'), findsOneWidget);
+        expect(find.byType(RecommendedCropDetailsSheet), findsOneWidget);
+        expect(find.text('AI Crop Ranking'), findsOneWidget);
+        expect(find.text('Full explanation and sources'), findsNothing);
+        expect(find.text('Explainable AI'), findsOneWidget);
+        expect(find.byType(BottomSheet), findsOneWidget);
         expect(jsonEncode(record), before);
         expect(state.submissions, 0);
         expect(tester.takeException(), isNull);

@@ -1457,6 +1457,8 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
         badge: _CropPill(
           label: record['analysis_mode'] == 'preliminary_environmental'
               ? 'Preliminary comparison'
+              : isModelRanked(record)
+              ? 'Ranked #1'
               : 'Recommended',
           icon: Icons.eco,
           background: CropSheetStyle.greenSoft,
@@ -1529,7 +1531,9 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
               preliminary
                   ? 'Factor colors describe individual documented criteria only. Missing observations or criteria remain not assessed.'
                   : isModelRanked(record)
-                  ? 'Model class scores are not harvest probabilities. Training includes synthetic GIS features, and nutrient inputs include estimated proxies.'
+                  ? isNoNpkModelRecord(record)
+                        ? 'Model scores are not harvest probabilities. Training includes generated terrain and vegetation features. NPK is not used.'
+                        : 'Model scores are not harvest probabilities. Training includes generated GIS features and estimated nutrient inputs.'
                   : 'These values are based on the environmental conditions retrieved for your selected area. The suitability score considers all factors together.',
             ),
           ],
