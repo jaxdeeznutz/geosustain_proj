@@ -1,0 +1,41 @@
+{
+  "version": "pagasa-station-outlook-reference-v1",
+  "records": [
+    {
+      "year": 2026,
+      "month": 11,
+      "station": "Tagum",
+      "issued_on": "2026-10-21",
+      "valid_from": "2026-11-01",
+      "valid_until": "2026-11-30",
+      "source_name": "DOST-PAGASA",
+      "source_title": "Probabilistic Rainfall Forecast for November 2026",
+      "source_url": "https://pubfiles.pagasa.dost.gov.ph/pagasaweb/files/climate/monthly/probabilistic/NOVEMBER_2026.pdf",
+      "source_page": 2,
+      "probabilities_pct": {
+        "below_normal": 38,
+        "near_normal": 30,
+        "above_normal": 32
+      },
+      "source_sha256": "9df938faceb35b70d2d6f53da17ed8514cb23087084abc1e5e17eead9dff5fe1"
+    },
+    {
+      "year": 2026,
+      "month": 12,
+      "station": "Tagum",
+      "issued_on": "2026-10-21",
+      "valid_from": "2026-12-01",
+      "valid_until": "2026-12-31",
+      "source_name": "DOST-PAGASA",
+      "source_title": "Probabilistic Rainfall Forecast for December 2026",
+      "source_url": "https://pubfiles.pagasa.dost.gov.ph/pagasaweb/files/climate/monthly/probabilistic/DECEMBER_2026.pdf",
+      "source_page": 2,
+      "probabilities_pct": {
+        "below_normal": 67,
+        "near_normal": 20,
+        "above_normal": 13
+      },
+      "source_sha256": "7511c24b7d023a3a043955919806b57630095185d92adc9ae6f687e97706ac6c"
+    }
+  ]
+}

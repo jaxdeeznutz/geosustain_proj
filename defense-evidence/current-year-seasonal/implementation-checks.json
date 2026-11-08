@@ -1,0 +1,96 @@
+{
+  "recorded_at_utc": "2026-11-08T02:37:46.042807+00:00",
+  "checks": {
+    "backend_passed": 655,
+    "flutter_passed": 453,
+    "final_forecast_checks_passed": 9,
+    "analyze": "No issues found",
+    "web_build": "passed",
+    "debug_apk": "passed"
+  },
+  "live_source_check": {
+    "location": "Public Panabo representative point 7.2915,125.6255; not a farm training record",
+    "year": 2026,
+    "complete_month_count": 9,
+    "latest_complete_month": "September",
+    "selected_november_status": "unavailable",
+    "nasa_monthly_query_current_year": true,
+    "provider_calls_per_analysis": "One monthly request covers historical baseline and current year"
+  },
+  "published_pagasa_outlooks": [
+    {
+      "year": 2026,
+      "month": 11,
+      "station": "Tagum",
+      "issued_on": "2026-10-21",
+      "valid_from": "2026-11-01",
+      "valid_until": "2026-11-30",
+      "source_name": "DOST-PAGASA",
+      "source_title": "Probabilistic Rainfall Forecast for November 2026",
+      "source_url": "https://pubfiles.pagasa.dost.gov.ph/pagasaweb/files/climate/monthly/probabilistic/NOVEMBER_2026.pdf",
+      "source_page": 2,
+      "probabilities_pct": {
+        "below_normal": 38,
+        "near_normal": 30,
+        "above_normal": 32
+      },
+      "source_sha256": "9df938faceb35b70d2d6f53da17ed8514cb23087084abc1e5e17eead9dff5fe1"
+    },
+    {
+      "year": 2026,
+      "month": 12,
+      "station": "Tagum",
+      "issued_on": "2026-10-21",
+      "valid_from": "2026-12-01",
+      "valid_until": "2026-12-31",
+      "source_name": "DOST-PAGASA",
+      "source_title": "Probabilistic Rainfall Forecast for December 2026",
+      "source_url": "https://pubfiles.pagasa.dost.gov.ph/pagasaweb/files/climate/monthly/probabilistic/DECEMBER_2026.pdf",
+      "source_page": 2,
+      "probabilities_pct": {
+        "below_normal": 67,
+        "near_normal": 20,
+        "above_normal": 13
+      },
+      "source_sha256": "7511c24b7d023a3a043955919806b57630095185d92adc9ae6f687e97706ac6c"
+    }
+  ],
+  "forecast_scope": "Tagum station regional reference only; not parcel forecast or a best-crop label",
+  "source_verification": "December PDF page 2 rendered and visually checked; November official PDF table reviewed via web extraction. Source checksums retained.",
+  "display": "Current-year estimates and dated forecast first; historical 2005-2024 planting guidance expandable and labelled separately",
+  "safeguards": [
+    "Incomplete current/future months excluded",
+    "No annual total assigned to unfinished year",
+    "Units and fill values checked",
+    "Forecast issue/expiry/year/location scope checked",
+    "No missing 2026 values filled from old averages",
+    "Saved snapshots retained; new analysis needed for new evidence"
+  ],
+  "model_artifacts_unchanged": true,
+  "model_sha256": {
+    "backend/crop_model.pkl": "6cefb5545173c05521a5c1fe71e5cb654b2a17161a1e1399d88f93afa867c8cd",
+    "backend/crop_model_features.pkl": "8cf20d6c9595151480c9204f63ca1d611a0cf9077fe42f3a7796a20c5cf6ab3b",
+    "backend/crop_model_metadata.json": "3767469a3261f86919f9029a5a22b3e0082b1f8a6548efe8a52c809077b3cfe7"
+  },
+  "model_status": "Five-year annual input scores unchanged and still unvalidated; no retraining or field validation claimed",
+  "web_build": {
+    "source_commit": "ecf9a3d32e9c10a64d8b3150099ca3b911a8c5ac",
+    "source_fingerprint": "6efd41358dc166ad325919060a06bdd06eb870672040e85e93ef0dd4027f63c1",
+    "build_id": "ecf9a3d32e9c-6efd41358dc1",
+    "api_origin": "https://geosustain.onrender.com",
+    "flutter_version": "3.41.9",
+    "built_at_utc": "2026-11-08T02:35:53.401861+00:00",
+    "main_js_sha256": "93099c356c31712b051401f58fae76a6ae332ae95277d21a1a2b802102ea1795",
+    "public_firebase_project": "geosustain-4c722",
+    "web_push_configured": false
+  },
+  "apk": {
+    "path": "C:\\Users\\jasph\\Downloads\\GeoSustain-mobile-update\\build\\app\\outputs\\flutter-apk\\app-debug.apk",
+    "bytes": 193491586,
+    "sha256": "6c9dd45556c84d3d758aa679c8c1e207408f8404255e7d03ce636c76474fd04c",
+    "built_at_utc": "2026-11-08T02:36:27.539957+00:00"
+  },
+  "visual_qa": "build/current-year-seasonal-previews/light.png and dark.png; enlarged-text tests passed",
+  "deployed": false,
+  "physical_device_acceptance": "Not performed in this turn"
+}
