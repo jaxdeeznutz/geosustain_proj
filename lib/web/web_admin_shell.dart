@@ -30,6 +30,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   String submittedSearch = '';
   final offsets = <int, int>{1: 0, 2: 0, 4: 0};
   final hasMore = <int, bool>{};
+  int get _pageSize => page == 2 ? 6 : 50;
   int refreshGeneration = 0;
 
   void _applySearch(String value) {
@@ -100,6 +101,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
           '/api/admin/analyses',
           offset: offsets[2]!,
           search: submittedSearch,
+          parameters: const {'limit': '6'},
         ),
         (value) {
           analyses = records(value['analyses']);
@@ -920,7 +922,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         ),
         const SizedBox(height: 9),
         Text(
-          'Search covers all records. Filters below apply to the loaded page (up to 50 records).',
+          'Search covers all records. Filters below apply to the loaded page (up to $_pageSize records).',
           style: TextStyle(fontSize: 10, color: WebPortalColors.muted),
         ),
       ],
@@ -935,13 +937,13 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
         Text(
-          '$count displayed · Page ${(offsets[page] ?? 0) ~/ 50 + 1}',
+          '$count displayed · Page ${(offsets[page] ?? 0) ~/ _pageSize + 1}',
           style: TextStyle(fontSize: 11, color: WebPortalColors.muted),
         ),
         OutlinedButton(
           onPressed: (offsets[page] ?? 0) > 0
               ? () {
-                  offsets[page] = offsets[page]! - 50;
+                  offsets[page] = offsets[page]! - _pageSize;
                   _refresh();
                 }
               : null,
@@ -950,7 +952,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         FilledButton(
           onPressed: hasMore[page] == true
               ? () {
-                  offsets[page] = (offsets[page] ?? 0) + 50;
+                  offsets[page] = (offsets[page] ?? 0) + _pageSize;
                   _refresh();
                 }
               : null,
@@ -2366,7 +2368,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                     pw.Header(level: 0, child: pw.Text('GeoSustain - $title')),
                     pw.Paragraph(
                       text:
-                          'Displayed records only. Search: ${submittedSearch.isEmpty ? 'none' : submittedSearch}. Page ${(offsets[page] ?? 0) ~/ 50 + 1}.',
+                          'Displayed records only. Search: ${submittedSearch.isEmpty ? 'none' : submittedSearch}. Page ${(offsets[page] ?? 0) ~/ _pageSize + 1}.',
                     ),
                     pw.TableHelper.fromTextArray(
                       headers: headers,

@@ -1825,6 +1825,24 @@ def update_farm_parcel(farmer_id: int, farm_id: int, **changes):
         conn.close()
 
 
+def delete_farm_parcel(farmer_id: int, farm_id: int):
+    """Remove an owned parcel; SET NULL foreign keys preserve saved assessments."""
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute('DELETE FROM farm_parcels WHERE id=%s AND farmer_id=%s RETURNING id',
+                        (farm_id, farmer_id))
+            row = cur.fetchone()
+            if row:
+                cur.execute('SELECT role FROM users WHERE id=%s', (farmer_id,))
+                actor = cur.fetchone()
+                audit_in_transaction(cur, farmer_id, actor['role'], 'farm_deleted', 'farm', farm_id)
+        conn.commit()
+        return bool(row)
+    finally:
+        conn.close()
+
+
 def attach_analysis_to_farm(session_id: int, farmer_id: int, farm_id: int):
     conn=get_conn()
     try:

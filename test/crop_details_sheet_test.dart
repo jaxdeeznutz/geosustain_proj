@@ -1,3 +1,8 @@
+import 'dart:convert';
+import 'dart:io';
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geosustain_clean_arranged/main.dart';
@@ -14,6 +19,10 @@ Future<void> _open(
   addTearDown(tester.view.resetDevicePixelRatio);
   await tester.pumpWidget(
     MaterialApp(
+      builder: (context, child) => RepaintBoundary(
+        key: const ValueKey('crop-sheet-preview'),
+        child: child!,
+      ),
       home: Scaffold(
         body: Builder(
           builder: (context) => TextButton(
@@ -30,6 +39,69 @@ Future<void> _open(
 }
 
 void main() {
+  setUpAll(() async {
+    await (FontLoader(
+      'Roboto',
+    )..addFont(rootBundle.load('assets/fonts/NotoSans-Regular.ttf'))).load();
+    await (FontLoader(
+      'MaterialIcons',
+    )..addFont(rootBundle.load('fonts/MaterialIcons-Regular.otf'))).load();
+  });
+  testWidgets('crop opens directly from seasonal summary into Explainable AI', (
+    tester,
+  ) async {
+    final record = Map<String, dynamic>.from(
+      jsonDecode(
+            File(
+              'test/fixtures/no_npk_model_explanation.json',
+            ).readAsStringSync(),
+          )
+          as Map,
+    );
+    record['seasonal_assessment'] =
+        (jsonDecode(
+              File(
+                'test/fixtures/current_year_seasonal_2026.json',
+              ).readAsStringSync(),
+            )
+            as Map)['seasonal_assessment'];
+    final before = jsonEncode(record);
+    final crop = Map<String, dynamic>.from(
+      (record['top_crop_recommendations'] as List).first as Map,
+    );
+    await _open(tester, crop, record, 1);
+    expect(find.text('November: Wet conditions'), findsOneWidget);
+    expect(find.text('Explainable AI'), findsOneWidget);
+    for (final removed in [
+      'Latest weather & sources',
+      'Check irrigation and planting schedule',
+      '2026 seasonal update',
+    ]) {
+      expect(find.text(removed), findsNothing);
+    }
+    expect(
+      tester.getTopLeft(find.text('Explainable AI')).dy,
+      greaterThan(tester.getTopLeft(find.text('November: Wet conditions')).dy),
+    );
+    expect(find.text('Soil pH'), findsOneWidget);
+    expect(find.text('Soil pH in water'), findsNothing);
+    expect(jsonEncode(record), before);
+    expect(tester.takeException(), isNull);
+    await tester.runAsync(() async {
+      final boundary = tester.renderObject<RenderRepaintBoundary>(
+        find.byKey(const ValueKey('crop-sheet-preview')),
+      );
+      final picture = await boundary.toImage();
+      final bytes = await picture.toByteData(format: ui.ImageByteFormat.png);
+      Directory('build/seasonal-trim-previews').createSync(recursive: true);
+      File(
+        'build/seasonal-trim-previews/crop-sheet.png',
+      ).writeAsBytesSync(bytes!.buffer.asUint8List());
+      picture.dispose();
+    });
+    await tester.pumpWidget(const SizedBox());
+  });
+
   testWidgets('AI ranking score is not labeled as poor agronomic suitability', (
     tester,
   ) async {

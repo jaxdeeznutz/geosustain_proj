@@ -686,7 +686,7 @@ class _ReviewInboxCaseCard extends StatelessWidget {
             children: [
               _fact(
                 Icons.eco_outlined,
-                'Model score',
+                'Ranking score',
                 scored ? '${score.toStringAsFixed(1)}%' : 'Unavailable',
               ),
               _fact(
@@ -738,7 +738,7 @@ class _ReviewInboxCaseCard extends StatelessWidget {
                               'Submitted ${analysisDateText(row['submitted_at'])}',
                             ),
                             Text(
-                              'Model score: ${scored ? '${score.toStringAsFixed(1)}%' : 'Unavailable'}',
+                              'Ranking score: ${scored ? '${score.toStringAsFixed(1)}%' : 'Unavailable'}',
                             ),
                             Text(
                               'Case version: ${row['review_version'] ?? 'Not recorded'}',

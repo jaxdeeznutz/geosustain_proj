@@ -37,7 +37,7 @@ String conciseCropFit(Map<String, dynamic> record, String crop) {
   final factors = savedReferenceFit(record, crop);
   String names(String status) => factors
       .where((f) => f['status'] == status)
-      .map((f) => '${f['label']}')
+      .map((f) => f['factor'] == 'soil_ph' ? 'Soil pH' : '${f['label']}')
       .join(', ');
   final fit = names('fits'),
       limited = names('limited'),

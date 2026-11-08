@@ -84,15 +84,7 @@ void main() {
             ),
           ),
         );
-        final classified = ['Cacao', 'Rubber'].contains(name);
-        expect(
-          find.text('Within limit'),
-          classified ? findsNothing : findsOneWidget,
-        );
-        expect(
-          find.text('Suitable'),
-          classified ? findsOneWidget : findsNothing,
-        );
+        expect(find.text('Suitable'), findsOneWidget);
         final prefix = view.upperExclusive ? '<' : '≤';
         expect(find.text('$prefix ${view.max!.toInt()} m'), findsOneWidget);
         expect(tester.takeException(), isNull);
@@ -113,8 +105,7 @@ void main() {
           home: Scaffold(body: EnvironmentalFactorCard(factor: outside)),
         ),
       );
-      expect(find.text('Outside limit'), findsOneWidget);
-      expect(find.text('Not suitable'), findsNothing);
+      expect(find.text('Not suitable'), findsOneWidget);
     },
   );
 }

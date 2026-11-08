@@ -56,6 +56,21 @@ class SeasonalContextCard extends StatelessWidget {
     final hasCurrent =
         analysisMapValue(snapshot['current_year_climate'])['version'] ==
         'current-year-climate-v1';
+    if (simple && planting.isNotEmpty) {
+      return GeoResultCard(
+        key: const ValueKey('farmer-seasonal-summary'),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Text(
+              'Seasonal planting assessment',
+              style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
+            ),
+            SeasonalPlantingAdvice(record: record),
+          ],
+        ),
+      );
+    }
     if (simple) {
       final climate = analysisMapValue(snapshot['monthly_climate']);
       final metrics = analysisMapValue(climate['metrics']);
@@ -245,179 +260,28 @@ class SeasonalPlantingAdvice extends StatelessWidget {
     final snapshot = analysisMapValue(record['seasonal_assessment']);
     final planting = analysisMapValue(snapshot['planting_assessment']);
     if (planting.isEmpty) return const SizedBox.shrink();
-    final rows = analysisListValue(planting['crops'])
-        .map(analysisMapValue)
-        .where(
-          (row) =>
-              crop == null ||
-              '${row['crop']}'.toLowerCase() == crop!.toLowerCase(),
-        )
-        .toList();
-    final scheme = Theme.of(context).colorScheme;
-    final blocked =
-        '${planting['land_cover_notice'] ?? ''}'.isNotEmpty ||
-        (rows.isNotEmpty &&
-            rows.every(
-              (row) => '${row['label']}'.contains('blocked by land assessment'),
-            ));
-    final historical = <Widget>[
-      Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${snapshot['selected_month_name'] ?? 'Selected month'}: ${seasonalMoistureLabel(record)}',
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
-            ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 10),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (crop != null) ...[
             const Text(
-              'Historical monthly pattern; not a forecast.',
-              style: TextStyle(fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-      if (blocked) ...[
-        const Text(
-          'Planting advice unavailable',
-          style: TextStyle(fontWeight: FontWeight.w700),
-        ),
-        const Text(
-          'Land cover is unverified or the land check does not allow crop recommendations. Wet conditions alone cannot clear this check.',
-        ),
-      ],
-      for (final row in blocked ? <Map<String, dynamic>>[] : rows)
-        ExpansionTile(
-          key: ValueKey(
-            'seasonal-${row['crop']}-${snapshot['captured_at']}-${snapshot['selected_month']}',
-          ),
-          tilePadding: EdgeInsets.zero,
-          childrenPadding: const EdgeInsets.only(bottom: 12),
-          leading: Icon(
-            switch ('${row['status']}') {
-              'favorable_moisture' => Icons.water_drop_outlined,
-              'unavailable' => Icons.help_outline,
-              _ => Icons.warning_amber_rounded,
-            },
-            color: switch ('${row['status']}') {
-              'favorable_moisture' => scheme.primary,
-              'water_support_needed' => scheme.error,
-              _ => scheme.onSurfaceVariant,
-            },
-          ),
-          title: Text(
-            '${row['crop']}',
-            style: const TextStyle(fontWeight: FontWeight.w700),
-          ),
-          subtitle: Text(
-            '${row['crop']}'.toLowerCase() == 'rice' &&
-                    row['status'] == 'conditional'
-                ? 'Check irrigation and planting schedule'
-                : '${row['label']}',
-          ),
-          children: [
-            if ('${row['crop']}'.toLowerCase() == 'rice' &&
-                row['status'] == 'conditional')
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8),
-                child: Text(
-                  'The AI rank is separate from planting readiness. Confirm field water, irrigation and the local rice calendar.',
-                ),
-              ),
-            for (final reason in analysisListValue(row['reasons']))
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8),
-                child: Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text('$reason'),
-                ),
-              ),
-            if (analysisListValue(row['moisture_supported_months']).isNotEmpty)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Months meeting these moisture checks: ${analysisListValue(row['moisture_supported_months']).map((m) => int.tryParse('$m')).whereType<int>().where((m) => m >= 1 && m <= 12).map((m) => AnalysisState.monthNames[m]).join(', ')}. These are historical screening results, not an official planting calendar.',
-                ),
-              ),
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                '${row['stage']}',
-                style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
-              ),
-            ),
-            TextButton(
-              onPressed: () => showDialog<void>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: Text('${row['crop']} seasonal evidence'),
-                  content: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('${planting['window_description']}'),
-                        Text('${planting['water_supply_assumption']}'),
-                        Text('${planting['local_validation']}'),
-                        const Divider(),
-                        for (final id in analysisListValue(
-                          row['source_ids'],
-                        )) ...[
-                          Text(
-                            '${analysisMapValue(analysisMapValue(planting['sources'])['$id'])['title']}',
-                            style: const TextStyle(fontWeight: FontWeight.w700),
-                          ),
-                          Text(
-                            '${analysisMapValue(analysisMapValue(planting['sources'])['$id'])['criterion']}',
-                          ),
-                          SelectableText(
-                            '${analysisMapValue(analysisMapValue(planting['sources'])['$id'])['url']}',
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                      ],
-                    ),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(context),
-                      child: const Text('Close'),
-                    ),
-                  ],
-                ),
-              ),
-              child: const Text('Seasonal evidence and sources'),
-            ),
-          ],
-        ),
-      if (rows.isEmpty) const Text('No crop-specific seasonal advice saved.'),
-      const SizedBox(height: 6),
-      const Text(
-        'Historical moisture screening, not a forecast. Confirm field water and drainage before planting.',
-        style: TextStyle(fontSize: 12),
-      ),
-    ];
-    final current = analysisMapValue(snapshot['current_year_climate']);
-    final hasCurrent = current['version'] == 'current-year-climate-v1';
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        if (crop != null)
-          const Padding(
-            padding: EdgeInsets.only(top: 12, bottom: 6),
-            child: Text(
               'Seasonal planting assessment',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
+            const SizedBox(height: 10),
+          ],
+          Text(
+            '${snapshot['selected_month_name'] ?? 'Selected month'}: ${seasonalMoistureLabel(record)}',
+            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
-        ...historical,
-        if (hasCurrent)
-          ExpansionTile(
-            tilePadding: EdgeInsets.zero,
-            title: const Text('Latest weather & sources'),
-            children: [CurrentYearSeasonalEvidence(record: record)],
+          const Text(
+            'Historical monthly pattern; not a forecast.',
+            style: TextStyle(fontSize: 12),
           ),
-      ],
+        ],
+      ),
     );
   }
 }

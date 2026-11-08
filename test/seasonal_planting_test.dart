@@ -16,6 +16,9 @@ Map<String, dynamic> seasonalPlantingFixture() => {
       'source_name': 'NASA POWER fixture',
       'baseline_start_year': 2005,
       'baseline_end_year': 2024,
+      'monthly_cycle': [
+        {'month': 6, 'moisture_status': 'humid'},
+      ],
       'metrics': {
         'rainfall': {
           'value': 300,
@@ -108,7 +111,8 @@ void main() {
         home: Scaffold(body: SeasonalPlantingAdvice(record: record)),
       ),
     );
-    expect(find.text('Planting advice unavailable'), findsOneWidget);
+    expect(find.text('June: Wet conditions'), findsOneWidget);
+    expect(find.text('Rice'), findsNothing);
     expect(
       find.text('Seasonal planting blocked by land assessment'),
       findsNothing,
@@ -119,69 +123,54 @@ void main() {
 
   for (final brightness in Brightness.values) {
     for (final scale in [1.0, 2.0]) {
-      testWidgets(
-        'seasonal crop advice and sources fit $brightness at scale $scale',
-        (tester) async {
-          tester.view.physicalSize = const Size(360, 800);
-          tester.view.devicePixelRatio = 1;
-          addTearDown(tester.view.resetPhysicalSize);
-          addTearDown(tester.view.resetDevicePixelRatio);
-          final record = seasonalPlantingFixture();
-          final saved = jsonEncode(record);
-          await tester.pumpWidget(
-            MaterialApp(
-              theme: ThemeData(brightness: brightness),
-              builder: (context, child) => MediaQuery(
-                data: MediaQuery.of(
-                  context,
-                ).copyWith(textScaler: TextScaler.linear(scale)),
-                child: child!,
-              ),
-              home: Scaffold(
-                body: SingleChildScrollView(
-                  child: SeasonalContextCard(record: record, simple: true),
-                ),
+      testWidgets('compact seasonal summary fits $brightness at scale $scale', (
+        tester,
+      ) async {
+        tester.view.physicalSize = const Size(360, 800);
+        tester.view.devicePixelRatio = 1;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+        final record = seasonalPlantingFixture();
+        final saved = jsonEncode(record);
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: ThemeData(brightness: brightness),
+            builder: (context, child) => MediaQuery(
+              data: MediaQuery.of(
+                context,
+              ).copyWith(textScaler: TextScaler.linear(scale)),
+              child: child!,
+            ),
+            home: Scaffold(
+              body: SingleChildScrollView(
+                child: SeasonalContextCard(record: record, simple: true),
               ),
             ),
-          );
-          await tester.pumpAndSettle();
-          expect(
-            find.text('Seasonal planting assessment - June'),
-            findsOneWidget,
-          );
-          for (final crop in [
-            'Banana',
-            'Cacao',
-            'Coconut',
-            'Durian',
-            'Mango',
-            'Rice',
-            'Rubber',
-          ]) {
-            expect(find.text(crop), findsOneWidget);
-          }
-          await tester.ensureVisible(find.text('Banana'));
-          await tester.tap(find.text('Banana'));
-          await tester.pumpAndSettle();
-          expect(
-            find.text('Historical moisture supports establishment in June.'),
-            findsOneWidget,
-          );
-          final sources = find.text('Seasonal evidence and sources').first;
-          await tester.ensureVisible(sources);
-          await tester.tap(sources);
-          await tester.pumpAndSettle();
-          expect(find.text('Banana seasonal evidence'), findsOneWidget);
-          expect(find.text('Published guide fixture'), findsOneWidget);
-          expect(find.text('Not field-validated in Panabo.'), findsOneWidget);
-          expect(jsonEncode(record), saved);
-          expect(tester.takeException(), isNull);
-        },
-      );
+          ),
+        );
+        await tester.pumpAndSettle();
+        expect(find.text('Seasonal planting assessment'), findsOneWidget);
+        expect(find.text('June: Wet conditions'), findsOneWidget);
+        for (final crop in [
+          'Banana',
+          'Cacao',
+          'Coconut',
+          'Durian',
+          'Mango',
+          'Rice',
+          'Rubber',
+        ]) {
+          expect(find.text(crop), findsNothing);
+        }
+        expect(find.byType(ExpansionTile), findsNothing);
+        expect(find.text('Latest weather & sources'), findsNothing);
+        expect(jsonEncode(record), saved);
+        expect(tester.takeException(), isNull);
+      });
     }
   }
 
-  testWidgets('crop detail shows only the selected saved seasonal advice', (
+  testWidgets('crop detail shows month without repeating crop advice', (
     tester,
   ) async {
     await tester.pumpWidget(
@@ -194,9 +183,11 @@ void main() {
         ),
       ),
     );
-    expect(find.text('Rice'), findsOneWidget);
+    expect(find.text('Rice'), findsNothing);
+    expect(find.text('June: Wet conditions'), findsOneWidget);
     expect(find.text('Banana'), findsNothing);
-    expect(find.text('Check irrigation and planting schedule'), findsOneWidget);
+    expect(find.text('Check irrigation and planting schedule'), findsNothing);
+    expect(find.byType(ExpansionTile), findsNothing);
   });
 
   test('reports retain all seven seasonal outcomes and their sources', () {

@@ -531,7 +531,7 @@ class GeoFieldIllustration extends StatelessWidget {
 class GeoFarmCard extends StatelessWidget {
   final Map<String, dynamic> farm;
   final bool busy;
-  final VoidCallback onOpen, onAnalyze, onResults, onEdit, onArchive;
+  final VoidCallback onOpen, onAnalyze, onResults, onEdit, onArchive, onDelete;
   const GeoFarmCard({
     super.key,
     required this.farm,
@@ -541,6 +541,7 @@ class GeoFarmCard extends StatelessWidget {
     required this.onResults,
     required this.onEdit,
     required this.onArchive,
+    required this.onDelete,
   });
   @override
   Widget build(BuildContext context) {
@@ -620,12 +621,14 @@ class GeoFarmCard extends StatelessWidget {
                   SizedBox(
                     width: 28,
                     child: PopupMenuButton<String>(
+                      enabled: !busy,
                       padding: EdgeInsets.zero,
                       tooltip: 'Farm actions',
                       onSelected: (value) {
                         if (value == 'open') onOpen();
                         if (value == 'edit') onEdit();
                         if (value == 'archive') onArchive();
+                        if (value == 'delete') onDelete();
                       },
                       itemBuilder: (_) => const [
                         PopupMenuItem(
@@ -634,6 +637,10 @@ class GeoFarmCard extends StatelessWidget {
                         ),
                         PopupMenuItem(value: 'edit', child: Text('Edit')),
                         PopupMenuItem(value: 'archive', child: Text('Archive')),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text('Delete farm'),
+                        ),
                       ],
                     ),
                   ),

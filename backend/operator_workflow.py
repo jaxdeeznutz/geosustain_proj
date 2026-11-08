@@ -116,7 +116,10 @@ FIELDS = '''c.id AS case_id,c.current_session_id AS session_id,c.status AS verif
     s.area_hectares,s.center_lat,s.center_lon,s.selected_polygon,u.username AS farmer_name,
     s.result_snapshot->>'analysis_mode' AS analysis_mode,crop.predicted_crop,crop.is_crop_recommended,crop.land_type,
     CASE WHEN COALESCE(s.result_snapshot->>'analysis_mode','')<>'preliminary_environmental'
-      AND crop.is_crop_recommended IS TRUE AND COALESCE(crop.land_type,'arable')='arable'
+      AND crop.is_crop_recommended IS TRUE
+      AND (s.result_snapshot->>'recommendation_basis'='model_probability'
+           OR COALESCE(crop.land_type,'arable')='arable')
+      AND COALESCE(s.result_snapshot->'land_cover'->>'allow_crops','true')<>'false'
       AND crop.compatibility_pct BETWEEN 0 AND 100 THEN crop.compatibility_pct END AS compatibility_pct'''
 
 

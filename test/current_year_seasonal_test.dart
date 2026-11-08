@@ -51,7 +51,7 @@ void main() {
   for (final dark in [false, true]) {
     for (final scale in [1.0, 2.0]) {
       testWidgets(
-        '2026 update precedes collapsed historical guidance dark=$dark scale=$scale',
+        'seasonal summary omits crop rows and latest-weather block dark=$dark scale=$scale',
         (tester) async {
           tester.view.physicalSize = const Size(390, 950);
           tester.view.devicePixelRatio = 1;
@@ -83,33 +83,21 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
-          expect(find.text('2026 seasonal update'), findsNothing);
           expect(find.text('November: Wet conditions'), findsOneWidget);
-          expect(find.text('Banana'), findsOneWidget);
-          final latest = find.text('Latest weather & sources');
-          await tester.ensureVisible(latest);
-          await tester.tap(latest);
-          await tester.pumpAndSettle();
-          expect(find.text('2026 seasonal update'), findsOneWidget);
-          expect(find.text('September 2026 weather estimates'), findsOneWidget);
           expect(
-            find.text('November 2026 rainfall outlook - Tagum'),
+            find.text('Historical monthly pattern; not a forecast.'),
             findsOneWidget,
           );
-          expect(
-            find.text(
-              'November 2026: complete monthly estimates are not yet available.',
-            ),
-            findsOneWidget,
-          );
-          expect(
-            find.text('Below normal: 38%\nNear normal: 30%\nAbove normal: 32%'),
-            findsOneWidget,
-          );
-          expect(
-            find.text('Banana'),
-            findsOneWidget,
-          ); // no historical result presented as 2026
+          for (final removed in [
+            '2026 seasonal update',
+            'Latest weather & sources',
+            'Banana',
+            'Rice',
+            'September 2026 weather estimates',
+          ]) {
+            expect(find.text(removed), findsNothing);
+          }
+          expect(find.byType(ExpansionTile), findsNothing);
           expect(tester.takeException(), isNull);
           if (scale == 1) {
             await tester.runAsync(() async {
@@ -128,28 +116,6 @@ void main() {
               picture.dispose();
             });
           }
-          await tester.ensureVisible(
-            find.text('Current-year sources and coverage'),
-          );
-          await tester.tap(find.text('Current-year sources and coverage'));
-          await tester.pumpAndSettle();
-          expect(find.text('Current-year climate sources'), findsOneWidget);
-          await tester.scrollUntilVisible(
-            find.textContaining('not a forecast for the analyzed parcel'),
-            250,
-            scrollable: find
-                .descendant(
-                  of: find.byType(BottomSheet),
-                  matching: find.byType(Scrollable),
-                )
-                .last,
-          );
-          expect(
-            find.textContaining('not a forecast for the analyzed parcel'),
-            findsOneWidget,
-          );
-          await tester.tap(find.text('Close'));
-          await tester.pumpAndSettle();
           expect(jsonEncode(record), saved);
           expect(tester.takeException(), isNull);
         },

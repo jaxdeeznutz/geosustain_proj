@@ -89,8 +89,9 @@ void main() {
           expect(find.text('June: Wet conditions'), findsOneWidget);
           expect(
             find.text('Check irrigation and planting schedule'),
-            findsOneWidget,
+            findsNothing,
           );
+          expect(find.text('Latest weather & sources'), findsNothing);
           expect(find.text('Compare with another crop'), findsNothing);
           expect(
             find.textContaining('percentage points above Coconut'),

@@ -1263,10 +1263,7 @@ class EnvironmentalFactorCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 6),
-          MatchStatusBadge(
-            state: factor.state,
-            labelOverride: factor.statusLabel,
-          ),
+          MatchStatusBadge(state: factor.state),
           if (factor.state == CropFactorState.unassessed) ...[
             const SizedBox(height: 4),
             Text(
@@ -1286,7 +1283,7 @@ class EnvironmentalFactorCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(
-          factor.label,
+          ['ph', 'soil_ph'].contains(factor.key) ? 'Soil pH' : factor.label,
           style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 2),
