@@ -25,6 +25,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   List<Map<String, dynamic>> analyses = [];
   List<Map<String, dynamic>> crops = [];
   List<Map<String, dynamic>> auditLogs = [];
+  Map<String, dynamic>? systemStatus;
+  String? monitoringError;
   String submittedSearch = '';
   final offsets = <int, int>{1: 0, 2: 0, 4: 0};
   final hasMore = <int, bool>{};
@@ -105,6 +107,29 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
         },
       ),
       panel('Crops', api.getAdminCrops, (value) => crops = records(value)),
+      panel(
+        'System status',
+        () async {
+          try {
+            final value = await api.getAdminSystemStatus();
+            if (value['checked_at'] == null || value['checks'] is! List) {
+              throw const FormatException('Missing monitoring result');
+            }
+            return value;
+          } catch (error) {
+            if (mounted && generation == refreshGeneration) {
+              systemStatus = null;
+              monitoringError =
+                  'Could not check service status. Refresh to retry.';
+            }
+            rethrow;
+          }
+        },
+        (value) {
+          systemStatus = Map<String, dynamic>.from(value as Map);
+          monitoringError = null;
+        },
+      ),
       panel(
         'Audit logs',
         () => api.getRecordPage(
@@ -280,7 +305,9 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
 
   void _routeChanged() {
     if (mounted) {
+      final previous = page;
       setState(() => page = PortalRoutes.pageFor(routePages, 'admin'));
+      if (page == 4 && previous != page) unawaited(_refresh());
     }
   }
 
@@ -1464,36 +1491,121 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
 
   Future<void> _analysisDetails(Map<String, dynamic> a) => showDialog<void>(
     context: context,
-    builder: (context) => AlertDialog(
-      title: Text('Saved analysis #${a['session_id']}'),
-      content: SizedBox(
-        width: 500,
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Owner: ${a['username'] ?? 'Unknown'}'),
-              Text('Location: ${a['place_name'] ?? 'Not recorded'}'),
-              Text('Recorded result: ${_result(a)}'),
-              Text('Area: ${_area(a)} ha'),
-              Text('Review status: ${a['verification_status'] ?? 'draft'}'),
-              Text('Saved: ${_adminDate(a['analyzed_at'], time: true)}'),
-              const SizedBox(height: 14),
-              const Text(
-                'Review status describes the assessment review. A recorded crop result does not guarantee crop success.',
-              ),
-            ],
+    builder: (context) {
+      final status = '${a['verification_status'] ?? 'draft'}';
+      final statusLabel = status.isEmpty
+          ? 'Not recorded'
+          : status[0].toUpperCase() + status.substring(1).replaceAll('_', ' ');
+      Widget tile(String label, String value, IconData icon) => Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: WebPortalColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: WebPortalColors.accent.withValues(alpha: .12),
           ),
         ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Close'),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: WebPortalColors.tint,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: WebPortalColors.accent, size: 21),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: WebPortalColors.muted,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: WebPortalColors.ink,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-      ],
-    ),
+      );
+      return _AdminDialog(
+        width: 720,
+        title: 'Saved Analysis #${a['session_id']}',
+        subtitle: 'Saved assessment details',
+        icon: Icons.description_outlined,
+        actions: [
+          OutlinedButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Close'),
+          ),
+        ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _AdminFieldGrid(
+              minimumWidth: 185,
+              maximumColumns: 3,
+              children: [
+                tile(
+                  'Owner',
+                  '${a['username'] ?? 'Unknown'}',
+                  Icons.person_outline,
+                ),
+                tile(
+                  'Location',
+                  '${a['place_name'] ?? 'Not recorded'}',
+                  Icons.location_on_outlined,
+                ),
+                tile('Area', '${_area(a)} ha', Icons.area_chart_outlined),
+                tile('Recorded result', _result(a), Icons.layers_outlined),
+                tile(
+                  'Review status',
+                  statusLabel,
+                  Icons.verified_user_outlined,
+                ),
+                tile(
+                  'Saved at',
+                  _adminDate(a['analyzed_at'], time: true),
+                  Icons.calendar_month_outlined,
+                ),
+              ],
+            ),
+            const SizedBox(height: 18),
+            _AdminDialogSection(
+              title: 'Review summary',
+              icon: Icons.fact_check_outlined,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if ('${a['planner_notes'] ?? ''}'.trim().isNotEmpty) ...[
+                    Text('${a['planner_notes']}'),
+                    const SizedBox(height: 10),
+                  ],
+                  const Text(
+                    'Review status describes the assessment review. A recorded crop result does not guarantee crop success.',
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    },
   );
 
   Widget _settingsPage() {
@@ -1867,7 +1979,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                     ),
                     _mini(
                       'Review decisions',
-                      '${auditLogs.where((a) => a['action'] == 'verification_decision').length}',
+                      '${auditLogs.where((a) => a['action'] == 'verification_decision' || a['action'] == 'review_verified' || a['action'] == 'review_rejected').length}',
                       Icons.fact_check_outlined,
                     ),
                     _mini(
@@ -1888,7 +2000,9 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
               {
                 'all': 'All actions',
                 for (final log in auditLogs)
-                  '${log['action']}': '${log['action']}'.replaceAll('_', ' '),
+                  '${log['action']}': log['action'] == 'sign_in'
+                      ? 'Signed in'
+                      : '${log['action']}'.replaceAll('_', ' '),
               },
               (v) => auditAction = v,
               width: 240,
@@ -1903,7 +2017,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                   _AnalystSectionTitle(
                     'Recent Activity Logs',
                     subtitle:
-                        'Account changes, reference changes and Farmer-submission decisions.',
+                        'Sign-ins, account changes, reference updates and review decisions.',
                     icon: Icons.description_rounded,
                     action: _exportButton(
                       'Audit Logs',
@@ -1913,7 +2027,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                             (a) => [
                               _adminDate(a['created_at'], time: true),
                               _actor(a),
-                              '${a['actor_role'] ?? 'Not recorded'}',
+                              _auditRole(a),
                               '${a['action']}',
                               _auditDetails(a),
                             ],
@@ -1971,63 +2085,141 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
     );
   }
 
-  Widget _monitoringCard() => _WebCard(
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const _AnalystSectionTitle(
-          'System Monitoring',
-          icon: Icons.monitor_heart_outlined,
-        ),
-        const SizedBox(height: 14),
-        _SmallBadge('Health not reported', color: WebPortalColors.muted),
-        const SizedBox(height: 14),
-        Text(
-          'Backend and Supabase monitoring',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: WebPortalColors.ink,
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'Use Render and Supabase logs for deployment, database, storage and infrastructure health.',
-          style: TextStyle(fontSize: 11, color: WebPortalColors.muted),
-        ),
-        const SizedBox(height: 14),
-        for (final service in [
-          'Database',
-          'API services',
-          'File storage',
-          'Maps service',
-        ])
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 5),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline,
-                  size: 15,
-                  color: WebPortalColors.muted,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(service, style: const TextStyle(fontSize: 11)),
-                ),
-                Text(
-                  'Not reported',
-                  style: TextStyle(fontSize: 10, color: WebPortalColors.muted),
-                ),
-              ],
+  Widget _monitoringCard() {
+    final checks = analysisListValue(
+      systemStatus?['checks'],
+    ).map(analysisMapValue).toList();
+    final healthy = systemStatus?['status'] == 'healthy';
+    String label(String status) => switch (status) {
+      'healthy' => 'Available',
+      'unavailable' => 'Needs attention',
+      'client_side' => 'Browser check',
+      _ => 'Not checked',
+    };
+    return _WebCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _AnalystSectionTitle(
+            'System Monitoring',
+            icon: Icons.monitor_heart_outlined,
+            action: IconButton(
+              tooltip: 'Check services now',
+              onPressed: loading ? null : _refresh,
+              icon: const Icon(Icons.refresh),
             ),
           ),
-      ],
-    ),
-  );
+          const SizedBox(height: 14),
+          if (systemStatus == null) ...[
+            Text(
+              loading ? 'Checking services...' : 'Service check unavailable',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            if (!loading)
+              Text(monitoringError ?? 'Refresh to request a new check.'),
+          ] else ...[
+            _SmallBadge(
+              healthy ? 'Server checks passed' : 'Service needs attention',
+              color: healthy
+                  ? WebPortalColors.accent
+                  : Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              'Checked ${_adminDate(systemStatus!['checked_at'], time: true)}',
+              style: TextStyle(fontSize: 11, color: WebPortalColors.muted),
+            ),
+            const SizedBox(height: 12),
+            for (final service in checks)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 9),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      service['status'] == 'healthy'
+                          ? Icons.check_circle_outline
+                          : service['status'] == 'unavailable'
+                          ? Icons.warning_amber_rounded
+                          : Icons.language,
+                      size: 19,
+                      color: service['status'] == 'unavailable'
+                          ? Theme.of(context).colorScheme.error
+                          : WebPortalColors.accent,
+                    ),
+                    const SizedBox(width: 9),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${service['label']}',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            '${service['message']}',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: WebPortalColors.muted,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            label('${service['status']}'),
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                              color: service['status'] == 'unavailable'
+                                  ? Theme.of(context).colorScheme.error
+                                  : WebPortalColors.accent,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            const Divider(),
+            Text(
+              'Point-in-time checks. Maps require a browser check; hosting uptime and backups remain in Render and Supabase.',
+              style: TextStyle(fontSize: 11, color: WebPortalColors.muted),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
 
-  String _actor(Map<String, dynamic> log) =>
-      '${log['actor_username'] ?? log['actor_email'] ?? log['actor_reference'] ?? 'Unknown actor'}';
+  String _auditRole(Map<String, dynamic> log) {
+    final role = '${log['actor_role'] ?? ''}';
+    if (role == 'system_migration') return 'System';
+    if (role == 'trusted_operator') return 'Setup operator';
+    if (role.isEmpty) return 'Not recorded';
+    if (![
+      'farmer',
+      'analyst',
+      'planner',
+      'admin',
+      'super_admin',
+      'agricultural_planning_analyst',
+    ].contains(role)) {
+      return role.replaceAll('_', ' ');
+    }
+    return _roleLabel(role);
+  }
+
+  String _actor(Map<String, dynamic> log) {
+    if (log['actor_username'] != null) return '${log['actor_username']}';
+    if (log['actor_email'] != null) return '${log['actor_email']}';
+    if (log['actor_role'] == 'system_migration') return 'System maintenance';
+    if (log['actor_role'] == 'trusted_operator') return 'Setup operator';
+    return '${log['actor_reference'] ?? 'Unknown actor'}';
+  }
 
   String _auditDetails(Map<String, dynamic> log) {
     final detail = log['details'];
@@ -2045,6 +2237,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   Map<String, dynamic> _safeAuditDetails(Map details) => {
     for (final key in [
       'decision',
+      'method',
+      'channel',
       'role',
       'before_role',
       'is_active',
@@ -2088,9 +2282,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                     ),
                     DataCell(
                       _SmallBadge(
-                        log['actor_role'] == null
-                            ? 'Not recorded'
-                            : _roleLabel('${log['actor_role']}'),
+                        _auditRole(log),
                         color: WebPortalColors.accent,
                       ),
                     ),
@@ -2098,7 +2290,9 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                       SizedBox(
                         width: 115,
                         child: Text(
-                          '${log['action']}'.replaceAll('_', ' '),
+                          log['action'] == 'sign_in'
+                              ? 'Signed in'
+                              : '${log['action']}'.replaceAll('_', ' '),
                           maxLines: 3,
                           overflow: TextOverflow.ellipsis,
                         ),

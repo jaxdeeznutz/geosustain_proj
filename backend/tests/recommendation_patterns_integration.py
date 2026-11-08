@@ -61,5 +61,46 @@ def run():
         print('PASS: real PostgreSQL current model, historical scope, missing versions, zero score, preliminary exclusion, latest revisions, chronological zero months and role/owner boundaries.')
 
 
+def current_pipeline_records():
+    """Use the production persistence path and current environmental labels."""
+    version, _ = model_identity()
+    with isolated() as connect:
+        farmer = db.create_user('Current pipeline fixture', 'current-pattern-farmer@example.com', 'unused-test-only')
+        analyst = db.create_user('Current analyst fixture', 'current-pattern-analyst@example.com', 'unused-test-only', role='agricultural_planning_analyst')
+
+        def save(score, *, submit=True, mode='environmental_model_no_npk', allow=True, recommended=True):
+            result = {
+                'lat': 7.29, 'lon': 125.62, 'area_hectares': 1,
+                'place_name': 'Synthetic current pipeline parcel',
+                'analysis_mode': mode, 'recommendation_basis': 'model_probability',
+                'model_version': version, 'model_explanation': {'model_version': version},
+                'predicted_crop': 'Mango', 'crop_compatibility_pct': score,
+                'is_crop_recommended': recommended,
+                'land_type': 'Vegetation observation only',
+                'land_cover': {'allow_crops': allow, 'status': 'unknown' if allow else 'water'},
+            }
+            sid = db.save_analysis_session(farmer['id'], result, 'synthetic-pattern-regression')
+            if submit:
+                with connect() as conn, conn.cursor() as cur:
+                    cur.execute("INSERT INTO review_cases(owner_id,current_session_id,status) VALUES(%s,%s,'pending')", (farmer['id'], sid))
+            return sid
+
+        save(55.6)
+        save(40)
+        save(99, submit=False)  # Unsubmitted analyses do not enter analyst totals.
+        save(100, mode='preliminary_environmental')
+        save(100, allow=False)  # Even stale positive flags cannot clear a blocked land check.
+        save(100, recommended=False)
+        summary = patterns(analyst['id'], submitted=True)
+        assert summary['analysis_count'] == 5
+        assert summary['scored_count'] == 2, summary
+        assert round(float(summary['average_model_score']), 1) == 47.8
+        assert summary['frequencies'] == [{'crop': 'Mango', 'count': 2}]
+        assert sum(r['count'] for r in summary['monthly']) == 2
+        assert patterns(analyst['id'])['analysis_count'] == 0
+        print('PASS: actual saved seven-input pipeline records populate Mango frequency, score average/distribution and dated trends; unsubmitted, preliminary and blocked results remain excluded.')
+
+
 if __name__ == '__main__':
     run()
+    current_pipeline_records()

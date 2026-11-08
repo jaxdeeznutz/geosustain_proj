@@ -65,6 +65,29 @@ class TestEarthEngineWireContract(ApiTestCase):
         assert '12 scenes' in period['period']
         assert 'Mixed dates' in period['observation_date']
 
+    def test_inference_and_raster_share_clear_pixel_definition(self):
+        from satellite_ndvi import recent_ndvi
+        point = ee.Geometry.Point([125.62, 7.29])
+        image, _, period = recent_ndvi(ee, point, date(2026, 11, 8))
+        graph = json.dumps(ee.serializer.encode(image))
+        assert 'ImageCollection.mosaic' in graph
+        assert 'Image.updateMask' in graph and 'SCL' in graph
+        assert period['start'] == '2026-08-10'
+        import rainfallDatasets as env
+        with (patch.object(env, 'ensure_earth_engine_initialized'),
+              patch('satellite_ndvi.recent_ndvi', return_value=(image, None, period)) as shared,
+              patch.object(ee.ComputedObject, 'getInfo', return_value=.695)):
+            value, quality, source = env.get_ndvi(7.29, 125.62)
+        assert value == .695 and quality == 'measured'
+        assert shared.call_count == 1 and 'SCL' in source
+
+    def test_missing_clear_ndvi_never_becomes_a_synthetic_default(self):
+        import rainfallDatasets as env
+        with (patch.object(env, 'ensure_earth_engine_initialized'),
+              patch('satellite_ndvi.recent_ndvi', side_effect=ValueError('no clear data'))):
+            value, quality, _ = env.get_ndvi(7.29, 125.62)
+        assert value is None and quality == 'unavailable'
+
     def test_bounded_rest_pixel_grid_and_mask_roundtrip(self):
         import rainfallDatasets as env
         polygon = [{'lat': 7.29, 'lng': 125.62}, {'lat': 7.291, 'lng': 125.62},

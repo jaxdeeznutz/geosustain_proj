@@ -30,7 +30,12 @@ def patterns(owner_id, *, submitted=False, model_scope='current'):
                  s.result_snapshot->>'model_version','') AS model_version,
         crop.predicted_crop,crop.compatibility_pct,
         (crop.is_crop_recommended IS TRUE AND NULLIF(btrim(crop.predicted_crop),'') IS NOT NULL
-         AND COALESCE(crop.land_type,'arable')='arable'
+         -- Current environmental rankings use "Vegetation observation only"
+         -- as a descriptive label, not the legacy arable/non-arable classifier.
+         -- Use their saved recommendation decision and explicit land-cover gate.
+         AND (s.result_snapshot->>'recommendation_basis'='model_probability'
+              OR COALESCE(crop.land_type,'arable')='arable')
+         AND COALESCE(s.result_snapshot->'land_cover'->>'allow_crops','true')<>'false'
          AND COALESCE(s.result_snapshot->>'analysis_mode','')<>'preliminary_environmental') AS eligible
       FROM analysis_sessions s {source}
       LEFT JOIN LATERAL (SELECT predicted_crop,compatibility_pct,is_crop_recommended,land_type

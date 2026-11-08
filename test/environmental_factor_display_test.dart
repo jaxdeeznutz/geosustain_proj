@@ -88,7 +88,7 @@ void main() {
       );
       expect(find.text('Used in crop prediction'), findsNothing);
       expect(find.text('Not assessed'), findsOneWidget);
-      expect(find.text('No compatible crop criterion saved'), findsOneWidget);
+      expect(find.text('No crop-specific reference range'), findsOneWidget);
       expect(find.text('No crop-specific range saved'), findsNothing);
     },
   );

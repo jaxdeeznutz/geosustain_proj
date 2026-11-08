@@ -425,9 +425,38 @@ class _ControlledRecordEditorState extends State<_ControlledRecordEditor> {
     padding: const EdgeInsets.only(bottom: 12),
     child: TextField(
       controller: controllers[key],
-      minLines: 1,
+      minLines: lines,
       maxLines: lines,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(
+        labelText: label,
+        suffixIcon: key.startsWith('valid_')
+            ? IconButton(
+                tooltip: 'Choose date',
+                icon: const Icon(Icons.calendar_month_outlined),
+                onPressed: saving
+                    ? null
+                    : () async {
+                        final initial =
+                            DateTime.tryParse(value(key)) ?? DateTime.now();
+                        final date = await showDatePicker(
+                          context: context,
+                          initialDate:
+                              initial.isBefore(DateTime(1900)) ||
+                                  initial.isAfter(DateTime(2200))
+                              ? DateTime.now()
+                              : initial,
+                          firstDate: DateTime(1900),
+                          lastDate: DateTime(2200),
+                        );
+                        if (date != null && mounted) {
+                          controllers[key]!.text = date
+                              .toIso8601String()
+                              .substring(0, 10);
+                        }
+                      },
+              )
+            : null,
+      ),
     ),
   );
   Widget select(
@@ -546,121 +575,190 @@ class _ControlledRecordEditorState extends State<_ControlledRecordEditor> {
   Widget build(BuildContext context) {
     final factors = analysisMapValue(widget.catalog['factors']),
         layers = analysisMapValue(widget.catalog['layers']);
-    return AlertDialog(
-      title: Text(
-        widget.row == null ? 'New controlled record' : 'Create record revision',
-      ),
-      content: SizedBox(
-        width: 600,
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              select('Record type', kind, _controlledKindLabels, (v) {
-                kind = v;
-                if (crop == 'analysis' && kind != 'supporting_reference') {
-                  crop = crops.first;
-                }
-              }, enabled: widget.row == null),
-              input('title', 'Title'),
-              if (kind == 'crop_requirement' ||
-                  kind == 'planting_calendar' ||
-                  kind == 'supporting_reference')
-                select(
-                  'Crop / reference scope',
-                  crop,
-                  {
-                    if (kind == 'supporting_reference')
-                      'analysis': 'All analysis reports',
-                    for (final c in crops) c: c,
-                  },
-                  (v) => crop = v,
-                  enabled: widget.row == null,
-                ),
-              if (kind == 'crop_requirement') ...[
-                select(
-                  'Environmental factor',
-                  factor,
-                  {
-                    for (final e in factors.entries)
-                      e.key: '${analysisMapValue(e.value)['label']}',
-                  },
-                  (v) => factor = v,
-                  enabled: widget.row == null,
-                ),
-                Text(
-                  'Unit: ${analysisMapValue(factors[factor])['unit']} | Period: ${analysisMapValue(factors[factor])['period']}',
-                ),
-                const SizedBox(height: 12),
-                input('preferred_min', 'Preferred minimum'),
-                input('preferred_max', 'Preferred maximum'),
-                input('absolute_min', 'Absolute minimum'),
-                input('absolute_max', 'Absolute maximum'),
-              ],
-              if (kind == 'planting_calendar')
-                input('months', 'Planting months (1-12, separated by commas)'),
-              if (kind == 'environmental_source') ...[
-                select(
-                  'Installed raster layer',
-                  layer,
-                  {
-                    for (final e in layers.entries)
-                      e.key: '${analysisMapValue(e.value)['label']}',
-                  },
-                  (v) => layer = v,
-                  enabled: widget.row == null,
-                ),
-                Text(
-                  'Source: ${analysisMapValue(layers[layer])['source_id']}\nUnit: ${analysisMapValue(layers[layer])['unit']} | Period: ${analysisMapValue(layers[layer])['period']}',
-                ),
-              ],
-              if (kind == 'model_version')
-                input('sha256', 'Model SHA-256 (metadata only)'),
-              if (kind == 'supporting_reference') ...[
-                if (widget.row == null)
-                  input(
-                    'record_key',
-                    'Reference identifier (lowercase letters, numbers, underscores)',
-                  ),
-                input('citation', 'Citation', lines: 3),
-              ],
-              if (kind == 'system_setting') ...[
-                input('sample_count', 'Maximum parcel samples (1, 5 or 9)'),
-                const Text(
-                  'This changes sampling for new analyses and can change their model scores. Historical results are preserved.',
-                ),
-              ],
-              const SizedBox(height: 12),
-              input('evidence_url', 'Public evidence URL (HTTPS)'),
-              input('reference', 'Source section / reference'),
-              input('method', 'Method and limitations', lines: 3),
-              input('valid_from', 'Valid from (YYYY-MM-DD)'),
-              input('valid_until', 'Valid until (YYYY-MM-DD)'),
-              select('Review status', review, {
-                'draft': 'Draft',
-                'reviewed': 'Reviewed',
-                'rejected': 'Rejected',
-              }, (v) => review = v),
-              input('review_note', 'Review note', lines: 3),
-              const Text(
-                'Scope: Panabo City. Unknown criteria stay absent. Do not enter credentials, nutrient datasets or model files.',
-              ),
-              if (error != null)
-                Text(error!, style: const TextStyle(color: Colors.red)),
-            ],
-          ),
-        ),
-      ),
+    return _AdminDialog(
+      title: widget.row == null
+          ? 'New controlled record'
+          : 'Create record revision',
+      subtitle:
+          'Save a revision, review its evidence, then activate it for new analyses.',
+      icon: Icons.layers_outlined,
+      busy: saving,
       actions: [
         TextButton(
           onPressed: saving ? null : () => Navigator.pop(context),
           child: const Text('Cancel'),
         ),
-        FilledButton(
+        FilledButton.icon(
           onPressed: saving ? null : save,
-          child: Text(saving ? 'Saving...' : 'Save revision'),
+          icon: saving
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.check),
+          label: Text(saving ? 'Saving...' : 'Save revision'),
         ),
       ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _AdminDialogSection(
+            title: 'Record details',
+            icon: Icons.description_outlined,
+            child: _AdminFieldGrid(
+              children: [
+                select(
+                  'Record type',
+                  kind,
+                  _controlledKindLabels,
+                  (v) {
+                    kind = v;
+                    if (crop == 'analysis' && kind != 'supporting_reference') {
+                      crop = crops.first;
+                    }
+                  },
+                  enabled: widget.row == null,
+                ),
+                input('title', 'Title'),
+                if (kind == 'crop_requirement' ||
+                    kind == 'planting_calendar' ||
+                    kind == 'supporting_reference')
+                  select(
+                    'Crop / reference scope',
+                    crop,
+                    {
+                      if (kind == 'supporting_reference')
+                        'analysis': 'All analysis reports',
+                      for (final c in crops)
+                        c: c[0].toUpperCase() + c.substring(1),
+                    },
+                    (v) => crop = v,
+                    enabled: widget.row == null,
+                  ),
+                if (kind == 'crop_requirement')
+                  select(
+                    'Environmental factor',
+                    factor,
+                    {
+                      for (final e in factors.entries)
+                        e.key: '${analysisMapValue(e.value)['label']}',
+                    },
+                    (v) => factor = v,
+                    enabled: widget.row == null,
+                  ),
+              ],
+            ),
+          ),
+          if (kind == 'crop_requirement')
+            _AdminDialogSection(
+              title: 'Measurement criteria',
+              icon: Icons.bar_chart_rounded,
+              description:
+                  'Unit: ${analysisMapValue(factors[factor])['unit']} | Period: ${analysisMapValue(factors[factor])['period']}',
+              child: _AdminFieldGrid(
+                minimumWidth: 160,
+                maximumColumns: 4,
+                children: [
+                  input('preferred_min', 'Preferred minimum'),
+                  input('preferred_max', 'Preferred maximum'),
+                  input('absolute_min', 'Absolute minimum'),
+                  input('absolute_max', 'Absolute maximum'),
+                ],
+              ),
+            ),
+          if (kind != 'crop_requirement')
+            _AdminDialogSection(
+              title: 'Reference scope',
+              icon: Icons.tune_outlined,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  if (kind == 'planting_calendar')
+                    input(
+                      'months',
+                      'Planting months (1-12, separated by commas)',
+                    ),
+                  if (kind == 'environmental_source') ...[
+                    select(
+                      'Installed raster layer',
+                      layer,
+                      {
+                        for (final e in layers.entries)
+                          e.key: '${analysisMapValue(e.value)['label']}',
+                      },
+                      (v) => layer = v,
+                      enabled: widget.row == null,
+                    ),
+                    Text(
+                      'Source: ${analysisMapValue(layers[layer])['source_id']}\nUnit: ${analysisMapValue(layers[layer])['unit']} | Period: ${analysisMapValue(layers[layer])['period']}',
+                    ),
+                  ],
+                  if (kind == 'model_version')
+                    input('sha256', 'Model SHA-256 (metadata only)'),
+                  if (kind == 'supporting_reference') ...[
+                    if (widget.row == null)
+                      input(
+                        'record_key',
+                        'Reference identifier (lowercase letters, numbers, underscores)',
+                      ),
+                    input('citation', 'Citation', lines: 3),
+                  ],
+                  if (kind == 'system_setting') ...[
+                    input('sample_count', 'Maximum parcel samples (1, 5 or 9)'),
+                    const Text(
+                      'Sampling applies to new analyses. Historical results are preserved.',
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          _AdminDialogSection(
+            title: 'Reference & details',
+            icon: Icons.menu_book_outlined,
+            description: 'Add the source, method and validity dates.',
+            child: _AdminFieldGrid(
+              children: [
+                input('evidence_url', 'Public evidence URL (HTTPS)'),
+                input('reference', 'Source section / reference'),
+                input('method', 'Method and limitations', lines: 3),
+                Column(
+                  children: [
+                    input('valid_from', 'Valid from (YYYY-MM-DD)'),
+                    input('valid_until', 'Valid until (YYYY-MM-DD)'),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          _AdminDialogSection(
+            title: 'Review',
+            icon: Icons.fact_check_outlined,
+            child: _AdminFieldGrid(
+              children: [
+                select('Review status', review, {
+                  'draft': 'Draft',
+                  'reviewed': 'Reviewed',
+                  'rejected': 'Rejected',
+                }, (v) => review = v),
+                input('review_note', 'Review note', lines: 2),
+              ],
+            ),
+          ),
+          const Text(
+            'Scope: Panabo City. Saving a revision does not activate it.',
+            style: TextStyle(fontSize: 12),
+          ),
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 10),
+              child: Text(
+                error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

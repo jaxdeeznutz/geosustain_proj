@@ -443,25 +443,24 @@ def get_elevation(lat, lon):
 
 
 def get_ndvi(lat, lon):
-    """Rolling 18-month window, most recent low-cloud Sentinel-2.
-    Returns (value, quality, source_label)."""
-    start, end = _date_window(18)
+    """Latest usable 90-day NDVI; identical cloud mask to parcel maps.
+
+    Scene-wide cloud percentage alone cannot establish a clear farm pixel.
+    Missing clear observations stay unavailable to the inference pipeline.
+    """
+    from datetime import datetime, timezone
+    from satellite_ndvi import recent_ndvi
     try:
         ensure_earth_engine_initialized()
-        s2    = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED')
         point = ee.Geometry.Point([lon, lat])
-        image = (s2.filterBounds(point).filterDate(start, end)
-                   .filter(ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', 20))
-                   .sort('system:time_start', False).first())
-        if image is None:
-            return 0.45, 'fallback_default', 'Regional typical value — no cloud-free Sentinel-2 scene in window'
-        val = (image.normalizedDifference(['B8', 'B4'])
-                    .rename('NDVI').sample(point, 10).first().get('NDVI').getInfo())
-        if val is not None:
-            return float(val), 'measured', 'Sentinel-2 SR Harmonized (Google Earth Engine), most recent low-cloud scene'
-        return 0.45, 'fallback_default', 'Regional typical value — NDVI source unavailable'
+        image, _, _ = recent_ndvi(ee, point, datetime.now(timezone.utc).date())
+        sample = image.rename('NDVI').sample(point, 10).first()
+        value = sample.get('NDVI').getInfo()
+        if value is not None and math.isfinite(float(value)) and -1 <= float(value) <= 1:
+            return float(value), 'measured', 'Sentinel-2 SR Harmonized; latest clear pixel within 90 days; SCL cloud/shadow mask'
+        return None, 'unavailable', 'No usable clear Sentinel-2 pixel within 90 days'
     except Exception:
-        return 0.45, 'fallback_default', 'Regional typical value — NDVI source unavailable'
+        return None, 'unavailable', 'Clear-pixel Sentinel-2 NDVI unavailable'
 
 
 def get_soil_ph(lat, lon):

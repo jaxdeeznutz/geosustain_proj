@@ -30,33 +30,32 @@ Future<void> _open(
 }
 
 void main() {
-  testWidgets(
-    'model class score is not labeled as poor agronomic suitability',
-    (tester) async {
-      await _open(
-        tester,
-        {
-          'crop': 'Rice',
-          'compatibility_pct': 12.5,
-          'model_probability_pct': 12.5,
-        },
-        {
-          'scoring_version': 'random-forest-probability-v1',
-          'recommendation_basis': 'model_probability',
-        },
-        2,
-      );
-      expect(find.text('Model score'), findsOneWidget);
-      expect(find.text('Model-ranked recommendation'), findsOneWidget);
-      expect(find.text('Poor match'), findsNothing);
-      expect(find.text('Good match: 75–100'), findsNothing);
-      expect(
-        find.textContaining('raw model class score determines the ranking'),
-        findsOneWidget,
-      );
-      expect(tester.takeException(), isNull);
-    },
-  );
+  testWidgets('AI ranking score is not labeled as poor agronomic suitability', (
+    tester,
+  ) async {
+    await _open(
+      tester,
+      {
+        'crop': 'Rice',
+        'compatibility_pct': 12.5,
+        'model_probability_pct': 12.5,
+      },
+      {
+        'scoring_version': 'random-forest-probability-v1',
+        'recommendation_basis': 'model_probability',
+      },
+      2,
+    );
+    expect(find.text('Ranking score'), findsOneWidget);
+    expect(find.text('AI-ranked recommendation'), findsOneWidget);
+    expect(find.text('Poor match'), findsNothing);
+    expect(find.text('Good match: 75–100'), findsNothing);
+    expect(
+      find.textContaining('raw AI ranking score determines the ranking'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
   test('ordinal ranking labels', () {
     expect(ordinalRecommendation(2), '2nd recommendation');
     expect(ordinalRecommendation(3), '3rd recommendation');
@@ -141,7 +140,7 @@ void main() {
     );
     expect(find.byType(EnvironmentalFactorCard), findsNWidgets(10));
     expect(find.text('Explainable AI'), findsOneWidget);
-    expect(find.text('Recorded model class score'), findsOneWidget);
+    expect(find.text('Recorded AI ranking score'), findsOneWidget);
     expect(
       find.text(
         'An explanation was not saved with this result. Scores are unchanged.',
@@ -159,7 +158,7 @@ void main() {
     expect(find.text('5th recommendation'), findsOneWidget);
     expect(find.text('Poor match'), findsOneWidget);
     expect(
-      find.textContaining('model class score was not recorded'),
+      find.textContaining('AI ranking score was not recorded'),
       findsOneWidget,
     );
   });

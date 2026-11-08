@@ -83,6 +83,13 @@ void main() {
             ),
           );
           await tester.pumpAndSettle();
+          expect(find.text('2026 seasonal update'), findsNothing);
+          expect(find.text('November: Wet conditions'), findsOneWidget);
+          expect(find.text('Banana'), findsOneWidget);
+          final latest = find.text('Latest weather & sources');
+          await tester.ensureVisible(latest);
+          await tester.tap(latest);
+          await tester.pumpAndSettle();
           expect(find.text('2026 seasonal update'), findsOneWidget);
           expect(find.text('September 2026 weather estimates'), findsOneWidget);
           expect(
@@ -101,7 +108,7 @@ void main() {
           );
           expect(
             find.text('Banana'),
-            findsNothing,
+            findsOneWidget,
           ); // no historical result presented as 2026
           expect(tester.takeException(), isNull);
           if (scale == 1) {
@@ -143,11 +150,6 @@ void main() {
           );
           await tester.tap(find.text('Close'));
           await tester.pumpAndSettle();
-          final history = find.text('Historical planting guidance (2005-2024)');
-          await tester.ensureVisible(history);
-          await tester.tap(history);
-          await tester.pumpAndSettle();
-          expect(find.text('Banana'), findsOneWidget);
           expect(jsonEncode(record), saved);
           expect(tester.takeException(), isNull);
         },

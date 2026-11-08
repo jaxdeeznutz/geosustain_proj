@@ -1679,6 +1679,12 @@ class ApiService {
     return Map<String, dynamic>.from(data['stats'] ?? const {});
   }
 
+  Future<Map<String, dynamic>> getAdminSystemStatus() => getRecordPage(
+    '/api/admin/system-status',
+    requestTimeout: const Duration(seconds: 15),
+    recoveryAttempts: 1,
+  );
+
   Future<List<dynamic>> getAdminUsers() =>
       _pagedList('/api/admin/users', 'users');
 

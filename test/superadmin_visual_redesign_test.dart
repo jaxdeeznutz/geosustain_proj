@@ -133,6 +133,41 @@ class _AdminFixture {
         row.addAll(Map<String, dynamic>.from(jsonDecode(request.body) as Map));
         return http.Response(jsonEncode({'crop': row}), 200);
       }
+      if (path.endsWith('/system-status')) {
+        return http.Response(
+          jsonEncode({
+            'checked_at': '2026-11-08T12:00:00Z',
+            'status': 'attention',
+            'checks': [
+              {
+                'key': 'api',
+                'label': 'API services',
+                'status': 'healthy',
+                'message': 'Synthetic API check passed.',
+              },
+              {
+                'key': 'database',
+                'label': 'Database',
+                'status': 'healthy',
+                'message': 'Synthetic read succeeded.',
+              },
+              {
+                'key': 'reports',
+                'label': 'Report records',
+                'status': 'unavailable',
+                'message': 'Synthetic report read failed.',
+              },
+              {
+                'key': 'maps',
+                'label': 'Maps & imagery',
+                'status': 'client_side',
+                'message': 'Browser check required; no server tile probe.',
+              },
+            ],
+          }),
+          200,
+        );
+      }
       if (path.endsWith('/dashboard')) {
         return http.Response(
           jsonEncode({
@@ -216,20 +251,16 @@ Future<void> _pumpAdmin(
         ),
         fontFamily: 'Roboto',
       ),
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(
-          context,
-        ).copyWith(textScaler: TextScaler.linear(scale)),
-        child: child!,
-      ),
-      home: RepaintBoundary(
+      builder: (context, child) => RepaintBoundary(
         key: const ValueKey('superadmin-preview'),
-        child: WebAdminDashboard(
-          api: fixture.api,
-          logout: () {},
-          message: (_) {},
+        child: MediaQuery(
+          data: MediaQuery.of(
+            context,
+          ).copyWith(textScaler: TextScaler.linear(scale)),
+          child: child!,
         ),
       ),
+      home: WebAdminDashboard(api: fixture.api, logout: () {}, message: (_) {}),
     ),
   );
   await tester.pumpAndSettle();
@@ -466,8 +497,14 @@ void main() {
       await tester.ensureVisible(find.byTooltip('View analysis 12'));
       await tester.tap(find.byTooltip('View analysis 12'));
       await tester.pumpAndSettle();
-      expect(find.text('Saved analysis #12'), findsOneWidget);
-      expect(find.text('Recorded result: Land assessment'), findsOneWidget);
+      expect(find.text('Saved Analysis #12'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(Dialog),
+          matching: find.text('Land assessment'),
+        ),
+        findsOneWidget,
+      );
       expect(fixture.requests.where((r) => r.method != 'GET'), isEmpty);
       await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();
@@ -594,13 +631,127 @@ void main() {
       await tester.ensureVisible(find.text('System Monitoring').first);
       await tester.tap(find.text('System Monitoring').first);
       await tester.pumpAndSettle();
-      expect(find.text('Health not reported'), findsOneWidget);
+      expect(find.text('Service needs attention'), findsOneWidget);
       expect(find.text('All Systems Operational'), findsNothing);
+      expect(find.text('Synthetic report read failed.'), findsOneWidget);
+      expect(find.text('Browser check'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
       fixture.api.close();
     },
   );
+
+  testWidgets(
+    'audit separates system maintenance from actual farmer sign-ins',
+    (tester) async {
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final fixture = _AdminFixture();
+      fixture.logs.addAll([
+        {
+          'id': 24,
+          'actor_reference': 'trusted-operator',
+          'actor_role': 'system_migration',
+          'action': 'crop_catalog_reconciled',
+          'details': {'crop_key': 'rice'},
+          'created_at': '2026-11-08T12:00:00Z',
+        },
+        {
+          'id': 25,
+          'actor_username': 'Synthetic audit farmer',
+          'actor_role': 'farmer',
+          'action': 'sign_in',
+          'details': {'method': 'password', 'channel': 'api'},
+          'created_at': '2026-11-08T12:01:00Z',
+        },
+      ]);
+      await _pumpAdmin(tester, fixture, 'audit', size: const Size(1440, 1100));
+      expect(find.text('System maintenance'), findsOneWidget);
+      expect(find.text('System'), findsOneWidget);
+      expect(find.text('trusted-operator'), findsNothing);
+      expect(find.text('Synthetic audit farmer'), findsOneWidget);
+      expect(find.text('Farmer'), findsOneWidget);
+      expect(find.text('Signed in'), findsOneWidget);
+      expect(find.textContaining('method: password'), findsOneWidget);
+      await _preview(tester, 'audit-system-and-signin');
+      await tester.pumpWidget(const SizedBox.shrink());
+      fixture.api.close();
+    },
+  );
+
+  for (final variant in [
+    (const Size(1440, 1100), 1.0, false),
+    (const Size(1280, 900), 1.0, true),
+    (const Size(360, 800), 1.0, false),
+    (const Size(390, 844), 2.0, true),
+  ]) {
+    testWidgets('admin dialogs remain scrollable at $variant', (tester) async {
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final fixture = _AdminFixture();
+      await _pumpAdmin(
+        tester,
+        fixture,
+        'analyses',
+        size: variant.$1,
+        scale: variant.$2,
+        dark: variant.$3,
+      );
+      await tester.ensureVisible(find.byTooltip('View analysis 11'));
+      await tester.tap(find.byTooltip('View analysis 11'));
+      await tester.pumpAndSettle();
+      expect(find.text('Saved Analysis #11'), findsOneWidget);
+      expect(
+        find.descendant(
+          of: find.byType(Dialog),
+          matching: find.text('Synthetic Farmer'),
+        ),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+      if (variant.$1.width > 1000) {
+        await _preview(
+          tester,
+          'saved-analysis-dialog-${variant.$3 ? 'dark' : 'light'}',
+        );
+      }
+      await tester.tap(find.text('Close'));
+      await tester.pumpAndSettle();
+      await tester.pumpWidget(const SizedBox.shrink());
+      await _pumpAdmin(
+        tester,
+        fixture,
+        'crops',
+        size: variant.$1,
+        scale: variant.$2,
+        dark: variant.$3,
+      );
+      final create = find.text('New record');
+      await tester.ensureVisible(create);
+      await tester.tap(create);
+      await tester.pumpAndSettle();
+      expect(find.text('New controlled record'), findsOneWidget);
+      expect(find.text('Measurement criteria'), findsOneWidget);
+      expect(find.text('Reference & details'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      if (variant.$1.width > 1000) {
+        await _preview(
+          tester,
+          'controlled-record-dialog-${variant.$3 ? 'dark' : 'light'}',
+        );
+      }
+      // Save/cancel remains visible even when the form needs scrolling.
+      expect(
+        tester.getBottomLeft(find.text('Save revision')).dy,
+        lessThan(variant.$1.height),
+      );
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
+      expect(fixture.requests.where((r) => r.method != 'GET'), isEmpty);
+      await tester.pumpWidget(const SizedBox.shrink());
+      fixture.api.close();
+    });
+  }
 
   testWidgets('narrow navigation opens and closes its drawer after selection', (
     tester,

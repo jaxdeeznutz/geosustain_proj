@@ -134,7 +134,7 @@ void main() {
           size: Size(width, 900),
           scale: scale,
         );
-        expect(find.text('Model score: 0.0%'), findsOneWidget);
+        expect(find.text('Ranking score: 0.0%'), findsOneWidget);
         expect(find.text('Explainable AI'), findsNothing);
         expect(find.text('Review color guide'), findsOneWidget);
         expect(find.text('Send for review'), findsOneWidget);
@@ -199,7 +199,7 @@ void main() {
       findsOneWidget,
     );
     expect(find.text('1. Rice'), findsNothing);
-    expect(find.text('Model score: 0.0%'), findsNothing);
+    expect(find.text('Ranking score: 0.0%'), findsNothing);
     final blocked = {
       ..._record(),
       'is_crop_recommended': false,

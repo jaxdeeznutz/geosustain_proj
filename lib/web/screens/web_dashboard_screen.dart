@@ -67,7 +67,7 @@ class WebDashboardScreen extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 12),
             child: Text(
               state.isPlanner
-                  ? 'Current-model summary is loading or unavailable. Refresh to retry.'
+                  ? 'Current-version summary is loading or unavailable. Refresh to retry.'
                   : 'Summary of currently loaded records only. Whole-account statistics are not available yet.',
             ),
           ),
@@ -79,11 +79,11 @@ class WebDashboardScreen extends StatelessWidget {
           children: [
             _DashboardKpi(
               icon: Icons.assignment_rounded,
-              title: 'Total Analyses',
+              title: state.isPlanner ? 'Submitted Analyses' : 'Total Analyses',
               value: '${summary?['analysis_count'] ?? records.length}',
               subtitle: summaryReady
                   ? (state.isPlanner
-                        ? 'Submitted cases \u00b7 current model'
+                        ? 'Submitted cases \u00b7 current AI version'
                         : 'Across all saved areas')
                   : 'Currently loaded records',
               warning:
@@ -93,13 +93,13 @@ class WebDashboardScreen extends StatelessWidget {
             ),
             _DashboardKpi(
               icon: Icons.eco_rounded,
-              title: 'Average Model Score',
+              title: 'Average Ranking Score',
               value: avg == null ? '—' : '${avg.toStringAsFixed(1)}%',
               subtitle: avg == null
                   ? (state.isPlanner
-                        ? 'No recorded model scores yet'
+                        ? 'No recorded ranking scores yet'
                         : 'Start your first crop analysis')
-                  : 'Recorded crop model scores',
+                  : 'Recorded crop ranking scores',
             ),
             _DashboardKpi(
               icon: Icons.spa_rounded,

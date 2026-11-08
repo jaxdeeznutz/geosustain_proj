@@ -490,6 +490,8 @@ def sign_in_user(request: Request, user) -> None:
     request.session["username"] = user["username"]
     request.session["role"] = user["role"]
     request.session['password_version'] = user.get('password_version',0)
+    defense_db.write_audit_log(user['id'], user.get('role'), 'sign_in', 'user', user['id'],
+                               {'method': 'password', 'channel': 'web'})
 
 
 def current_user(request: Request):
@@ -1366,7 +1368,10 @@ def mobile_login(body: LoginBody):
         return JSONResponse({"error": "Invalid email or password."}, status_code=401)
     if user.get("is_active") is False:
         return JSONResponse({"error": "This account is deactivated."}, status_code=403)
-    return {"user": user_public_dict(user), "token": generate_mobile_token(user)}
+    token = generate_mobile_token(user)
+    defense_db.write_audit_log(user['id'], user.get('role'), 'sign_in', 'user', user['id'],
+                               {'method': 'password', 'channel': 'api'})
+    return {"user": user_public_dict(user), "token": token}
 
 
 
@@ -1456,7 +1461,10 @@ class PhoneFinishBody(ProviderTokenBody):
 def google_signin(body: ProviderTokenBody):
     from federated_identity import google_login
     user = google_login(body.id_token)
-    return {'user': user_public_dict(user), 'token': generate_mobile_token(user)}
+    token = generate_mobile_token(user)
+    defense_db.write_audit_log(user['id'], user.get('role'), 'sign_in', 'user', user['id'],
+                               {'method': 'google', 'channel': 'api'})
+    return {'user': user_public_dict(user), 'token': token}
 
 
 class GooglePasswordSetupBody(BaseModel):
@@ -1675,6 +1683,12 @@ def api_admin_update_crop(crop_key: str, body: CropReferenceUpdateBody, user=Dep
 def api_admin_audit_logs(user=Depends(require_super_admin), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query("", max_length=160)):
     rows = get_audit_logs(limit=limit+1, offset=offset, q=q)
     return {"logs": rows[:limit], "has_more": len(rows)>limit}
+
+
+@app.get('/api/admin/system-status')
+def api_admin_system_status(user=Depends(require_super_admin)):
+    from system_monitoring import snapshot
+    return JSONResponse(snapshot(), headers={'Cache-Control': 'no-store'})
 
 
 @app.get("/api/mobile/weather")
