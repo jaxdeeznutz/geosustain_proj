@@ -338,7 +338,6 @@ void _analysisDetails(
                       style: const TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.w800,
-                        color: darkGreen,
                       ),
                     ),
                   ),

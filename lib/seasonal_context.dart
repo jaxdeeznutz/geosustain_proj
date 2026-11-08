@@ -48,6 +48,29 @@ List<String> seasonalAssessmentLines(Map<String, dynamic> record) {
     '${climate['spatial_method'] ?? 'Spatial method unavailable'}',
     'Spatial resolution: ${climate['spatial_resolution'] ?? 'Not recorded'}',
   ];
+  final current = object(saved['current_year_climate']);
+  final outlook = object(saved['current_year_outlook']);
+  if (current['version'] == 'current-year-climate-v1') {
+    final selected = object(current['selected']);
+    final latest = object(current['latest_complete_month']);
+    final reading = selected['status'] == 'available' ? selected : latest;
+    lines.insertAll(1, [
+      '${current['year']} climate update; checked ${current['as_of']}; ${current['complete_month_count']}/12 complete monthly estimates.',
+      if (selected['status'] != 'available')
+        '${saved['selected_month_name']} ${current['year']}: complete monthly estimates unavailable; no old values substituted.',
+      if (reading.isNotEmpty)
+        '${reading['month_name']} ${current['year']} ${selected['status'] == 'available' ? 'selected-month' : 'latest available month'}: rainfall ${reading['rainfall_mm']} mm/month; temperature ${reading['temperature_c']} C; humidity ${reading['humidity_pct']}%. NASA POWER gridded estimates, not field measurements.',
+      '${current['limitation']}',
+      'Current-year source: ${current['documentation_url']}',
+      if (outlook['status'] == 'available') ...[
+        'PAGASA ${saved['selected_month_name']} ${outlook['year']} outlook: ${outlook['station']} station; issued ${outlook['issued_on']}; valid through ${outlook['valid_until']}.',
+        'Forecast probabilities: below normal ${object(outlook['probabilities_pct'])['below_normal']}%; near normal ${object(outlook['probabilities_pct'])['near_normal']}%; above normal ${object(outlook['probabilities_pct'])['above_normal']}%.',
+        '${outlook['scope']} ${outlook['interpretation']}',
+        'Outlook source: ${outlook['source_url']}',
+      ],
+      'Current-year updates do not replace annual model inputs or adjust crop ranks.',
+    ]);
+  }
   for (final item in [
     ('temperature', 'Historical selected-month mean temperature'),
     ('rainfall', 'Historical selected-month mean rainfall total'),

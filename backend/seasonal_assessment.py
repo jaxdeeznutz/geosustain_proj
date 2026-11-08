@@ -17,8 +17,9 @@ from time import monotonic
 
 import requests
 from seasonal_planting import eto_month, planting_assessment
+from current_seasonal_climate import parse_current_year, published_outlook
 
-VERSION = 'seasonal-context-v2'
+VERSION = 'seasonal-context-v3'
 START_YEAR, END_YEAR = 2005, 2024
 URL = 'https://power.larc.nasa.gov/api/temporal/monthly/point'
 DOCS = 'https://power.larc.nasa.gov/docs/services/api/temporal/monthly/'
@@ -53,7 +54,7 @@ def empty_baseline(lat, lon, month):
     }
 
 
-def parse_baseline(payload, lat, lon, month):
+def parse_baseline(payload, lat, lon, month, as_of=None):
     result = empty_baseline(lat, lon, month)
     parameters = (payload.get('properties') or {}).get('parameter') or {}
     metadata = payload.get('parameters') or {}
@@ -134,13 +135,15 @@ def parse_baseline(payload, lat, lon, month):
             'moisture_status': 'unavailable' if ratio is None else 'dry' if ratio < .5 else 'intermediate' if ratio < 1 else 'humid',
             'eto_method': 'FAO-56 eq.52 Hargreaves estimate from monthly means of daily T2M/T2M_MIN_AVG/T2M_MAX_AVG, with daily astronomical Ra; uncalibrated',
         })
+    result['current_year_climate'] = parse_current_year(payload, lat, lon, month, as_of)
     return result
 
 
 def fetch_baseline(lat, lon, month):
     # Exact requested point avoids attributing another farm's point query to
     # this parcel. Bounds limit memory and failure caching prevents retry storms.
-    key = (float(lat), float(lon), month, VERSION)
+    today = datetime.now(timezone.utc).date()
+    key = (float(lat), float(lon), month, VERSION, today.isoformat())
     now = monotonic()
     with _LOCK:
         prior = _CACHE.get(key)
@@ -154,16 +157,17 @@ def fetch_baseline(lat, lon, month):
         response = requests.get(URL, params={
             'parameters': 'T2M,T2M_MIN_AVG,T2M_MAX_AVG,PRECTOTCORR,RH2M', 'community': 'AG',
             'longitude': lon, 'latitude': lat, 'start': START_YEAR,
-            'end': END_YEAR, 'format': 'JSON',
+            'end': today.year, 'format': 'JSON',
         }, timeout=(3, 8))
         response.raise_for_status()
-        result = parse_baseline(response.json(), lat, lon, month)
+        result = parse_baseline(response.json(), lat, lon, month, today)
     except Exception:
         # Exception details can contain transport settings; store only a bounded
         # user-facing failure state, never a substituted climate measurement.
         result['limitations'].append('Monthly climate provider unavailable or returned an invalid response. Retry a new analysis later.')
     result['cache_hit'] = False
-    ttl = 86400 if result['status'] == 'available' else 300
+    result.setdefault('current_year_climate', parse_current_year({}, lat, lon, month, today))
+    ttl = 21600 if result['status'] == 'available' else 300
     with _LOCK:
         _CACHE[key] = (monotonic() + ttl, deepcopy(result))
         _CACHE.move_to_end(key)
@@ -193,7 +197,7 @@ def attach_seasonal_assessment(result, baseline, month, enabled_crops=None):
     summary = (f'{name} historical climate context ({START_YEAR}-{END_YEAR}) is '
                + {'available': 'available.', 'partial': 'partially available; check valid-year counts.',
                   'unavailable': 'unavailable; no seasonal suitability conclusion is made.'}[status])
-    summary += ' Seasonal planting advice uses published references and historical monthly moisture. This is not a forecast. Model scores and crop order are unchanged.'
+    summary += ' Current-year estimates and dated station outlooks are saved separately when available. Planting guidance uses historical monthly moisture. Model scores and crop order are unchanged.'
     separate = []
     for field in ('rainfall_annual_mean_5y_mm', 'temperature_mean_5y_c', 'humidity_current_pct'):
         metadata = deepcopy((result.get('climate_field_metadata') or {}).get(field) or {})
@@ -202,8 +206,12 @@ def attach_seasonal_assessment(result, baseline, month, enabled_crops=None):
     result['intended_planting_month_name'] = name
     result['seasonal_assessment'] = {
         'version': VERSION, 'status': status, 'selected_month': month, 'selected_month_name': name,
-        'captured_at': utc_now(), 'year_interpretation': 'Calendar month only; no planting year or forecast selected',
+        'captured_at': utc_now(), 'year_interpretation': 'Calendar month selected; current-year estimates are retrospective and dated station outlooks are separate forecasts',
         'monthly_climate': monthly, 'separate_current_and_annual_observations': separate,
+        'current_year_climate': deepcopy(monthly.get('current_year_climate') or {}),
+        'current_year_outlook': published_outlook(
+            (monthly.get('requested_location') or {}).get('latitude'),
+            (monthly.get('requested_location') or {}).get('longitude'), month),
         'planting_assessment': planting,
         'calendar': {'status': 'unavailable', 'source': None,
                      'reason': 'No reviewed local crop planting calendar with traceable source and validity scope is configured; no In season label is assigned.'},

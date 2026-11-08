@@ -109,7 +109,7 @@ def test_seasonal_snapshot_is_separate_with_no_unsourced_calendar_claim():
         snapshot = result['seasonal_assessment']
         assert snapshot['calendar']['status'] == 'unavailable'
         assert snapshot['ranking_effect'] == 'none'
-        assert snapshot['year_interpretation'].endswith('forecast selected')
+        assert 'separate forecasts' in snapshot['year_interpretation']
         assert 'season_adjusted_score' not in result and 'season_status' not in result
         baseline['metrics']['temperature']['value'] = -500
         snapshots.append(snapshot)
