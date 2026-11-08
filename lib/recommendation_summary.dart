@@ -32,6 +32,26 @@ List<Map<String, dynamic>> savedReferenceFit(
   return [for (final row in localRows(saved['factors'])) _referenceFactor(row)];
 }
 
+/// Short growing-condition explanation. Never infer suitability from AI scores.
+String conciseCropFit(Map<String, dynamic> record, String crop) {
+  final factors = savedReferenceFit(record, crop);
+  String names(String status) => factors
+      .where((f) => f['status'] == status)
+      .map((f) => '${f['label']}')
+      .join(', ');
+  final fit = names('fits'),
+      limited = names('limited'),
+      outside = names('outside');
+  if (fit.isEmpty && limited.isEmpty && outside.isEmpty) {
+    return 'No compatible growing-condition checks were saved for $crop. Review the available readings before planting.';
+  }
+  return [
+    if (fit.isNotEmpty) '$crop fits the recorded reference ranges for $fit.',
+    if (limited.isNotEmpty) 'Partial fit: $limited.',
+    if (outside.isNotEmpty) 'Outside the reference range: $outside.',
+  ].join(' ');
+}
+
 Map<String, dynamic> _referenceFactor(Map<String, dynamic> factor) {
   final observation = localObject(factor['measurement']);
   final rule = localObject(factor['requirement']);

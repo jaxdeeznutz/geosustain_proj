@@ -111,65 +111,6 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
     final requested =
         selected ?? widget.initialCrop ?? '${record['predicted_crop']}';
     final name = names.contains(requested) ? requested : names.first;
-    final summary = recommendationSummary(record, name);
-    final referenceFactors = localRows(summary['reference_factors']);
-    final assessed = referenceFactors
-        .where((factor) => factor['status'] != 'not_assessed')
-        .toList();
-    Widget summaryPanel(List<Widget> children) => Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: children,
-      ),
-    );
-    final modelWidgets = <Widget>[
-      Text(
-        'How the model used the farm conditions',
-        style: const TextStyle(fontWeight: FontWeight.w800),
-      ),
-      Text('${summary['model_summary']}'),
-      const SizedBox(height: 8),
-      const Text(
-        'These factors explain the model score; they do not establish crop suitability.',
-      ),
-    ];
-    final referenceWidgets = <Widget>[
-      Text(
-        'Growing conditions for $name',
-        style: TextStyle(fontWeight: FontWeight.w800),
-      ),
-      if (assessed.isEmpty)
-        const Text('No compatible cited condition check was saved.')
-      else ...[
-        for (final group in [
-          ('fits', 'Fits reference ranges'),
-          ('limited', 'Partial fit'),
-          ('outside', 'Outside reference ranges'),
-        ])
-          if (assessed.any((factor) => factor['status'] == group.$1))
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 4),
-              child: Text(
-                '${group.$2}: ${assessed.where((factor) => factor['status'] == group.$1).map((factor) => factor['label']).join(', ')}.',
-              ),
-            ),
-      ],
-      if (referenceFactors.length > assessed.length)
-        Text(
-          '${referenceFactors.length - assessed.length} other conditions were not assessed.',
-        ),
-      Text('${summary['reference_note']}'),
-      TextButton.icon(
-        onPressed: () => _showReferenceFit(context, record, name),
-        icon: const Icon(Icons.menu_book_outlined),
-        label: const Text('View cited conditions'),
-      ),
-    ];
     return _AnalysisSection(
       title: 'Explainable AI',
       icon: Icons.psychology_outlined,
@@ -195,43 +136,16 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         const SizedBox(height: 10),
-        Text('Based on ${body['sample_count']} saved farm samples.'),
-        const SizedBox(height: 8),
-        LayoutBuilder(
-          builder: (context, constraints) {
-            final modelPanel = summaryPanel(modelWidgets);
-            final referencePanel = summaryPanel(referenceWidgets);
-            if (constraints.maxWidth >= 900 &&
-                MediaQuery.textScalerOf(context).scale(14) <= 20) {
-              return Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(child: modelPanel),
-                  const SizedBox(width: 16),
-                  Expanded(child: referencePanel),
-                ],
-              );
-            }
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                modelPanel,
-                const SizedBox(height: 12),
-                referencePanel,
-              ],
-            );
-          },
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Model patterns do not prove crop success, causes or measured soil nutrients.',
-          style: TextStyle(fontSize: 12),
-        ),
+        Text(conciseCropFit(record, name)),
         TextButton.icon(
+          onPressed: () => _showReferenceFit(context, record, name),
+          icon: const Icon(Icons.menu_book_outlined),
+          label: const Text('Conditions & sources'),
+        ),
+        TextButton(
           onPressed: () =>
               _showLocalExplanationDetails(context, record, body, name),
-          icon: const Icon(Icons.fact_check_outlined),
-          label: const Text('View local explanation details'),
+          child: const Text('AI calculation details'),
         ),
       ],
     );
@@ -292,7 +206,7 @@ class _LocalContributionBar extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 7),
       child: Semantics(
         label:
-            '${feature['label']}, ${localSigned(value)} percentage points relative to the model baseline',
+            '${feature['label']}, ${localSigned(value)} percentage points relative to the AI baseline',
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
@@ -338,7 +252,10 @@ void _showLocalExplanationDetails(
       .fold(0.0, math.max);
   _analysisDetails(context, 'Explainable AI details - $crop', [
     _AnalysisParagraph(
-      '${recommendationSummary(record, crop)['model_summary']}',
+      '${recommendationSummary(record, crop)['model_summary']}'.replaceAll(
+        'model',
+        'AI',
+      ),
     ),
     if (isAnnualPrototypeRecord(record))
       const _AnalysisParagraph(annualPrototypeShortNotice),
@@ -349,7 +266,7 @@ void _showLocalExplanationDetails(
       '${body['baseline_definition']}. ${body['aggregation']}',
     ),
     const _AnalysisParagraph(
-      'Input summaries describe the original saved samples. The model was not run on these means.',
+      'Input summaries describe the original saved samples. The AI was not run on these means.',
     ),
     for (final feature in features) ...[
       _LocalContributionBar(feature: feature, maximum: maximum),
@@ -357,12 +274,12 @@ void _showLocalExplanationDetails(
         'Saved input: mean ${(feature['mean'] as num).toStringAsFixed(3)}; range ${(feature['minimum'] as num).toStringAsFixed(3)} to ${(feature['maximum'] as num).toStringAsFixed(3)} ${feature['unit']}.',
       ),
     ],
-    _AnalysisParagraph('Model SHA-256: ${body['model_version']}'),
+    _AnalysisParagraph('AI artifact SHA-256: ${body['model_version']}'),
     _AnalysisParagraph('Analysis context: ${body['prediction_context_id']}'),
     _AnalysisParagraph('Input snapshot hash: ${body['input_snapshot_hash']}'),
     _AnalysisParagraph('Attribution checksum: ${body['snapshot_hash']}'),
     const _AnalysisParagraph(
-      'Base plus all signed feature contributions reconstructs the model class score within 0.0000001 percentage points. Display values are rounded.',
+      'Base plus all signed feature contributions reconstructs the AI class score within 0.0000001 percentage points. Display values are rounded.',
     ),
     for (final (index, sample) in localRows(
       localObject(record['model_explanation'])['samples'],
@@ -374,6 +291,6 @@ void _showLocalExplanationDetails(
         _AnalysisParagraph('${entry.key}: ${entry.value}'),
     ],
     for (final limitation in body['limitations'] as List)
-      _AnalysisParagraph('$limitation'),
+      _AnalysisParagraph('$limitation'.replaceAll('model', 'AI')),
   ]);
 }

@@ -271,7 +271,7 @@ class SeasonalPlantingAdvice extends StatelessWidget {
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
             ),
             const Text(
-              'Historical moisture estimate, not a forecast or official season declaration.',
+              'Historical monthly pattern; not a forecast.',
               style: TextStyle(fontSize: 12),
             ),
           ],
@@ -321,7 +321,7 @@ class SeasonalPlantingAdvice extends StatelessWidget {
               const Padding(
                 padding: EdgeInsets.only(bottom: 8),
                 child: Text(
-                  'The model rank is separate from planting readiness. Confirm field water, irrigation and the local rice calendar.',
+                  'The AI rank is separate from planting readiness. Confirm field water, irrigation and the local rice calendar.',
                 ),
               ),
             for (final reason in analysisListValue(row['reasons']))
@@ -399,7 +399,6 @@ class SeasonalPlantingAdvice extends StatelessWidget {
     ];
     final current = analysisMapValue(snapshot['current_year_climate']);
     final hasCurrent = current['version'] == 'current-year-climate-v1';
-    final climate = analysisMapValue(snapshot['monthly_climate']);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -411,20 +410,13 @@ class SeasonalPlantingAdvice extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
           ),
-        if (hasCurrent) ...[
-          CurrentYearSeasonalEvidence(record: record),
+        ...historical,
+        if (hasCurrent)
           ExpansionTile(
             tilePadding: EdgeInsets.zero,
-            title: Text(
-              'Historical planting guidance (${climate['baseline_start_year'] ?? '?'}-${climate['baseline_end_year'] ?? '?'})',
-            ),
-            subtitle: const Text(
-              'Typical climate; separate from the current-year update',
-            ),
-            children: historical,
+            title: const Text('Latest weather & sources'),
+            children: [CurrentYearSeasonalEvidence(record: record)],
           ),
-        ] else
-          ...historical,
       ],
     );
   }
@@ -532,7 +524,7 @@ class CurrentYearSeasonalEvidence extends StatelessWidget {
                   SelectableText('${outlook['source_url'] ?? ''}'),
                 ],
                 const Text(
-                  'Current-year updates do not replace the five-year annual inputs or change model scores.',
+                  'Current-year updates do not replace the five-year annual inputs or change ranking scores.',
                 ),
               ],
             ),

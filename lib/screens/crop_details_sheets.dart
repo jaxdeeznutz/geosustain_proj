@@ -1250,10 +1250,10 @@ class EnvironmentalFactorCard extends StatelessWidget {
                     upperExclusive: factor.upperExclusive,
                   )
                 : reference
-                ? 'No compatible documented range saved'
+                ? 'No compatible reference range'
                 : factor.value == null
                 ? 'Value unavailable'
-                : 'No compatible crop criterion saved',
+                : 'No crop-specific reference range',
             style: TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.w800,
@@ -1296,7 +1296,15 @@ class EnvironmentalFactorCard extends StatelessWidget {
         ),
         const SizedBox(height: 2),
         Text(
-          factor.interpretation,
+          !hasRange &&
+                  factor.value != null &&
+                  ['humidity', 'ndvi'].contains(factor.key)
+              ? 'Reading available; a compatible crop-specific reference is needed to assess fit.'
+              : factor.applicationScreening
+              ? factor.key == 'humidity'
+                    ? 'Current humidity; not a climate average or a crop suitability test.'
+                    : 'Vegetation screening; not proof of crop suitability.'
+              : factor.interpretation,
           style: const TextStyle(
             fontSize: 12,
             height: 1.3,
@@ -1480,12 +1488,12 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
         else
           SuitabilityScoreCard(
             score: score,
-            scoreLabel: isModelRanked(record) ? 'Model score' : 'Suitability',
+            scoreLabel: isModelRanked(record) ? 'Ranking score' : 'Suitability',
             title: isModelRanked(record)
-                ? 'Highest model score among enabled crops'
+                ? 'Highest ranking score among enabled crops'
                 : '$name was selected as the best match.',
             description: isModelRanked(record)
-                ? 'Highest mean Random Forest class probability across the farm samples. Environmental comparisons below do not change this ranking.'
+                ? 'AI ranking across the saved farm samples. Check growing conditions below before planting.'
                 : 'The explanation below shows the measured conditions that contributed most to that result.',
           ),
         SeasonalPlantingAdvice(record: record, crop: name),
@@ -1500,7 +1508,7 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
         _SheetHeading(
           'Environmental & Soil Reference Assessment',
           subtitle:
-              'Annual rainfall is compared with the crop’s documented annual requirements. Other recorded factors and reference comparisons are separate from the model ranking.',
+              'Annual rainfall is compared with the crop’s documented annual requirements. Other recorded factors and reference comparisons are separate from the AI ranking.',
         ),
         if (factors.isEmpty)
           const InfoExplanationCard(
@@ -1532,8 +1540,8 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
                   ? 'Factor colors describe individual documented criteria only. Missing observations or criteria remain not assessed.'
                   : isModelRanked(record)
                   ? isNoNpkModelRecord(record)
-                        ? 'Model scores are not harvest probabilities. Training includes generated terrain and vegetation features. NPK is not used.'
-                        : 'Model scores are not harvest probabilities. Training includes generated GIS features and estimated nutrient inputs.'
+                        ? 'Ranking scores are not harvest probabilities. Training includes generated terrain and vegetation features. NPK is not used.'
+                        : 'Ranking scores are not harvest probabilities. Training includes generated GIS features and estimated nutrient inputs.'
                   : 'These values are based on the environmental conditions retrieved for your selected area. The suitability score considers all factors together.',
             ),
           ],
@@ -1601,11 +1609,11 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
         else
           SuitabilityScoreCard(
             score: score,
-            scoreLabel: modelRanked ? 'Model score' : 'Suitability',
+            scoreLabel: modelRanked ? 'Ranking score' : 'Suitability',
             title: score == null
                 ? 'Suitability unavailable'
                 : modelRanked
-                ? 'Model-ranked recommendation'
+                ? 'AI-ranked recommendation'
                 : farmerSuitability(score),
             description: score == null
                 ? 'There was not enough recorded data to calculate a suitability score for this crop.'
@@ -1639,7 +1647,7 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
           _SheetHeading(
             'Environmental & Soil Reference Assessment',
             subtitle:
-                'Annual rainfall reference screening and other recorded environmental factors. These comparisons are separate from the model ranking.',
+                'Annual rainfall reference screening and other recorded environmental factors. These comparisons are separate from the AI ranking.',
           ),
           for (final factor in factors) EnvironmentalFactorCard(factor: factor),
           CagroSoilObservationsCard(record: record, crop: crop),
@@ -1679,15 +1687,15 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
             ),
           InfoExplanationCard(
             icon: Icons.description_outlined,
-            title: 'Recorded model class score',
+            title: 'Recorded AI ranking score',
             background: CropSheetStyle.amberSoft,
             accent: CropSheetStyle.amber,
             children: [
               Text(
                 modelScore == null
-                    ? 'A model class score was not recorded for this crop in this analysis.'
+                    ? 'An AI ranking score was not recorded for this crop in this analysis.'
                     : modelRanked
-                    ? '${_cropNum(modelScore)}%. This raw model class score determines the ranking; it is not a harvest probability.'
+                    ? '${_cropNum(modelScore)}%. This raw AI ranking score determines the ranking; it is not a harvest probability.'
                     : '${_cropNum(modelScore)}%. This is separate from the final crop suitability score and is not a harvest probability.',
               ),
               if (scoring['model_class_available'] == false) ...[

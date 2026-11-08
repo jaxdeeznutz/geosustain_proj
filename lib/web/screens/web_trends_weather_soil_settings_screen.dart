@@ -16,7 +16,9 @@ class _WebCropTrendsScreenState extends State<WebCropTrendsScreen> {
   @override
   void initState() {
     super.initState();
-    if (widget.state.currentModelSummary == null) unawaited(load());
+    // A new submission may arrive while another page is open. Cached totals
+    // are not evidence that the server still has the same set of cases.
+    unawaited(load());
   }
 
   Future<void> load() async {
@@ -36,7 +38,7 @@ class _WebCropTrendsScreenState extends State<WebCropTrendsScreen> {
       if (value['current_model_version'] == null ||
           value['model_scope'] != selectedScope) {
         throw Exception(
-          'The model summary is unavailable. Deploy the matching backend and refresh.',
+          'The ranking summary is unavailable. Deploy the matching backend and refresh.',
         );
       }
       if (mounted &&
@@ -124,16 +126,16 @@ class _WebCropTrendsScreenState extends State<WebCropTrendsScreen> {
                         isExpanded: true,
                         initialValue: scope,
                         decoration: const InputDecoration(
-                          labelText: 'Model results',
+                          labelText: 'Ranking version',
                         ),
                         items: const [
                           DropdownMenuItem(
                             value: 'current',
-                            child: Text('Current seven-crop model'),
+                            child: Text('Current seven-crop version'),
                           ),
                           DropdownMenuItem(
                             value: 'all',
-                            child: Text('All model versions (historical)'),
+                            child: Text('All AI versions (historical)'),
                           ),
                         ],
                         onChanged: loading
@@ -156,7 +158,7 @@ class _WebCropTrendsScreenState extends State<WebCropTrendsScreen> {
                 const SizedBox(height: 10),
                 Text(
                   scope == 'current'
-                      ? 'Current model only. $archived older or unversioned results are excluded.'
+                      ? 'Current AI version only. $archived older or unversioned results are excluded.'
                       : 'Historical results include older models and crop labels. Their scores are not directly comparable.',
                 ),
                 Text(
@@ -181,7 +183,7 @@ class _WebCropTrendsScreenState extends State<WebCropTrendsScreen> {
                   ),
                 if (!loading && error == null && summary == null)
                   const Text(
-                    'No model summary is available. Refresh to retry.',
+                    'No ranking summary is available. Refresh to retry.',
                   ),
               ],
             ),
@@ -198,8 +200,8 @@ class _WebCropTrendsScreenState extends State<WebCropTrendsScreen> {
                   value: '${summary['analysis_count'] ?? 0}',
                   series: monthly.map((e) => e.value.toDouble()).toList(),
                   caption: scope == 'current'
-                      ? 'Current model version'
-                      : 'All model versions',
+                      ? 'Current AI version'
+                      : 'All AI versions',
                 ),
                 _AnalystMetric(
                   icon: Icons.emoji_events_rounded,
@@ -211,7 +213,7 @@ class _WebCropTrendsScreenState extends State<WebCropTrendsScreen> {
                 ),
                 _AnalystMetric(
                   icon: Icons.speed_rounded,
-                  label: 'Average Model Score',
+                  label: 'Average Ranking Score',
                   value: scored == 0
                       ? 'Not assessed'
                       : '${(analysisNumber(summary['average_model_score']) ?? 0).toStringAsFixed(1)}%',
@@ -223,7 +225,7 @@ class _WebCropTrendsScreenState extends State<WebCropTrendsScreen> {
               const Padding(
                 padding: EdgeInsets.symmetric(vertical: 18),
                 child: Text(
-                  'No saved recommendations from this model yet. Submit a new analysis to populate these charts.',
+                  'No ranked crop recommendations are recorded for the selected version and submission scope.',
                 ),
               ),
             const SizedBox(height: 18),
@@ -385,12 +387,12 @@ class _SuitabilityDistributionCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Model Score Distribution',
+            'Ranking Score Distribution',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
           ),
           SizedBox(height: 5),
           Text(
-            'Recorded model score bands, not agronomic grades',
+            'Recorded ranking score bands, not agronomic grades',
             style: TextStyle(color: WebPortalColors.muted),
           ),
           SizedBox(height: 20),
@@ -564,7 +566,7 @@ class _TrendInsightsCard extends StatelessWidget {
           _InsightRow(
             icon: Icons.bar_chart_rounded,
             title: total == 0
-                ? 'No saved model scores yet.'
+                ? 'No saved ranking scores yet.'
                 : 'High model-score records account for $highPct%',
             subtitle: 'of all scored recommendations.',
           ),

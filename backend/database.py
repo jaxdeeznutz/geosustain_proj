@@ -24,7 +24,7 @@ def audit_in_transaction(cur, actor_id, role, action, target_type=None, target_i
     cur.execute("""INSERT INTO audit_logs
         (actor_user_id, actor_role, actor_reference, action, target_type, target_id, details)
         VALUES (%s, %s, %s, %s, %s, %s, %s)""",
-        (actor_id, role, f'account:{actor_id}' if actor_id else 'trusted-operator',
+        (actor_id, role, f'account:{actor_id}' if actor_id else ('system' if role == 'system_migration' else 'trusted-operator'),
          action, target_type, target_id, Json(details or {})))
 
 
@@ -1538,13 +1538,7 @@ def write_audit_log(actor_user_id, actor_role, action, target_type=None, target_
     try:
         with get_conn() as conn:
             with conn.cursor() as cur:
-                cur.execute(
-                    """
-                    INSERT INTO audit_logs (actor_user_id, actor_role, action, target_type, target_id, details)
-                    VALUES (%s, %s, %s, %s, %s, %s)
-                    """,
-                    (actor_user_id, actor_role, action, target_type, target_id, Json(details or {})),
-                )
+                audit_in_transaction(cur, actor_user_id, actor_role, action, target_type, target_id, details)
                 conn.commit()
     except Exception as exc:
         print(f"Audit log write failed (non-fatal): {exc}")

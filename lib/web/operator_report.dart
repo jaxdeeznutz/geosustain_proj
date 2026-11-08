@@ -1,3 +1,4 @@
+import '../compact_analysis_pdf.dart';
 import 'dart:typed_data';
 import '../seasonal_context.dart';
 import '../spatial_pdf.dart';
@@ -19,6 +20,13 @@ Future<Uint8List> buildOperatorReport(
       v is Map ? Map<String, dynamic>.from(v) : {};
   List<Map<String, dynamic>> rows(dynamic v) =>
       v is List ? v.map(object).toList() : [];
+  if (!planning) {
+    return buildCompactAnalysisPdf(
+      object(data['analysis']),
+      reviewCase: object(data['case']),
+      events: rows(data['events']),
+    );
+  }
   final regular = await rootBundle.load('assets/fonts/NotoSans-Regular.ttf');
   final bold = await rootBundle.load('assets/fonts/NotoSans-Bold.ttf');
   final symbols = await rootBundle.load(

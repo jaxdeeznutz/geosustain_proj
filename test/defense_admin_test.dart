@@ -19,6 +19,23 @@ void main() {
       addTearDown(tester.view.resetDevicePixelRatio);
       final api = ApiService(
         client: MockClient((request) async {
+          if (request.url.path.endsWith('/system-status')) {
+            return http.Response(
+              jsonEncode({
+                'checked_at': '2026-11-08T12:00:00Z',
+                'status': 'healthy',
+                'checks': [
+                  {
+                    'key': 'api',
+                    'label': 'Backend API',
+                    'status': 'healthy',
+                    'message': 'Synthetic API check passed.',
+                  },
+                ],
+              }),
+              200,
+            );
+          }
           if (request.url.path.endsWith('/analyses')) {
             return http.Response('{}', 503);
           }

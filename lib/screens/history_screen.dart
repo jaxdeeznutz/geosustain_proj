@@ -424,6 +424,17 @@ Future<Uint8List> buildAnalysisPdf(
   Map<String, dynamic> raw, {
   AnalysisState? state,
 }) async {
+  final data = Map<String, dynamic>.from(raw);
+  if (state != null) {
+    data['place_name'] = await state.resolvePlaceForRecord(data);
+  }
+  return buildCompactAnalysisPdf(data);
+}
+
+Future<Uint8List> buildDetailedAnalysisPdf(
+  Map<String, dynamic> raw, {
+  AnalysisState? state,
+}) async {
   dynamic printable(dynamic value) {
     if (value is String) {
       return value.replaceAll(

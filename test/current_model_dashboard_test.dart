@@ -130,8 +130,8 @@ void main() {
         );
         await tester.pumpAndSettle();
         for (final title in [
-          'Total Analyses',
-          'Average Model Score',
+          'Submitted Analyses',
+          'Average Ranking Score',
           'Most Frequent Recommendation',
           'Get Started with GeoSustain',
           'Quick Actions',
@@ -217,12 +217,65 @@ void main() {
       expect(tester.getSize(chart).width, greaterThan(500));
       await tester.tap(find.byKey(const ValueKey('patterns-model-scope')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('All model versions (historical)').last);
+      await tester.tap(find.text('All AI versions (historical)').last);
       await tester.pumpAndSettle();
       expect(requests.last.url.path, '/api/operator/recommendation-patterns');
       expect(requests.last.url.queryParameters['model_scope'], 'all');
       expect(find.text('84.3%'), findsOneWidget);
       expect(find.textContaining('not directly comparable'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+      await tester.pumpWidget(const SizedBox());
+      state.dispose();
+    },
+  );
+
+  testWidgets(
+    'patterns replace cached empty totals with fresh submitted rankings',
+    (tester) async {
+      var requests = 0;
+      final api = ApiService(
+        client: MockClient((r) async {
+          requests++;
+          return http.Response(
+            jsonEncode({
+              ...current,
+              'average_model_score': 47.8,
+              'high_count': 0,
+              'medium_count': 1,
+              'low_count': 1,
+              'very_low_count': 0,
+              'frequencies': [
+                {'crop': 'Mango', 'count': 2},
+              ],
+            }),
+            200,
+          );
+        }),
+      );
+      await api.saveToken('synthetic-refresh');
+      final state = AnalysisState(api: api)
+        ..currentUser = {'id': 1, 'role': 'analyst'}
+        ..currentModelSummary = {
+          ...current,
+          'scored_count': 0,
+          'average_model_score': null,
+          'frequencies': [],
+          'monthly': [],
+        };
+      await tester.pumpWidget(
+        GeoSustainApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: WebCropTrendsScreen(state: state),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(requests, 1);
+      expect(find.text('47.8%'), findsOneWidget);
+      expect(find.text('Mango'), findsWidgets);
+      expect(find.text('No data'), findsNothing);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       state.dispose();

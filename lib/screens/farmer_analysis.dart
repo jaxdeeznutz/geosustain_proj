@@ -58,7 +58,7 @@ class FarmerAnalysisContent extends StatelessWidget {
                     : crops.isEmpty
                     ? 'Ask an analyst to check the available land data.'
                     : model
-                    ? 'Model scores rank approved crops, not harvest success.'
+                    ? 'Ranking scores rank approved crops, not harvest success.'
                     : 'These choices use the saved condition checks.',
               ),
               if (_farmerUsesEstimates(record)) ...[
@@ -344,7 +344,7 @@ class _FarmerCropRow extends StatelessWidget {
     final label = score == null
         ? 'Score unavailable'
         : isModelRanked(record)
-        ? 'Model score: ${score.toStringAsFixed(1)}%'
+        ? 'Ranking score: ${score.toStringAsFixed(1)}%'
         : record['scoring_version'] != null
         ? 'Condition score: ${score.toStringAsFixed(1)}/100'
         : 'Recorded score: ${score.toStringAsFixed(1)}%';

@@ -516,7 +516,10 @@ void main() {
               'metric-Submitted Analyses',
               'metric-Most Recommended Crop',
             );
-            aligned('metric-Submitted Analyses', 'metric-Average Model Score');
+            aligned(
+              'metric-Submitted Analyses',
+              'metric-Average Ranking Score',
+            );
           }
           expect(tester.takeException(), isNull);
         }

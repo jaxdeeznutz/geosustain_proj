@@ -361,7 +361,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                 ),
               if (modelRanked)
                 Text(
-                  'Model score, not harvest odds. Soil inputs include estimates.',
+                  'Ranking score, not harvest odds. Soil inputs include estimates.',
                   style: TextStyle(fontSize: 12),
                 )
               else if (preliminary)
@@ -395,7 +395,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                   preliminary
                       ? 'Available crop comparisons; this is not a complete suitability ranking.'
                       : modelRanked
-                      ? 'Top ${crops.length}, highest model score first.'
+                      ? 'Top ${crops.length}, highest ranking score first.'
                       : 'Top ${crops.length}, highest recorded score first.',
                   style: TextStyle(fontSize: 12, color: Color(0xFF5D6A61)),
                 ),
@@ -570,7 +570,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                         : score == null
                         ? 'Insufficient data'
                         : isModelRanked(r)
-                        ? '${score.toStringAsFixed(1)}% · Model score'
+                        ? '${score.toStringAsFixed(1)}% · Ranking score'
                         : r['scoring_version'] != null
                         ? '${score.toStringAsFixed(1)}/100 · Assessed-condition index'
                         : '${score.toStringAsFixed(1)}% · ${crop['classification'] ?? farmerSuitability(score)}',
@@ -701,7 +701,7 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                             score == null
                                 ? 'Insufficient data'
                                 : isModelRanked(widget.record)
-                                ? 'Model score: ${score.toStringAsFixed(1)}%'
+                                ? 'Ranking score: ${score.toStringAsFixed(1)}%'
                                 : 'Screening index: ${score.toStringAsFixed(1)}/100',
                             style: TextStyle(fontWeight: FontWeight.w700),
                           ),
@@ -709,7 +709,7 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                           Text(
                             isModelRanked(widget.record)
                                 ? 'The Random Forest class probability determines this ranking. The environmental comparisons do not adjust it. This is not a harvest probability.'
-                                : 'This index compares documented requirements with the available observations. It is not a harvest probability, yield forecast, or model prediction.',
+                                : 'This index compares documented requirements with the available observations. It is not a harvest probability, yield forecast, or AI prediction.',
                           ),
                         ],
                       ),
@@ -748,7 +748,7 @@ class _ReferenceCropDetailsState extends State<_ReferenceCropDetails> {
                     if (tab == 2) ...[
                       _AnalysisSection(
                         title: isModelRanked(widget.record)
-                            ? 'Model ranking method'
+                            ? 'AI ranking method'
                             : 'Suitability calculation',
                         children: [
                           Text('${crop['explanation']}'),
@@ -807,12 +807,12 @@ class _LegacyModelSummary extends StatelessWidget {
         ? <String, dynamic>{}
         : Map<String, dynamic>.from(snapshots.first);
     return _AnalysisSection(
-      title: 'Actual model · research output',
+      title: 'Actual AI · research output',
       icon: Icons.insights_outlined,
       children: [
         Text(
           snapshots.isEmpty
-              ? 'The legacy model could not run with the available inputs. It does not determine these crop scores.'
+              ? 'The legacy AI could not run with the available inputs. It does not determine these crop scores.'
               : 'The retained forest ran on ${snapshots.length} sampled location(s). Its outputs are separate from these suitability calculations.',
         ),
         Text(
@@ -821,7 +821,7 @@ class _LegacyModelSummary extends StatelessWidget {
         ),
         if (snapshots.isNotEmpty) ...[
           Text(
-            'Raw model outputs: ${snapshots.expand((s) => analysisListValue(s['samples'])).whereType<Map>().map((s) => s['raw_prediction']).toSet().join(', ')}',
+            'Raw AI outputs: ${snapshots.expand((s) => analysisListValue(s['samples'])).whereType<Map>().map((s) => s['raw_prediction']).toSet().join(', ')}',
           ),
           for (final f in analysisListValue(
             snapshot['features'],
@@ -832,9 +832,9 @@ class _LegacyModelSummary extends StatelessWidget {
             style: TextStyle(fontSize: 12),
           ),
           TextButton(
-            onPressed: () => _analysisDetails(context, 'Actual model details', [
+            onPressed: () => _analysisDetails(context, 'Actual AI details', [
               for (final s in snapshots) ...[
-                SelectableText('Model SHA-256: ${s['model_version']}'),
+                SelectableText('AI artifact SHA-256: ${s['model_version']}'),
                 for (final f in analysisListValue(
                   s['features'],
                 ).whereType<Map>())

@@ -1,5 +1,234 @@
 part of '../../main.dart';
 
+/// Shared, scrollable admin dialogs with a fixed action row.
+class _AdminDialog extends StatelessWidget {
+  final String title, subtitle;
+  final IconData icon;
+  final Widget child;
+  final List<Widget> actions;
+  final double width;
+  final bool busy;
+  const _AdminDialog({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.child,
+    required this.actions,
+    this.width = 860,
+    this.busy = false,
+  });
+  @override
+  Widget build(BuildContext context) => Theme(
+    data: Theme.of(context).copyWith(
+      textTheme: Theme.of(context).textTheme.apply(fontFamily: 'Roboto'),
+    ),
+    child: DefaultTextStyle.merge(
+      style: const TextStyle(fontFamily: 'Roboto'),
+      child: Dialog(
+        insetPadding: const EdgeInsets.all(16),
+        backgroundColor: WebPortalColors.canvas,
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: width,
+            maxHeight: MediaQuery.sizeOf(context).height - 32,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(22, 22, 14, 20),
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: const AssetImage(
+                      'assets/images/web/admin_valley_banner.png',
+                    ),
+                    fit: BoxFit.cover,
+                    alignment: Alignment.centerRight,
+                    opacity: WebPortalColors.dark ? .10 : .24,
+                  ),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (MediaQuery.sizeOf(context).width >= 600 &&
+                        MediaQuery.textScalerOf(context).scale(14) <= 20) ...[
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: WebPortalColors.tint,
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: Icon(
+                          icon,
+                          color: WebPortalColors.accent,
+                          size: 28,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                    ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: TextStyle(
+                              fontSize: 23,
+                              height: 1.2,
+                              fontWeight: FontWeight.w800,
+                              color: WebPortalColors.ink,
+                            ),
+                          ),
+                          if (MediaQuery.sizeOf(context).width >= 600 &&
+                              MediaQuery.textScalerOf(context).scale(14) <=
+                                  20) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              subtitle,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: WebPortalColors.muted,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Close dialog',
+                      onPressed: busy ? null : () => Navigator.pop(context),
+                      icon: const Icon(Icons.close),
+                    ),
+                  ],
+                ),
+              ),
+              Flexible(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 18),
+                  child: child,
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: WebPortalColors.muted.withValues(alpha: .15),
+                    ),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: Wrap(
+                        alignment: WrapAlignment.end,
+                        spacing: 12,
+                        runSpacing: 8,
+                        children: actions,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    ),
+  );
+}
+
+class _AdminFieldGrid extends StatelessWidget {
+  final List<Widget> children;
+  final double minimumWidth;
+  final int maximumColumns;
+  const _AdminFieldGrid({
+    required this.children,
+    this.minimumWidth = 270,
+    this.maximumColumns = 2,
+  });
+  @override
+  Widget build(BuildContext context) => LayoutBuilder(
+    builder: (context, box) {
+      final scaledMin =
+          minimumWidth *
+          (MediaQuery.textScalerOf(context).scale(14) / 14).clamp(1, 1.5);
+      final columns = ((box.maxWidth + 14) / (scaledMin + 14)).floor().clamp(
+        1,
+        maximumColumns,
+      );
+      final width = math.max(
+        0.0,
+        (box.maxWidth - (columns - 1) * 14) / columns,
+      );
+      return Wrap(
+        spacing: 14,
+        runSpacing: 12,
+        children: [
+          for (final child in children) SizedBox(width: width, child: child),
+        ],
+      );
+    },
+  );
+}
+
+class _AdminDialogSection extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final Widget child;
+  final String? description;
+  const _AdminDialogSection({
+    required this.title,
+    required this.icon,
+    required this.child,
+    this.description,
+  });
+  @override
+  Widget build(BuildContext context) => Container(
+    margin: const EdgeInsets.only(bottom: 12),
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: WebPortalColors.surface,
+      borderRadius: BorderRadius.circular(17),
+      border: Border.all(color: WebPortalColors.accent.withValues(alpha: .14)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          children: [
+            Icon(icon, color: WebPortalColors.accent, size: 23),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w800,
+                  color: WebPortalColors.ink,
+                ),
+              ),
+            ),
+          ],
+        ),
+        if (description != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 5),
+            child: Text(
+              description!,
+              style: TextStyle(fontSize: 12, color: WebPortalColors.muted),
+            ),
+          ),
+        const SizedBox(height: 14),
+        child,
+      ],
+    ),
+  );
+}
+
 /// Administrator presentation only; permissions and mutations remain in the API.
 class _AdminPortal extends StatefulWidget {
   final AnalysisState? state;
@@ -35,17 +264,24 @@ class _AdminPortalState extends State<_AdminPortal> {
       data: theme.copyWith(
         textTheme: theme.textTheme.copyWith(
           bodyMedium: TextStyle(
+            fontFamily: 'Roboto',
             fontSize: 12,
             height: 1.4,
             color: WebPortalColors.ink,
           ),
           bodySmall: TextStyle(
+            fontFamily: 'Roboto',
             fontSize: 11,
             height: 1.35,
             color: WebPortalColors.muted,
           ),
-          bodyLarge: TextStyle(fontSize: 13, color: WebPortalColors.ink),
+          bodyLarge: TextStyle(
+            fontFamily: 'Roboto',
+            fontSize: 13,
+            color: WebPortalColors.ink,
+          ),
           titleMedium: TextStyle(
+            fontFamily: 'Roboto',
             fontSize: 13,
             fontWeight: FontWeight.w600,
             color: WebPortalColors.ink,
@@ -82,6 +318,7 @@ class _AdminPortalState extends State<_AdminPortal> {
           style: FilledButton.styleFrom(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
             textStyle: const TextStyle(
+              fontFamily: 'Roboto',
               fontSize: 12,
               fontWeight: FontWeight.w700,
             ),
@@ -98,6 +335,7 @@ class _AdminPortalState extends State<_AdminPortal> {
             ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
             textStyle: const TextStyle(
+              fontFamily: 'Roboto',
               fontSize: 12,
               fontWeight: FontWeight.w600,
             ),
@@ -548,7 +786,7 @@ Color _adminStatusColor(String status) => switch (status.toLowerCase()) {
 };
 
 String _adminDate(dynamic raw, {bool time = false}) {
-  final date = DateTime.tryParse('$raw');
+  final date = DateTime.tryParse('$raw')?.toLocal();
   if (date == null) {
     return 'Not recorded';
   }
