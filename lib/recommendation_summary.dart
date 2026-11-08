@@ -235,8 +235,9 @@ Map<String, dynamic> recommendationSummary(
                   ? 'Calendar month listed.'
                   : 'Calendar month not listed.'}',
     'terrain': terrain,
-    'limit':
-        'Model scores are not harvest probabilities. Nutrients are estimates; field checks are still needed.',
+    'limit': isNoNpkModelRecord(record)
+        ? 'Model scores are not harvest probabilities. NPK is not used; field checks are still needed.'
+        : 'Model scores are not harvest probabilities. Nutrients are estimates; field checks are still needed.',
     'reference_note':
         'Cited requirements check growing conditions separately; they do not change the model ranking.',
   };

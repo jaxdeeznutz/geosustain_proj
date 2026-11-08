@@ -266,39 +266,6 @@ class WebAuthLoginShell extends StatelessWidget {
             ),
             label: Text(loading ? 'Signing in...' : 'Sign In to Dashboard'),
           ),
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 14),
-            child: Row(
-              children: [
-                Expanded(child: Divider()),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 14),
-                  child: Text('OR', style: TextStyle(fontSize: 11)),
-                ),
-                Expanded(child: Divider()),
-              ],
-            ),
-          ),
-          OutlinedButton.icon(
-            onPressed: loading ? null : onGoogle,
-            icon: const Icon(Icons.account_circle_outlined),
-            label: const Text('Continue with Google'),
-          ),
-          if (onGoogle == null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                'Google sign-in is currently unavailable. Use your email and password.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: WebPortalColors.muted, fontSize: 12),
-              ),
-            ),
-          const SizedBox(height: 22),
-          Text(
-            'Analyst access is assigned by your administrator. Farmers register and sign in through the GeoSustain mobile app.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: WebPortalColors.muted, fontSize: 12),
-          ),
           const SizedBox(height: 12),
           SelectableText(
             'Build ${WebBuildIdentity.id}',

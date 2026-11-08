@@ -163,58 +163,20 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
             record: r,
             simple: !kIsWeb && widget.state.accountRole == 'farmer',
           ),
-          const GeoResultCard(
-            child: Text(
-              'This is a partial assessment, not a crop recommendation. You can ask an analyst to review the available evidence or retry online when coverage is available.',
-            ),
-          ),
           if (widget.showActions)
             AnalysisReviewCard(state: widget.state, record: r),
-          if ('${cover['limitation'] ?? ''}'.isNotEmpty)
-            GeoResultCard(
-              color: const Color(0xFFE9F3FD),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Notes',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${cover['limitation']}',
-                    style: TextStyle(height: 1.4, color: GeoDesign.muted),
-                  ),
-                ],
-              ),
-            ),
-          if ('${cover['source'] ?? ''}${cover['attribution'] ?? ''}'
-              .isNotEmpty)
-            GeoResultCard(
-              color: const Color(0xFFEEF4EF),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Data source',
-                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w800),
-                  ),
-                  const SizedBox(height: 8),
-                  Text('${cover['source'] ?? ''}'),
-                  if ('${cover['attribution'] ?? ''}'.isNotEmpty) ...[
-                    const Divider(height: 24),
-                    Text(
-                      '${cover['attribution']}',
-                      style: TextStyle(
-                        fontSize: 13,
-                        height: 1.4,
-                        color: Theme.of(context).colorScheme.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
+          ExpansionTile(
+            title: const Text('Sources and limitations'),
+            childrenPadding: const EdgeInsets.all(16),
+            children: [
+              if ('${cover['limitation'] ?? ''}'.isNotEmpty)
+                Text('${cover['limitation']}'),
+              if ('${cover['source'] ?? ''}'.isNotEmpty)
+                Text('${cover['source']}'),
+              if ('${cover['attribution'] ?? ''}'.isNotEmpty)
+                Text('${cover['attribution']}'),
+            ],
+          ),
         ],
       );
     }
@@ -226,8 +188,6 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (!widget.farmerDetails && isAnnualPrototypeRecord(r))
-          AnnualPrototypeNotice(record: r),
         if (!widget.reviewLayout)
           SeasonalContextCard(
             record: r,
@@ -541,6 +501,8 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
               TextButton(
                 onPressed: () =>
                     _analysisDetails(context, 'Data sources and limitations', [
+                      if (isAnnualPrototypeRecord(r))
+                        const Text(annualPrototypeShortNotice),
                       AnalysisIndicatorsCard(record: r),
                       if (modern)
                         SelectableText('${r['recommendation_scoring']}'),

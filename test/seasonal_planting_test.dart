@@ -71,6 +71,52 @@ Map<String, dynamic> seasonalPlantingFixture() => {
 };
 
 void main() {
+  test('wet and dry descriptions require saved selected-month evidence', () {
+    final record = seasonalPlantingFixture();
+    final snapshot = record['seasonal_assessment'] as Map;
+    final climate = snapshot['monthly_climate'] as Map;
+    for (final entry in {
+      'humid': 'Wet conditions',
+      'dry': 'Dry conditions',
+      'intermediate': 'Transitional conditions',
+      'unavailable': 'Seasonal conditions unavailable',
+    }.entries) {
+      climate['monthly_cycle'] = [
+        {'month': 6, 'moisture_status': entry.key},
+        {'month': 7, 'moisture_status': 'humid'},
+      ];
+      expect(seasonalMoistureLabel(record), entry.value);
+    }
+    climate.remove('monthly_cycle');
+    expect(seasonalMoistureLabel(record), 'Seasonal conditions unavailable');
+  });
+
+  testWidgets('land gate shows one explanation without seven blocked rows', (
+    tester,
+  ) async {
+    final record = seasonalPlantingFixture();
+    final planting =
+        (record['seasonal_assessment'] as Map)['planting_assessment'] as Map;
+    planting['land_cover_notice'] = 'Land cover is unverified.';
+    for (final row in planting['crops'] as List) {
+      row['status'] = 'unavailable';
+      row['label'] = 'Seasonal planting blocked by land assessment';
+    }
+    final before = jsonEncode(record);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(body: SeasonalPlantingAdvice(record: record)),
+      ),
+    );
+    expect(find.text('Planting advice unavailable'), findsOneWidget);
+    expect(
+      find.text('Seasonal planting blocked by land assessment'),
+      findsNothing,
+    );
+    expect(find.byType(ExpansionTile), findsNothing);
+    expect(jsonEncode(record), before);
+  });
+
   for (final brightness in Brightness.values) {
     for (final scale in [1.0, 2.0]) {
       testWidgets(
@@ -150,7 +196,7 @@ void main() {
     );
     expect(find.text('Rice'), findsOneWidget);
     expect(find.text('Banana'), findsNothing);
-    expect(find.text('Seasonal planting: check conditions'), findsOneWidget);
+    expect(find.text('Check irrigation and planting schedule'), findsOneWidget);
   });
 
   test('reports retain all seven seasonal outcomes and their sources', () {

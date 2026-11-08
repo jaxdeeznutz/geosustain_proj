@@ -58,8 +58,10 @@ void main() {
         expect(find.text('Welcome Back!'), findsOneWidget);
         expect(
           find.textContaining('Google sign-in is currently unavailable'),
-          findsOneWidget,
+          findsNothing,
         );
+        expect(find.text('Continue with Google'), findsNothing);
+        expect(find.textContaining('Analyst access is assigned'), findsNothing);
         expect(find.text('Create Farmer Account'), findsNothing);
         expect(tester.takeException(), isNull);
         if (spec.$2 == 1.0) {

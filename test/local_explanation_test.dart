@@ -141,13 +141,17 @@ void main() {
         );
         await tester.pumpAndSettle();
         expect(find.text('Explainable AI'), findsOneWidget);
-        expect(find.text('Why Rice ranks #1'), findsOneWidget);
-        expect(find.text('Research and reference fit'), findsOneWidget);
+        expect(find.text('Growing conditions for Rice'), findsOneWidget);
         expect(
-          find.textContaining('3.413 percentage points above Mango'),
+          find.text('How the model used the farm conditions'),
           findsOneWidget,
         );
-        expect(find.byType(DropdownButtonFormField<String>), findsNWidgets(2));
+        expect(
+          find.textContaining('3.413 percentage points above Mango'),
+          findsNothing,
+        );
+        expect(find.text('Compare with another crop'), findsNothing);
+        expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
         expect(tester.takeException(), isNull);
         final citations = find.text('View cited conditions');
         await tester.ensureVisible(citations);

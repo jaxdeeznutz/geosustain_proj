@@ -250,6 +250,12 @@ class SeasonalPlantingAdvice extends StatelessWidget {
         )
         .toList();
     final scheme = Theme.of(context).colorScheme;
+    final blocked =
+        '${planting['land_cover_notice'] ?? ''}'.isNotEmpty ||
+        (rows.isNotEmpty &&
+            rows.every(
+              (row) => '${row['label']}'.contains('blocked by land assessment'),
+            ));
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -261,7 +267,35 @@ class SeasonalPlantingAdvice extends StatelessWidget {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
           ),
-        for (final row in rows)
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '${snapshot['selected_month_name'] ?? 'Selected month'}: ${seasonalMoistureLabel(record)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                ),
+              ),
+              const Text(
+                'Historical moisture estimate, not a forecast or official season declaration.',
+                style: TextStyle(fontSize: 12),
+              ),
+            ],
+          ),
+        ),
+        if (blocked) ...[
+          const Text(
+            'Planting advice unavailable',
+            style: TextStyle(fontWeight: FontWeight.w700),
+          ),
+          const Text(
+            'Land cover is unverified or the land check does not allow crop recommendations. Wet conditions alone cannot clear this check.',
+          ),
+        ],
+        for (final row in blocked ? <Map<String, dynamic>>[] : rows)
           ExpansionTile(
             key: ValueKey(
               'seasonal-${row['crop']}-${snapshot['captured_at']}-${snapshot['selected_month']}',
@@ -284,8 +318,21 @@ class SeasonalPlantingAdvice extends StatelessWidget {
               '${row['crop']}',
               style: const TextStyle(fontWeight: FontWeight.w700),
             ),
-            subtitle: Text('${row['label']}'),
+            subtitle: Text(
+              '${row['crop']}'.toLowerCase() == 'rice' &&
+                      row['status'] == 'conditional'
+                  ? 'Check irrigation and planting schedule'
+                  : '${row['label']}',
+            ),
             children: [
+              if ('${row['crop']}'.toLowerCase() == 'rice' &&
+                  row['status'] == 'conditional')
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    'The model rank is separate from planting readiness. Confirm field water, irrigation and the local rice calendar.',
+                  ),
+                ),
               for (final reason in analysisListValue(row['reasons']))
                 Padding(
                   padding: const EdgeInsets.only(bottom: 8),

@@ -15,7 +15,7 @@ class LocalExplanationCard extends StatefulWidget {
 }
 
 class _LocalExplanationCardState extends State<LocalExplanationCard> {
-  String? selected, comparison;
+  String? selected;
   @override
   void didUpdateWidget(LocalExplanationCard oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -23,7 +23,6 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
             widget.record['prediction_context_id'] ||
         oldWidget.initialCrop != widget.initialCrop) {
       selected = null;
-      comparison = null;
     }
   }
 
@@ -112,23 +111,6 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
     final requested =
         selected ?? widget.initialCrop ?? '${record['predicted_crop']}';
     final name = names.contains(requested) ? requested : names.first;
-    final view = localCropView(body, name);
-    final features = localRows(view['features'])
-      ..sort(
-        (a, b) => (b['contribution_pp'] as num).abs().compareTo(
-          (a['contribution_pp'] as num).abs(),
-        ),
-      );
-    final maximum = features
-        .map((v) => (v['contribution_pp'] as num).abs().toDouble())
-        .fold(0.0, math.max);
-    final alternatives = names.where((v) => v != name).toList();
-    final other = alternatives.contains(comparison)
-        ? comparison!
-        : alternatives.firstOrNull;
-    final difference = other == null
-        ? <String, dynamic>{}
-        : localCropComparison(body, name, other);
     final summary = recommendationSummary(record, name);
     final referenceFactors = localRows(summary['reference_factors']);
     final assessed = referenceFactors
@@ -146,73 +128,42 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
       ),
     );
     final modelWidgets = <Widget>[
-      if (isAnnualPrototypeRecord(record))
-        const Text('Experimental model. $annualPrototypeShortNotice'),
       Text(
-        '${summary['heading']}',
+        'How the model used the farm conditions',
         style: const TextStyle(fontWeight: FontWeight.w800),
       ),
-      Text('${summary['ranking']}'),
-      const SizedBox(height: 8),
       Text('${summary['model_summary']}'),
-      if (summary['other'] != null)
-        Text(
-          [
-            for (final factor in localRows(summary['contrast_supporting']))
-              '${factor['label']} favors $name over ${summary['other']}.',
-            for (final factor in localRows(
-              summary['contrast_limiting'],
-            ).take(1))
-              '${factor['label']} favors ${summary['other']} over $name.',
-          ].join(' '),
-        ),
-      const SizedBox(height: 10),
+      const SizedBox(height: 8),
       const Text(
-        'Top model factors',
-        style: TextStyle(fontWeight: FontWeight.w700),
+        'These factors explain the model score; they do not establish crop suitability.',
       ),
-      const Text(
-        'Left lowers the score; right raises it. pp = percentage points.',
-      ),
-      for (final feature in features.take(3))
-        _LocalContributionBar(feature: feature, maximum: maximum),
-      if (features.length > 3)
-        Text(
-          'Other ${features.length - 3} factors: ${localSigned(features.skip(3).fold<double>(0, (sum, f) => sum + (f['contribution_pp'] as num).toDouble()))} pp combined.',
-        ),
     ];
     final referenceWidgets = <Widget>[
-      const Text(
-        'Research and reference fit',
+      Text(
+        'Growing conditions for $name',
         style: TextStyle(fontWeight: FontWeight.w800),
       ),
       if (assessed.isEmpty)
         const Text('No compatible cited condition check was saved.')
-      else
-        for (final factor in assessed.take(3))
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            child: Text(
-              '${factor['label']}: ${factor['status'] == 'fits'
-                  ? 'Fits preferred range'
-                  : factor['status'] == 'outside'
-                  ? 'Outside range'
-                  : 'Limited fit'}. ${factor['text']}',
+      else ...[
+        for (final group in [
+          ('fits', 'Fits reference ranges'),
+          ('limited', 'Partial fit'),
+          ('outside', 'Outside reference ranges'),
+        ])
+          if (assessed.any((factor) => factor['status'] == group.$1))
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: Text(
+                '${group.$2}: ${assessed.where((factor) => factor['status'] == group.$1).map((factor) => factor['label']).join(', ')}.',
+              ),
             ),
-          ),
+      ],
       if (referenceFactors.length > assessed.length)
         Text(
           '${referenceFactors.length - assessed.length} other conditions were not assessed.',
         ),
-      if (assessed.length > 3)
-        Text(
-          '${assessed.length - 3} more checks are available in cited conditions.',
-        ),
       Text('${summary['reference_note']}'),
-      if (assessed.isNotEmpty)
-        Text(
-          'Sources: ${localRows(summary['reference_sources']).map((source) => source['title']).toSet().join('; ')}',
-        ),
       TextButton.icon(
         onPressed: () => _showReferenceFit(context, record, name),
         icon: const Icon(Icons.menu_book_outlined),
@@ -236,7 +187,6 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
             ],
             onChanged: (value) => setState(() {
               selected = value;
-              comparison = null;
             }),
           )
         else
@@ -245,16 +195,7 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
             style: const TextStyle(fontWeight: FontWeight.w700),
           ),
         const SizedBox(height: 10),
-        Text(
-          'Model score for $name: ${(view['score_pct'] as num).toStringAsFixed(3)}%',
-          style: const TextStyle(fontWeight: FontWeight.w800),
-        ),
-        Text(
-          'Baseline: ${(view['base_pct'] as num).toStringAsFixed(3)}% | Net change: ${localSigned(view['net_pp'] as num)} pp',
-        ),
-        Text(
-          'Based on ${body['sample_count']} saved samples. Values are rounded.',
-        ),
+        Text('Based on ${body['sample_count']} saved farm samples.'),
         const SizedBox(height: 8),
         LayoutBuilder(
           builder: (context, constraints) {
@@ -286,33 +227,9 @@ class _LocalExplanationCardState extends State<LocalExplanationCard> {
           'Model patterns do not prove crop success, causes or measured soil nutrients.',
           style: TextStyle(fontSize: 12),
         ),
-        if (other != null) ...[
-          const SizedBox(height: 14),
-          DropdownButtonFormField<String>(
-            key: ValueKey(
-              'xai-comparison-${body['prediction_context_id']}-$name-$other',
-            ),
-            initialValue: other,
-            isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Compare with another crop',
-            ),
-            items: [
-              for (final value in alternatives)
-                DropdownMenuItem(value: value, child: Text(value)),
-            ],
-            onChanged: (value) => setState(() => comparison = value),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            (difference['score_gap_pp'] as num) == 0
-                ? '$name and $other have the same model score.'
-                : '$name scores ${(difference['score_gap_pp'] as num).abs().toStringAsFixed(3)} pp ${(difference['score_gap_pp'] as num) < 0 ? 'lower than' : 'higher than'} $other.',
-          ),
-        ],
         TextButton.icon(
           onPressed: () =>
-              _showLocalExplanationDetails(context, record, body, name, other),
+              _showLocalExplanationDetails(context, record, body, name),
           icon: const Icon(Icons.fact_check_outlined),
           label: const Text('View local explanation details'),
         ),
@@ -413,7 +330,6 @@ void _showLocalExplanationDetails(
   Map<String, dynamic> record,
   Map<String, dynamic> body,
   String crop,
-  String? other,
 ) {
   final view = localCropView(body, crop);
   final features = localRows(view['features']);
@@ -421,8 +337,11 @@ void _showLocalExplanationDetails(
       .map((v) => (v['contribution_pp'] as num).abs().toDouble())
       .fold(0.0, math.max);
   _analysisDetails(context, 'Explainable AI details - $crop', [
-    for (final line in recommendationSummaryLines(record, crop))
-      _AnalysisParagraph(line),
+    _AnalysisParagraph(
+      '${recommendationSummary(record, crop)['model_summary']}',
+    ),
+    if (isAnnualPrototypeRecord(record))
+      const _AnalysisParagraph(annualPrototypeShortNotice),
     _AnalysisParagraph(
       'Method: ${body['method_label']} (${body['method_version']}). Each tree contributes its root baseline and signed child-minus-parent changes along the actual prediction path.',
     ),
@@ -436,20 +355,6 @@ void _showLocalExplanationDetails(
       _LocalContributionBar(feature: feature, maximum: maximum),
       _AnalysisParagraph(
         'Saved input: mean ${(feature['mean'] as num).toStringAsFixed(3)}; range ${(feature['minimum'] as num).toStringAsFixed(3)} to ${(feature['maximum'] as num).toStringAsFixed(3)} ${feature['unit']}.',
-      ),
-    ],
-    if (other != null) ...[
-      _AnalysisParagraph(
-        '$crop compared with $other: ${localSigned(localCropComparison(body, crop, other)['score_gap_pp'] as num)} pp.',
-      ),
-      for (final feature in localRows(
-        localCropComparison(body, crop, other)['features'],
-      ))
-        _AnalysisParagraph(
-          '${feature['label']}: ${localSigned(feature['contribution_pp'] as num)} pp toward the score difference.',
-        ),
-      const _AnalysisParagraph(
-        'The comparison uses the same saved samples. It does not predict the effect of changing a farm condition.',
       ),
     ],
     _AnalysisParagraph('Model SHA-256: ${body['model_version']}'),
