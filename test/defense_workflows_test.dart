@@ -137,6 +137,7 @@ void main() {
                   onResults: () {},
                   onEdit: () {},
                   onArchive: () {},
+                  onDelete: () {},
                 ),
               ),
             ),

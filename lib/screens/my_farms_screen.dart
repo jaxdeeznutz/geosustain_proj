@@ -1,5 +1,35 @@
 part of '../main.dart';
 
+Future<bool> _confirmFarmDeletion(
+  BuildContext context,
+  Map<String, dynamic> farm,
+) async =>
+    await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete this farm?'),
+        content: Text(
+          farm['_local_only'] == true
+              ? 'Delete "${farm['farm_name'] ?? 'Farm'}" and its pending boundary from this device?'
+              : 'Permanently delete "${farm['farm_name'] ?? 'Farm'}" and its saved boundary? Past analyses and analyst reviews will remain in History. This cannot be undone.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete farm'),
+          ),
+        ],
+      ),
+    ) ==
+    true;
+
 String _farmReviewLabel(dynamic value) => switch ('$value'.toLowerCase()) {
   'pending' => 'Pending Review',
   'verified' || 'approved' => 'Approved',
@@ -24,6 +54,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
   String _search = '', _filter = 'All Farms';
   bool _loading = true;
   String? _error;
+  bool _deleting = false;
   final _searchController = TextEditingController();
   List<Map<String, dynamic>> get _visibleFarms => widget.state.farms
       .where(
@@ -121,6 +152,26 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
       setState(() => _error = error);
     } else {
       _onAnalyzed();
+    }
+  }
+
+  Future<void> _deleteFarm(Map<String, dynamic> farm) async {
+    if (!await _confirmFarmDeletion(context, farm) || !mounted) return;
+    setState(() {
+      _deleting = true;
+      _error = null;
+    });
+    try {
+      await widget.state.deleteFarm(farm);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Farm deleted.')));
+      }
+    } catch (error) {
+      if (mounted) setState(() => _error = friendlyErrorMessage(error));
+    } finally {
+      if (mounted) setState(() => _deleting = false);
     }
   }
 
@@ -304,12 +355,16 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
             for (final farm in _visibleFarms)
               GeoFarmCard(
                 farm: farm,
-                busy: widget.state.loading,
+                busy:
+                    widget.state.loading ||
+                    _deleting ||
+                    widget.state.syncingFarms,
                 onOpen: () => _open(farm),
                 onAnalyze: () => _analyzeFarm(farm),
                 onResults: () => _open(farm, action: 'results'),
                 onEdit: () => _open(farm, action: 'edit'),
                 onArchive: () => _open(farm, action: 'archive'),
+                onDelete: () => _deleteFarm(farm),
               ),
           ],
         ),
@@ -585,6 +640,25 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
     }
   }
 
+  Future<void> _delete() async {
+    if (!await _confirmFarmDeletion(context, _farm) || !mounted) return;
+    setState(() {
+      _busy = true;
+      _notice = null;
+    });
+    try {
+      await widget.state.deleteFarm(_farm);
+      if (mounted) {
+        setState(() => _busy = false);
+        Navigator.pop(context);
+      }
+    } catch (error) {
+      if (mounted) setState(() => _notice = friendlyErrorMessage(error));
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final points = FarmGeometry.fromPayload(_farm['polygon']);
@@ -605,11 +679,13 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
               if (action == 'refresh') _load();
               if (action == 'edit') _editDetails();
               if (action == 'archive') _archive();
+              if (action == 'delete') _delete();
             },
             itemBuilder: (_) => const [
               PopupMenuItem(value: 'refresh', child: Text('Refresh')),
               PopupMenuItem(value: 'edit', child: Text('Edit farm details')),
               PopupMenuItem(value: 'archive', child: Text('Archive farm')),
+              PopupMenuItem(value: 'delete', child: Text('Delete farm')),
             ],
           ),
         ),

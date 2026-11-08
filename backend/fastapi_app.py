@@ -65,7 +65,7 @@ from database import (
     verify_analysis_session,
     get_planner_queue_counts,
     admin_dashboard_stats, admin_list_users, admin_update_user, admin_list_analyses,
-    create_farm_parcel, list_farm_parcels, get_farm_parcel, update_farm_parcel,
+    create_farm_parcel, list_farm_parcels, get_farm_parcel, update_farm_parcel, delete_farm_parcel,
     validate_farm_polygon, get_active_crop_keys, list_crop_reference,
     update_crop_reference, get_audit_logs,
     get_user_analysis, find_analysis_request, change_user_password,
@@ -1876,6 +1876,13 @@ def mobile_farm(farm_id: int, user=Depends(get_api_user)):
     row=get_farm_parcel(user['id'],farm_id)
     if not row: raise HTTPException(status_code=404, detail='Farm parcel not found.')
     return {'farm':farm_coverage(row)}
+
+
+@app.delete('/api/mobile/farms/{farm_id}')
+def mobile_delete_farm(farm_id: int, user=Depends(get_api_user)):
+    if not delete_farm_parcel(user['id'], farm_id):
+        raise HTTPException(status_code=404, detail='Farm parcel not found.')
+    return {'deleted': True, 'farm_id': farm_id}
 
 
 @app.get('/api/mobile/analysis-coverage/catalog')

@@ -1377,6 +1377,30 @@ class AnalysisState extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<void> deleteFarm(Map<String, dynamic> farm) async {
+    final epoch = _sessionEpoch, owner = currentUser?['id'];
+    if (syncingFarms || loading || analysisPending) {
+      throw StateError('Wait for the current farm sync or analysis to finish.');
+    }
+    if (farm['_local_only'] == true) {
+      await OfflineFarmStore.remove('${farm['request_id']}');
+    } else {
+      final id = int.parse('${farm['id']}');
+      await api.deleteFarm(id);
+      if (!_active(epoch, owner)) return;
+      await OfflineFarmStore.forgetFarm(id);
+    }
+    if (!_active(epoch, owner)) return;
+    farms.removeWhere((row) => '${row['id']}' == '${farm['id']}');
+    if (selectedFarm != null && '${selectedFarm!['id']}' == '${farm['id']}') {
+      _selectionEpoch++;
+      selectedFarm = null;
+      result = null;
+      analysisError = null;
+    }
+    notifyListeners();
+  }
+
   void updateCurrentProfile(Map<String, dynamic> user, {Uint8List? photo}) {
     currentUser = user;
     if (photo != null) profilePhotoBytes = photo;

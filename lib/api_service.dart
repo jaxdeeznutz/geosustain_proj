@@ -856,6 +856,26 @@ class ApiService {
     return Map<String, dynamic>.from(data['farm'] as Map);
   }
 
+  Future<void> deleteFarm(int farmId) async {
+    final token = await getToken();
+    final response = await _client
+        .delete(
+          Uri.parse('$baseUrl/api/mobile/farms/$farmId'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 30));
+    final data = _decodeJson(response);
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(data, 'Could not delete farm'),
+      );
+    }
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session has changed. Sign in again.');
+    }
+  }
+
   Future<Map<String, dynamic>> getLiveWeather(double lat, double lon) async {
     // Home live weather should not depend on Render being awake. Try Open-Meteo
     // directly first, then use the backend as backup. This keeps the Home cards

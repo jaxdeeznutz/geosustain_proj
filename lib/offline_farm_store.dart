@@ -109,6 +109,17 @@ class OfflineFarmStore {
     if (id != null) await _change(id, (data) => data['farms'] = farms);
   }
 
+  static Future<void> forgetFarm(int farmId) async {
+    final id = await owner();
+    if (id != null) {
+      await _change(id, (data) {
+        data['farms'] = rows(
+          data['farms'],
+        ).where((farm) => '${farm['id']}' != '$farmId').toList();
+      });
+    }
+  }
+
   static Future<Map<String, dynamic>> save({
     required String requestId,
     required String name,
