@@ -1,0 +1,107 @@
+def run_training(dataset, manifest_path, reference_path, output_parent, *, seed=42,
+                 trees=500, cv_folds=5, execution_platform='local', researcher='Not supplied'):
+    """Fit one predefined RF on training rows; score an untouched test partition."""
+    if type(trees) is not int or not 1 <= trees <= 1000:
+        raise ValueError('Tree count must be 1-1000.')
+    frame, manifest, audit = prepare_data(dataset, manifest_path)
+    reference = json.loads(Path(reference_path).read_text(encoding='utf-8'))
+    if reference['dataset_sha256'] != audit['dataset_sha256'] or reference['feature_order'] != FEATURES:
+        raise ValueError('Dataset/input contract differs from the baseline reference.')
+    train, holdout, cv, split = make_partitions(frame, seed, cv_folds)
+    started = datetime.now(timezone.utc)
+    run_id = started.strftime('%Y%m%dT%H%M%SZ') + '-' + uuid.uuid4().hex[:8]
+    output = Path(output_parent) / run_id
+    if any(part.lower() == 'backend' for part in output.resolve().parts):
+        raise ValueError('Research outputs cannot be written into backend/.')
+    output.mkdir(parents=True, exist_ok=False)
+    x_train, y_train = frame.iloc[train][FEATURES], frame.iloc[train].label
+    x_test, y_test = frame.iloc[holdout][FEATURES], frame.iloc[holdout].label
+    model = RandomForestClassifier(n_estimators=trees, max_depth=14, min_samples_leaf=6,
+        min_samples_split=12, max_features='sqrt', class_weight='balanced_subsample',
+        random_state=seed, n_jobs=1)
+    scoring = {key: key for key in ['accuracy', 'precision_macro', 'recall_macro', 'f1_macro']}
+    print(f'Random Forest: {cv_folds} training-only cross-validation folds', flush=True)
+    scores = cross_validate(model, x_train, y_train, cv=cv, scoring=scoring,
+                            n_jobs=1, error_score='raise', return_train_score=False)
+    cv_rows = [{'fold': fold + 1, **{key: float(scores['test_' + key][fold]) for key in scoring}}
+               for fold in range(cv_folds)]
+    tick = perf_counter()
+    model.fit(x_train, y_train)
+    fit_seconds = perf_counter() - tick
+    prediction = model.predict(x_test)
+    report = classification_report(y_test, prediction, labels=LABELS, output_dict=True, zero_division=0)
+    matrix = confusion_matrix(y_test, prediction, labels=LABELS)
+    metrics = {'algorithm': 'Random Forest', 'holdout_accuracy': float(accuracy_score(y_test, prediction)),
+        'holdout_precision_macro': float(report['macro avg']['precision']),
+        'holdout_recall_macro': float(report['macro avg']['recall']),
+        'holdout_f1_macro': float(report['macro avg']['f1-score']),
+        'holdout_f1_weighted': float(report['weighted avg']['f1-score']),
+        **{f'cv_{key}_mean': float(scores['test_' + key].mean()) for key in scoring}}
+    pd.DataFrame([metrics]).to_csv(output / 'metrics.csv', index=False)
+    pd.DataFrame(report).T.to_csv(output / 'classification_report.csv')
+    pd.DataFrame(matrix, index=LABELS, columns=LABELS).to_csv(output / 'confusion_matrix.csv', index_label='actual_crop')
+    pd.DataFrame(cv_rows).to_csv(output / 'cross_validation.csv', index=False)
+    split.to_csv(output / 'split_manifest.csv', index=False)
+    frame.to_csv(output / 'training_rows_deduplicated.csv', index=False)
+    predictions = frame.iloc[holdout][['_record_id', 'label', '_source_basis']].copy()
+    predictions['predicted_crop'] = prediction
+    for index, crop in enumerate(model.classes_):
+        predictions['probability_' + crop] = model.predict_proba(x_test)[:, index]
+    predictions.to_csv(output / 'holdout_predictions.csv', index=False)
+    joblib.dump(model, output / 'random_forest.joblib')
+    restored = joblib.load(output / 'random_forest.joblib')
+    np.testing.assert_array_equal(restored.predict(x_test), prediction)
+    np.testing.assert_allclose(restored.predict_proba(x_test), model.predict_proba(x_test), rtol=0, atol=0)
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+    from sklearn.metrics import ConfusionMatrixDisplay
+    fig, ax = plt.subplots(figsize=(8, 7))
+    ConfusionMatrixDisplay(matrix, display_labels=LABELS).plot(ax=ax, xticks_rotation=45, cmap='Greens', colorbar=False)
+    ax.set_title('Random Forest: held-out dataset rows')
+    fig.tight_layout(); fig.savefig(output / 'confusion_matrix.png', dpi=160); plt.close(fig)
+    pd.DataFrame({'feature': FEATURES, 'global_impurity_importance': model.feature_importances_}).to_csv(
+        output / 'feature_importance.csv', index=False)
+    record = {'run_id': run_id, 'algorithm': 'Random Forest',
+        'started_at_utc': started.isoformat(), 'finished_at_utc': datetime.now(timezone.utc).isoformat(),
+        'researcher': researcher, 'execution_platform_reported': execution_platform,
+        'environment': {'python': platform.python_version(), 'sklearn': sklearn.__version__,
+                        'numpy': np.__version__, 'pandas': pd.__version__, 'joblib': joblib.__version__},
+        'features': FEATURES, 'classes': LABELS, 'hyperparameters': model.get_params(),
+        'split': {'seed': seed, 'train_rows': len(train), 'holdout_rows': len(holdout),
+                  'cv_folds': cv_folds, 'exact_predictor_overlap': 0, 'test_used_for_selection': False},
+        'algorithm_selection': 'Random Forest specified before evaluation; no algorithm comparison.',
+        'data_audit': audit, 'metrics': metrics, 'fit_seconds': fit_seconds,
+        'training_script_sha256': file_hash(__file__),
+        'new_artifact_sha256': file_hash(output / 'random_forest.joblib'),
+        'baseline_reference': reference, 'production_model_changed': False,
+        'fit_scope': 'training partition only; exported model replays held-out predictions',
+        'npk_used': False, 'field_validation': 'not established',
+        'annual_input_compatibility': 'not established',
+        'limitations': ['Existing mixed Kaggle-based and generated profile/GIS rows; not independent farm accuracy.',
+          'Independent farm groups and consistent labelled climate periods are unavailable.',
+          'Banana variety labels and NPK measurements are not available in these rows.',
+          'Recorded platform/timestamps support replay but do not independently authenticate the place of execution.']}
+    write_json(output / 'training_run.json', record)
+    write_json(output / 'feature_order.json', FEATURES)
+    for source, name in [(dataset, 'input_dataset.csv'), (manifest_path, 'dataset_manifest.json'),
+                         (reference_path, 'current_model_reference.json'), (__file__, 'train_random_forest.py')]:
+        (output / name).write_bytes(Path(source).read_bytes())
+    write_json(output / 'artifact_hashes.json', {p.name: file_hash(p) for p in sorted(output.iterdir()) if p.is_file()})
+    archive = output.with_suffix('.zip')
+    with zipfile.ZipFile(archive, 'w', compression=zipfile.ZIP_DEFLATED) as zipped:
+        for path in sorted(output.iterdir()):
+            zipped.write(path, arcname=output.name + '/' + path.name)
+    print('Random Forest training finished. Keep the executed notebook with outputs.', flush=True)
+    return output, archive, record
+
+
+if __name__ == '__main__':
+    import argparse
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--dataset', type=Path, default=Path('seven_crop_without_npk.csv'))
+    parser.add_argument('--manifest', type=Path, default=Path('dataset_manifest.json'))
+    parser.add_argument('--reference', type=Path, default=Path('current_model_reference.json'))
+    parser.add_argument('--output', type=Path, default=Path('runs'))
+    args = parser.parse_args()
+    run_training(args.dataset, args.manifest, args.reference, args.output)

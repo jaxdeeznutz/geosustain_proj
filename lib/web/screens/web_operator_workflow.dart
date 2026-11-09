@@ -542,9 +542,11 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
   String? error;
   bool loading = true, busy = false;
   int generation = 0;
-  final notes = TextEditingController(), task = TextEditingController();
+  final notes = TextEditingController(),
+      task = TextEditingController(),
+      advisory = TextEditingController();
   DateTime due = DateTime.now().add(const Duration(days: 7));
-  String reason = 'boundary_clarification';
+  String? reason;
   final checks = {
     'reference': false,
     'geometry': false,
@@ -569,6 +571,9 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
         oldWidget.bySession != widget.bySession) {
       data = null;
       notes.clear();
+      advisory.clear();
+      task.clear();
+      reason = null;
       load();
     }
   }
@@ -578,6 +583,7 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
     generation++;
     notes.dispose();
     task.dispose();
+    advisory.dispose();
     super.dispose();
   }
 
@@ -640,46 +646,36 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
   }
 
   Future<void> decide(String status) async {
-    if (ownSubmission) return;
-    if (status != 'verified' && notes.text.trim().isEmpty) {
+    if (busy || loading || ownSubmission || c['status'] != 'pending') return;
+    if (status == 'verified' && !checks.values.every((value) => value)) return;
+    final reviewedCase = Map<String, dynamic>.from(c);
+    final requestGeneration = generation;
+    final accepted = await showDialog<bool>(
+      context: context,
+      builder: (_) => _ReviewDecisionDialog(
+        status: status,
+        notes: notes,
+        reason: reason,
+        onReasonChanged: (value) => reason = value,
+      ),
+    );
+    if (accepted != true || !mounted) return;
+    if (generation != requestGeneration ||
+        c['id'] != reviewedCase['id'] ||
+        c['version'] != reviewedCase['version']) {
       setState(
         () => error =
-            'Add a clear explanation below the evidence before requesting information or rejecting.',
+            'This case changed. Your notes are retained. Reload before making another decision.',
       );
       return;
     }
-    final accepted = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          status == 'verified'
-              ? 'Verify assessment?'
-              : '${reviewLabel(status)}?',
-        ),
-        content: Text(
-          'Case #${c['id']}, analysis #${c['current_session_id']}. ${status == 'needs_information' ? 'The farmer can respond with a new linked analysis.' : 'This records a final decision on this submission.'}\n${notes.text.trim()}',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Confirm decision'),
-          ),
-        ],
-      ),
-    );
-    if (accepted == true && mounted) {
-      await action('decision', {
-        'status': status,
-        'version': c['version'],
-        'notes': notes.text.trim(),
-        'reason': reason,
-        'checklist': checks,
-      });
-    }
+    await action('decision', {
+      'status': status,
+      'version': reviewedCase['version'],
+      'notes': notes.text.trim(),
+      'reason': status == 'verified' ? '' : reason,
+      'checklist': Map<String, bool>.from(checks),
+    });
   }
 
   Future<void> revision(Map<String, dynamic> r) async {
@@ -777,6 +773,13 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
               'You cannot verify or reject your own submission. Another analyst must review it.',
             ),
           ),
+        const _AnalystSectionTitle(
+          '1. Check the farm results',
+          icon: Icons.map_outlined,
+          subtitle:
+              'Review the saved boundary, crop results and available readings below.',
+        ),
+        const SizedBox(height: 12),
         _ReviewEvidenceLayout(
           key: ValueKey(
             'review-evidence-${c['id']}-${c['current_session_id']}',
@@ -818,251 +821,162 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
                 },
         ),
         const SizedBox(height: 16),
-        _WebCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _AnalystSectionTitle(
-                'Review checklist and explanation',
-                icon: Icons.fact_check_outlined,
-              ),
-              const SizedBox(height: 14),
-              _AnalystColumns(
-                mainFlex: 1,
-                sideFlex: 1,
-                breakpoint: 850,
-                main: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    for (final item in [
-                      (
-                        'reference',
-                        'I reviewed the recorded date, data sources and reference context.',
-                      ),
-                      (
-                        'geometry',
-                        'I checked the recorded boundary and any change to the current farm.',
-                      ),
-                      (
-                        'coverage',
-                        'I checked coverage, preliminary status and unavailable measurements.',
-                      ),
-                      (
-                        'limitations',
-                        'I recorded or acknowledged limitations and the appropriate next step.',
-                      ),
-                    ])
-                      CheckboxListTile(
-                        value: checks[item.$1],
-                        onChanged:
-                            c['status'] != 'pending' ||
-                                busy ||
-                                loading ||
-                                ownSubmission
-                            ? null
-                            : (v) => setState(() => checks[item.$1] = v!),
-                        title: Text(item.$2),
-                        controlAffinity: ListTileControlAffinity.leading,
-                      ),
-                  ],
-                ),
-                side: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    TextField(
-                      controller: notes,
-                      maxLength: 500,
-                      minLines: 3,
-                      maxLines: 6,
-                      decoration: const InputDecoration(
-                        labelText: 'Decision explanation / advisory note',
-                        helperMaxLines: 3,
-                        helperText:
-                            'Required for information requests and rejection. Do not include passwords or unnecessary personal data.',
-                      ),
-                    ),
-                    DropdownButtonFormField<String>(
-                      initialValue: reason,
-                      decoration: const InputDecoration(labelText: 'Reason'),
-                      items: [
-                        for (final value in [
-                          'boundary_clarification',
-                          'missing_evidence',
-                          'coverage_limitation',
-                          'data_inconsistency',
-                          'other',
-                        ])
-                          DropdownMenuItem(
-                            value: value,
-                            child: Text(reviewLabel(value)),
-                          ),
-                      ],
-                      onChanged: (v) => setState(() => reason = v!),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
-                      children: [
-                        if (c['status'] == 'pending') ...[
-                          FilledButton(
-                            onPressed:
-                                busy ||
-                                    loading ||
-                                    ownSubmission ||
-                                    !checks.values.every((v) => v)
-                                ? null
-                                : () => decide('verified'),
-                            child: const Text('Verify assessment'),
-                          ),
-                          OutlinedButton(
-                            onPressed: busy || loading || ownSubmission
-                                ? null
-                                : () => decide('needs_information'),
-                            child: const Text('Request information'),
-                          ),
-                          OutlinedButton(
-                            onPressed: busy || loading || ownSubmission
-                                ? null
-                                : () => decide('rejected'),
-                            child: const Text('Reject submission'),
-                          ),
-                        ],
-                        OutlinedButton(
-                          onPressed: busy || loading
-                              ? null
-                              : () async {
-                                  if (notes.text.trim().isEmpty) {
-                                    setState(
-                                      () => error =
-                                          'Enter an advisory note first.',
-                                    );
-                                    return;
-                                  }
-                                  await action('notes', {
-                                    'notes': notes.text.trim(),
-                                  });
-                                },
-                          child: const Text('Send advisory note'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              if (busy) const LinearProgressIndicator(),
-            ],
+        if (c['status'] == 'pending')
+          _ReviewDecisionCard(
+            checks: checks,
+            disabled: busy || loading || ownSubmission,
+            ownSubmission: ownSubmission,
+            onCheck: (key, value) => setState(() => checks[key] = value),
+            verify: () => decide('verified'),
+            requestInformation: () => decide('needs_information'),
+            reject: () => decide('rejected'),
           ),
-        ),
+        if (busy) const LinearProgressIndicator(),
         const SizedBox(height: 16),
-        _WebCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _AnalystSectionTitle(
-                'Revisions and decision timeline',
-                icon: Icons.history,
+        _ReviewOptionalSection(
+          storageId: '${c['id']}-${c['current_session_id']}-advice',
+          title: 'Add advice (optional)',
+          icon: Icons.chat_bubble_outline,
+          children: [
+            const Text('Send advice without changing the review decision.'),
+            const SizedBox(height: 12),
+            TextField(
+              key: const ValueKey('review-advisory-note'),
+              controller: advisory,
+              enabled: !busy && !loading,
+              maxLength: 500,
+              minLines: 2,
+              maxLines: 5,
+              decoration: const InputDecoration(
+                labelText: 'Advice for the farmer',
               ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                children: [
-                  for (final r in analysisListValue(
-                    data!['revisions'],
-                  ).map(analysisMapValue))
-                    OutlinedButton(
-                      onPressed: () => revision(r),
-                      child: Text(
-                        'Revision ${r['revision']} · #${r['session_id']}',
-                      ),
-                    ),
-                ],
+            ),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: OutlinedButton(
+                onPressed: busy || loading
+                    ? null
+                    : () async {
+                        if (advisory.text.trim().isEmpty) {
+                          setState(
+                            () => error = 'Enter an advisory note first.',
+                          );
+                          return;
+                        }
+                        await action('notes', {'notes': advisory.text.trim()});
+                        if (mounted && error == null) advisory.clear();
+                      },
+                child: const Text('Send advisory note'),
               ),
-              for (final e in analysisListValue(
-                data!['events'],
-              ).map(analysisMapValue))
-                _ReviewEventTile(event: e),
-            ],
-          ),
+            ),
+          ],
         ),
-        const SizedBox(height: 16),
-        _WebCard(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const _AnalystSectionTitle(
-                'Follow-up tasks',
-                icon: Icons.playlist_add_check_outlined,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'New tasks are assigned to you. Due reminders appear when Activity is refreshed; background delivery requires a configured provider.',
-              ),
-              for (final f in analysisListValue(
-                data!['followups'],
-              ).map(analysisMapValue))
-                ListTile(
-                  title: Text('${f['title']} · due ${f['due_on']}'),
-                  subtitle: Text(
-                    '${f['assigned_name']} · ${f['completed_at'] == null ? 'Open' : 'Completed'}',
-                  ),
-                  trailing:
-                      f['completed_at'] == null &&
-                          f['assigned_to'] == widget.state.currentUser?['id']
-                      ? TextButton(
-                          onPressed: busy || loading
-                              ? null
-                              : () =>
-                                    action('followups/${f['id']}/complete', {}),
-                          child: const Text('Complete'),
-                        )
-                      : null,
-                ),
-              TextField(
-                controller: task,
-                maxLength: 160,
-                decoration: const InputDecoration(labelText: 'Follow-up title'),
-              ),
-              Wrap(
-                spacing: 12,
-                children: [
+        const SizedBox(height: 12),
+        _ReviewOptionalSection(
+          storageId: '${c['id']}-${c['current_session_id']}-history',
+          title: 'Review history',
+          icon: Icons.history,
+          children: [
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                for (final r in analysisListValue(
+                  data!['revisions'],
+                ).map(analysisMapValue))
                   OutlinedButton(
-                    onPressed: () async {
-                      final value = await showDatePicker(
-                        context: context,
-                        initialDate: due,
-                        firstDate: DateTime.now().subtract(
-                          const Duration(days: 365),
-                        ),
-                        lastDate: DateTime.now().add(
-                          const Duration(days: 3650),
-                        ),
-                      );
-                      if (value != null && mounted) setState(() => due = value);
-                    },
+                    onPressed: busy || loading ? null : () => revision(r),
                     child: Text(
-                      'Due ${due.toIso8601String().substring(0, 10)}',
+                      'Revision ${r['revision']} ? #${r['session_id']}',
                     ),
                   ),
-                  FilledButton(
-                    onPressed: busy || loading
-                        ? null
-                        : () async {
-                            if (task.text.trim().isEmpty) {
-                              setState(() => error = 'Add a follow-up title.');
-                              return;
-                            }
-                            await action('followups', {
-                              'title': task.text.trim(),
-                              'due_on': due.toIso8601String().substring(0, 10),
-                            });
-                          },
-                    child: const Text('Create follow-up'),
-                  ),
-                ],
+              ],
+            ),
+            for (final e in analysisListValue(
+              data!['events'],
+            ).map(analysisMapValue))
+              _ReviewEventTile(event: e),
+            if (analysisListValue(data!['events']).isEmpty)
+              const Text('No earlier review activity.'),
+          ],
+        ),
+        const SizedBox(height: 12),
+        _ReviewOptionalSection(
+          storageId: '${c['id']}-${c['current_session_id']}-tasks',
+          title: 'Follow-up tasks (optional)',
+          icon: Icons.playlist_add_check_outlined,
+          children: [
+            const Text(
+              'Add a reminder for yourself. Reminders appear in Activity when it refreshes.',
+            ),
+            const SizedBox(height: 12),
+            for (final f in analysisListValue(
+              data!['followups'],
+            ).map(analysisMapValue))
+              ListTile(
+                title: Text('${f['title']} ? due ${f['due_on']}'),
+                subtitle: Text(
+                  '${f['assigned_name']} ? ${f['completed_at'] == null ? 'Open' : 'Completed'}',
+                ),
+                trailing:
+                    f['completed_at'] == null &&
+                        f['assigned_to'] == widget.state.currentUser?['id']
+                    ? TextButton(
+                        onPressed: busy || loading
+                            ? null
+                            : () => action('followups/${f['id']}/complete', {}),
+                        child: const Text('Complete'),
+                      )
+                    : null,
               ),
-            ],
-          ),
+            TextField(
+              controller: task,
+              enabled: !busy && !loading,
+              maxLength: 160,
+              decoration: const InputDecoration(labelText: 'Follow-up title'),
+            ),
+            Wrap(
+              spacing: 12,
+              runSpacing: 8,
+              children: [
+                OutlinedButton(
+                  onPressed: busy || loading
+                      ? null
+                      : () async {
+                          final value = await showDatePicker(
+                            context: context,
+                            initialDate: due,
+                            firstDate: DateTime.now().subtract(
+                              const Duration(days: 365),
+                            ),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 3650),
+                            ),
+                          );
+                          if (value != null && mounted) {
+                            setState(() => due = value);
+                          }
+                        },
+                  child: Text('Due ${due.toIso8601String().substring(0, 10)}'),
+                ),
+                FilledButton(
+                  onPressed: busy || loading
+                      ? null
+                      : () async {
+                          if (task.text.trim().isEmpty) {
+                            setState(() => error = 'Add a follow-up title.');
+                            return;
+                          }
+                          await action('followups', {
+                            'title': task.text.trim(),
+                            'due_on': due.toIso8601String().substring(0, 10),
+                          });
+                        },
+                  child: const Text('Create follow-up'),
+                ),
+              ],
+            ),
+          ],
         ),
       ],
     ],
