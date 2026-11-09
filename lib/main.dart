@@ -46,6 +46,7 @@ import 'web/portal_routes.dart';
 import 'web/web_record_controller.dart';
 import 'web/operator_report.dart';
 import 'web/operator_metrics.dart';
+import 'web/excel_files.dart';
 
 part 'screens/mobile_visuals.dart';
 part 'screens/reference_visuals.dart';
@@ -87,6 +88,7 @@ part 'web/auth/web_auth_login.dart';
 part 'web/web_analyst_shell.dart';
 part 'web/web_admin_shell.dart';
 part 'web/widgets/controlled_records.dart';
+part 'web/widgets/controlled_excel.dart';
 part 'web/widgets/web_common.dart';
 part 'web/widgets/web_analysis_evidence.dart';
 part 'web/widgets/web_portal_layout.dart';

@@ -10,6 +10,8 @@ joblib
 requests
 scikit-learn==1.8.0
 pandas
+openpyxl==3.1.5
+defusedxml==0.7.1
 itsdangerous
 jinja2
 google-auth
