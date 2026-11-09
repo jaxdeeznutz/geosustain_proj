@@ -30,7 +30,11 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   String submittedSearch = '';
   final offsets = <int, int>{1: 0, 2: 0, 4: 0};
   final hasMore = <int, bool>{};
-  int get _pageSize => page == 2 ? 6 : 50;
+  int get _pageSize => switch (page) {
+    2 => 6,
+    4 => 8,
+    _ => 50,
+  };
   int refreshGeneration = 0;
 
   void _applySearch(String value) {
@@ -138,6 +142,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
           '/api/admin/audit-logs',
           offset: offsets[4]!,
           search: submittedSearch,
+          parameters: const {'limit': '8'},
         ),
         (value) {
           auditLogs = records(value['logs']);

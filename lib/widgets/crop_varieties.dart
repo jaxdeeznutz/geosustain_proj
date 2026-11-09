@@ -48,6 +48,7 @@ class _CropVarietyReferenceState extends State<CropVarietyReference> {
         ).map(analysisMapValue).toList();
         final colors = Theme.of(context).colorScheme;
         return Container(
+          key: const ValueKey('banana-variety-reference'),
           margin: const EdgeInsets.symmetric(vertical: 10),
           decoration: BoxDecoration(
             border: Border.all(color: colors.outlineVariant),
@@ -55,7 +56,9 @@ class _CropVarietyReferenceState extends State<CropVarietyReference> {
             color: colors.surface,
           ),
           child: ExpansionTile(
-            key: const ValueKey('banana-variety-reference'),
+            // A scroll view stores a double in PageStorage; expansion stores a
+            // bool. Give this control its own storage identity on every screen.
+            key: const PageStorageKey<String>('banana-variety-expanded'),
             initiallyExpanded: widget.initiallyExpanded,
             shape: const Border(),
             collapsedShape: const Border(),
