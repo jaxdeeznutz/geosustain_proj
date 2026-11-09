@@ -1776,7 +1776,7 @@ class ApiService {
         await (body == null
                 ? _client.get(uri, headers: headers)
                 : _client.post(uri, headers: headers, body: jsonEncode(body)))
-            .timeout(const Duration(seconds: 60));
+            .timeout(Duration(seconds: body == null ? 20 : 60));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw ApiException(

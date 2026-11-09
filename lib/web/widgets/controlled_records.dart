@@ -39,25 +39,42 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
       loading = true;
       error = null;
     });
-    try {
-      final values = await Future.wait([
-        widget.api.controlledRecordsRequest('/catalog'),
-        widget.api.controlledRecordsRequest('', kind: kind, offset: offset),
-      ]);
-      if (!mounted || current != request) return;
-      setState(() {
-        catalog = values[0];
-        rows = analysisListValue(
-          values[1]['records'],
-        ).map(analysisMapValue).toList();
-        more = values[1]['has_more'] == true;
-      });
-    } catch (e) {
-      if (mounted && current == request) {
-        setState(() => error = friendlyErrorMessage(e));
+    final failures = <String>[];
+    Future<void> loadPart(
+      String label,
+      Future<Map<String, dynamic>> future,
+      void Function(Map<String, dynamic>) apply,
+    ) async {
+      try {
+        final value = await future;
+        if (mounted && current == request) setState(() => apply(value));
+      } catch (e) {
+        failures.add('$label: ${friendlyErrorMessage(e)}');
       }
-    } finally {
-      if (mounted && current == request) setState(() => loading = false);
+    }
+
+    await Future.wait([
+      loadPart(
+        'Reference catalog',
+        widget.api.controlledRecordsRequest('/catalog'),
+        (value) => catalog = value,
+      ),
+      loadPart(
+        'Reference records',
+        widget.api.controlledRecordsRequest('', kind: kind, offset: offset),
+        (value) {
+          rows = analysisListValue(
+            value['records'],
+          ).map(analysisMapValue).toList();
+          more = value['has_more'] == true;
+        },
+      ),
+    ]);
+    if (mounted && current == request) {
+      setState(() {
+        error = failures.isEmpty ? null : failures.join('\n');
+        loading = false;
+      });
     }
   }
 
@@ -237,7 +254,7 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
                 label: const Text('New record'),
               ),
               IconButton(
-                onPressed: busy ? null : _load,
+                onPressed: busy || loading ? null : _load,
                 icon: const Icon(Icons.refresh),
                 tooltip: 'Refresh records',
               ),
@@ -253,7 +270,7 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
               padding: EdgeInsets.all(14),
               child: LinearProgressIndicator(),
             ),
-          if (!loading && rows.isEmpty)
+          if (!loading && error == null && rows.isEmpty)
             const Padding(
               padding: EdgeInsets.all(14),
               child: Text(
@@ -341,7 +358,11 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
           ),
           const Divider(),
           Text(
-            'Trusted model: ${analysisMapValue(catalog['installed_model'])['sha256'] ?? 'Unavailable'}',
+            'Trusted model: ${analysisMapValue(catalog['installed_model'])['sha256'] ?? (loading
+                    ? 'Checking…'
+                    : error != null
+                    ? 'Could not retrieve status'
+                    : 'Unavailable')}',
           ),
           const Text(
             'Model records document the installed artifact. Uploading or deploying models is maintained by the project release process. NPK record entry is deferred.',

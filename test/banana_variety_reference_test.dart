@@ -116,4 +116,39 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Banana varieties'), findsNothing);
   });
+
+  testWidgets(
+    'banana expansion survives a saved page scroll offset and remount',
+    (tester) async {
+      final bucket = PageStorageBucket();
+      const scrollKey = PageStorageKey<String>('admin-page-3');
+      Widget page({bool seed = false}) => MaterialApp(
+        home: Scaffold(
+          body: PageStorage(
+            bucket: bucket,
+            child: SingleChildScrollView(
+              key: scrollKey,
+              child: Builder(
+                builder: (context) {
+                  if (seed) bucket.writeState(context, 420.0);
+                  return const CropVarietyReference(crop: 'banana');
+                },
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpWidget(page(seed: true));
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.tap(find.text('Banana varieties'));
+      await tester.pumpAndSettle();
+      expect(find.text('Cavendish').hitTestable(), findsOneWidget);
+      await tester.pumpWidget(const SizedBox.shrink());
+      await tester.pumpWidget(page());
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      expect(find.text('Cavendish').hitTestable(), findsOneWidget);
+    },
+  );
 }
