@@ -12,10 +12,14 @@ const _controlledKindLabels = {
 class ControlledRecordsPanel extends StatefulWidget {
   final ApiService api;
   final bool adminDesign;
+  final Future<ExcelUpload?> Function()? excelPicker;
+  final Future<void> Function(Uint8List, String)? excelSaver;
   const ControlledRecordsPanel({
     super.key,
     required this.api,
     this.adminDesign = false,
+    this.excelPicker,
+    this.excelSaver,
   });
   @override
   State<ControlledRecordsPanel> createState() => _ControlledRecordsPanelState();
@@ -99,6 +103,56 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
     }
   }
 
+  Future<void> _excelDownload(String suffix, String name) async {
+    setState(() {
+      busy = true;
+      error = null;
+    });
+    try {
+      final bytes = await widget.api.getControlledExcelFile(suffix);
+      await (widget.excelSaver ?? saveExcelFile)(bytes, name);
+    } catch (failure) {
+      if (mounted) setState(() => error = friendlyErrorMessage(failure));
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  Future<void> _importExcel() async {
+    setState(() {
+      busy = true;
+      error = null;
+    });
+    try {
+      final file = await (widget.excelPicker ?? pickExcelFile)();
+      if (file == null || !mounted) return;
+      if (file.bytes.length > 2 * 1024 * 1024 ||
+          !file.name.toLowerCase().endsWith('.xlsx')) {
+        throw const FormatException(
+          'Choose an .xlsx file no larger than 2 MB.',
+        );
+      }
+      final result = await showDialog<Map<String, dynamic>>(
+        context: context,
+        builder: (_) => _ControlledExcelDialog(api: widget.api, file: file),
+      );
+      if (result != null && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '${result['imported']} reference rows ${result['activated'] == true ? 'saved and activated' : 'saved as drafts'}.',
+            ),
+          ),
+        );
+        await _load();
+      }
+    } catch (failure) {
+      if (mounted) setState(() => error = friendlyErrorMessage(failure));
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   Future<void> _activate(Map<String, dynamic> row, bool activate) async {
     final doc = analysisMapValue(row['document']);
     final confirmed = await showDialog<bool>(
@@ -174,6 +228,22 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
                     padding: const EdgeInsets.only(bottom: 10),
                     child: SelectableText('${pair.key}: ${pair.value}'),
                   ),
+                if (doc['source_file'] != null) ...[
+                  Text(
+                    'Excel source: ${analysisMapValue(doc['source_file'])['filename']}',
+                  ),
+                  SelectableText(
+                    'File SHA-256: ${analysisMapValue(doc['source_file'])['sha256']}',
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _excelDownload(
+                      'files/${analysisMapValue(doc['source_file'])['upload_id']}',
+                      '${analysisMapValue(doc['source_file'])['filename']}',
+                    ),
+                    icon: const Icon(Icons.download),
+                    label: const Text('Download source Excel'),
+                  ),
+                ],
               ],
             ),
           ),
@@ -207,7 +277,7 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
             ),
           const SizedBox(height: 6),
           const Text(
-            'Save a revision, review its evidence, then activate it for new analyses. Existing analyses keep their saved versions.',
+            'Import crop requirement ranges from Excel, preview the rows, then save or activate them. Existing analyses keep their saved values.',
           ),
           const SizedBox(height: 12),
           Wrap(
@@ -215,6 +285,22 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
             runSpacing: 12,
             crossAxisAlignment: WrapCrossAlignment.center,
             children: [
+              FilledButton.icon(
+                key: const ValueKey('import-crop-excel'),
+                onPressed: loading || busy ? null : _importExcel,
+                icon: const Icon(Icons.upload_file),
+                label: const Text('Import Excel'),
+              ),
+              OutlinedButton.icon(
+                onPressed: loading || busy
+                    ? null
+                    : () => _excelDownload(
+                        'template',
+                        'GeoSustain_crop_requirements.xlsx',
+                      ),
+                icon: const Icon(Icons.download),
+                label: const Text('Download template'),
+              ),
               SizedBox(
                 width: 270,
                 child: DropdownButtonFormField<String>(
@@ -560,6 +646,10 @@ class _ControlledRecordEditorState extends State<_ControlledRecordEditor> {
           throw const FormatException('Unsupported record category.');
       }
       await widget.onSave(<String, dynamic>{
+        if (analysisMapValue(widget.row?['document'])['source_file'] != null)
+          'source_file': analysisMapValue(
+            widget.row?['document'],
+          )['source_file'],
         'kind': kind,
         'record_key': key,
         'expected_revision': widget.row?['revision'] ?? 0,

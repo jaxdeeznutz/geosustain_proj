@@ -1680,9 +1680,9 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                 ),
                 const SizedBox(height: 16),
                 for (final step in [
-                  (1, 'Add or revise reference information.'),
-                  (2, 'Review evidence and validate the details.'),
-                  (3, 'Activate the revision for new analyses.'),
+                  (1, 'Download the template and enter crop requirements.'),
+                  (2, 'Import Excel and check the row preview.'),
+                  (3, 'Save drafts or activate the checked rows.'),
                   (4, 'Existing analyses retain their saved versions.'),
                 ])
                   Padding(

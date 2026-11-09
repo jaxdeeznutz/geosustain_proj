@@ -1787,6 +1787,26 @@ class ApiService {
     return Map<String, dynamic>.from(data);
   }
 
+  Future<Uint8List> getControlledExcelFile(String suffix) async {
+    final token = await getToken();
+    final response = await _client
+        .get(
+          Uri.parse('$baseUrl/api/admin/controlled-records/excel/$suffix'),
+          headers: {'Authorization': 'Bearer $token'},
+        )
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(_decodeJson(response), 'Could not download Excel file'),
+      );
+    }
+    if (await getToken() != token) {
+      throw const ApiException(401, 'Your session changed. Sign in again.');
+    }
+    return response.bodyBytes;
+  }
+
   Future<Map<String, dynamic>> updateAdminCrop(
     String cropKey, {
     String? label,
