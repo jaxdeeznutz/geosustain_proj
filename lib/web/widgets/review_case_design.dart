@@ -1,5 +1,275 @@
 part of '../../main.dart';
 
+class _ReviewDecisionCard extends StatelessWidget {
+  final Map<String, bool> checks;
+  final bool disabled, ownSubmission;
+  final void Function(String, bool) onCheck;
+  final VoidCallback verify, requestInformation, reject;
+  const _ReviewDecisionCard({
+    required this.checks,
+    required this.disabled,
+    required this.ownSubmission,
+    required this.onCheck,
+    required this.verify,
+    required this.requestInformation,
+    required this.reject,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final count = checks.values.where((value) => value).length;
+    const labels = {
+      'reference': 'Results, dates and sources checked',
+      'geometry': 'Saved boundary and any changes checked',
+      'coverage': 'Coverage and missing readings checked',
+      'limitations': 'Limitations and next steps checked',
+    };
+    return _WebCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const _AnalystSectionTitle(
+            '2. Complete the review checks',
+            icon: Icons.fact_check_outlined,
+          ),
+          const SizedBox(height: 8),
+          const Text('Tick each item after checking the farm results above.'),
+          const SizedBox(height: 8),
+          for (final item in labels.entries)
+            CheckboxListTile(
+              key: ValueKey('review-check-${item.key}'),
+              contentPadding: EdgeInsets.zero,
+              dense: true,
+              value: checks[item.key],
+              onChanged: disabled
+                  ? null
+                  : (value) => onCheck(item.key, value == true),
+              title: Text(item.value),
+              controlAffinity: ListTileControlAffinity.leading,
+            ),
+          Semantics(
+            liveRegion: true,
+            child: Text(
+              '$count of 4 checked',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: count == 4
+                    ? WebPortalColors.accent
+                    : WebPortalColors.muted,
+              ),
+            ),
+          ),
+          const Divider(height: 28),
+          const _AnalystSectionTitle(
+            '3. Choose a decision',
+            icon: Icons.task_alt,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            ownSubmission
+                ? 'Another analyst must review your submission.'
+                : count < 4
+                ? 'Complete all four checks to enable verification.'
+                : 'Your checks are complete. You can now verify the assessment.',
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: [
+              FilledButton(
+                onPressed: disabled || count < 4 ? null : verify,
+                child: const Text('Verify assessment'),
+              ),
+              OutlinedButton(
+                onPressed: disabled ? null : requestInformation,
+                child: const Text('Request information'),
+              ),
+              OutlinedButton(
+                onPressed: disabled ? null : reject,
+                child: const Text('Reject submission'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Missing details? Request information. Unable to accept the submission? Reject it and explain why.',
+            style: TextStyle(fontSize: 12, color: WebPortalColors.muted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReviewDecisionDialog extends StatefulWidget {
+  final String status;
+  final TextEditingController notes;
+  final String? reason;
+  final ValueChanged<String?> onReasonChanged;
+  const _ReviewDecisionDialog({
+    required this.status,
+    required this.notes,
+    required this.reason,
+    required this.onReasonChanged,
+  });
+  @override
+  State<_ReviewDecisionDialog> createState() => _ReviewDecisionDialogState();
+}
+
+class _ReviewDecisionDialogState extends State<_ReviewDecisionDialog> {
+  final form = GlobalKey<FormState>();
+  @override
+  Widget build(BuildContext context) {
+    final verifying = widget.status == 'verified';
+    final asking = widget.status == 'needs_information';
+    return AlertDialog(
+      title: Text(
+        verifying
+            ? 'Verify assessment?'
+            : asking
+            ? 'Request information'
+            : 'Reject submission',
+      ),
+      content: SizedBox(
+        width: 520,
+        child: SingleChildScrollView(
+          child: Form(
+            key: form,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  verifying
+                      ? 'Confirm that you reviewed the saved farm results. Verification does not guarantee crop success.'
+                      : asking
+                      ? 'Tell the farmer what to clarify or provide.'
+                      : 'Tell the farmer why this submission cannot be accepted.',
+                ),
+                const SizedBox(height: 16),
+                if (!verifying) ...[
+                  DropdownButtonFormField<String>(
+                    key: const ValueKey('review-decision-reason'),
+                    initialValue: widget.reason,
+                    isExpanded: true,
+                    itemHeight: null,
+                    decoration: const InputDecoration(
+                      labelText: 'Reason',
+                      hintText: 'Choose a reason',
+                    ),
+                    items: [
+                      for (final item in const {
+                        'boundary_clarification':
+                            'Farm boundary needs clarification',
+                        'missing_evidence': 'Missing information or evidence',
+                        'coverage_limitation': 'Limited data coverage',
+                        'data_inconsistency': 'Details do not match',
+                        'other': 'Other',
+                      }.entries)
+                        DropdownMenuItem(
+                          value: item.key,
+                          child: Text(
+                            item.value,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
+                    onChanged: widget.onReasonChanged,
+                    validator: (value) => value == null || value.isEmpty
+                        ? 'Choose a reason.'
+                        : null,
+                  ),
+                  const SizedBox(height: 16),
+                ],
+                TextFormField(
+                  key: const ValueKey('review-decision-note'),
+                  controller: widget.notes,
+                  maxLength: 500,
+                  minLines: 3,
+                  maxLines: 5,
+                  decoration: InputDecoration(
+                    labelText: verifying
+                        ? 'Note to farmer (optional)'
+                        : 'Message to farmer',
+                    helperText: verifying
+                        ? null
+                        : 'Required. Explain what the farmer needs to know.',
+                    helperMaxLines: 2,
+                  ),
+                  validator: (value) =>
+                      !verifying && (value ?? '').trim().isEmpty
+                      ? 'Add a message for the farmer.'
+                      : null,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (form.currentState!.validate()) Navigator.pop(context, true);
+          },
+          child: const Text('Confirm decision'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ReviewOptionalSection extends StatefulWidget {
+  final String storageId, title;
+  final IconData icon;
+  final List<Widget> children;
+  const _ReviewOptionalSection({
+    required this.storageId,
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
+  @override
+  State<_ReviewOptionalSection> createState() => _ReviewOptionalSectionState();
+}
+
+class _ReviewOptionalSectionState extends State<_ReviewOptionalSection> {
+  // Text fields have numeric scroll offsets; keep them separate from the
+  // ExpansionTile's saved open/closed boolean.
+  final contentStorage = PageStorageBucket();
+  @override
+  Widget build(BuildContext context) => _WebCard(
+    child: ExpansionTile(
+      key: PageStorageKey<String>('review-option-${widget.storageId}'),
+      tilePadding: EdgeInsets.zero,
+      shape: const Border(),
+      collapsedShape: const Border(),
+      leading: Icon(widget.icon, color: WebPortalColors.accent),
+      title: Text(
+        widget.title,
+        style: const TextStyle(fontWeight: FontWeight.w700),
+      ),
+      children: [
+        PageStorage(
+          bucket: contentStorage,
+          child: Padding(
+            padding: const EdgeInsets.only(top: 8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: widget.children,
+            ),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 class _ReviewCaseHeading extends StatelessWidget {
   final Map<String, dynamic> data;
   final AnalysisState state;
@@ -49,7 +319,7 @@ class _ReviewCaseHeading extends StatelessWidget {
                     ),
                     const SizedBox(height: 6),
                     Text(
-                      'Analysis #${review['current_session_id']} · Review the saved boundary, measurements and context.',
+                      'Check the farm results, then record your decision.',
                       style: TextStyle(color: WebPortalColors.muted),
                     ),
                   ],

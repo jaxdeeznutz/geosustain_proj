@@ -173,7 +173,12 @@ void main() {
       tester,
     ) async {
       final key = GlobalKey();
-      await pumpReview(tester, reviewFixture(), size, previewKey: key);
+      await pumpReview(
+        tester,
+        reviewFixture(status: 'pending'),
+        size,
+        previewKey: key,
+      );
       expect(find.text('Boundary & Measurements'), findsOneWidget);
       final locationCard = find.byKey(const ValueKey('review-location-card'));
       expect(locationCard, findsOneWidget);
@@ -194,7 +199,7 @@ void main() {
       );
       expect(tester.takeException(), isNull);
       await savePreview(tester, key, 'review-${size.width.toInt()}');
-      await tester.ensureVisible(find.text('Review checklist and explanation'));
+      await tester.ensureVisible(find.text('2. Complete the review checks'));
       await tester.pumpAndSettle();
       expect(find.text('Export analysis report'), findsOneWidget);
       expect(find.text('Export case report'), findsOneWidget);
@@ -202,6 +207,9 @@ void main() {
       if (size.width >= 1440) {
         await savePreview(tester, key, 'review-actions-${size.width.toInt()}');
       }
+      await tester.ensureVisible(find.text('Follow-up tasks (optional)'));
+      await tester.tap(find.text('Follow-up tasks (optional)'));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Create follow-up'));
       await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
@@ -304,9 +312,233 @@ void main() {
         find.textContaining('current farm boundary has changed'),
         findsOneWidget,
       );
+      await tester.ensureVisible(find.text('Add advice (optional)'));
+      await tester.tap(find.text('Add advice (optional)'));
+      await tester.pumpAndSettle();
       await tester.ensureVisible(find.text('Send advisory note'));
       await tester.pumpAndSettle();
       expect(find.text('Send advisory note').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'simple review shows three steps and hides optional forms until opened',
+    (tester) async {
+      final key = GlobalKey();
+      final requests = <http.Request>[];
+      await pumpReview(
+        tester,
+        reviewFixture(status: 'pending'),
+        const Size(1440, 1000),
+        requests: requests,
+        previewKey: key,
+      );
+      for (final title in [
+        '1. Check the farm results',
+        '2. Complete the review checks',
+        '3. Choose a decision',
+      ]) {
+        expect(find.text(title), findsOneWidget);
+      }
+      expect(find.byKey(const ValueKey('review-decision-note')), findsNothing);
+      expect(find.byKey(const ValueKey('review-advisory-note')), findsNothing);
+      expect(find.text('Synthetic decision history'), findsNothing);
+      expect(find.widgetWithText(TextField, 'Follow-up title'), findsNothing);
+      await tester.ensureVisible(find.text('2. Complete the review checks'));
+      await tester.pumpAndSettle();
+      await savePreview(tester, key, 'simple-review-decisions');
+      await tester.ensureVisible(find.text('Review history'));
+      await tester.tap(find.text('Review history'));
+      await tester.pumpAndSettle();
+      expect(find.text('Synthetic decision history'), findsOneWidget);
+      expect(requests.where((request) => request.method == 'POST'), isEmpty);
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  for (final decision in [
+    ('Request information', 'needs_information'),
+    ('Reject submission', 'rejected'),
+  ]) {
+    testWidgets(
+      '${decision.$1} asks for a reason and message before posting the current revision',
+      (tester) async {
+        final requests = <http.Request>[];
+        final data = reviewFixture(status: 'pending');
+        final before = jsonEncode(data);
+        await pumpReview(
+          tester,
+          data,
+          const Size(1440, 1000),
+          requests: requests,
+        );
+        final button = find.widgetWithText(OutlinedButton, decision.$1);
+        await tester.ensureVisible(button);
+        await tester.tap(button);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Confirm decision'));
+        await tester.pumpAndSettle();
+        expect(find.text('Choose a reason.'), findsOneWidget);
+        expect(find.text('Add a message for the farmer.'), findsOneWidget);
+        expect(requests.where((request) => request.method == 'POST'), isEmpty);
+        await tester.tap(find.byKey(const ValueKey('review-decision-reason')));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Missing information or evidence').last);
+        await tester.pumpAndSettle();
+        await tester.enterText(
+          find.byKey(const ValueKey('review-decision-note')),
+          'Please provide the missing farm details.',
+        );
+        await tester.tap(find.text('Confirm decision'));
+        await tester.pumpAndSettle();
+        final posted = requests.singleWhere(
+          (request) => request.method == 'POST',
+        );
+        expect(posted.url.path, '/api/operator/cases/5/decision');
+        final body = jsonDecode(posted.body) as Map;
+        expect(body['status'], decision.$2);
+        expect(body['version'], 2);
+        expect(body['reason'], 'missing_evidence');
+        expect(body['notes'], 'Please provide the missing farm details.');
+        expect(
+          (body['checklist'] as Map).keys,
+          unorderedEquals(['reference', 'geometry', 'coverage', 'limitations']),
+        );
+        expect(jsonEncode(data), before);
+        expect(tester.takeException(), isNull);
+      },
+    );
+  }
+
+  testWidgets(
+    'verification submits all four checks with no required note or reason',
+    (tester) async {
+      final requests = <http.Request>[];
+      await pumpReview(
+        tester,
+        reviewFixture(status: 'pending'),
+        const Size(1440, 1000),
+        requests: requests,
+      );
+      for (final key in ['reference', 'geometry', 'coverage', 'limitations']) {
+        final check = find.byKey(ValueKey('review-check-$key'));
+        await tester.ensureVisible(check);
+        await tester.tap(check);
+        await tester.pumpAndSettle();
+      }
+      expect(find.text('4 of 4 checked'), findsOneWidget);
+      final verify = find.widgetWithText(FilledButton, 'Verify assessment');
+      await tester.ensureVisible(verify);
+      await tester.tap(verify);
+      await tester.pumpAndSettle();
+      expect(
+        find.byKey(const ValueKey('review-decision-reason')),
+        findsNothing,
+      );
+      await tester.tap(find.text('Confirm decision'));
+      await tester.pumpAndSettle();
+      final body =
+          jsonDecode(
+                requests
+                    .singleWhere((request) => request.method == 'POST')
+                    .body,
+              )
+              as Map;
+      expect(body['status'], 'verified');
+      expect(body['version'], 2);
+      expect(body['notes'], '');
+      expect(body['reason'], '');
+      expect((body['checklist'] as Map).values, everyElement(true));
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('advisory text stays separate from a cancelled decision draft', (
+    tester,
+  ) async {
+    final requests = <http.Request>[];
+    await pumpReview(
+      tester,
+      reviewFixture(status: 'pending'),
+      const Size(1440, 1000),
+      requests: requests,
+    );
+    final requestButton = find.widgetWithText(
+      OutlinedButton,
+      'Request information',
+    );
+    await tester.ensureVisible(requestButton);
+    await tester.tap(requestButton);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('review-decision-note')),
+      'Decision draft remains private until confirmed.',
+    );
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Add advice (optional)'));
+    await tester.tap(find.text('Add advice (optional)'));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const ValueKey('review-advisory-note')),
+      'Check field drainage before planting.',
+    );
+    await tester.ensureVisible(find.text('Send advisory note'));
+    await tester.tap(find.text('Send advisory note'));
+    await tester.pumpAndSettle();
+    final posted = requests.singleWhere((request) => request.method == 'POST');
+    expect(posted.url.path, '/api/operator/cases/5/notes');
+    expect(jsonDecode(posted.body), {
+      'notes': 'Check field drainage before planting.',
+    });
+    await tester.ensureVisible(requestButton);
+    await tester.tap(requestButton);
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<TextFormField>(
+            find.byKey(const ValueKey('review-decision-note')),
+          )
+          .controller!
+          .text,
+      'Decision draft remains private until confirmed.',
+    );
+    await tester.tap(find.text('Cancel'));
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'decision dialog remains usable on a narrow screen with enlarged text',
+    (tester) async {
+      await pumpReview(
+        tester,
+        reviewFixture(status: 'pending'),
+        const Size(390, 844),
+        scale: 2,
+      );
+      final request = find.widgetWithText(
+        OutlinedButton,
+        'Request information',
+      );
+      await tester.ensureVisible(request);
+      await tester.tap(request);
+      await tester.pumpAndSettle();
+      final reason = find.byKey(const ValueKey('review-decision-reason'));
+      await tester.ensureVisible(reason);
+      await tester.tap(reason);
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Farm boundary needs clarification').last);
+      await tester.pumpAndSettle();
+      final note = find.byKey(const ValueKey('review-decision-note'));
+      await tester.ensureVisible(note);
+      await tester.enterText(note, 'Please confirm the farm boundary.');
+      await tester.pumpAndSettle();
+      expect(tester.takeException(), isNull);
+      await tester.ensureVisible(find.text('Cancel'));
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
     },
   );

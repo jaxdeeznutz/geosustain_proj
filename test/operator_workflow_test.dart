@@ -167,14 +167,14 @@ void main() {
       expect(find.byType(LinearProgressIndicator), findsOneWidget);
       initial.complete(http.Response(jsonEncode(fixture()), 200));
       await tester.pumpAndSettle();
-      final explanation = find.widgetWithText(
-        TextField,
-        'Decision explanation / advisory note',
-      );
-      await tester.ensureVisible(explanation);
-      await tester.enterText(explanation, 'Confirm the outline.');
       await tester.ensureVisible(find.text('Request information'));
       await tester.tap(find.text('Request information'));
+      await tester.pumpAndSettle();
+      final explanation = find.byKey(const ValueKey('review-decision-note'));
+      await tester.enterText(explanation, 'Confirm the outline.');
+      await tester.tap(find.byKey(const ValueKey('review-decision-reason')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Farm boundary needs clarification').last);
       await tester.pumpAndSettle();
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
@@ -185,10 +185,16 @@ void main() {
       await tester.pumpAndSettle();
       expect(writes, 1);
       expect(find.textContaining('Your notes are retained'), findsOneWidget);
+      await tester.tap(
+        find.widgetWithText(OutlinedButton, 'Request information'),
+      );
+      await tester.pumpAndSettle();
       expect(
-        tester.widget<TextField>(explanation).controller!.text,
+        tester.widget<TextFormField>(explanation).controller!.text,
         'Confirm the outline.',
       );
+      await tester.tap(find.text('Cancel'));
+      await tester.pumpAndSettle();
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       state.dispose();
