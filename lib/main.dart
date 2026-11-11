@@ -2260,7 +2260,7 @@ class AnalysisState extends ChangeNotifier {
               'User-Agent': 'GeoSustainCapstone/1.0 (student capstone project)',
             },
           )
-          .timeout(const Duration(seconds: 10));
+          .timeout(const Duration(seconds: 3));
       if (response.statusCode < 400) {
         final decoded = jsonDecode(response.body);
         if (decoded is Map<String, dynamic>) {
@@ -2798,6 +2798,9 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
           barrierColor: Colors.transparent,
           builder: (_) => PopScope(
             canPop: false,
+            onPopInvokedWithResult: (didPop, _) {
+              if (!didPop && state.loading) _minimizeAnalysis();
+            },
             child: ListenableBuilder(
               listenable: state,
               builder: (_, _) => FullscreenAnalysisOverlay(

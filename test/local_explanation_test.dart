@@ -162,7 +162,10 @@ void main() {
         await tester.tap(details);
         await tester.pumpAndSettle();
         expect(find.textContaining('Explainable AI details'), findsOneWidget);
-        expect(find.textContaining('ranked first because'), findsOneWidget);
+        expect(
+          find.textContaining('received its saved AI ranking'),
+          findsOneWidget,
+        );
         expect(find.textContaining('Arithmetic mean'), findsNothing);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
@@ -189,6 +192,30 @@ void main() {
     expect(find.text('Copy check details'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
+  testWidgets(
+    'crop details use the selected crop explanation without a picker',
+    (tester) async {
+      final record = localRecord();
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: LocalExplanationCard(
+              record: record,
+              initialCrop: 'Mango',
+              showCropPicker: false,
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('Crop 2: Mango'), findsOneWidget);
+      expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+      await tester.tap(find.text('AI calculation details'));
+      await tester.pumpAndSettle();
+      expect(find.text('Mango'), findsWidgets);
+      expect(find.text('Ranked #2'), findsOneWidget);
+    },
+  );
   test('farmer and analyst export the same saved local explanations', () async {
     final record = localRecord();
     expect(verifiedLocalExplanation(record), isNotEmpty);

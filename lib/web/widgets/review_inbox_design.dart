@@ -93,7 +93,7 @@ class _WebOperatorInboxState extends State<WebOperatorInbox> {
           ? 'needs_information'
           : index == 2
           ? 'all'
-          : 'pending',
+          : 'all',
       if (index == 2) 'view': 'decisions',
     });
   }
@@ -376,8 +376,8 @@ class _ReviewInboxFiltersState extends State<_ReviewInboxFilters> {
   late final end = TextEditingController(
     text: widget.controller.parameters['end'],
   );
-  late String status = widget.controller.parameters['status'] ?? 'pending';
-  late String sort = widget.controller.parameters['sort'] ?? 'oldest';
+  late String status = widget.controller.parameters['status'] ?? 'all';
+  late String sort = widget.controller.parameters['sort'] ?? 'newest';
   String? error;
   String signature = '';
 
@@ -403,8 +403,8 @@ class _ReviewInboxFiltersState extends State<_ReviewInboxFilters> {
       place.text = widget.controller.parameters['place'] ?? '';
       start.text = widget.controller.parameters['start'] ?? '';
       end.text = widget.controller.parameters['end'] ?? '';
-      status = widget.controller.parameters['status'] ?? 'pending';
-      sort = widget.controller.parameters['sort'] ?? 'oldest';
+      status = widget.controller.parameters['status'] ?? 'all';
+      sort = widget.controller.parameters['sort'] ?? 'newest';
     }
   }
 
@@ -421,8 +421,8 @@ class _ReviewInboxFiltersState extends State<_ReviewInboxFilters> {
       for (final c in [search, place, start, end]) {
         c.clear();
       }
-      status = 'pending';
-      sort = 'oldest';
+      status = 'all';
+      sort = 'newest';
     }
     final from = DateTime.tryParse(start.text.trim());
     final through = DateTime.tryParse(end.text.trim());

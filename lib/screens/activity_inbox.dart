@@ -17,6 +17,7 @@ class NotificationsPage extends StatefulWidget {
 }
 
 class _NotificationsPageState extends State<NotificationsPage> {
+  static final Map<String, List<Map<String, dynamic>>> _recentByAccount = {};
   late final ApiService api = widget.api ?? widget.state?.api ?? ApiService();
   List<Map<String, dynamic>> rows = [], local = [];
   int offset = 0, unread = 0, generation = 0;
@@ -42,6 +43,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   void initState() {
     super.initState();
+    final account = '${widget.state?.currentUser?['id'] ?? ''}';
+    if (account.isNotEmpty && _recentByAccount.containsKey(account)) {
+      rows = List<Map<String, dynamic>>.from(_recentByAccount[account]!);
+    }
     _load();
     if (widget.initialSessionId != null) {
       WidgetsBinding.instance.addPostFrameCallback(
@@ -106,6 +111,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
         rows = type == 'farm_synced'
             ? []
             : OfflineFarmStore.rows(data['notifications']);
+        final account = '${widget.state?.currentUser?['id'] ?? ''}';
+        if (account.isNotEmpty && target == 0 && type.isEmpty && !unreadOnly) {
+          _recentByAccount[account] = List<Map<String, dynamic>>.from(rows);
+        }
         local = events
             .where(
               (e) =>

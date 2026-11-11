@@ -51,6 +51,12 @@ class ApiService {
   ApiService({http.Client? client})
     : _client = client ?? RecoverableHttpClient();
   final http.Client _client;
+  DateTime? _lastHealthyReadAt;
+
+  bool get _recentlyResponsive =>
+      _lastHealthyReadAt != null &&
+      DateTime.now().difference(_lastHealthyReadAt!) <
+          const Duration(minutes: 8);
 
   void _renewTransport() {
     final client = _client;
@@ -181,9 +187,10 @@ class ApiService {
   Future<http.Response> _readWithRecovery(
     Future<http.Response> Function() request,
     String? token, {
-    int attempts = 3,
-    Duration timeout = const Duration(seconds: 30),
+    int? attempts,
+    Duration? timeout,
   }) async {
+    final warm = _recentlyResponsive;
     final response = await _withRenderWarmupRetry(
       () async {
         if (await getToken() != token) {
@@ -191,9 +198,12 @@ class ApiService {
         }
         return request();
       },
-      timeout: timeout,
-      attempts: attempts,
+      timeout:
+          timeout ??
+          (warm ? const Duration(seconds: 18) : const Duration(seconds: 40)),
+      attempts: attempts ?? (warm ? 1 : 2),
     );
+    if (response.statusCode < 500) _lastHealthyReadAt = DateTime.now();
     if (await getToken() != token) {
       throw const ApiException(401, 'Your session changed. Sign in again.');
     }
@@ -388,7 +398,7 @@ class ApiService {
     );
     final response = await _client
         .get(uri, headers: {'Authorization': 'Bearer $token'})
-        .timeout(const Duration(seconds: 60));
+        .timeout(const Duration(seconds: 4));
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {
       throw ApiException(
@@ -1345,8 +1355,10 @@ class ApiService {
     final response = await _readWithRecovery(
       () => _client.get(uri, headers: {'Authorization': 'Bearer $token'}),
       token,
-      timeout: requestTimeout,
-      attempts: recoveryAttempts,
+      timeout: requestTimeout == const Duration(seconds: 30)
+          ? null
+          : requestTimeout,
+      attempts: recoveryAttempts == 3 ? null : recoveryAttempts,
     );
     final data = _decodeJson(response);
     if (response.statusCode >= 400) {

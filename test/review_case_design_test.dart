@@ -492,6 +492,7 @@ void main() {
     await tester.ensureVisible(find.text('Send advisory note'));
     await tester.tap(find.text('Send advisory note'));
     await tester.pumpAndSettle();
+    expect(find.text('Advisory note sent to the farmer.'), findsOneWidget);
     final posted = requests.singleWhere((request) => request.method == 'POST');
     expect(posted.url.path, '/api/operator/cases/5/notes');
     expect(jsonDecode(posted.body), {
@@ -511,6 +512,7 @@ void main() {
     );
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
+    await tester.pump(const Duration(seconds: 3));
     expect(tester.takeException(), isNull);
   });
 

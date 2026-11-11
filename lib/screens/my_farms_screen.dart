@@ -397,6 +397,15 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
   void initState() {
     super.initState();
     _farm = Map.of(widget.farm);
+    _records = widget.state.historyRecords
+        .where(
+          (record) =>
+              '${record['farm_id']}' == '${_farm['id']}' &&
+              widget.state._ownsRecord(record),
+        )
+        .map((record) => Map<String, dynamic>.from(record))
+        .toList();
+    _recordsLoaded = widget.state.historyLoaded;
     widget.state.addListener(_refresh);
     _load().then((_) {
       if (!mounted || _notice != null) return;
@@ -430,7 +439,6 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
     }
     try {
       final epoch = widget.state._sessionEpoch;
-      _recordsLoaded = false;
       final values = await Future.wait<dynamic>([
         widget.state.api.getFarm(int.parse('${_farm['id']}')),
         widget.state.api.getFarmHistory(int.parse('${_farm['id']}')),
@@ -667,7 +675,7 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
     final analyses = _analyses;
     final latest = analyses.firstOrNull;
     return PopScope<bool>(
-      canPop: !_busy,
+      canPop: !_busy || widget.state.loading,
       child: Scaffold(
         appBar: GeoSustainHeader(
           title: 'Farm Details',
@@ -695,25 +703,65 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
           child: ListView(
             padding: const EdgeInsets.all(16),
             children: [
-              Text(
-                '${_farm['farm_name'] ?? 'Farm'}',
-                style: const TextStyle(
-                  fontSize: 26,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF20382C),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFF5FCF7), Color(0xFFDDF4E2)],
+                  ),
+                  borderRadius: BorderRadius.circular(18),
                 ),
-              ),
-              if ('${_farm['owner_display_name'] ?? ''}'.isNotEmpty)
-                Text('Owner: ${_farm['owner_display_name']}'),
-              if ('${_farm['location_name'] ?? ''}'.isNotEmpty)
-                Text(
-                  '${_farm['location_name']}',
-                  style: const TextStyle(color: Colors.black54),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const CircleAvatar(
+                          backgroundColor: Color(0xFFD6F2DF),
+                          child: Icon(Icons.eco, color: green),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                '${_farm['farm_name'] ?? 'Farm'}',
+                                style: const TextStyle(
+                                  fontSize: 21,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF20382C),
+                                ),
+                              ),
+                              if ('${_farm['owner_display_name'] ?? ''}'
+                                  .isNotEmpty)
+                                Text('Owner: ${_farm['owner_display_name']}'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 6,
+                      children: [
+                        Chip(
+                          label: Text(analysisAreaText(_farm)),
+                          avatar: const Icon(Icons.crop_free, size: 16),
+                        ),
+                        if ('${_farm['location_name'] ?? ''}'.isNotEmpty)
+                          Chip(
+                            label: Text('${_farm['location_name']}'),
+                            avatar: const Icon(
+                              Icons.location_on_outlined,
+                              size: 16,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
                 ),
-              const SizedBox(height: 6),
-              Text(
-                '${analysisAreaText(_farm)} · ${_farm['mapping_method'] == 'gps_walk' ? 'GPS boundary' : 'Drawn boundary'}',
-                style: const TextStyle(fontSize: 13, color: Colors.black54),
               ),
               const SizedBox(height: 16),
               if (_notice != null) _MappingNotice(_notice!),
@@ -764,7 +812,7 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
                 ),
               ),
               if (latest != null)
-                TextButton.icon(
+                OutlinedButton.icon(
                   onPressed: _busy ? null : () => _openResult(latest),
                   icon: const Icon(Icons.assessment_outlined),
                   label: const Text('Latest results'),

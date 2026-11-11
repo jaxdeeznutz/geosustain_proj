@@ -1,5 +1,7 @@
 import 'dart:async';
 
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geosustain_clean_arranged/main.dart';
@@ -26,6 +28,7 @@ class _ReviewApi extends ApiService {
     if (path == '/api/mobile/review-cases/8') {
       return {
         'case': {'id': 8, 'status': 'verified'},
+        'analysis': {'farm_name': 'Rice Farm'},
         'events': [
           {
             'kind': 'verified',
@@ -57,6 +60,27 @@ class _ResultState extends AnalysisState {
 }
 
 void main() {
+  testWidgets('farmer results retain the full crop ranking', (tester) async {
+    final record = Map<String, dynamic>.from(
+      jsonDecode(File('test/fixtures/local_analysis.json').readAsStringSync())
+          as Map,
+    );
+    final state = _ResultState()..currentUser = {'role': 'farmer'};
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: FarmerAnalysisContent(state: state, record: record),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Crops ranked for your farm'), findsOneWidget);
+    expect(find.byKey(const ValueKey('farmer-crop-1-Rice')), findsOneWidget);
+    expect(find.byKey(const ValueKey('farmer-crop-2-Mango')), findsOneWidget);
+  });
   test(
     'recorded model input uses all samples and never invents missing NPK',
     () {
@@ -373,7 +397,7 @@ void main() {
     expect(find.text('Reviewed by: Analyst'), findsOneWidget);
     await tester.tap(find.text('View full review'));
     await tester.pumpAndSettle();
-    expect(find.text('Review case #8'), findsOneWidget);
+    expect(find.text('Rice Farm'), findsOneWidget);
     expect(find.textContaining('Reason: Evidence checked'), findsOneWidget);
     expect(
       find.textContaining('Check drainage before planting.'),

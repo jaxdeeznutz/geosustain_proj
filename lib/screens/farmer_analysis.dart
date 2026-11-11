@@ -25,7 +25,7 @@ class FarmerAnalysisContent extends StatelessWidget {
         : preliminary
         ? 'More data needed'
         : crops.isNotEmpty
-        ? 'Best crop for your farm'
+        ? 'Crops ranked for your farm'
         : cover['status'] == 'water'
         ? 'Water area detected'
         : ['built', 'built_up', 'urban'].contains(cover['status'])
@@ -68,8 +68,12 @@ class FarmerAnalysisContent extends StatelessWidget {
                   style: TextStyle(fontSize: 12),
                 ),
               ],
-              if (crops.isNotEmpty)
-                _FarmerCropRow(crop: crops.first, record: record, rank: 1),
+              for (var index = 0; index < crops.length; index++)
+                _FarmerCropRow(
+                  crop: crops[index],
+                  record: record,
+                  rank: index + 1,
+                ),
             ],
           ),
         ),

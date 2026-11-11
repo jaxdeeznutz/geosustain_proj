@@ -1,0 +1,5 @@
+data/*.csv text eol=lf
+data/*.json text eol=lf
+results/*.csv text eol=lf
+results/*.json text eol=lf
+*.ipynb text eol=lf

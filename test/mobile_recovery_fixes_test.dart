@@ -106,10 +106,10 @@ void main() {
         api.getFarms(),
         throwsA(isA<ApiException>().having((e) => e.statusCode, 'status', 503)),
       );
-      expect(calls, 3);
+      expect(calls, 2);
       available = true;
       expect(await api.getFarms(), isEmpty);
-      expect(calls, 4);
+      expect(calls, 3);
       expect(await api.getToken(), 'synthetic-mobile-session');
     },
   );
@@ -290,7 +290,7 @@ void main() {
         expect(tester.takeException(), isNull);
       }
       expect(find.text('1. Rice'), findsOneWidget);
-      expect(find.text('4. Corn'), findsNothing);
+      expect(find.text('4. Corn'), findsOneWidget);
     },
   );
 

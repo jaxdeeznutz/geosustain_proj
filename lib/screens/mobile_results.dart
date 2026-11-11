@@ -763,8 +763,12 @@ class _AnalysisReviewCardState extends State<AnalysisReviewCard> {
       await Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (_) =>
-              FarmerReviewResponsePage(state: widget.state, caseId: caseId!),
+          builder: (_) => FarmerReviewResponsePage(
+            state: widget.state,
+            caseId: caseId!,
+            farmName:
+                '${widget.record['farm_name'] ?? widget.record['farm_name_snapshot'] ?? ''}',
+          ),
         ),
       );
     } catch (error) {

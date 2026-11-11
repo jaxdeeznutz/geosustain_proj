@@ -66,6 +66,11 @@ void main() {
       expect(find.text('Analyzing your farm'), findsOneWidget);
       await tester.binding.handlePopRoute();
       await tester.pump();
+      expect(find.text('Analyzing your farm'), findsNothing);
+      expect(find.text('Analyzing farm'), findsOneWidget);
+      await tester.tap(find.text('Analyzing farm'));
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 400));
       expect(find.text('Analyzing your farm'), findsOneWidget);
       await tester.tap(find.text('Minimize'));
       await tester.pump();

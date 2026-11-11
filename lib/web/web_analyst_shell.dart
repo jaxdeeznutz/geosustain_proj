@@ -24,7 +24,7 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
     widget.state.api,
     '/api/operator/inbox',
     'queue',
-  );
+  )..parameters = {'status': 'all', 'sort': 'newest'};
   String _lastInboxFilter = '';
   late final reviewMap = WebRecordController(
     widget.state.api,
@@ -132,10 +132,10 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
         _lastInboxFilter = signature;
         reviewInbox.query = uri.queryParameters['q'] ?? '';
         reviewInbox.filter({
-          'status': uri.queryParameters['status'] ?? 'pending',
+          'status': uri.queryParameters['status'] ?? 'all',
           'place': uri.queryParameters['place'] ?? '',
           'view': uri.queryParameters['view'] ?? 'all',
-          'sort': uri.queryParameters['sort'] ?? 'oldest',
+          'sort': uri.queryParameters['sort'] ?? 'newest',
           if (uri.queryParameters['start'] != null)
             'start': uri.queryParameters['start']!,
           if (uri.queryParameters['end'] != null)
@@ -143,7 +143,7 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
         });
       }
     } else if (!reviewInbox.loaded && !reviewInbox.loading) {
-      reviewInbox.filter({'status': 'pending'});
+      reviewInbox.filter({'status': 'all', 'sort': 'newest'});
     }
   }
 

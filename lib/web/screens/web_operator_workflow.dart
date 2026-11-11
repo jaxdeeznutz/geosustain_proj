@@ -1,5 +1,45 @@
 part of '../../main.dart';
 
+void _showReviewToast(BuildContext context, String message) {
+  final overlay = Overlay.of(context, rootOverlay: true);
+  late final OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (context) => Positioned(
+      top: 22,
+      right: 22,
+      child: SafeArea(
+        child: Material(
+          elevation: 12,
+          color: const Color(0xFF075C36),
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 10),
+                Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  overlay.insert(entry);
+  Future<void>.delayed(const Duration(seconds: 3), () {
+    entry.remove();
+    entry.dispose();
+  });
+}
+
 Future<void> _exportOperatorReport(
   BuildContext context,
   Map<String, dynamic> data, {
@@ -890,12 +930,9 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
                         await action('notes', {'notes': advisory.text.trim()});
                         if (context.mounted && error == null) {
                           advisory.clear();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Advisory note sent to the farmer.',
-                              ),
-                            ),
+                          _showReviewToast(
+                            context,
+                            'Advisory note sent to the farmer.',
                           );
                         }
                       },
@@ -1754,10 +1791,12 @@ class _FarmerReviewCasesPageState extends State<FarmerReviewCasesPage> {
 class FarmerReviewResponsePage extends StatefulWidget {
   final AnalysisState state;
   final int caseId;
+  final String? farmName;
   const FarmerReviewResponsePage({
     super.key,
     required this.state,
     required this.caseId,
+    this.farmName,
   });
   @override
   State<FarmerReviewResponsePage> createState() =>
@@ -1814,9 +1853,22 @@ class _FarmerReviewResponsePageState extends State<FarmerReviewResponsePage> {
   @override
   Widget build(BuildContext context) {
     final c = analysisMapValue(data?['case']);
+    final analysis = analysisMapValue(data?['analysis']);
+    final name =
+        '${analysis['farm_name'] ?? analysis['farm_name_snapshot'] ?? widget.farmName ?? ''}'
+            .trim();
+    final events = analysisListValue(
+      data?['events'],
+    ).map(analysisMapValue).toList();
+    final status = '${c['status'] ?? 'pending'}';
+    final accent = status == 'verified'
+        ? const Color(0xFF087B42)
+        : status == 'rejected'
+        ? const Color(0xFFC83838)
+        : const Color(0xFF9A6500);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Review case #${widget.caseId}'),
+        title: Text(name.isEmpty ? 'Analyst review' : name),
         actions: [
           IconButton(
             tooltip: 'Refresh case',
@@ -1826,34 +1878,46 @@ class _FarmerReviewResponsePageState extends State<FarmerReviewResponsePage> {
         ],
       ),
       body: ListView(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         children: [
           if (loading || busy) const LinearProgressIndicator(),
           if (error != null)
             Text(error!, style: const TextStyle(color: Colors.red)),
           if (data != null) ...[
-            Text(
-              reviewLabel(c['status']),
-              style: Theme.of(context).textTheme.headlineSmall,
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: .12),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    status == 'verified'
+                        ? Icons.check_circle
+                        : status == 'rejected'
+                        ? Icons.cancel
+                        : Icons.hourglass_top,
+                    color: accent,
+                    size: 30,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    reviewLabel(c['status']),
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.w800,
+                      color: accent,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            for (final e in analysisListValue(
-              data!['events'],
-            ).map(analysisMapValue))
-              ListTile(
-                title: Text(reviewLabel(e['kind'])),
-                subtitle: Text(
-                  [
-                    if ('${e['actor_name'] ?? ''}'.trim().isNotEmpty)
-                      'By ${e['actor_name']}',
-                    if ('${e['reason'] ?? ''}'.trim().isNotEmpty)
-                      'Reason: ${e['reason']}',
-                    if ('${e['notes'] ?? ''}'.trim().isNotEmpty)
-                      '${e['notes']}',
-                    if (analysisMapValue(e['checklist']).isNotEmpty)
-                      'Checks: ${analysisMapValue(e['checklist']).entries.map((entry) => '${entry.key}: ${entry.value}').join(', ')}',
-                    analysisDateText(e['created_at']),
-                  ].join('\n'),
-                ),
+            const SizedBox(height: 18),
+            for (var index = 0; index < events.length; index++)
+              _FarmerReviewEvent(
+                event: events[index],
+                last: index == events.length - 1,
               ),
             if (c['status'] == 'needs_information' && c['farm_id'] == null)
               const Text(
@@ -1955,6 +2019,133 @@ class _FarmerReviewResponsePageState extends State<FarmerReviewResponsePage> {
               ),
             ],
           ],
+        ],
+      ),
+    );
+  }
+}
+
+class _FarmerReviewEvent extends StatelessWidget {
+  final Map<String, dynamic> event;
+  final bool last;
+  const _FarmerReviewEvent({required this.event, required this.last});
+
+  @override
+  Widget build(BuildContext context) {
+    final kind = '${event['kind'] ?? ''}';
+    final accepted = kind == 'verified';
+    final color = accepted ? const Color(0xFF087B42) : const Color(0xFF6B7C72);
+    final checks = analysisMapValue(event['checklist']);
+    final note = '${event['notes'] ?? ''}'.trim();
+    final reason = '${event['reason'] ?? ''}'.trim();
+    final actor = '${event['actor_name'] ?? ''}'.trim();
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          SizedBox(
+            width: 28,
+            child: Column(
+              children: [
+                Icon(
+                  accepted ? Icons.check_circle : Icons.radio_button_checked,
+                  color: color,
+                  size: 22,
+                ),
+                if (!last)
+                  Expanded(
+                    child: Container(width: 2, color: const Color(0xFF9BD8AE)),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 9),
+          Expanded(
+            child: Card(
+              margin: const EdgeInsets.only(bottom: 14),
+              color: accepted ? const Color(0xFFF2FBF4) : null,
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          accepted
+                              ? Icons.fact_check_outlined
+                              : Icons.description_outlined,
+                          color: color,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            reviewLabel(kind),
+                            style: const TextStyle(
+                              fontSize: 17,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (actor.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 5),
+                        child: Text('By $actor'),
+                      ),
+                    if (reason.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text('Reason: $reason'),
+                      ),
+                    if (note.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 8),
+                        child: Text(note),
+                      ),
+                    if (checks.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 10),
+                        child: ExpansionTile(
+                          tilePadding: EdgeInsets.zero,
+                          title: const Text(
+                            'Checks',
+                            style: TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          children: [
+                            for (final entry in checks.entries)
+                              Row(
+                                children: [
+                                  Icon(
+                                    entry.value == true
+                                        ? Icons.check_box
+                                        : Icons.check_box_outline_blank,
+                                    color: color,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 7),
+                                  Expanded(
+                                    child: Text(entry.key.replaceAll('_', ' ')),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                    Text(
+                      analysisDateText(event['created_at']),
+                      style: const TextStyle(
+                        color: Colors.black54,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
         ],
       ),
     );
