@@ -38,6 +38,7 @@ import 'spatial_pdf.dart';
 import 'local_explanation.dart';
 import 'local_explanation_pdf.dart';
 import 'push_notifications.dart';
+import 'firebase_runtime.dart';
 import 'federated_identity.dart';
 import 'web_build_identity.dart';
 import 'web/widgets/aligned_cards.dart';
@@ -107,6 +108,7 @@ part 'web/screens/web_operator_workflow.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await FirebaseRuntime.loadBundledConfig();
   if (kIsWeb) {
     // Keep the browser control tree available to keyboard/screen-reader users.
     webSemanticsHandles.add(SemanticsBinding.instance.ensureSemantics());
@@ -1466,6 +1468,7 @@ class AnalysisState extends ChangeNotifier {
   };
   bool loading = false;
   bool weatherLoading = false;
+  bool analysisMinimized = false;
   String loadingMessage = 'Preparing analysis...';
   Timer? _loadingTimer;
   Timer? _weatherRefreshTimer;
@@ -1553,6 +1556,7 @@ class AnalysisState extends ChangeNotifier {
   void _startLoadingFlow() {
     _loadingTimer?.cancel();
     loading = true;
+    analysisMinimized = false;
     analysisError = null;
     loadingMessage = 'Analyzing your land. This may take a few minutes…';
     notifyListeners();
@@ -2030,8 +2034,7 @@ class AnalysisState extends ChangeNotifier {
       '${currentUser?['role'] ?? currentUser?['account_type'] ?? 'unknown'}'
           .trim()
           .toLowerCase();
-  String userRole() =>
-      isAnalystRole ? 'Agricultural Planning Analyst' : 'Farmer Account';
+  String userRole() => isAnalystRole ? 'Analyst' : 'Farmer Account';
 
   bool get isSuperAdmin =>
       accountRole == 'super_admin' || accountRole == 'admin';
@@ -2669,8 +2672,76 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
   late final AnalysisState state;
   int index = 0;
   DialogRoute<void>? _analysisDialog;
+  OverlayEntry? _analysisBubble;
   Timer? _unreadRefreshTimer;
   bool _analysisDialogHidden = false;
+  bool _wasAnalyzing = false;
+
+  void _removeAnalysisBubble() {
+    _analysisBubble?.remove();
+    _analysisBubble?.dispose();
+    _analysisBubble = null;
+  }
+
+  void _showAnalysisBubble() {
+    if (_analysisBubble != null || !mounted) return;
+    _analysisBubble = OverlayEntry(
+      builder: (_) => Positioned(
+        right: 18,
+        bottom: 100,
+        child: SafeArea(
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(28),
+            color: green,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(28),
+              onTap: () {
+                _removeAnalysisBubble();
+                _analysisDialogHidden = false;
+                state.analysisMinimized = false;
+                _syncAnalysisDialog();
+              },
+              child: const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 9),
+                    Text(
+                      'Analyzing farm',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    Overlay.of(context, rootOverlay: true).insert(_analysisBubble!);
+  }
+
+  void _minimizeAnalysis() {
+    _analysisDialogHidden = true;
+    state.analysisMinimized = true;
+    final active = _analysisDialog;
+    _analysisDialog = null;
+    active?.navigator?.removeRoute(active);
+    _showAnalysisBubble();
+  }
 
   void _openReview(int id) {
     if (!mounted) return;
@@ -2684,7 +2755,33 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
   void _syncAnalysisDialog() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
-      if (!state.loading) _analysisDialogHidden = false;
+      if (!state.loading) {
+        _removeAnalysisBubble();
+        if (_wasAnalyzing && _analysisDialogHidden) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                state.result != null
+                    ? 'Land analysis completed. Your results are ready.'
+                    : 'Land analysis finished. Check the result or try again.',
+              ),
+              action: state.result == null
+                  ? null
+                  : SnackBarAction(
+                      label: 'View results',
+                      onPressed: () {
+                        Navigator.of(
+                          context,
+                        ).popUntil((route) => route.isFirst);
+                        selectTab(2);
+                      },
+                    ),
+            ),
+          );
+        }
+        _analysisDialogHidden = false;
+      }
+      _wasAnalyzing = state.loading;
       if (state.loading && _analysisDialog == null && !_analysisDialogHidden) {
         final route = DialogRoute<void>(
           context: context,
@@ -2694,29 +2791,9 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
             canPop: false,
             child: ListenableBuilder(
               listenable: state,
-              builder: (_, _) => Stack(
-                children: [
-                  FullscreenAnalysisOverlay(message: state.loadingMessage),
-                  Positioned(
-                    bottom: 32,
-                    left: 24,
-                    right: 24,
-                    child: SafeArea(
-                      child: FilledButton(
-                        onPressed: () {
-                          _analysisDialogHidden = true;
-                          final active = _analysisDialog;
-                          _analysisDialog = null;
-                          active?.navigator?.removeRoute(active);
-                          message(
-                            'Analysis continues. Its saved result will be available in History.',
-                          );
-                        },
-                        child: const Text('Continue in background'),
-                      ),
-                    ),
-                  ),
-                ],
+              builder: (_, _) => FullscreenAnalysisOverlay(
+                message: state.loadingMessage,
+                onMinimize: _minimizeAnalysis,
               ),
             ),
           ),
@@ -2835,6 +2912,7 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
     PushNotifications.onReviewOpened = null;
     PushNotifications.onReviewReceived = null;
     state.removeListener(_syncAnalysisDialog);
+    _removeAnalysisBubble();
     _unreadRefreshTimer?.cancel();
     final dialog = _analysisDialog;
     _analysisDialog = null;
@@ -3059,56 +3137,172 @@ class AccessDeniedPage extends StatelessWidget {
 
 class FullscreenAnalysisOverlay extends StatelessWidget {
   final String message;
-  const FullscreenAnalysisOverlay({super.key, required this.message});
+  final VoidCallback onMinimize;
+  const FullscreenAnalysisOverlay({
+    super.key,
+    required this.message,
+    required this.onMinimize,
+  });
 
   @override
-  Widget build(BuildContext context) => Positioned.fill(
-    child: Material(
-      color: Colors.black54,
-      child: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 360),
-              padding: const EdgeInsets.all(28),
-              decoration: BoxDecoration(
-                color: geoPanelColor(context, Colors.white),
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  CircularProgressIndicator(
-                    color: Theme.of(context).colorScheme.primary,
-                    semanticsLabel: 'Farm analysis in progress',
+  Widget build(BuildContext context) => Stack(
+    children: [
+      Positioned.fill(
+        child: Material(
+          color: Colors.black54,
+          child: SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Container(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: geoPanelColor(context, Colors.white),
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                  const SizedBox(height: 24),
-                  Text(
-                    'Analyzing your farm',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 23,
-                      fontWeight: FontWeight.bold,
-                      color: Theme.of(context).colorScheme.primary,
-                    ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: double.infinity,
+                        height: 125,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFFE8F7EB), Color(0xFFAFE3C0)],
+                          ),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Stack(
+                          children: [
+                            Positioned(
+                              top: 14,
+                              left: 22,
+                              child: Icon(
+                                Icons.satellite_alt_rounded,
+                                size: 43,
+                                color: green,
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 4,
+                              right: 24,
+                              child: Icon(
+                                Icons.landscape_rounded,
+                                size: 100,
+                                color: Color(0xFF5CB583),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 12,
+                              left: 30,
+                              child: Icon(
+                                Icons.crop_free_rounded,
+                                size: 72,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Analyzing your farm',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 23,
+                          fontWeight: FontWeight.bold,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      Semantics(
+                        liveRegion: true,
+                        child: Text(message, textAlign: TextAlign.center),
+                      ),
+                      const SizedBox(height: 20),
+                      const _AnalysisStage(
+                        icon: Icons.check_circle,
+                        label: 'Processing boundary',
+                        done: true,
+                      ),
+                      const _AnalysisStage(
+                        icon: Icons.radio_button_checked,
+                        label: 'Analyzing land and crops',
+                        active: true,
+                      ),
+                      const _AnalysisStage(
+                        icon: Icons.radio_button_unchecked,
+                        label: 'Preparing results',
+                      ),
+                      const SizedBox(height: 12),
+                      const LinearProgressIndicator(
+                        semanticsLabel: 'Analysis in progress',
+                      ),
+                      const SizedBox(height: 20),
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: softGreen,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.info_outline, color: green),
+                            SizedBox(width: 10),
+                            Expanded(
+                              child: Text(
+                                'You can minimize this while analysis runs. We will notify you when it finishes.',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                      TextButton.icon(
+                        onPressed: onMinimize,
+                        icon: const Icon(Icons.remove),
+                        label: const Text('Minimize'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 14),
-                  Semantics(
-                    liveRegion: true,
-                    child: Text(message, textAlign: TextAlign.center),
-                  ),
-                  const SizedBox(height: 18),
-                  const Text(
-                    'Please keep this screen open. Your results will appear automatically.',
-                    textAlign: TextAlign.center,
-                  ),
-                ],
+                ),
               ),
             ),
           ),
         ),
       ),
+    ],
+  );
+}
+
+class _AnalysisStage extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool done, active;
+  const _AnalysisStage({
+    required this.icon,
+    required this.label,
+    this.done = false,
+    this.active = false,
+  });
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Row(
+      children: [
+        Icon(icon, color: done || active ? green : Colors.grey, size: 24),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: active ? green : null,
+              fontWeight: active ? FontWeight.w700 : null,
+            ),
+          ),
+        ),
+      ],
     ),
   );
 }

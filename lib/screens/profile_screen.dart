@@ -125,7 +125,8 @@ class ProfilePage extends StatelessWidget {
                             style: TextButton.styleFrom(
                               foregroundColor: Colors.white,
                             ),
-                            onPressed: edit,
+                            onPressed: () =>
+                                _open(context, const LocationGuidancePage()),
                             icon: const Icon(
                               Icons.location_on_outlined,
                               size: 17,
@@ -193,38 +194,26 @@ class ProfilePage extends StatelessWidget {
               tile(
                 Icons.location_on_outlined,
                 'Location',
-                'Set your default location',
-                edit,
+                'Manage GPS location access',
+                () => _open(context, const LocationGuidancePage()),
               ),
               tile(
                 Icons.notifications_none,
                 'Notifications',
                 'Manage your notification preferences',
-                () => _open(context, const SettingsPage()),
+                () => _open(
+                  context,
+                  const SettingsPage(section: SettingsSection.notifications),
+                ),
               ),
               tile(
                 Icons.dark_mode_outlined,
                 'Appearance',
                 'Light or dark mode',
-                () => _open(context, const SettingsPage()),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          ProfileSection(
-            title: 'Analysis Library',
-            children: [
-              tile(
-                Icons.bookmark_outline,
-                'Saved Analysis',
-                'View saved land and crop analysis records',
-                () => _open(context, SavedAnalysesPage(state: state)),
-              ),
-              tile(
-                Icons.description_outlined,
-                'Reports',
-                'Open generated land suitability reports',
-                () => _open(context, ReportsListPage(state: state)),
+                () => _open(
+                  context,
+                  const SettingsPage(section: SettingsSection.appearance),
+                ),
               ),
             ],
           ),
@@ -530,8 +519,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(
-                        role == 'Agricultural Planning Analyst'
-                            ? 'Agricultural Planning Analyst: view reports, saved analyses, and planning insights for independent environmental monitoring.'
+                        role == 'Analyst'
+                            ? 'Analyst: view reports, saved analyses, and planning insights for independent environmental monitoring.'
                             : 'Farmer: analyze land, get crop recommendations, save reports, and view weather advisories and review decisions.',
                         style: const TextStyle(
                           color: darkGreen,

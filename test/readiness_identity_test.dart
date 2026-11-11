@@ -69,59 +69,49 @@ void main() {
     },
   );
 
-  testWidgets(
-    'profile phone saves without claiming verification when provider is unavailable',
-    (t) async {
-      SharedPreferences.setMockInitialValues({
-        'token': 'synthetic-session',
-        'account_id': '44',
-      });
-      Map<String, dynamic>? stored;
-      final api = ApiService(
-        client: MockClient((request) async {
-          expect(request.method, 'PUT');
-          stored = jsonDecode(request.body) as Map<String, dynamic>;
-          return http.Response(
-            jsonEncode({
-              'user': {
-                'id': 44,
-                'username': 'Fixture',
-                'role': 'farmer',
-                'phone_number': stored!['phone_number'],
-                'phone_verified': false,
-              },
-            }),
-            200,
-          );
-        }),
-      );
-      final state = AnalysisState(api: api)
-        ..currentUser = {'id': 44, 'username': 'Fixture', 'role': 'farmer'};
-      addTearDown(state.dispose);
-      await t.pumpWidget(
-        MaterialApp(
-          home: Scaffold(
-            body: ListView(children: [IdentityProfileSection(state: state)]),
-          ),
+  testWidgets('profile phone saves without SMS verification', (t) async {
+    SharedPreferences.setMockInitialValues({
+      'token': 'synthetic-session',
+      'account_id': '44',
+    });
+    Map<String, dynamic>? stored;
+    final api = ApiService(
+      client: MockClient((request) async {
+        expect(request.method, 'PUT');
+        stored = jsonDecode(request.body) as Map<String, dynamic>;
+        return http.Response(
+          jsonEncode({
+            'user': {
+              'id': 44,
+              'username': 'Fixture',
+              'role': 'farmer',
+              'phone_number': stored!['phone_number'],
+              'phone_verified': false,
+            },
+          }),
+          200,
+        );
+      }),
+    );
+    final state = AnalysisState(api: api)
+      ..currentUser = {'id': 44, 'username': 'Fixture', 'role': 'farmer'};
+    addTearDown(state.dispose);
+    await t.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ListView(children: [IdentityProfileSection(state: state)]),
         ),
-      );
-      await t.enterText(find.byType(TextField).first, '+639171234567');
-      await t.tap(find.text('Save phone number'));
-      await t.pumpAndSettle();
-      expect(stored?['phone_number'], '+639171234567');
-      expect(state.currentUser?['phone_verified'], false);
-      expect(find.text('Not verified'), findsOneWidget);
-      expect(
-        t
-            .widget<OutlinedButton>(
-              find.widgetWithText(OutlinedButton, 'Send SMS code'),
-            )
-            .onPressed,
-        isNull,
-      );
-      expect(t.takeException(), isNull);
-    },
-  );
+      ),
+    );
+    await t.enterText(find.byType(TextField).first, '+639171234567');
+    await t.tap(find.text('Save phone number'));
+    await t.pumpAndSettle();
+    expect(stored?['phone_number'], '+639171234567');
+    expect(state.currentUser?['phone_verified'], false);
+    expect(find.text('Phone number saved.'), findsOneWidget);
+    expect(find.text('Send SMS code'), findsNothing);
+    expect(t.takeException(), isNull);
+  });
 
   testWidgets(
     'email recovery resets password without creating a login session',

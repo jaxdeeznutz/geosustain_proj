@@ -1959,7 +1959,7 @@ def require_planner(user=Depends(get_api_user)):
     if role not in ("analyst", "planner", "agricultural_planning_analyst"):
         raise HTTPException(
             status_code=403,
-            detail="Agricultural Planning Analyst access required.",
+            detail="Analyst access required.",
         )
     return user
 

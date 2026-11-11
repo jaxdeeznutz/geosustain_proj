@@ -1,15 +1,46 @@
+import 'dart:convert';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart' show rootBundle;
 
 class FirebaseRuntime {
-  static const apiKey = String.fromEnvironment('FIREBASE_API_KEY');
-  static const projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
-  static const senderId = String.fromEnvironment('FIREBASE_SENDER_ID');
-  static const webAppId = String.fromEnvironment('FIREBASE_WEB_APP_ID');
-  static const androidAppId = String.fromEnvironment('FIREBASE_ANDROID_APP_ID');
-  static const googleWebClientId = String.fromEnvironment(
-    'GOOGLE_WEB_CLIENT_ID',
+  static Map<String, dynamic> _bundled = {};
+  static String _value(String key, String supplied) =>
+      supplied.isNotEmpty ? supplied : '${_bundled[key] ?? ''}';
+  static String get apiKey => _value(
+    'FIREBASE_API_KEY',
+    const String.fromEnvironment('FIREBASE_API_KEY'),
   );
+  static String get projectId => _value(
+    'FIREBASE_PROJECT_ID',
+    const String.fromEnvironment('FIREBASE_PROJECT_ID'),
+  );
+  static String get senderId => _value(
+    'FIREBASE_SENDER_ID',
+    const String.fromEnvironment('FIREBASE_SENDER_ID'),
+  );
+  static String get webAppId =>
+      const String.fromEnvironment('FIREBASE_WEB_APP_ID');
+  static String get androidAppId => _value(
+    'FIREBASE_ANDROID_APP_ID',
+    const String.fromEnvironment('FIREBASE_ANDROID_APP_ID'),
+  );
+  static String get googleWebClientId => _value(
+    'GOOGLE_WEB_CLIENT_ID',
+    const String.fromEnvironment('GOOGLE_WEB_CLIENT_ID'),
+  );
+  static Future<void> loadBundledConfig() async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
+    try {
+      final data = jsonDecode(
+        await rootBundle.loadString('deployment/firebase-android.public.json'),
+      );
+      if (data is Map<String, dynamic>) _bundled = data;
+    } catch (_) {
+      _bundled = {};
+    }
+  }
+
   static bool get configured =>
       apiKey.isNotEmpty &&
       projectId.isNotEmpty &&
@@ -23,8 +54,15 @@ class FirebaseRuntime {
     appId: kIsWeb ? webAppId : androidAppId,
     messagingSenderId: senderId,
     projectId: projectId,
-    authDomain: const String.fromEnvironment('FIREBASE_AUTH_DOMAIN').isNotEmpty
-        ? const String.fromEnvironment('FIREBASE_AUTH_DOMAIN')
+    authDomain:
+        _value(
+          'FIREBASE_AUTH_DOMAIN',
+          const String.fromEnvironment('FIREBASE_AUTH_DOMAIN'),
+        ).isNotEmpty
+        ? _value(
+            'FIREBASE_AUTH_DOMAIN',
+            const String.fromEnvironment('FIREBASE_AUTH_DOMAIN'),
+          )
         : '$projectId.firebaseapp.com',
   );
   static Future<FirebaseApp>? _default;

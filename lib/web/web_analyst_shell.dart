@@ -351,7 +351,7 @@ class _WebSidebar extends StatelessWidget {
                           ),
                         ),
                         const Text(
-                          'Agricultural Planning Analyst',
+                          'Analyst',
                           style: TextStyle(
                             fontFamily: 'Roboto',
                             color: Color(0xFFCEE3DB),

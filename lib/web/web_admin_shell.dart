@@ -577,7 +577,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
           'Registered farmers',
         ),
         _metric(
-          'Planning Analysts',
+          'Analysts',
           stats['planning_analysts'],
           Icons.bar_chart_rounded,
           'Registered analysts',
@@ -879,7 +879,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
   static const _roles = {
     'all': 'All roles',
     'farmer': 'Farmer',
-    'agricultural_planning_analyst': 'Planning Analyst',
+    'agricultural_planning_analyst': 'Analyst',
     'super_admin': 'Super Administrator',
   };
 
@@ -986,7 +986,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       children: [
         _header(
           'User Management',
-          'Manage Farmers, Agricultural Planning Analysts, and Super Administrators.',
+          'Manage Farmers, Analysts, and Super Administrators.',
           Icons.people_alt_rounded,
         ),
         const SizedBox(height: 20),
@@ -1004,7 +1004,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
             'Farmer accounts',
           ),
           _metric(
-            'Planning Analysts',
+            'Analysts',
             stats['planning_analysts'],
             Icons.bar_chart_rounded,
             'Analysis team',

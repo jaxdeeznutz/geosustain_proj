@@ -231,7 +231,7 @@ class _WebPortalFrameState extends State<WebPortalFrame> {
                       ),
                     ),
                     Text(
-                      'Agricultural Planning Analyst',
+                      'Analyst',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(

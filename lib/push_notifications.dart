@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,13 +13,10 @@ class PushNotifications {
   static const androidAppId = String.fromEnvironment('FIREBASE_ANDROID_APP_ID');
   static const vapidKey = String.fromEnvironment('FIREBASE_WEB_VAPID_KEY');
   static bool get configured =>
-      apiKey.isNotEmpty &&
-      projectId.isNotEmpty &&
-      senderId.isNotEmpty &&
+      FirebaseRuntime.configured &&
       (kIsWeb
-          ? webAppId.isNotEmpty && vapidKey.isNotEmpty
-          : androidAppId.isNotEmpty &&
-                defaultTargetPlatform == TargetPlatform.android);
+          ? vapidKey.isNotEmpty
+          : defaultTargetPlatform == TargetPlatform.android);
   static StreamSubscription<String>? _refresh;
   static StreamSubscription<RemoteMessage>? _opened;
   static StreamSubscription<RemoteMessage>? _foreground;
@@ -55,17 +51,7 @@ class PushNotifications {
         'Push setup is incomplete. Ask the project administrator to configure Firebase.',
       );
     }
-    if (!Firebase.apps.any((app) => app.name == '[DEFAULT]')) {
-      await Firebase.initializeApp(
-        options: FirebaseOptions(
-          apiKey: apiKey,
-          appId: kIsWeb ? webAppId : androidAppId,
-          messagingSenderId: senderId,
-          projectId: projectId,
-          authDomain: FirebaseRuntime.options.authDomain,
-        ),
-      );
-    }
+    await FirebaseRuntime.initialize();
   }
 
   static Future<bool> enabled() async {

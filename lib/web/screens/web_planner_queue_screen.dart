@@ -683,7 +683,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Add a rejection reason in Planning Analyst Notes first.',
+            'Add a rejection reason in Analyst Notes first.',
           ),
         ),
       );
@@ -791,7 +791,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
             .toLowerCase();
     final currentRoleLabel =
         (currentRoleRaw == 'analyst' || currentRoleRaw == 'planner')
-        ? 'Agricultural Planning Analyst'
+        ? 'Analyst'
         : 'Farmer';
     final ownerRoleRaw = '${r['farmer_role'] ?? r['owner_role'] ?? ''}'
         .trim()
@@ -1219,7 +1219,7 @@ class _PlannerReviewDialogState extends State<_PlannerReviewDialog> {
                           Expanded(
                             flex: 4,
                             child: _ReviewSection(
-                              title: 'Planning Analyst Notes',
+                              title: 'Analyst Notes',
                               icon: Icons.note_alt_outlined,
                               child: status == 'pending'
                                   ? TextField(

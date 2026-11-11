@@ -345,6 +345,150 @@ class _NotificationsPageState extends State<NotificationsPage> {
       onTap: () => _open(row, device: device),
     ),
   );
+
+  DateTime? _eventTime(Map<String, dynamic> row) =>
+      DateTime.tryParse('${row['created_at'] ?? ''}')?.toLocal();
+
+  String _dayLabel(DateTime? value) {
+    if (value == null) return 'Earlier';
+    final today = DateTime.now();
+    final day = DateTime(value.year, value.month, value.day);
+    final difference = DateTime(
+      today.year,
+      today.month,
+      today.day,
+    ).difference(day).inDays;
+    if (difference == 0) return 'Today';
+    if (difference == 1) return 'Yesterday';
+    const months = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    return '${months[value.month - 1]} ${value.day}, ${value.year}';
+  }
+
+  Widget _mobileTile(Map<String, dynamic> row, {bool device = false}) {
+    final kind = '${row['event_type']}';
+    final icon = switch (kind) {
+      'analysis_ready' || 'analysis_partial' => Icons.check_circle_outline,
+      'analysis_failed' || 'needs_information' => Icons.info_outline,
+      'review' ||
+      'submitted' ||
+      'submission_received' => Icons.description_outlined,
+      _ => Icons.notifications_none,
+    };
+    final tint = kind == 'analysis_failed' || kind == 'needs_information'
+        ? const Color(0xFFB98215)
+        : green;
+    final timestamp = _eventTime(row);
+    final time = timestamp == null
+        ? ''
+        : '${timestamp.hour % 12 == 0 ? 12 : timestamp.hour % 12}:${timestamp.minute.toString().padLeft(2, '0')} ${timestamp.hour < 12 ? 'AM' : 'PM'}';
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 9),
+      child: Material(
+        color: row['read_at'] == null
+            ? const Color(0xFFEAF7EF)
+            : Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: opening ? null : () => _open(row, device: device),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                CircleAvatar(
+                  backgroundColor: tint.withValues(alpha: .12),
+                  child: Icon(icon, color: tint),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        device
+                            ? 'Farm synced: ${row['farm_name']}'
+                            : title(row),
+                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        device
+                            ? 'Ready for online analysis.'
+                            : '${row['message'] ?? ''}',
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 5),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(time, style: Theme.of(context).textTheme.labelSmall),
+                    if (row['read_at'] == null) ...[
+                      const SizedBox(height: 8),
+                      const CircleAvatar(radius: 4, backgroundColor: green),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  List<Widget> _mobileEvents() {
+    final events =
+        <({Map<String, dynamic> row, bool device})>[
+          for (final row in rows) (row: row, device: false),
+          if (offset == 0)
+            for (final row in local) (row: row, device: true),
+        ]..sort(
+          (a, b) => (_eventTime(b.row) ?? DateTime(1970)).compareTo(
+            _eventTime(a.row) ?? DateTime(1970),
+          ),
+        );
+    final widgets = <Widget>[];
+    String? lastDay;
+    for (final event in events) {
+      final day = _dayLabel(_eventTime(event.row));
+      if (day != lastDay) {
+        widgets.add(
+          Padding(
+            padding: const EdgeInsets.fromLTRB(4, 20, 0, 12),
+            child: Text(
+              day,
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
+        );
+        lastDay = day;
+      }
+      widgets.add(_mobileTile(event.row, device: event.device));
+    }
+    return widgets;
+  }
+
   Widget _webActivity(BuildContext context) {
     final empty =
         !loading &&
@@ -553,51 +697,58 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 ),
                 child: const Text('My review cases and corrections'),
               ),
-            Semantics(
-              liveRegion: true,
-              child: Text(
-                '$unread unread notifications',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-            ),
-            Wrap(
-              spacing: 12,
-              crossAxisAlignment: WrapCrossAlignment.center,
+            Row(
               children: [
-                FilterChip(
-                  label: const Text('Unread only'),
-                  selected: unreadOnly,
-                  onSelected: loading
-                      ? null
-                      : (value) {
-                          setState(() => unreadOnly = value);
-                          _load(page: 0);
-                        },
+                Expanded(
+                  child: Text(
+                    'Notifications',
+                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
                 ),
-                DropdownButton<String>(
-                  value: type,
-                  items: [
-                    for (final entry in labels.entries)
-                      DropdownMenuItem(
-                        value: entry.key,
-                        child: Text(entry.value),
-                      ),
-                  ],
-                  onChanged: loading
-                      ? null
-                      : (value) {
-                          setState(() => type = value!);
-                          _load(page: 0);
-                        },
-                ),
-                TextButton(
+                TextButton.icon(
                   onPressed: loading || opening || unread == 0
                       ? null
                       : _markAll,
-                  child: const Text('Mark all as read'),
+                  icon: const Icon(Icons.mark_email_read_outlined, size: 18),
+                  label: const Text('Mark all read'),
+                ),
+                PopupMenuButton<String>(
+                  tooltip: 'Notification options',
+                  onSelected: (choice) {
+                    if (choice == 'unread') {
+                      setState(() => unreadOnly = !unreadOnly);
+                      _load(page: 0);
+                    } else if (choice == 'settings') {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const SettingsPage(
+                            section: SettingsSection.notifications,
+                          ),
+                        ),
+                      );
+                    }
+                  },
+                  itemBuilder: (_) => [
+                    PopupMenuItem(
+                      value: 'unread',
+                      child: Text(unreadOnly ? 'Show all' : 'Unread only'),
+                    ),
+                    const PopupMenuItem(
+                      value: 'settings',
+                      child: Text('Notification settings'),
+                    ),
+                  ],
                 ),
               ],
             ),
+            if (unread > 0)
+              Text(
+                '$unread unread',
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
             if (loading) const LinearProgressIndicator(),
             if (error != null)
               Card(
@@ -616,11 +767,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   'No notifications match this view. Analysis, submission, review and farm-sync activity appear here.',
                 ),
               ),
-            if (error == null) ...[
-              for (final row in rows) tile(row),
-              if (offset == 0)
-                for (final row in local) tile(row, device: true),
-            ],
+            if (error == null) ...[..._mobileEvents()],
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

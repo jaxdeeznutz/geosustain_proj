@@ -11,19 +11,15 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
   late final phone = TextEditingController(
     text: '${widget.state.currentUser?['phone_number'] ?? ''}',
   );
-  final code = TextEditingController(), password = TextEditingController();
-  PhoneProofChallenge? challenge;
-  String? ticket, message, phoneError, codeError;
+  final password = TextEditingController();
+  String? message, phoneError;
   bool busy = false;
-  DateTime? resendAt;
   String get owner => '${widget.state.currentUser?['id']}';
 
   @override
   void dispose() {
     phone.dispose();
-    code.dispose();
     password.dispose();
-    unawaited(challenge?.close().catchError((_) {}) ?? Future<void>.value());
     super.dispose();
   }
 
@@ -81,70 +77,7 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
       update(user, expectedOwner);
       if (mounted) {
         setState(() {
-          ticket = null;
-          message = 'Phone number saved. A changed number needs verification.';
-        });
-      }
-    });
-  }
-
-  Future<void> sendCode() async {
-    if (!validPhone()) return;
-    if (resendAt != null && DateTime.now().isBefore(resendAt!)) {
-      setState(
-        () => message = 'Wait one minute before requesting another SMS code.',
-      );
-      return;
-    }
-    await action((expectedOwner) async {
-      final response = await widget.state.api.startPhoneVerification(
-        phone.text.trim(),
-      );
-      update(await widget.state.api.getMe(), expectedOwner);
-      final proof = await FirebaseIdentity.startPhone(phone.text.trim());
-      if (!mounted || owner != expectedOwner) {
-        await proof.close();
-        return;
-      }
-      setState(() {
-        challenge = proof;
-        ticket = '${response['ticket']}';
-        code.clear();
-        codeError = null;
-        resendAt = DateTime.now().add(const Duration(seconds: 60));
-        message = proof.automaticToken != null
-            ? 'Code received automatically. Tap Verify phone number.'
-            : 'Enter the code from your SMS message.';
-      });
-    });
-  }
-
-  Future<void> verifyPhone() async {
-    if (challenge == null || ticket == null) return;
-    if (challenge!.automaticToken == null &&
-        !RegExp(r'^[0-9]{6}$').hasMatch(code.text)) {
-      setState(() => codeError = 'Enter the six-digit SMS code.');
-      return;
-    }
-    await action((expectedOwner) async {
-      final token = await challenge!.confirm(code.text);
-      if (owner != expectedOwner) {
-        throw const ApiException(
-          409,
-          'Account changed. Start verification again.',
-        );
-      }
-      update(
-        await widget.state.api.finishPhoneVerification(ticket!, token),
-        expectedOwner,
-      );
-      await challenge!.close();
-      if (mounted) {
-        setState(() {
-          challenge = null;
-          ticket = null;
-          code.clear();
-          message = 'Phone number verified.';
+          message = 'Phone number saved.';
         });
       }
     });
@@ -182,18 +115,12 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
   @override
   Widget build(BuildContext context) {
     final user = widget.state.currentUser ?? {};
-    final verified =
-        user['phone_verified'] == true &&
-        phone.text.trim() == user['phone_number'];
     final linked = user['auth_provider'] == 'google';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Divider(height: 28),
-        Text(
-          'Account verification',
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
+        Text('Account details', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
         Text(
           user['email_verified'] == true
@@ -205,19 +132,12 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
           controller: phone,
           enabled: !busy,
           keyboardType: TextInputType.phone,
-          onChanged: (_) => setState(() {
-            ticket = null;
-            phoneError = null;
-            codeError = null;
-          }),
+          onChanged: (_) => setState(() => phoneError = null),
           decoration: InputDecoration(
             labelText: 'Phone number',
             hintText: '+639171234567',
             errorText: phoneError,
-            helperText: verified ? 'Verified number' : 'Not verified',
-            prefixIcon: Icon(
-              verified ? Icons.verified_outlined : Icons.phone_outlined,
-            ),
+            prefixIcon: const Icon(Icons.phone_outlined),
           ),
         ),
         Wrap(
@@ -227,34 +147,8 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
               onPressed: busy ? null : savePhone,
               child: const Text('Save phone number'),
             ),
-            OutlinedButton(
-              onPressed: busy || !FirebaseIdentity.configured ? null : sendCode,
-              child: const Text('Send SMS code'),
-            ),
           ],
         ),
-        if (!FirebaseIdentity.configured)
-          const Text(
-            'SMS verification is temporarily unavailable. You can still save your number.',
-          ),
-        if (ticket != null) ...[
-          TextField(
-            controller: code,
-            enabled: !busy,
-            keyboardType: TextInputType.number,
-            maxLength: 6,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            decoration: InputDecoration(
-              labelText: 'SMS verification code',
-              errorText: codeError,
-            ),
-            onChanged: (_) => setState(() => codeError = null),
-          ),
-          FilledButton(
-            onPressed: busy ? null : verifyPhone,
-            child: const Text('Verify phone number'),
-          ),
-        ],
         const SizedBox(height: 12),
         if (linked)
           const Text('Google sign-in is linked')

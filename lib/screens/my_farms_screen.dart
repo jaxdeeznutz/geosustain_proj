@@ -135,7 +135,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
       ),
     );
     if (!mounted) return;
-    if (analyzed == true) _onAnalyzed();
+    if (analyzed == true && !widget.state.analysisMinimized) _onAnalyzed();
     await _load();
   }
 
@@ -151,7 +151,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
     if (error != null) {
       setState(() => _error = error);
     } else {
-      _onAnalyzed();
+      if (!widget.state.analysisMinimized) _onAnalyzed();
     }
   }
 
@@ -479,7 +479,9 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
       _busy = false;
       _notice = error;
     });
-    if (error == null) Navigator.pop(context, true);
+    if (error == null && !widget.state.analysisMinimized) {
+      Navigator.pop(context, true);
+    }
   }
 
   Future<void> _openResult(Map<String, dynamic> record) async {
