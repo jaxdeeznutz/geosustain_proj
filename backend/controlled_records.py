@@ -11,6 +11,7 @@ import math
 import re
 from typing import Literal
 from urllib.parse import urlsplit
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, StrictBool, StrictInt, model_validator
 from psycopg2.extras import Json
@@ -30,6 +31,15 @@ class Conflict(ValueError):
     pass
 
 
+class UploadedEvidence(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    upload_id: UUID
+    filename: str = Field(min_length=1, max_length=120)
+    sha256: str = Field(pattern=r'^[0-9a-f]{64}$')
+    sheet: str = Field(min_length=1, max_length=31)
+    row: StrictInt = Field(ge=2, le=201)
+
+
 class RecordBody(BaseModel):
     model_config = ConfigDict(extra='forbid', allow_inf_nan=False)
     kind: Literal['crop_requirement', 'planting_calendar', 'environmental_source',
@@ -39,6 +49,7 @@ class RecordBody(BaseModel):
     title: str = Field(min_length=3, max_length=120)
     scope: Literal['Panabo City'] = 'Panabo City'
     evidence_url: str = Field(max_length=500)
+    source_file: UploadedEvidence | None = None
     reference: str = Field(min_length=3, max_length=300)
     method: str = Field(min_length=3, max_length=500)
     valid_from: date
@@ -49,7 +60,10 @@ class RecordBody(BaseModel):
 
     @model_validator(mode='after')
     def validate_document(self):
-        public_url(self.evidence_url)
+        if self.evidence_url:
+            public_url(self.evidence_url)
+        elif self.source_file is None:
+            raise ValueError('Provide an evidence URL or an uploaded Excel source.')
         if self.valid_until < self.valid_from:
             raise ValueError('Validity end must not precede its start.')
         if self.review_status == 'reviewed' and len(self.review_note.strip()) < 3:
@@ -130,7 +144,7 @@ def validate_payload(kind, key, payload):
 
 
 def document(body):
-    return body.model_dump(mode='json', exclude={'expected_revision'})
+    return body.model_dump(mode='json', exclude={'expected_revision'}, exclude_none=True)
 
 
 def digest(value):
@@ -145,6 +159,12 @@ def installed_model():
 
 
 def migrate(cur):
+    cur.execute('''CREATE TABLE IF NOT EXISTS controlled_excel_uploads (
+        id UUID PRIMARY KEY, uploaded_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
+        filename VARCHAR(120) NOT NULL, sha256 CHAR(64) NOT NULL, content BYTEA NOT NULL,
+        preview JSONB NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+        import_signature CHAR(64), import_result JSONB)''')
     cur.execute('''CREATE TABLE IF NOT EXISTS controlled_record_revisions (
         id BIGSERIAL PRIMARY KEY, kind TEXT NOT NULL, record_key TEXT NOT NULL,
         revision INTEGER NOT NULL CHECK (revision>0), document JSONB NOT NULL,
@@ -181,6 +201,11 @@ def create_revision(body, actor):
     import database as db
     doc = document(body)
     with db.get_conn() as conn, conn.cursor() as cur:
+        if body.source_file:
+            cur.execute('SELECT filename,sha256 FROM controlled_excel_uploads WHERE id=%s', (str(body.source_file.upload_id),))
+            source = cur.fetchone()
+            if not source or source['filename'] != body.source_file.filename or source['sha256'] != body.source_file.sha256:
+                raise ValueError('Uploaded source does not match a saved Excel file.')
         cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))', ('control:'+body.kind+':'+body.record_key,))
         cur.execute('SELECT COALESCE(MAX(revision),0) AS revision FROM controlled_record_revisions WHERE kind=%s AND record_key=%s', (body.kind, body.record_key))
         latest = cur.fetchone()['revision']
@@ -268,7 +293,8 @@ def attach_controlled_records(result, records):
             crop = next(c for c in rules if c.lower()==p['crop'])
             rules[crop][p['factor']] = {'optimal': [p['preferred_min'],p['preferred_max']],
                 'absolute': [p['absolute_min'],p['absolute_max']], 'classes': None,
-                'source': {'title': doc['title'], 'url': doc['evidence_url'], 'section': doc['reference'], 'scope': doc['scope']},
+                'source': {'title': doc['title'], 'url': doc['evidence_url'], 'section': doc['reference'], 'scope': doc['scope'],
+                           **({'source_file': deepcopy(doc['source_file'])} if doc.get('source_file') else {})},
                 'limitations': doc['method'], 'controlled_record_id': row['id'], 'controlled_revision': row['revision']}
         comparisons = {c['crop']: c for c in assess(result.get('environmental_measurements') or {}, requirements=rules)}
         for crop in result['crop_assessments']:

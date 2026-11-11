@@ -5,13 +5,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.3,
     "organic_matter_pct": 1.77,
-    "estimated_nitrogen_pct": 0.09,
+    "estimated_nitrogen_pct": 0.0885,
     "nitrogen_pct": null,
     "phosphorus_ppm": 61.47,
     "potassium_ppm": 1337.2,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 5,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -26,7 +26,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-01",
+    "source_workbook_nitrogen_pct": 0.09
   },
   {
     "id": "cagro-workbook-6",
@@ -34,13 +37,13 @@
     "location_name": "FARM 3, DAPCO",
     "soil_ph": 6.5,
     "organic_matter_pct": 1.14,
-    "estimated_nitrogen_pct": 0.06,
+    "estimated_nitrogen_pct": 0.057,
     "nitrogen_pct": null,
     "phosphorus_ppm": 6.41,
     "potassium_ppm": 978.0,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 6,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -55,7 +58,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-02",
+    "source_workbook_nitrogen_pct": 0.06
   },
   {
     "id": "cagro-workbook-7",
@@ -63,13 +69,13 @@
     "location_name": "PRK. CAIMITO, DATU ABDUL",
     "soil_ph": 6.4,
     "organic_matter_pct": 0.99,
-    "estimated_nitrogen_pct": 0.05,
+    "estimated_nitrogen_pct": 0.0495,
     "nitrogen_pct": null,
     "phosphorus_ppm": 6.55,
     "potassium_ppm": 1231.93,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 7,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -84,7 +90,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-03",
+    "source_workbook_nitrogen_pct": 0.05
   },
   {
     "id": "cagro-workbook-8",
@@ -92,13 +101,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.6,
     "organic_matter_pct": 1.1,
-    "estimated_nitrogen_pct": 0.06,
+    "estimated_nitrogen_pct": 0.055,
     "nitrogen_pct": null,
     "phosphorus_ppm": 40.86,
     "potassium_ppm": 1578.85,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 8,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -113,7 +122,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-04",
+    "source_workbook_nitrogen_pct": 0.06
   },
   {
     "id": "cagro-workbook-9",
@@ -121,13 +133,13 @@
     "location_name": "PRK. 1 NANYO",
     "soil_ph": 6.6,
     "organic_matter_pct": 3.94,
-    "estimated_nitrogen_pct": 0.2,
+    "estimated_nitrogen_pct": 0.197,
     "nitrogen_pct": null,
     "phosphorus_ppm": 16.42,
     "potassium_ppm": 1142.87,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 9,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -142,7 +154,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-05",
+    "source_workbook_nitrogen_pct": 0.2
   },
   {
     "id": "cagro-workbook-10",
@@ -150,13 +165,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.5,
     "organic_matter_pct": 1.65,
-    "estimated_nitrogen_pct": 0.08,
+    "estimated_nitrogen_pct": 0.0825,
     "nitrogen_pct": null,
     "phosphorus_ppm": 52.45,
     "potassium_ppm": 1436.22,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 10,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -171,7 +186,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-06",
+    "source_workbook_nitrogen_pct": 0.08
   },
   {
     "id": "cagro-workbook-11",
@@ -179,13 +197,13 @@
     "location_name": "FARM 3, DAPCO",
     "soil_ph": 5.9,
     "organic_matter_pct": 1.89,
-    "estimated_nitrogen_pct": 0.09,
+    "estimated_nitrogen_pct": 0.0945,
     "nitrogen_pct": null,
     "phosphorus_ppm": 74.33,
     "potassium_ppm": 6564.25,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 11,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -200,7 +218,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-07",
+    "source_workbook_nitrogen_pct": 0.09
   },
   {
     "id": "cagro-workbook-12",
@@ -208,13 +229,13 @@
     "location_name": "FARM 3, DAPCO",
     "soil_ph": 6.0,
     "organic_matter_pct": 2.06,
-    "estimated_nitrogen_pct": 0.1,
+    "estimated_nitrogen_pct": 0.103,
     "nitrogen_pct": null,
     "phosphorus_ppm": 45.52,
     "potassium_ppm": 1417.9,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 12,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -229,7 +250,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-08",
+    "source_workbook_nitrogen_pct": 0.1
   },
   {
     "id": "cagro-workbook-13",
@@ -237,13 +261,13 @@
     "location_name": "FARM 3, DAPCO",
     "soil_ph": 6.2,
     "organic_matter_pct": 1.97,
-    "estimated_nitrogen_pct": 0.1,
+    "estimated_nitrogen_pct": 0.0985,
     "nitrogen_pct": null,
     "phosphorus_ppm": 75.94,
     "potassium_ppm": 5961.18,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 13,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -258,7 +282,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-09",
+    "source_workbook_nitrogen_pct": 0.1
   },
   {
     "id": "cagro-workbook-14",
@@ -266,13 +293,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.1,
     "organic_matter_pct": 1.45,
-    "estimated_nitrogen_pct": 0.07,
+    "estimated_nitrogen_pct": 0.0725,
     "nitrogen_pct": null,
     "phosphorus_ppm": 49.4,
     "potassium_ppm": 1883.94,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 14,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -287,7 +314,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-10",
+    "source_workbook_nitrogen_pct": 0.07
   },
   {
     "id": "cagro-workbook-15",
@@ -295,13 +325,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.0,
     "organic_matter_pct": 3.38,
-    "estimated_nitrogen_pct": 0.17,
+    "estimated_nitrogen_pct": 0.169,
     "nitrogen_pct": null,
     "phosphorus_ppm": 66.27,
     "potassium_ppm": 1780.79,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 15,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -316,7 +346,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-11",
+    "source_workbook_nitrogen_pct": 0.17
   },
   {
     "id": "cagro-workbook-16",
@@ -324,13 +357,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.6,
     "organic_matter_pct": 1.1,
-    "estimated_nitrogen_pct": 0.06,
+    "estimated_nitrogen_pct": 0.055,
     "nitrogen_pct": null,
     "phosphorus_ppm": 39.73,
     "potassium_ppm": 2423.36,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 16,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -345,7 +378,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-12",
+    "source_workbook_nitrogen_pct": 0.06
   },
   {
     "id": "cagro-workbook-17",
@@ -353,13 +389,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.3,
     "organic_matter_pct": 1.21,
-    "estimated_nitrogen_pct": 0.06,
+    "estimated_nitrogen_pct": 0.0605,
     "nitrogen_pct": null,
     "phosphorus_ppm": 36.03,
     "potassium_ppm": 1588.66,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 17,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -374,7 +410,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-13",
+    "source_workbook_nitrogen_pct": 0.06
   },
   {
     "id": "cagro-workbook-18",
@@ -382,13 +421,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 5.7,
     "organic_matter_pct": 2.54,
-    "estimated_nitrogen_pct": 0.13,
+    "estimated_nitrogen_pct": 0.127,
     "nitrogen_pct": null,
     "phosphorus_ppm": 57.81,
     "potassium_ppm": 1685.34,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 18,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -403,7 +442,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-14",
+    "source_workbook_nitrogen_pct": 0.13
   },
   {
     "id": "cagro-workbook-19",
@@ -411,13 +453,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.4,
     "organic_matter_pct": 1.76,
-    "estimated_nitrogen_pct": 0.09,
+    "estimated_nitrogen_pct": 0.088,
     "nitrogen_pct": null,
     "phosphorus_ppm": 48.87,
-    "potassium_ppm": 1114.77,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "potassium_ppm": 1144.77,
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 19,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -432,7 +474,12 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-15",
+    "source_workbook_nitrogen_pct": 0.09,
+    "source_workbook_potassium_ppm": 1114.77,
+    "potassium_correction_source": "Original CAGRO table image supplied by project owner; XLSX-15 K = 1144.77 ppm"
   },
   {
     "id": "cagro-workbook-20",
@@ -440,13 +487,13 @@
     "location_name": "FARM 1 DAPCO",
     "soil_ph": 6.5,
     "organic_matter_pct": 1.3,
-    "estimated_nitrogen_pct": 0.07,
+    "estimated_nitrogen_pct": 0.065,
     "nitrogen_pct": null,
     "phosphorus_ppm": 52.22,
     "potassium_ppm": 1553.3,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 20,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -461,7 +508,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-16",
+    "source_workbook_nitrogen_pct": 0.07
   },
   {
     "id": "cagro-workbook-21",
@@ -469,13 +519,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.5,
     "organic_matter_pct": 1.21,
-    "estimated_nitrogen_pct": 0.06,
+    "estimated_nitrogen_pct": 0.0605,
     "nitrogen_pct": null,
     "phosphorus_ppm": 48.73,
     "potassium_ppm": 2248.95,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 21,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -490,7 +540,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-17",
+    "source_workbook_nitrogen_pct": 0.06
   },
   {
     "id": "cagro-workbook-22",
@@ -498,13 +551,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.5,
     "organic_matter_pct": 1.71,
-    "estimated_nitrogen_pct": 0.09,
+    "estimated_nitrogen_pct": 0.0855,
     "nitrogen_pct": null,
     "phosphorus_ppm": 58.41,
     "potassium_ppm": 2115.89,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 22,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -519,7 +572,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-18",
+    "source_workbook_nitrogen_pct": 0.09
   },
   {
     "id": "cagro-workbook-23",
@@ -527,13 +583,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.2,
     "organic_matter_pct": 2.3,
-    "estimated_nitrogen_pct": 0.11,
+    "estimated_nitrogen_pct": 0.115,
     "nitrogen_pct": null,
     "phosphorus_ppm": 71.12,
     "potassium_ppm": 1844.29,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 23,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -548,7 +604,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-19",
+    "source_workbook_nitrogen_pct": 0.11
   },
   {
     "id": "cagro-workbook-24",
@@ -556,13 +615,13 @@
     "location_name": "FARM 2, DAPCO",
     "soil_ph": 6.1,
     "organic_matter_pct": 1.41,
-    "estimated_nitrogen_pct": 0.07,
+    "estimated_nitrogen_pct": 0.0705,
     "nitrogen_pct": null,
     "phosphorus_ppm": 45.38,
     "potassium_ppm": 1934.97,
-    "nitrogen_method": "Estimated from organic matter: N approximately OM / 20; rounded value preserved from workbook",
+    "nitrogen_method": "Estimated N (%) = organic matter (%) / 20; full precision retained, not measured N",
     "sample_date": null,
-    "sample_year": null,
+    "sample_year": 2025,
     "source_file": "soil_analysis_with_nitrogen.xlsx",
     "source_row": 24,
     "source_sha256": "0c93a77e7c04e1e3050ee92a991ffc299b12fdf97fa8775b2ebd0e3ef0a9a2b5",
@@ -577,7 +636,10 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "XLSX-20",
+    "source_workbook_nitrogen_pct": 0.07
   },
   {
     "id": "cagro-image-2025-1",
@@ -605,7 +667,9 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-01"
   },
   {
     "id": "cagro-image-2025-2",
@@ -633,7 +697,9 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-02"
   },
   {
     "id": "cagro-image-2025-3",
@@ -661,7 +727,9 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-03"
   },
   {
     "id": "cagro-image-2025-4",
@@ -689,7 +757,9 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-04"
   },
   {
     "id": "cagro-image-2025-5",
@@ -717,7 +787,9 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-05"
   },
   {
     "id": "cagro-image-2025-6",
@@ -745,7 +817,9 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-06"
   },
   {
     "id": "cagro-image-2025-7",
@@ -773,7 +847,9 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-07"
   },
   {
     "id": "cagro-image-2025-8",
@@ -801,7 +877,9 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-08"
   },
   {
     "id": "cagro-image-2025-9",
@@ -829,7 +907,9 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-09"
   },
   {
     "id": "cagro-image-2025-10",
@@ -857,7 +937,9 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-10"
   },
   {
     "id": "cagro-image-2025-11",
@@ -885,6 +967,8 @@
     },
     "units_provenance": "User confirmed units; laboratory extraction methods and sample depths not supplied",
     "laboratory_method": null,
-    "sample_depth_cm": null
+    "sample_depth_cm": null,
+    "sample_year_provenance": "Year 2025 confirmed by project owner from CAGRO source records, 2026-11-10",
+    "combined_record_id": "PHOTO-11"
   }
 ]

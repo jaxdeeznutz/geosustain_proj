@@ -163,21 +163,6 @@ CREATE TABLE IF NOT EXISTS farm_parcels (
     updated_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS climate_monthly_baselines (
-    id              SERIAL PRIMARY KEY,
-    latitude_key    FLOAT NOT NULL,
-    longitude_key   FLOAT NOT NULL,
-    month_number    INTEGER NOT NULL,
-    mean_temperature_c FLOAT,
-    mean_rainfall_mm FLOAT,
-    mean_humidity_pct FLOAT,
-    baseline_start_year INTEGER,
-    baseline_end_year INTEGER,
-    source_name     VARCHAR(120) NOT NULL DEFAULT 'NASA POWER',
-    fetched_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    UNIQUE(latitude_key, longitude_key, month_number)
-);
-
 
 CREATE TABLE IF NOT EXISTS analysis_sessions (
     id              SERIAL PRIMARY KEY,
@@ -252,16 +237,6 @@ CREATE TABLE IF NOT EXISTS crop_recommendations (
     crop_est_yield       VARCHAR(80),
     alternative_crops     JSONB,
     xai_explanation        JSONB
-);
-
-CREATE TABLE IF NOT EXISTS analysis_cache (
-    id             SERIAL PRIMARY KEY,
-    lat_rounded    FLOAT NOT NULL,
-    lon_rounded    FLOAT NOT NULL,
-    cached_result  JSONB NOT NULL,
-    cached_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    expires_at     TIMESTAMPTZ NOT NULL,
-    UNIQUE (lat_rounded, lon_rounded)
 );
 
 CREATE TABLE IF NOT EXISTS pending_registrations (
@@ -1856,41 +1831,3 @@ def attach_analysis_to_farm(session_id: int, farmer_id: int, farm_id: int):
         return bool(row)
     finally:
         conn.close()
-
-
-def get_climate_baseline(lat: float, lon: float, month: int):
-    lk=round(float(lat),2); ok=round(float(lon),2)
-    conn=get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""SELECT * FROM climate_monthly_baselines
-                           WHERE latitude_key=%s AND longitude_key=%s AND month_number=%s""",(lk,ok,month))
-            row=cur.fetchone(); return dict(row) if row else None
-    finally: conn.close()
-
-
-def save_climate_baseline(lat: float, lon: float, month: int, values: dict):
-    lk=round(float(lat),2); ok=round(float(lon),2)
-    conn=get_conn()
-    try:
-        with conn.cursor() as cur:
-            cur.execute("""
-              INSERT INTO climate_monthly_baselines
-                (latitude_key,longitude_key,month_number,mean_temperature_c,mean_rainfall_mm,
-                 mean_humidity_pct,baseline_start_year,baseline_end_year,source_name)
-              VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
-              ON CONFLICT(latitude_key,longitude_key,month_number) DO UPDATE SET
-                mean_temperature_c=EXCLUDED.mean_temperature_c,
-                mean_rainfall_mm=EXCLUDED.mean_rainfall_mm,
-                mean_humidity_pct=EXCLUDED.mean_humidity_pct,
-                baseline_start_year=EXCLUDED.baseline_start_year,
-                baseline_end_year=EXCLUDED.baseline_end_year,
-                source_name=EXCLUDED.source_name,
-                fetched_at=NOW()
-              RETURNING *
-            """,(lk,ok,month,values.get('mean_temperature_c'),values.get('mean_rainfall_mm'),
-                 values.get('mean_humidity_pct'),values.get('baseline_start_year'),values.get('baseline_end_year'),
-                 values.get('source_name','NASA POWER')))
-            row=cur.fetchone()
-        conn.commit(); return dict(row) if row else None
-    finally: conn.close()

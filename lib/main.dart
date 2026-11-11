@@ -46,6 +46,7 @@ import 'web/portal_routes.dart';
 import 'web/web_record_controller.dart';
 import 'web/operator_report.dart';
 import 'web/operator_metrics.dart';
+import 'web/excel_files.dart';
 
 part 'screens/mobile_visuals.dart';
 part 'screens/reference_visuals.dart';
@@ -87,6 +88,7 @@ part 'web/auth/web_auth_login.dart';
 part 'web/web_analyst_shell.dart';
 part 'web/web_admin_shell.dart';
 part 'web/widgets/controlled_records.dart';
+part 'web/widgets/controlled_excel.dart';
 part 'web/widgets/web_common.dart';
 part 'web/widgets/web_analysis_evidence.dart';
 part 'web/widgets/web_portal_layout.dart';
@@ -110,14 +112,14 @@ void main() async {
     webSemanticsHandles.add(SemanticsBinding.instance.ensureSemantics());
   }
   final prefs = await SharedPreferences.getInstance();
-  lowBandwidthMode.value = prefs.getBool('settings_low_bandwidth') ?? true;
+  lowBandwidthMode.value = false;
   appThemeMode.value = (prefs.getBool('settings_dark_mode') ?? false)
       ? ThemeMode.dark
       : ThemeMode.light;
   runApp(const GeoSustainApp());
 }
 
-final lowBandwidthMode = ValueNotifier<bool>(true);
+final lowBandwidthMode = ValueNotifier<bool>(false);
 final webSemanticsHandles = <SemanticsHandle>[];
 
 final appThemeMode = ValueNotifier<ThemeMode>(ThemeMode.light);
@@ -1245,6 +1247,7 @@ class AnalysisState extends ChangeNotifier {
   bool _disposed = false;
   int _sessionEpoch = 0, _selectionEpoch = 0;
   bool historyLoading = false, historyLoaded = false;
+  int unreadNotifications = 0;
   Future<void>? _historyRefresh;
   Future<void>? _farmsRefresh;
   Map<String, dynamic>? selectedFarm;
@@ -1270,6 +1273,36 @@ class AnalysisState extends ChangeNotifier {
 
   String? historyError;
   String? farmsError;
+  void setUnreadNotifications(int count) {
+    final next = math.max(0, count);
+    if (unreadNotifications == next) return;
+    unreadNotifications = next;
+    notifyListeners();
+  }
+
+  Future<void> refreshUnreadNotifications() async {
+    if (currentUser == null) return;
+    final epoch = _sessionEpoch, owner = currentUser?['id'];
+    try {
+      final data = await api.getRecordPage(
+        '/api/mobile/activity',
+        requestTimeout: const Duration(seconds: 8),
+        recoveryAttempts: 1,
+      );
+      final local = OfflineFarmStore.rows(
+        (await OfflineFarmStore.read())['events'],
+      );
+      if (_active(epoch, owner)) {
+        setUnreadNotifications(
+          (data['unread_count'] as num? ?? 0).toInt() +
+              local.where((event) => event['read_at'] == null).length,
+        );
+      }
+    } catch (_) {
+      // Keep the last known count when the activity service is unreachable.
+    }
+  }
+
   @override
   void notifyListeners() {
     if (!_disposed) super.notifyListeners();
@@ -1329,6 +1362,7 @@ class AnalysisState extends ChangeNotifier {
     farmsError = null;
     historyLoaded = false;
     historyLoading = false;
+    unreadNotifications = 0;
     webSummary = null;
     currentModelSummary = null;
     _patternsRefresh = null;
@@ -2523,6 +2557,7 @@ class AnalysisState extends ChangeNotifier {
         _lastAnalysisAt = DateTime.now();
       }
       unawaited(Future.wait([refreshHistoryData(), refreshFarms()]));
+      unawaited(refreshUnreadNotifications());
       return null;
     } catch (error) {
       if (_active(epoch, owner) && selection == _selectionEpoch) {
@@ -2634,6 +2669,7 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
   late final AnalysisState state;
   int index = 0;
   DialogRoute<void>? _analysisDialog;
+  Timer? _unreadRefreshTimer;
   bool _analysisDialogHidden = false;
 
   void _openReview(int id) {
@@ -2726,6 +2762,11 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
         state.refreshLiveWeather();
         state.startWeatherAutoRefresh();
         state.refreshFarms();
+        unawaited(state.refreshUnreadNotifications());
+        _unreadRefreshTimer ??= Timer.periodic(
+          const Duration(minutes: 1),
+          (_) => unawaited(state.refreshUnreadNotifications()),
+        );
       }
 
       if (!state.userLoaded) {
@@ -2768,6 +2809,7 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
     if (lifecycle == AppLifecycleState.resumed && state.hasWorkspaceAccess) {
       state.refreshHistoryData();
       state.refreshFarms();
+      unawaited(state.refreshUnreadNotifications());
     }
   }
 
@@ -2793,6 +2835,7 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
     PushNotifications.onReviewOpened = null;
     PushNotifications.onReviewReceived = null;
     state.removeListener(_syncAnalysisDialog);
+    _unreadRefreshTimer?.cancel();
     final dialog = _analysisDialog;
     _analysisDialog = null;
     if (dialog != null) {

@@ -36,7 +36,13 @@ DATA_FILES = ('Crop_recommendation.csv', 'Crop_recommendation_with_gis.csv')
 
 
 def digest(path):
-    return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+    path = Path(path)
+    raw = path.read_bytes()
+    # Colab records LF text; Git on Windows may check that same text out as
+    # CRLF. Canonicalize text line endings only; binary model bytes stay exact.
+    if path.suffix.lower() in ('.csv', '.json', '.txt', '.py'):
+        raw = raw.replace(b'\r\n', b'\n')
+    return hashlib.sha256(raw).hexdigest()
 
 
 def validate_candidate(directory=CANDIDATE):

@@ -99,6 +99,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         more = type != 'farm_synced' && data['has_more'] == true;
         offset = target;
       });
+      widget.state?.setUnreadNotifications(unread);
     } catch (failure) {
       if (mounted && generation == request) {
         setState(() => error = friendlyErrorMessage(failure));

@@ -158,7 +158,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
               ],
             ),
           ),
-          CagroSoilObservationsCard(record: r),
+          if (!widget.farmerDetails) CagroSoilObservationsCard(record: r),
           SeasonalContextCard(
             record: r,
             simple: !kIsWeb && widget.state.accountRole == 'farmer',
@@ -403,7 +403,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
           ),
         if (tab == 0 || tab == 2) ...[
           if (!widget.farmerDetails) AnalysisCoverageCard(record: r),
-          CagroSoilObservationsCard(record: r),
+          if (!widget.farmerDetails) CagroSoilObservationsCard(record: r),
           _AnalysisSection(
             title: modelRanked
                 ? 'Environmental & Soil Reference Assessment'

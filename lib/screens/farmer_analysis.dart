@@ -61,13 +61,6 @@ class FarmerAnalysisContent extends StatelessWidget {
                     ? 'Ranking scores rank approved crops, not harvest success.'
                     : 'These choices use the saved condition checks.',
               ),
-              if (_farmerUsesEstimates(record)) ...[
-                const SizedBox(height: 8),
-                const Text(
-                  'Estimated soil data — not a field soil test.',
-                  style: TextStyle(fontSize: 12),
-                ),
-              ],
               if (isNoNpkModelRecord(record)) ...[
                 const SizedBox(height: 8),
                 const Text(
@@ -157,19 +150,6 @@ class FarmerAnalysisContent extends StatelessWidget {
       ],
     );
   }
-}
-
-bool _farmerUsesEstimates(Map<String, dynamic> record) {
-  if (record['nutrient_display_basis'] == 'legacy_model_estimates') {
-    return true;
-  }
-  final quality = analysisMapValue(record['data_quality']);
-  return ['nitrogen', 'phosphorus', 'potassium'].any((key) {
-    final item = analysisMapValue(quality[key]);
-    return '${item['overall_quality'] ?? item['quality'] ?? ''}'
-        .toLowerCase()
-        .contains('estimated');
-  });
 }
 
 class FarmerLegendItem {

@@ -257,16 +257,7 @@ class GeoSustainHeader extends StatelessWidget implements PreferredSizeWidget {
               if (trailing != null) ...[const SizedBox(width: 4), trailing!],
               if (showNotifications && title != 'Notifications') ...[
                 const SizedBox(width: 6),
-                GeoHeaderAction(
-                  icon: Icons.notifications_none_rounded,
-                  tooltip: 'Notifications',
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => NotificationsPage(state: effectiveState),
-                    ),
-                  ),
-                ),
+                GeoNotificationAction(state: effectiveState),
               ],
             ],
           ),
@@ -347,6 +338,63 @@ class GeoHeaderAction extends StatelessWidget {
         : null,
     icon: Icon(icon, size: 22),
   );
+}
+
+class GeoNotificationAction extends StatelessWidget {
+  final AnalysisState? state;
+  const GeoNotificationAction({super.key, this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    Widget action() => Stack(
+      clipBehavior: Clip.none,
+      children: [
+        GeoHeaderAction(
+          icon: Icons.notifications_none_rounded,
+          tooltip: 'Notifications',
+          onPressed: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => NotificationsPage(state: state),
+              ),
+            );
+            unawaited(
+              state?.refreshUnreadNotifications() ?? Future<void>.value(),
+            );
+          },
+        ),
+        if ((state?.unreadNotifications ?? 0) > 0)
+          Positioned(
+            top: -5,
+            right: -6,
+            child: Container(
+              constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE94A3F),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Colors.white, width: 1.5),
+              ),
+              child: Text(
+                state!.unreadNotifications > 99
+                    ? '99+'
+                    : '${state!.unreadNotifications}',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 10,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+    return state == null
+        ? action()
+        : ListenableBuilder(listenable: state!, builder: (_, _) => action());
+  }
 }
 
 class GeoButton extends StatelessWidget {
@@ -546,7 +594,7 @@ class GeoFarmCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final count = (analysisNumber(farm['analysis_count']) ?? 0).toInt();
-    final location = '${farm['location_name'] ?? ''}'.trim();
+    final location = displayFarmLocation(farm['location_name']);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(

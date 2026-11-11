@@ -38,7 +38,7 @@ String analysisRecordName(Map<String, dynamic> record) {
 
 String analysisLocation(Map<String, dynamic> record) {
   for (final key in ['location_name', 'place_name']) {
-    final value = '${record[key] ?? ''}'.trim();
+    final value = displayFarmLocation(record[key]);
     if (value.isNotEmpty &&
         value != 'Looking up location...' &&
         value != analysisRecordName(record)) {
@@ -47,6 +47,16 @@ String analysisLocation(Map<String, dynamic> record) {
   }
   return '';
 }
+
+String displayFarmLocation(dynamic raw) => '${raw ?? ''}'
+    .replaceAll(
+      RegExp(
+        r'\s*\(local test polygon, not CAGRO sample boundary\)',
+        caseSensitive: false,
+      ),
+      '',
+    )
+    .trim();
 
 class AnalysisIdentity extends StatelessWidget {
   final Map<String, dynamic> record;

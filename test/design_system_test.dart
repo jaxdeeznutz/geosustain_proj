@@ -148,4 +148,21 @@ void main() {
       });
     }
   }
+
+  testWidgets('notification bell shows the unread count and clears it', (
+    tester,
+  ) async {
+    final state = AnalysisState();
+    addTearDown(state.dispose);
+    state.setUnreadNotifications(3);
+    await tester.pumpWidget(
+      GeoSustainApp(
+        home: Scaffold(body: GeoNotificationAction(state: state)),
+      ),
+    );
+    expect(find.text('3'), findsOneWidget);
+    state.setUnreadNotifications(0);
+    await tester.pump();
+    expect(find.text('3'), findsNothing);
+  });
 }

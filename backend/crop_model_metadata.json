@@ -1,8 +1,11 @@
 {
   "schema_version": 1,
-  "model_version": "6cefb5545173c05521a5c1fe71e5cb654b2a17161a1e1399d88f93afa867c8cd",
+  "model_version": "55ee230b370ea90071df7d32dcb209f916b2dcfa77a6522dd264d10e830f7eaf",
   "model_type": "RandomForestClassifier",
   "feature_names": [
+    "N",
+    "P",
+    "K",
     "temperature",
     "humidity",
     "ph",
@@ -22,117 +25,430 @@
   ],
   "training": {
     "status": "experimental_prototype",
-    "timestamp_utc": "2026-11-06T08:07:12.723479+00:00",
+    "timestamp_utc": "2026-11-03T05:27:58.942783+00:00",
     "random_seed": 42,
-    "script_sha256": "46c2352260577497d6c83e3da662cba35b4f3e86d62a262e3ac1dfff8a4be12e",
-    "dataset_sha256": "bfd1f5b9c2a1b745b62f93f16e95464f3d2bb7e81f4bbaeb3621a986c134c3c1",
+    "script_sha256": "77ce9cd7afbf03dc59eabcdb11f78f60446ded4464a9f4ba9aa3467f3f08aa3a",
+    "dataset_sha256": "1a6dcf3b22c20ff51c0ef7eee310df3ad5d359263d78d1a93e2dbaa7245ec03a",
     "provenance": {
-      "source": "research/colab-training-runs/20261106T080700Z-3adeb48c/input_dataset.csv",
-      "colab_run_id": "20261106T080700Z-3adeb48c",
-      "execution_platform_reported": "google_colab",
-      "basis": "Owner Colab run; existing Kaggle-based augmented rows and generated crop/GIS profiles; NPK excluded.",
+      "source": "backend\\Crop_recommendation_with_gis.csv",
+      "basis": "Existing Kaggle-based augmented dataset; generated GIS and local crop profiles.",
       "climate_sources": {
-        "original_kaggle_rows": {
+        "Crop_recommendation.csv": {
           "rainfall": null,
           "temperature": null,
           "humidity": null
         },
-        "legacy_profile_rows": {
+        "LOCAL_CROP_PROFILES": {
           "rainfall": "rolling_30_days",
           "temperature": null,
           "humidity": null
         }
       },
       "annual_input_compatibility": "unverified",
-      "npk_used": false,
+      "nutrient_compatibility": "Legacy proxy representation only; physical units/methods unverified. PAGRO data pending.",
       "field_validation": "Not established",
       "source_limitations": [
-        "Research comparison on existing augmented data; not independent farm accuracy.",
-        "Original Kaggle rows cover banana, coconut, mango and rice only. Cacao, durian and rubber use existing generated profiles.",
-        "GIS predictors in this legacy dataset were generated using crop profiles; their label dependence can inflate evaluation.",
-        "Rainfall periods and temperature aggregation in the labelled rows are unresolved. No annual conversion or relabelling is performed.",
-        "Exact duplicates are removed before splitting; independent farm/source groups are unknown, so a row split cannot establish farm generalization.",
-        "N, P and K are excluded. Received PAGRO measurements require compatible methods/units and matched crop-labelled records before retraining.",
-        "This seven-input candidate cannot replace the current ten-input application model without integration and input-contract review."
+        "Climate training contract unresolved: Crop_recommendation.csv rainfall period None; inference expects rolling_30_days. Supply documented compatible training data; do not relabel or rescale the existing CSV/synthetic profiles. Existing model artifacts were not replaced.",
+        "N/P/K physical measurement/unit compatibility with inference remains unverified.",
+        "Legacy rows include synthetic crop/GIS profiles; field/source group identities are unavailable.",
+        "No independent Panabo field validation; holdout scores are not harvest probabilities."
       ]
     },
     "evaluation": {
-      "basis": "Held-out legacy augmented rows without NPK; not annual-input or farm accuracy",
+      "basis": "Legacy-data experiment; not annual or farm validation",
       "holdout_rows": 279,
-      "train_rows": 1115,
-      "comparison": [
-        {
-          "model": "decision_tree",
-          "cv_accuracy_mean": 0.695067264573991,
-          "cv_precision_macro_mean": 0.6664412452916846,
-          "cv_recall_macro_mean": 0.6647952634198737,
-          "cv_f1_macro_mean": 0.6588438097921803,
-          "cv_f1_macro_std": 0.02619522099709084,
-          "fit_seconds": 0.010089682000000266,
-          "holdout_accuracy": 0.7168458781362007,
-          "holdout_precision_macro": 0.6809178833485927,
-          "holdout_recall_macro": 0.6716634814460901,
-          "holdout_f1_macro": 0.6725587146513051,
-          "holdout_f1_weighted": 0.7214006064679754,
-          "selected_by_cv": false
+      "comparison": {
+        "random_forest": {
+          "accuracy": 0.8602150537634409,
+          "f1_macro": 0.7999603517193355,
+          "classification_report": {
+            "banana": {
+              "precision": 0.9272727272727272,
+              "recall": 0.9807692307692307,
+              "f1-score": 0.9532710280373832,
+              "support": 52.0
+            },
+            "cacao": {
+              "precision": 0.6842105263157895,
+              "recall": 0.5652173913043478,
+              "f1-score": 0.6190476190476191,
+              "support": 23.0
+            },
+            "coconut": {
+              "precision": 0.8947368421052632,
+              "recall": 0.9807692307692307,
+              "f1-score": 0.9357798165137615,
+              "support": 52.0
+            },
+            "durian": {
+              "precision": 0.5,
+              "recall": 0.5416666666666666,
+              "f1-score": 0.52,
+              "support": 24.0
+            },
+            "mango": {
+              "precision": 0.9433962264150944,
+              "recall": 0.9615384615384616,
+              "f1-score": 0.9523809523809523,
+              "support": 52.0
+            },
+            "rice": {
+              "precision": 0.94,
+              "recall": 0.9038461538461539,
+              "f1-score": 0.9215686274509803,
+              "support": 52.0
+            },
+            "rubber": {
+              "precision": 0.7894736842105263,
+              "recall": 0.625,
+              "f1-score": 0.6976744186046512,
+              "support": 24.0
+            },
+            "accuracy": 0.8602150537634409,
+            "macro avg": {
+              "precision": 0.8112985723313431,
+              "recall": 0.7941153049848702,
+              "f1-score": 0.7999603517193355,
+              "support": 279.0
+            },
+            "weighted avg": {
+              "precision": 0.8579401860485885,
+              "recall": 0.8602150537634409,
+              "f1-score": 0.8571265353137165,
+              "support": 279.0
+            }
+          },
+          "confusion_matrix": [
+            [
+              51,
+              0,
+              0,
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              13,
+              0,
+              5,
+              0,
+              1,
+              4
+            ],
+            [
+              0,
+              0,
+              51,
+              0,
+              1,
+              0,
+              0
+            ],
+            [
+              0,
+              5,
+              4,
+              13,
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              0,
+              0,
+              2,
+              50,
+              0,
+              0
+            ],
+            [
+              4,
+              0,
+              1,
+              0,
+              0,
+              47,
+              0
+            ],
+            [
+              0,
+              1,
+              1,
+              6,
+              0,
+              1,
+              15
+            ]
+          ]
         },
-        {
-          "model": "svm",
-          "cv_accuracy_mean": 0.7452914798206278,
-          "cv_precision_macro_mean": 0.7172833857481532,
-          "cv_recall_macro_mean": 0.7061602903891553,
-          "cv_f1_macro_mean": 0.7086372218081269,
-          "cv_f1_macro_std": 0.01570275787572208,
-          "fit_seconds": 0.024652309000003925,
-          "holdout_accuracy": 0.7347670250896058,
-          "holdout_precision_macro": 0.693259216775443,
-          "holdout_recall_macro": 0.6779542920847269,
-          "holdout_f1_macro": 0.6826442615260194,
-          "holdout_f1_weighted": 0.7351056151108857,
-          "selected_by_cv": false
+        "decision_tree": {
+          "accuracy": 0.7670250896057348,
+          "f1_macro": 0.6951237187062905,
+          "classification_report": {
+            "banana": {
+              "precision": 0.9090909090909091,
+              "recall": 0.9615384615384616,
+              "f1-score": 0.9345794392523364,
+              "support": 52.0
+            },
+            "cacao": {
+              "precision": 0.5,
+              "recall": 0.4782608695652174,
+              "f1-score": 0.4888888888888889,
+              "support": 23.0
+            },
+            "coconut": {
+              "precision": 0.84,
+              "recall": 0.8076923076923077,
+              "f1-score": 0.8235294117647058,
+              "support": 52.0
+            },
+            "durian": {
+              "precision": 0.375,
+              "recall": 0.375,
+              "f1-score": 0.375,
+              "support": 24.0
+            },
+            "mango": {
+              "precision": 0.8846153846153846,
+              "recall": 0.8846153846153846,
+              "f1-score": 0.8846153846153846,
+              "support": 52.0
+            },
+            "rice": {
+              "precision": 0.9148936170212766,
+              "recall": 0.8269230769230769,
+              "f1-score": 0.8686868686868687,
+              "support": 52.0
+            },
+            "rubber": {
+              "precision": 0.4482758620689655,
+              "recall": 0.5416666666666666,
+              "f1-score": 0.49056603773584906,
+              "support": 24.0
+            },
+            "accuracy": 0.7670250896057348,
+            "macro avg": {
+              "precision": 0.6959822532566479,
+              "recall": 0.696528109571588,
+              "f1-score": 0.6951237187062905,
+              "support": 279.0
+            },
+            "weighted avg": {
+              "precision": 0.773425863969494,
+              "recall": 0.7670250896057348,
+              "f1-score": 0.7692165117373054,
+              "support": 279.0
+            }
+          },
+          "confusion_matrix": [
+            [
+              50,
+              0,
+              0,
+              0,
+              1,
+              1,
+              0
+            ],
+            [
+              0,
+              11,
+              1,
+              3,
+              0,
+              1,
+              7
+            ],
+            [
+              0,
+              0,
+              42,
+              2,
+              3,
+              0,
+              5
+            ],
+            [
+              0,
+              8,
+              3,
+              9,
+              1,
+              0,
+              3
+            ],
+            [
+              0,
+              0,
+              2,
+              2,
+              46,
+              1,
+              1
+            ],
+            [
+              5,
+              1,
+              1,
+              1,
+              1,
+              43,
+              0
+            ],
+            [
+              0,
+              2,
+              1,
+              7,
+              0,
+              1,
+              13
+            ]
+          ]
         },
-        {
-          "model": "random_forest",
-          "cv_accuracy_mean": 0.7802690582959642,
-          "cv_precision_macro_mean": 0.7690534471283976,
-          "cv_recall_macro_mean": 0.7546674467818792,
-          "cv_f1_macro_mean": 0.7561943510306385,
-          "cv_f1_macro_std": 0.020985466956896584,
-          "fit_seconds": 1.7483080720000146,
-          "holdout_accuracy": 0.7849462365591398,
-          "holdout_precision_macro": 0.7430525030525031,
-          "holdout_recall_macro": 0.7262900143334925,
-          "holdout_f1_macro": 0.7312814222984428,
-          "holdout_f1_weighted": 0.7856669543589946,
-          "selected_by_cv": true
+        "svm": {
+          "accuracy": 0.8315412186379928,
+          "f1_macro": 0.7835695099880536,
+          "classification_report": {
+            "banana": {
+              "precision": 0.8928571428571429,
+              "recall": 0.9615384615384616,
+              "f1-score": 0.9259259259259259,
+              "support": 52.0
+            },
+            "cacao": {
+              "precision": 0.5769230769230769,
+              "recall": 0.6521739130434783,
+              "f1-score": 0.6122448979591837,
+              "support": 23.0
+            },
+            "coconut": {
+              "precision": 0.8703703703703703,
+              "recall": 0.9038461538461539,
+              "f1-score": 0.8867924528301887,
+              "support": 52.0
+            },
+            "durian": {
+              "precision": 0.4827586206896552,
+              "recall": 0.5833333333333334,
+              "f1-score": 0.5283018867924528,
+              "support": 24.0
+            },
+            "mango": {
+              "precision": 0.9607843137254902,
+              "recall": 0.9423076923076923,
+              "f1-score": 0.9514563106796117,
+              "support": 52.0
+            },
+            "rice": {
+              "precision": 0.9333333333333333,
+              "recall": 0.8076923076923077,
+              "f1-score": 0.865979381443299,
+              "support": 52.0
+            },
+            "rubber": {
+              "precision": 0.8333333333333334,
+              "recall": 0.625,
+              "f1-score": 0.7142857142857143,
+              "support": 24.0
+            },
+            "accuracy": 0.8315412186379928,
+            "macro avg": {
+              "precision": 0.792908598747486,
+              "recall": 0.7822702659659181,
+              "f1-score": 0.7835695099880536,
+              "support": 279.0
+            },
+            "weighted avg": {
+              "precision": 0.8424279068124444,
+              "recall": 0.8315412186379928,
+              "f1-score": 0.8339489131349338,
+              "support": 279.0
+            }
+          },
+          "confusion_matrix": [
+            [
+              50,
+              0,
+              0,
+              0,
+              0,
+              2,
+              0
+            ],
+            [
+              0,
+              15,
+              0,
+              6,
+              0,
+              0,
+              2
+            ],
+            [
+              0,
+              0,
+              47,
+              3,
+              2,
+              0,
+              0
+            ],
+            [
+              0,
+              5,
+              3,
+              14,
+              0,
+              1,
+              1
+            ],
+            [
+              0,
+              0,
+              2,
+              1,
+              49,
+              0,
+              0
+            ],
+            [
+              6,
+              2,
+              2,
+              0,
+              0,
+              42,
+              0
+            ],
+            [
+              0,
+              4,
+              0,
+              5,
+              0,
+              0,
+              15
+            ]
+          ]
         }
-      ],
-      "selection": {
-        "rule": "Highest mean training-only CV macro F1; alphabetical model-name tie break.",
-        "selected_model": "random_forest",
-        "production_model_changed": false
       }
     }
   },
   "runtime_input_policy": {
-    "mode": "seven_crop_no_npk_raw_annual_prototype_v1",
-    "model_version": "6cefb5545173c05521a5c1fe71e5cb654b2a17161a1e1399d88f93afa867c8cd",
+    "mode": "seven_crop_raw_annual_prototype_v1",
+    "model_version": "55ee230b370ea90071df7d32dcb209f916b2dcfa77a6522dd264d10e830f7eaf",
     "climate_contract_version": "climate-annual-five-year-v2",
-    "feature_order": [
-      "temperature",
-      "humidity",
-      "ph",
-      "rainfall",
-      "ndvi",
-      "elevation",
-      "slope"
-    ],
-    "npk_used": false,
     "annual_input_compatibility": "unverified",
     "use_raw_annual_values": true,
     "validation_claim": "experimental_only",
+    "legacy_nutrients": "estimated_proxies_not_soil_tests",
     "owner_instruction_date": "2026-11-06",
-    "basis": "Owner requested integration of the verified Colab model while PAGRO NPK remains pending."
+    "basis": "Owner explicitly requested activation of the existing seven-crop model using annual rainfall despite the unresolved training-period mismatch."
   },
   "reference_requirements": {
     "version": "panabo-annual-terrain-references-2026-11-06-v5",

@@ -35,7 +35,7 @@ def test_catalog_preserves_all_rows_precision_and_no_original_gps():
     assert len({r["id"] for r in rows}) == 31
     first = next(r for r in rows if r["id"] == "cagro-workbook-5")
     assert first["location_name"] == "FARM 2, DAPCO"
-    assert (first["estimated_nitrogen_pct"], first["phosphorus_ppm"], first["potassium_ppm"]) == (.09, 61.47, 1337.2)
+    assert (first["estimated_nitrogen_pct"], first["phosphorus_ppm"], first["potassium_ppm"]) == (.0885, 61.47, 1337.2)
     reported = next(r for r in rows if r["id"] == "cagro-image-2025-1")
     assert reported["estimated_nitrogen_pct"] is None
     assert reported["nitrogen_pct"] == .05

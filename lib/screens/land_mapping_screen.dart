@@ -528,6 +528,8 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
     _draftFinished = true;
     await BoundaryDraftStore.write('gps', null);
     if (!mounted) return;
+    await WidgetsBinding.instance.endOfFrame;
+    if (!mounted) return;
     Navigator.pop(context, true);
   }
 
@@ -1049,6 +1051,8 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
         await BoundaryDraftStore.write('polygon', null);
         if (mounted) {
           setState(() => _busy = false);
+          await WidgetsBinding.instance.endOfFrame;
+          if (!mounted) return;
           Navigator.pop(context, true);
         }
       } else if (mounted) {

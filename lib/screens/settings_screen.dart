@@ -7,7 +7,6 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool lowBandwidth = true;
   bool darkMode = false;
   bool notifications = false;
   bool savingNotifications = false;
@@ -24,7 +23,6 @@ class _SettingsPageState extends State<SettingsPage> {
     final pushEnabled = await PushNotifications.enabled();
     if (!mounted) return;
     setState(() {
-      lowBandwidth = prefs.getBool('settings_low_bandwidth') ?? true;
       darkMode = prefs.getBool('settings_dark_mode') ?? false;
       notifications = pushEnabled;
     });
@@ -50,18 +48,6 @@ class _SettingsPageState extends State<SettingsPage> {
             Card(
               child: Column(
                 children: [
-                  SwitchListTile(
-                    value: lowBandwidth,
-                    onChanged: (v) {
-                      setState(() => lowBandwidth = v);
-                      lowBandwidthMode.value = v;
-                      saveBool('settings_low_bandwidth', v);
-                    },
-                    title: const Text('Low-bandwidth mode'),
-                    subtitle: const Text(
-                      'Use street tiles instead of satellite imagery and pause automatic weather refresh. Manual refresh remains available.',
-                    ),
-                  ),
                   SwitchListTile(
                     value: darkMode,
                     onChanged: (v) {

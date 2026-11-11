@@ -85,8 +85,8 @@ List<String> analysisCoverageLines(Map<String, dynamic> record) {
   if (estimated) {
     lines.add(
       cagroDisabled
-          ? 'Model nutrient source: Recorded nitrogen, phosphorus and potassium estimates.'
-          : 'Model nutrient source: Estimated NPK inputs; historical CAGRO observations are separate.',
+          ? 'Model nutrient source: SoilGrids nitrogen when available, with a labelled backup or default; phosphorus and potassium are calculated estimates.'
+          : 'Model nutrient source: SoilGrids nitrogen when available, with a labelled backup or default; phosphorus and potassium are calculated estimates. Historical CAGRO records are separate.',
     );
     final count = analysisNumber(
       analysisMapValue(record['model_nutrient_aggregation'])['sample_count'],

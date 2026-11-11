@@ -32,7 +32,8 @@ from analysis_coverage import (require_analysis_coverage, require_point_coverage
                                farm_coverage, CoverageUnavailable, VERSION as COVERAGE_VERSION,
                                HISTORICAL_NOTE)
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse, FileResponse, Response
+from uuid import UUID
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
@@ -41,8 +42,10 @@ from email_validator import validate_email, EmailNotValidError
 from geometry import normalize_polygon, polygon_area_m2, in_study_area
 from model_explainability import merge_model_snapshots, finalize_explanation
 import controlled_records
+import controlled_excel
 from psycopg2 import Error as DatabaseError
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.concurrency import run_in_threadpool
 
 from database import (
     init_db,
@@ -1014,8 +1017,8 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
     if preliminary:
         result['preliminary_notice'] = 'Preliminary environmental screening. CAGRO NPK unavailable for this farm; no complete soil suitability claim is made.'
     result.update(analysis_schema_version=COVERAGE_VERSION, analysis_coverage=coverage,
-                  nutrient_basis=('Legacy model NPK estimates; CAGRO historical observations remain separate reference evidence'
-                                  if coverage['cagro_enabled'] else 'Legacy model NPK estimates; historical local soil reference disabled'),
+                  nutrient_basis=('Estimated model inputs: nitrogen from SoilGrids when available (otherwise a labelled backup or regional default); phosphorus and potassium calculated from NDVI, soil pH and elevation. Historical CAGRO observations are separate reference evidence.'
+                                  if coverage['cagro_enabled'] else 'Estimated model inputs: nitrogen from SoilGrids when available (otherwise a labelled backup or regional default); phosphorus and potassium calculated from NDVI, soil pH and elevation. Historical local soil reference disabled.'),
                   historical_soil_notice=HISTORICAL_NOTE if coverage['cagro_enabled'] else None,
                   centroid_method=('Area-weighted polygon centroid; not a soil sample coordinate' if polygon
                                    else 'Selected point; not a farm centroid or soil sample coordinate'))
@@ -1618,6 +1621,8 @@ def api_create_controlled_record(body: controlled_records.RecordBody, user=Depen
         return {'record': json_safe(controlled_records.create_revision(body, user))}
     except controlled_records.Conflict as exc:
         raise HTTPException(409, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
 
 @app.post('/api/admin/controlled-records/activation')
@@ -1628,6 +1633,52 @@ def api_activate_controlled_record(body: controlled_records.ActivationBody, user
         raise HTTPException(409, str(exc)) from exc
     except ValueError as exc:
         raise HTTPException(422, str(exc)) from exc
+
+
+@app.get('/api/admin/controlled-records/excel/template')
+def api_controlled_excel_template(user=Depends(require_super_admin)):
+    return FileResponse(os.path.join(BASE_DIR, 'assets', 'crop_requirements_template.xlsx'),
+                        filename='GeoSustain_crop_requirements.xlsx',
+                        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                        headers={'Cache-Control': 'no-store'})
+
+
+@app.post('/api/admin/controlled-records/excel/preview')
+async def api_controlled_excel_preview(request: Request, user=Depends(require_super_admin)):
+    chunks = []; size = 0
+    async for chunk in request.stream():
+        size += len(chunk)
+        if size > 4 * controlled_excel.MAX_BYTES // 3 + 16384:
+            raise HTTPException(413, 'Choose an Excel file no larger than 2 MB.')
+        chunks.append(chunk)
+    try:
+        body = controlled_excel.PreviewBody.model_validate(json.loads(b''.join(chunks)))
+        return await run_in_threadpool(controlled_excel.preview, body, user)
+    except (ValueError, TypeError) as exc:
+        if isinstance(exc, controlled_excel.ValidationError):
+            raise HTTPException(422, 'Choose a valid .xlsx file no larger than 2 MB.') from exc
+        raise HTTPException(422, str(exc)) from exc
+
+
+@app.post('/api/admin/controlled-records/excel/apply')
+def api_controlled_excel_apply(body: controlled_excel.ApplyBody, user=Depends(require_super_admin)):
+    try:
+        return controlled_excel.apply(body, user)
+    except controlled_records.Conflict as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
+
+
+@app.get('/api/admin/controlled-records/excel/files/{upload_id}')
+def api_controlled_excel_download(upload_id: UUID, user=Depends(require_super_admin)):
+    row = controlled_excel.download(upload_id)
+    if not row:
+        raise HTTPException(404, 'Uploaded spreadsheet not found.')
+    return Response(bytes(row['content']),
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        headers={'Cache-Control': 'private, no-store', 'X-Content-Type-Options': 'nosniff',
+                 'Content-Disposition': 'attachment; filename="crop-requirements-source.xlsx"'})
 
 @app.get('/api/admin/users')
 def api_admin_users(user=Depends(require_super_admin), offset: int = Query(0, ge=0), limit: int = Query(50, ge=1, le=100), q: str = Query("", max_length=160)):

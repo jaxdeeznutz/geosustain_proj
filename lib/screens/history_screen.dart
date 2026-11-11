@@ -21,8 +21,6 @@ class _HistoryPageState extends State<HistoryPage> {
 
   bool loading = false;
   bool opening = false;
-  bool _allFarms = false;
-  int? _lastFarm;
   String? error;
 
   @override
@@ -75,11 +73,6 @@ class _HistoryPageState extends State<HistoryPage> {
   Widget build(BuildContext context) => AnimatedBuilder(
     animation: widget.state,
     builder: (context, _) {
-      final farmId = widget.state.selectedFarmId;
-      if (_lastFarm != farmId) {
-        _lastFarm = farmId;
-        _allFarms = false;
-      }
       final rows = newestAnalysisRecords(
         widget.state.historyRecords
             .where(analysisIsCompleted)
@@ -90,12 +83,6 @@ class _HistoryPageState extends State<HistoryPage> {
                   ) &&
                   (_status == 'All status' ||
                       _farmReviewLabel(r['verification_status']) == _status),
-            )
-            .where(
-              (row) =>
-                  _allFarms ||
-                  farmId == null ||
-                  '${row['farm_id']}' == '$farmId',
             ),
       );
       final busy = loading || opening || widget.state.historyLoading;
@@ -115,15 +102,7 @@ class _HistoryPageState extends State<HistoryPage> {
                     onTap: busy ? null : refresh,
                   ),
                   const SizedBox(width: 6),
-                  _HeaderCircleButton(
-                    icon: Icons.notifications_none_rounded,
-                    onTap: () => Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => NotificationsPage(state: widget.state),
-                      ),
-                    ),
-                  ),
+                  GeoNotificationAction(state: widget.state),
                 ],
               ),
             ),
@@ -138,51 +117,13 @@ class _HistoryPageState extends State<HistoryPage> {
                   children: [
                     const GeoHistoryBanner(),
                     const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            decoration: const InputDecoration(
-                              hintText: 'Search history',
-                              prefixIcon: Icon(Icons.search),
-                            ),
-                            onChanged: (v) =>
-                                setState(() => _search = v.toLowerCase()),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        SizedBox(
-                          width: 124,
-                          child: DropdownButtonFormField<bool>(
-                            key: ValueKey((farmId, _allFarms)),
-                            initialValue: farmId == null || _allFarms,
-                            isExpanded: true,
-                            decoration: const InputDecoration(
-                              contentPadding: EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 12,
-                              ),
-                            ),
-                            items: [
-                              const DropdownMenuItem(
-                                value: true,
-                                child: Text('All farms'),
-                              ),
-                              if (farmId != null)
-                                DropdownMenuItem(
-                                  value: false,
-                                  child: Text(
-                                    '${widget.state.selectedFarm?['farm_name'] ?? 'Selected farm'}',
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                            ],
-                            onChanged: farmId == null
-                                ? null
-                                : (value) => setState(() => _allFarms = value!),
-                          ),
-                        ),
-                      ],
+                    TextField(
+                      decoration: const InputDecoration(
+                        hintText: 'Search history',
+                        prefixIcon: Icon(Icons.search),
+                      ),
+                      onChanged: (v) =>
+                          setState(() => _search = v.toLowerCase()),
                     ),
                     const SizedBox(height: 12),
                     SingleChildScrollView(

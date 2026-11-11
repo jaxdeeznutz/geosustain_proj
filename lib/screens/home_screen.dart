@@ -129,6 +129,14 @@ class HomePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
+            CurrentWeatherCard(
+              weather: weather,
+              onRefresh: () async {
+                final error = await state.refreshLiveWeather();
+                if (error != null) message(error);
+              },
+            ),
+            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -253,66 +261,6 @@ class HomePage extends StatelessWidget {
                   onTap: () => openRecord(row),
                 ),
               ),
-            _heading(context, 'Current Weather', () async {
-              final error = await state.refreshLiveWeather();
-              if (error != null) message(error);
-            }),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(18),
-                gradient: LinearGradient(
-                  colors: Theme.of(context).brightness == Brightness.dark
-                      ? [
-                          Theme.of(context).colorScheme.surfaceContainerHigh,
-                          Theme.of(context).colorScheme.surfaceContainerLow,
-                        ]
-                      : const [Color(0xFFDFF4FC), Colors.white],
-                ),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(
-                        Icons.wb_cloudy_outlined,
-                        size: 43,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          weather == null
-                              ? 'Weather unavailable'
-                              : '${state.numText(weather['temperature_c'])} C',
-                          style: TextStyle(
-                            fontSize: 25,
-                            fontWeight: FontWeight.w800,
-                            color: Theme.of(context).colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  Text(
-                    weather == null
-                        ? 'Pull to refresh. Live conditions are separate from saved analyses.'
-                        : '${weather['weather_description'] ?? 'Conditions unavailable'} | Humidity ${state.numText(weather['live_humidity'])}% | Wind ${state.numText(weather['wind_speed_kmh'])} km/h',
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.onSurface,
-                    ),
-                  ),
-                  Text(
-                    'Panabo City | ${weather?['updated_at'] ?? weather?['observed_at'] ?? 'Update time unavailable'}',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                ],
-              ),
-            ),
           ],
         ),
       ),
@@ -341,6 +289,138 @@ class HomePage extends StatelessWidget {
           ],
         ),
       );
+}
+
+class CurrentWeatherCard extends StatelessWidget {
+  final Map<String, dynamic>? weather;
+  final VoidCallback onRefresh;
+  const CurrentWeatherCard({
+    super.key,
+    required this.weather,
+    required this.onRefresh,
+  });
+
+  String _number(dynamic value, {int decimals = 1}) =>
+      analysisNumber(value)?.toStringAsFixed(decimals) ?? '--';
+
+  @override
+  Widget build(BuildContext context) {
+    final updated = DateTime.tryParse(
+      '${weather?['updated_at'] ?? weather?['observed_at'] ?? ''}',
+    );
+    final time = updated == null
+        ? 'Update time unavailable'
+        : MaterialLocalizations.of(
+            context,
+          ).formatTimeOfDay(TimeOfDay.fromDateTime(updated.toLocal()));
+    final place = '${weather?['place_name'] ?? 'Panabo City'}'.trim();
+    final condition = weather == null
+        ? 'Weather unavailable'
+        : '${weather!['weather_description'] ?? 'Conditions unavailable'}';
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFB7DDC5)),
+        image: const DecorationImage(
+          image: AssetImage('assets/images/dashboard/weather_fields.png'),
+          fit: BoxFit.cover,
+          opacity: 0.6,
+        ),
+        color: const Color(0xFFE5F5EB),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.wb_sunny_outlined, color: green, size: 24),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Current Weather',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+                ),
+              ),
+              TextButton.icon(
+                onPressed: onRefresh,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Refresh'),
+              ),
+            ],
+          ),
+          Text(
+            place.isEmpty ? 'Panabo City' : place,
+            style: const TextStyle(fontSize: 12),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.wb_cloudy_rounded,
+                          color: Color(0xFF327AB3),
+                          size: 35,
+                        ),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              '${_number(weather?['temperature_c'])}°C',
+                              style: const TextStyle(
+                                color: darkGreen,
+                                fontSize: 27,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      condition,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.all(9),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.85),
+                  borderRadius: BorderRadius.circular(13),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Humidity ${_number(weather?['live_humidity'], decimals: 0)}%',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    Text(
+                      'Wind ${_number(weather?['wind_speed_kmh'])} km/h',
+                      style: const TextStyle(fontSize: 11),
+                    ),
+                    Text('Updated $time', style: const TextStyle(fontSize: 11)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class SmartConditionCard extends StatelessWidget {
