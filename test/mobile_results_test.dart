@@ -3,6 +3,44 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geosustain_clean_arranged/main.dart';
+import 'package:geosustain_clean_arranged/api_service.dart';
+
+class _ReviewApi extends ApiService {
+  @override
+  Future<Map<String, dynamic>> getRecordPage(
+    String path, {
+    int offset = 0,
+    String search = '',
+    Map<String, String> parameters = const {},
+    Duration requestTimeout = const Duration(seconds: 30),
+    int recoveryAttempts = 3,
+  }) async {
+    if (path == '/api/mobile/review-cases') {
+      return {
+        'cases': [
+          {'case_id': 8, 'current_session_id': 7},
+        ],
+        'has_more': false,
+      };
+    }
+    if (path == '/api/mobile/review-cases/8') {
+      return {
+        'case': {'id': 8, 'status': 'verified'},
+        'events': [
+          {
+            'kind': 'verified',
+            'actor_name': 'Analyst One',
+            'reason': 'Evidence checked',
+            'notes': 'Check drainage before planting.',
+            'checklist': {'results_checked': true},
+            'created_at': '2026-11-12T10:00:00Z',
+          },
+        ],
+      };
+    }
+    throw StateError('Unexpected page: $path');
+  }
+}
 
 class _ResultState extends AnalysisState {
   int submissions = 0;
@@ -309,5 +347,37 @@ void main() {
       );
       expect(find.byType(FilledButton), findsNothing);
     }
+  });
+
+  testWidgets('approved review opens the analyst decision and notes', (
+    tester,
+  ) async {
+    final state = AnalysisState(api: _ReviewApi())
+      ..currentUser = {'role': 'farmer'};
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: AnalysisReviewCard(
+            state: state,
+            record: {
+              'session_id': 7,
+              'verification_status': 'verified',
+              'verified_at': '2026-11-12T10:00:00Z',
+              'planner_notes': 'Check drainage before planting.',
+            },
+          ),
+        ),
+      ),
+    );
+    expect(find.text('Reviewed by: Analyst'), findsOneWidget);
+    await tester.tap(find.text('View full review'));
+    await tester.pumpAndSettle();
+    expect(find.text('Review case #8'), findsOneWidget);
+    expect(find.textContaining('Reason: Evidence checked'), findsOneWidget);
+    expect(
+      find.textContaining('Check drainage before planting.'),
+      findsWidgets,
+    );
   });
 }

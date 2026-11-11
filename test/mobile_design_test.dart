@@ -175,14 +175,10 @@ void main() {
       await capture('crop-details');
       await tester.tap(find.byTooltip('Close'));
       await tester.pumpAndSettle();
-      await revealAnalysis(find.text('See all details'));
       await capture('land-conditions');
-      await tester.tap(find.text('See all details'));
-      await tester.pumpAndSettle();
-      expect(find.text('Data sources and limitations'), findsOneWidget);
+      expect(find.text('See all details'), findsNothing);
+      expect(find.text('Data sources and limitations'), findsNothing);
       await capture('analysis-details');
-      await tester.tap(find.text('Close'));
-      await tester.pumpAndSettle();
       await tab('History');
       await tester.scrollUntilVisible(
         find.text('Unnamed area'),

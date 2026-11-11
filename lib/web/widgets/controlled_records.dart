@@ -29,6 +29,7 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
   Map<String, dynamic> catalog = {};
   List<Map<String, dynamic>> rows = [];
   String? kind, error;
+  String query = '';
   bool loading = true, busy = false, more = false;
   int offset = 0, request = 0;
   @override
@@ -258,6 +259,108 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
     );
   }
 
+  Widget _recordTable(List<Map<String, dynamic>> visible) => LayoutBuilder(
+    builder: (context, bounds) => SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: ConstrainedBox(
+        constraints: BoxConstraints(minWidth: bounds.maxWidth),
+        child: DataTable(
+          columnSpacing: 22,
+          columns: const [
+            DataColumn(label: Text('Name / Description')),
+            DataColumn(label: Text('Type')),
+            DataColumn(label: Text('Version')),
+            DataColumn(label: Text('Status')),
+            DataColumn(label: Text('Updated')),
+            DataColumn(label: Text('Actions')),
+          ],
+          rows: [
+            for (final row in visible)
+              DataRow(
+                cells: [
+                  DataCell(
+                    SizedBox(
+                      width: 260,
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${analysisMapValue(row['document'])['title']}',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontWeight: FontWeight.w700),
+                          ),
+                          Text(
+                            '${row['record_key']}',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(fontSize: 11),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  DataCell(
+                    Text(
+                      '${_controlledKindLabels[row['kind']] ?? row['kind']}',
+                    ),
+                  ),
+                  DataCell(Text('v${row['revision']}')),
+                  DataCell(
+                    Chip(
+                      label: Text(
+                        row['active_record_id'] == row['id']
+                            ? 'Active'
+                            : 'Inactive',
+                      ),
+                      backgroundColor: row['active_record_id'] == row['id']
+                          ? const Color(0xFFE1F6E8)
+                          : const Color(0xFFFFF0D9),
+                    ),
+                  ),
+                  DataCell(Text(analysisDateText(row['created_at']))),
+                  DataCell(
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'View revision',
+                          onPressed: () => _details(row),
+                          icon: const Icon(Icons.visibility_outlined),
+                        ),
+                        IconButton(
+                          tooltip: 'Create revision',
+                          onPressed: busy ? null : () => _edit(row),
+                          icon: const Icon(Icons.edit_outlined),
+                        ),
+                        IconButton(
+                          tooltip: row['active_record_id'] == row['id']
+                              ? 'Deactivate'
+                              : 'Activate',
+                          onPressed: busy
+                              ? null
+                              : () => _activate(
+                                  row,
+                                  row['active_record_id'] != row['id'],
+                                ),
+                          icon: Icon(
+                            row['active_record_id'] == row['id']
+                                ? Icons.pause_circle_outline
+                                : Icons.check_circle_outline,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    ),
+  );
+
   @override
   Widget build(BuildContext context) => Card(
     child: Padding(
@@ -301,6 +404,13 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
                 icon: const Icon(Icons.download),
                 label: const Text('Download template'),
               ),
+              FilledButton.icon(
+                onPressed: loading || busy || catalog.isEmpty
+                    ? null
+                    : () => _edit(),
+                icon: const Icon(Icons.add),
+                label: const Text('New record'),
+              ),
               SizedBox(
                 width: 270,
                 child: DropdownButtonFormField<String>(
@@ -332,13 +442,6 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
                         },
                 ),
               ),
-              FilledButton.icon(
-                onPressed: loading || busy || catalog.isEmpty
-                    ? null
-                    : () => _edit(),
-                icon: const Icon(Icons.add),
-                label: const Text('New record'),
-              ),
               IconButton(
                 onPressed: busy || loading ? null : _load,
                 icon: const Icon(Icons.refresh),
@@ -346,6 +449,17 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
               ),
             ],
           ),
+          if (widget.adminDesign) ...[
+            const SizedBox(height: 12),
+            TextField(
+              key: const ValueKey('controlled-record-search'),
+              onChanged: (value) => setState(() => query = value),
+              decoration: const InputDecoration(
+                prefixIcon: Icon(Icons.search),
+                hintText: 'Search reference records...',
+              ),
+            ),
+          ],
           if (error != null)
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 10),
@@ -363,60 +477,72 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
                 'No controlled records saved yet. Built-in defaults remain in use.',
               ),
             ),
-          for (final row in rows)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFD7E3DA)),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        '${analysisMapValue(row['document'])['title']}',
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                      Text(
-                        '${_controlledKindLabels[row['kind']]} | ${row['record_key']} | Revision ${row['revision']}',
-                      ),
-                      Text(
-                        '${row['active_record_id'] == row['id'] ? 'Active' : 'Inactive'} | ${analysisMapValue(row['document'])['review_status']} | Valid until ${analysisMapValue(row['document'])['valid_until']}',
-                      ),
-                      Wrap(
-                        spacing: 10,
-                        children: [
-                          TextButton(
-                            onPressed: () => _details(row),
-                            child: const Text('View revision'),
-                          ),
-                          TextButton(
-                            onPressed: busy ? null : () => _edit(row),
-                            child: const Text('Create revision'),
-                          ),
-                          TextButton(
-                            onPressed: busy
-                                ? null
-                                : () => _activate(
-                                    row,
-                                    row['active_record_id'] != row['id'],
-                                  ),
-                            child: Text(
-                              row['active_record_id'] == row['id']
-                                  ? 'Deactivate'
-                                  : 'Activate',
+          if (widget.adminDesign)
+            _recordTable(
+              rows
+                  .where(
+                    (row) =>
+                        '${analysisMapValue(row['document'])['title']} ${row['record_key']} ${row['kind']}'
+                            .toLowerCase()
+                            .contains(query.toLowerCase()),
+                  )
+                  .toList(),
+            )
+          else
+            for (final row in rows)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFFD7E3DA)),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${analysisMapValue(row['document'])['title']}',
+                          style: const TextStyle(fontWeight: FontWeight.w800),
+                        ),
+                        Text(
+                          '${_controlledKindLabels[row['kind']]} | ${row['record_key']} | Revision ${row['revision']}',
+                        ),
+                        Text(
+                          '${row['active_record_id'] == row['id'] ? 'Active' : 'Inactive'} | ${analysisMapValue(row['document'])['review_status']} | Valid until ${analysisMapValue(row['document'])['valid_until']}',
+                        ),
+                        Wrap(
+                          spacing: 10,
+                          children: [
+                            TextButton(
+                              onPressed: () => _details(row),
+                              child: const Text('View revision'),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
+                            TextButton(
+                              onPressed: busy ? null : () => _edit(row),
+                              child: const Text('Create revision'),
+                            ),
+                            TextButton(
+                              onPressed: busy
+                                  ? null
+                                  : () => _activate(
+                                      row,
+                                      row['active_record_id'] != row['id'],
+                                    ),
+                              child: Text(
+                                row['active_record_id'] == row['id']
+                                    ? 'Deactivate'
+                                    : 'Activate',
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
           const SizedBox(height: 12),
           Wrap(
             spacing: 12,
@@ -442,17 +568,19 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
               ),
             ],
           ),
-          const Divider(),
-          Text(
-            'Trusted model: ${analysisMapValue(catalog['installed_model'])['sha256'] ?? (loading
-                    ? 'Checking…'
-                    : error != null
-                    ? 'Could not retrieve status'
-                    : 'Unavailable')}',
-          ),
-          const Text(
-            'Model records document the installed artifact. Uploading or deploying models is maintained by the project release process. NPK record entry is deferred.',
-          ),
+          if (!widget.adminDesign) ...[
+            const Divider(),
+            Text(
+              'Trusted model: ${analysisMapValue(catalog['installed_model'])['sha256'] ?? (loading
+                      ? 'Checking…'
+                      : error != null
+                      ? 'Could not retrieve status'
+                      : 'Unavailable')}',
+            ),
+            const Text(
+              'Model records document the installed artifact. Uploading or deploying models is maintained by the project release process. NPK record entry is deferred.',
+            ),
+          ],
         ],
       ),
     ),

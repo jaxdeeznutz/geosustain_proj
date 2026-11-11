@@ -548,7 +548,6 @@ class AnalysisIndicatorsCard extends StatelessWidget {
     final present = indicators
         .where((item) => analysisNumber(values[item.$1]) != null)
         .toList();
-    final warnings = analysisListValue(record['data_quality_warnings']);
     return _AnalysisSection(
       title: 'Land conditions',
       icon: Icons.landscape_outlined,
@@ -610,25 +609,6 @@ class AnalysisIndicatorsCard extends StatelessWidget {
           Text(
             'Nutrient values are model inputs. Units are not specified in these records; they are not fertilizer application rates.',
             style: TextStyle(fontSize: 16),
-          ),
-        if (warnings.isNotEmpty || quality.isNotEmpty)
-          ExpansionTile(
-            key: PageStorageKey<String>(
-              'analysis-source-details-${record['session_id'] ?? record['id']}',
-            ),
-            tilePadding: EdgeInsets.zero,
-            title: Text('Data sources and limitations'),
-            children: [
-              for (final warning in warnings) _AnalysisParagraph('$warning'),
-              for (final item in present)
-                if (analysisMapValue(quality[item.$4])['source'] != null)
-                  _AnalysisParagraph(
-                    '${item.$2}: ${analysisMapValue(quality[item.$4])['source']}',
-                  ),
-              const _AnalysisParagraph(
-                'NDVI describes vegetation, from −1 to 1. Soil and terrain estimates should be checked in the field when making planting decisions.',
-              ),
-            ],
           ),
       ],
     );
@@ -747,7 +727,53 @@ class AnalysisReviewCard extends StatefulWidget {
 
 class _AnalysisReviewCardState extends State<AnalysisReviewCard> {
   bool _submitting = false;
+  bool _opening = false;
   String? _error;
+  Future<void> _openReview() async {
+    if (_opening) return;
+    setState(() {
+      _opening = true;
+      _error = null;
+    });
+    try {
+      final sessionId = int.tryParse('${widget.record['session_id']}');
+      if (sessionId == null) throw StateError('Save this analysis first.');
+      int? caseId;
+      for (var offset = 0; offset < 500 && caseId == null; offset += 100) {
+        final page = await widget.state.api.getRecordPage(
+          '/api/mobile/review-cases',
+          offset: offset,
+          parameters: const {'limit': '100'},
+        );
+        for (final raw in analysisListValue(page['cases'])) {
+          final row = analysisMapValue(raw);
+          if (row['current_session_id'] == sessionId) {
+            caseId = int.tryParse('${row['case_id']}');
+            break;
+          }
+        }
+        if (page['has_more'] != true) break;
+      }
+      if (caseId == null) {
+        throw StateError(
+          'Review details are not available for this saved analysis.',
+        );
+      }
+      if (!mounted) return;
+      await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              FarmerReviewResponsePage(state: widget.state, caseId: caseId!),
+        ),
+      );
+    } catch (error) {
+      if (mounted) setState(() => _error = friendlyErrorMessage(error));
+    } finally {
+      if (mounted) setState(() => _opening = false);
+    }
+  }
+
   Future<void> _submit() async {
     if (_submitting) return;
     setState(() {
@@ -788,87 +814,104 @@ class _AnalysisReviewCardState extends State<AnalysisReviewCard> {
         formalReviewCandidate(widget.record) &&
         analysisProcessingLabel(widget.record) == 'Completed' &&
         status == 'draft';
-    return _AnalysisSection(
-      title: 'Analyst review',
-      children: [
-        VerificationStatusBadge(status: status),
-        if (status == 'draft' && !formalReviewCandidate(widget.record))
-          Text(
-            widget.simple
-                ? 'Save and analyze a farm boundary before sending for review.'
-                : 'Preliminary inspection only. Open a saved farm and analyze its boundary before submitting for analyst review.',
-          ),
-        if (status != 'draft' && !formalReviewCandidate(widget.record))
-          Text(
-            widget.simple
-                ? 'Older result: saved boundary unavailable.'
-                : 'This historical submission has no complete saved-farm boundary reference. Its original review history is preserved.',
-          ),
-        if (widget.record['is_crop_recommended'] == false)
-          Text(
-            widget.simple
-                ? 'Review covers the available land data only.'
-                : 'Review covers this partial assessment. It does not fill missing observations or establish crop suitability.',
-          ),
-        const SizedBox(height: 10),
-        Text(
-          widget.simple
-              ? switch (status) {
-                  'verified' => 'Reviewed. Read the feedback below.',
-                  'pending' => 'Sent. Waiting for an analyst.',
-                  'rejected' => 'Not approved. Read the feedback below.',
-                  _ => 'Send these results to an analyst when ready.',
-                }
-              : switch (status) {
-                  'verified' =>
-                    'An analyst approved this analysis. This decision applies to this analysis and its recorded boundary.',
-                  'pending' =>
-                    'Your analysis is awaiting an analyst’s decision. Refresh to retrieve the latest review.',
-                  'rejected' =>
-                    'Review the analyst’s feedback before submitting again. A new analysis starts with its own review status.',
-                  _ =>
-                    'Completing an automated analysis does not submit it or approve it. Submit when you are ready for an analyst to review these results.',
-                },
-        ),
-        if (widget.record['verified_at'] != null) ...[
-          const SizedBox(height: 8),
-          Text('Reviewed: ${analysisDateText(widget.record['verified_at'])}'),
-        ],
-        if ('${widget.record['planner_notes'] ?? ''}'.trim().isNotEmpty) ...[
+    return GestureDetector(
+      onTap: status == 'draft' || _opening ? null : _openReview,
+      child: _AnalysisSection(
+        title: 'Analyst Review',
+        icon: Icons.fact_check_outlined,
+        children: [
+          VerificationStatusBadge(status: status),
+          if (status == 'draft' && !formalReviewCandidate(widget.record))
+            Text(
+              widget.simple
+                  ? 'Save and analyze a farm boundary before sending for review.'
+                  : 'Preliminary inspection only. Open a saved farm and analyze its boundary before submitting for analyst review.',
+            ),
+          if (status != 'draft' && !formalReviewCandidate(widget.record))
+            Text(
+              widget.simple
+                  ? 'Older result: saved boundary unavailable.'
+                  : 'This historical submission has no complete saved-farm boundary reference. Its original review history is preserved.',
+            ),
+          if (widget.record['is_crop_recommended'] == false)
+            Text(
+              widget.simple
+                  ? 'Review covers the available land data only.'
+                  : 'Review covers this partial assessment. It does not fill missing observations or establish crop suitability.',
+            ),
           const SizedBox(height: 10),
-          Text('Analyst feedback: ${widget.record['planner_notes']}'),
-        ],
-        if (_error != null)
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            child: Text(
-              _error!,
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
+          Text(
+            widget.simple
+                ? switch (status) {
+                    'verified' => 'Reviewed. Read the feedback below.',
+                    'pending' => 'Sent. Waiting for an analyst.',
+                    'rejected' => 'Not approved. Read the feedback below.',
+                    'needs_information' =>
+                      'The analyst requested more information.',
+                    _ => 'Send these results to an analyst when ready.',
+                  }
+                : switch (status) {
+                    'verified' =>
+                      'An analyst approved this analysis. This decision applies to this analysis and its recorded boundary.',
+                    'pending' =>
+                      'Your analysis is awaiting an analyst’s decision. Refresh to retrieve the latest review.',
+                    'rejected' =>
+                      'Review the analyst’s feedback before submitting again. A new analysis starts with its own review status.',
+                    'needs_information' =>
+                      'Open the full review to see what the analyst requested and respond with a new analysis.',
+                    _ =>
+                      'Completing an automated analysis does not submit it or approve it. Submit when you are ready for an analyst to review these results.',
+                  },
           ),
-        if (eligible) ...[
-          const SizedBox(height: 14),
-          FilledButton.icon(
-            onPressed: _submitting ? null : _submit,
-            icon: _submitting
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.send_outlined),
-            label: Text(
-              _submitting
-                  ? 'Submitting…'
-                  : widget.simple
-                  ? 'Send for review'
-                  : status == 'rejected'
-                  ? 'Resubmit for Analyst Review'
-                  : 'Submit for Analyst Review',
+          if (widget.record['verified_at'] != null) ...[
+            const SizedBox(height: 8),
+            Text('Reviewed: ${analysisDateText(widget.record['verified_at'])}'),
+            const Text('Reviewed by: Analyst'),
+          ],
+          if ('${widget.record['planner_notes'] ?? ''}'.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text('Analyst feedback: ${widget.record['planner_notes']}'),
+          ],
+          if (status != 'draft') ...[
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: _opening ? null : _openReview,
+              icon: const Icon(Icons.open_in_new),
+              label: Text(_opening ? 'Opening review…' : 'View full review'),
             ),
-          ),
+          ],
+          if (_error != null)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 10),
+              child: Text(
+                _error!,
+                style: TextStyle(color: Theme.of(context).colorScheme.error),
+              ),
+            ),
+          if (eligible) ...[
+            const SizedBox(height: 14),
+            FilledButton.icon(
+              onPressed: _submitting ? null : _submit,
+              icon: _submitting
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.send_outlined),
+              label: Text(
+                _submitting
+                    ? 'Submitting…'
+                    : widget.simple
+                    ? 'Send for review'
+                    : status == 'rejected'
+                    ? 'Resubmit for Analyst Review'
+                    : 'Submit for Analyst Review',
+              ),
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }

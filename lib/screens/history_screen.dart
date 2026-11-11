@@ -280,6 +280,7 @@ class VerificationStatusBadge extends StatelessWidget {
       case 'draft':
         return const Color(0xFF667085);
       case 'pending':
+      case 'needs_information':
         return const Color(0xFF805700);
       default:
         return const Color(0xFF667085);
@@ -296,6 +297,8 @@ class VerificationStatusBadge extends StatelessWidget {
         return Icons.edit_note_rounded;
       case 'pending':
         return Icons.hourglass_top_rounded;
+      case 'needs_information':
+        return Icons.info_outline_rounded;
       default:
         return Icons.help_outline;
     }

@@ -154,25 +154,16 @@ void main() {
           findsNothing,
         );
         expect(find.text('Compare with another crop'), findsNothing);
-        expect(find.byType(DropdownButtonFormField<String>), findsOneWidget);
+        expect(find.byType(DropdownButtonFormField<String>), findsNothing);
+        expect(find.text('Top crop: Rice'), findsOneWidget);
         expect(tester.takeException(), isNull);
-        final citations = find.text('Conditions & sources');
-        await tester.ensureVisible(citations);
-        await tester.tap(citations);
-        await tester.pumpAndSettle();
-        expect(find.text('Research and reference fit - Rice'), findsOneWidget);
-        expect(
-          find.textContaining('https://ecocrop.apps.fao.org'),
-          findsWidgets,
-        );
-        expect(tester.takeException(), isNull);
-        await tester.tap(find.text('Close'));
-        await tester.pumpAndSettle();
         final details = find.text('AI calculation details');
         await tester.ensureVisible(details);
         await tester.tap(details);
         await tester.pumpAndSettle();
         expect(find.textContaining('Explainable AI details'), findsOneWidget);
+        expect(find.textContaining('ranked first because'), findsOneWidget);
+        expect(find.textContaining('Arithmetic mean'), findsNothing);
         expect(tester.takeException(), isNull);
         await tester.pumpWidget(const SizedBox());
       },

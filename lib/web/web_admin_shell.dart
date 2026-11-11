@@ -1656,8 +1656,8 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
       children: [
         _header(
           'Crop & Season Settings',
-          'Manage which approved crops GeoSustain can currently recommend, and their reference information.',
-          Icons.calendar_month_rounded,
+          'Manage crop requirements, crop groups, and seasonal configurations for new analyses.',
+          Icons.spa_rounded,
         ),
         const SizedBox(height: 20),
         _metrics([
@@ -1689,53 +1689,7 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
           ),
         ]),
         const SizedBox(height: 16),
-        _AnalystColumns(
-          main: ControlledRecordsPanel(api: api, adminDesign: true),
-          side: _WebCard(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                const _AnalystSectionTitle(
-                  'How it works',
-                  icon: Icons.lightbulb_outline,
-                ),
-                const SizedBox(height: 16),
-                for (final step in [
-                  (1, 'Download the template and enter crop requirements.'),
-                  (2, 'Import Excel and check the row preview.'),
-                  (3, 'Save drafts or activate the checked rows.'),
-                  (4, 'Existing analyses retain their saved versions.'),
-                ])
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        CircleAvatar(
-                          radius: 11,
-                          backgroundColor: WebPortalColors.tint,
-                          child: Text(
-                            '${step.$1}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: WebPortalColors.accent,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            step.$2,
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
+        ControlledRecordsPanel(api: api, adminDesign: true),
         const SizedBox(height: 16),
         _WebCard(
           child: Column(

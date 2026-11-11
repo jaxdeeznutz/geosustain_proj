@@ -498,17 +498,6 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                     ),
                 ],
               ),
-              TextButton(
-                onPressed: () =>
-                    _analysisDetails(context, 'Data sources and limitations', [
-                      if (isAnnualPrototypeRecord(r))
-                        const Text(annualPrototypeShortNotice),
-                      AnalysisIndicatorsCard(record: r),
-                      if (modern)
-                        SelectableText('${r['recommendation_scoring']}'),
-                    ]),
-                child: Text('See all details'),
-              ),
             ],
           ),
           if (tab == 2 && modelRanked && !preliminary)

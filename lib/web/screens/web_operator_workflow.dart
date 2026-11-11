@@ -1842,7 +1842,17 @@ class _FarmerReviewResponsePageState extends State<FarmerReviewResponsePage> {
               ListTile(
                 title: Text(reviewLabel(e['kind'])),
                 subtitle: Text(
-                  '${e['notes'] ?? ''}\n${analysisDateText(e['created_at'])}',
+                  [
+                    if ('${e['actor_name'] ?? ''}'.trim().isNotEmpty)
+                      'By ${e['actor_name']}',
+                    if ('${e['reason'] ?? ''}'.trim().isNotEmpty)
+                      'Reason: ${e['reason']}',
+                    if ('${e['notes'] ?? ''}'.trim().isNotEmpty)
+                      '${e['notes']}',
+                    if (analysisMapValue(e['checklist']).isNotEmpty)
+                      'Checks: ${analysisMapValue(e['checklist']).entries.map((entry) => '${entry.key}: ${entry.value}').join(', ')}',
+                    analysisDateText(e['created_at']),
+                  ].join('\n'),
                 ),
               ),
             if (c['status'] == 'needs_information' && c['farm_id'] == null)

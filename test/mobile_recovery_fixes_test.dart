@@ -289,7 +289,8 @@ void main() {
         await tester.pumpAndSettle();
         expect(tester.takeException(), isNull);
       }
-      expect(find.text('4. Corn'), findsWidgets);
+      expect(find.text('1. Rice'), findsOneWidget);
+      expect(find.text('4. Corn'), findsNothing);
     },
   );
 

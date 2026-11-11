@@ -530,8 +530,6 @@ void _showModelDetails(
       _ModelImportanceBar(feature: feature),
       _AnalysisParagraph('Exact importance: ${feature['importance']}'),
     ],
-    if (explanation['aggregation'] != null)
-      _AnalysisParagraph('${explanation['aggregation']}'),
     const _AnalysisParagraph('Inputs recorded at prediction time'),
     for (final (index, raw) in analysisListValue(
       explanation['samples'],
