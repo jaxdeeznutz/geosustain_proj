@@ -1,0 +1,417 @@
+{
+  "source_sha256": "1a6dcf3b22c20ff51c0ef7eee310df3ad5d359263d78d1a93e2dbaa7245ec03a",
+  "source_rows": 4420,
+  "filtered_rows": 1820,
+  "duplicate_rows_removed_before_split": 426,
+  "unique_rows": 1394,
+  "train_rows": 1115,
+  "holdout_rows": 279,
+  "feature_order": [
+    "N",
+    "P",
+    "K",
+    "temperature",
+    "humidity",
+    "ph",
+    "rainfall",
+    "ndvi",
+    "elevation",
+    "slope"
+  ],
+  "versions": {
+    "scikit_learn": "1.8.0",
+    "numpy": "2.4.4",
+    "pandas": "3.0.3"
+  },
+  "comparison": [
+    {
+      "model": "decision_tree",
+      "holdout_accuracy": 0.7670250896057348,
+      "holdout_f1_macro": 0.6951237187062905
+    },
+    {
+      "model": "svm",
+      "holdout_accuracy": 0.8315412186379928,
+      "holdout_f1_macro": 0.7835695099880536
+    },
+    {
+      "model": "random_forest",
+      "holdout_accuracy": 0.8602150537634409,
+      "holdout_f1_macro": 0.7999603517193355
+    }
+  ],
+  "details": {
+    "decision_tree": {
+      "classification_report": {
+        "banana": {
+          "precision": 0.9090909090909091,
+          "recall": 0.9615384615384616,
+          "f1-score": 0.9345794392523364,
+          "support": 52.0
+        },
+        "cacao": {
+          "precision": 0.5,
+          "recall": 0.4782608695652174,
+          "f1-score": 0.4888888888888889,
+          "support": 23.0
+        },
+        "coconut": {
+          "precision": 0.84,
+          "recall": 0.8076923076923077,
+          "f1-score": 0.8235294117647058,
+          "support": 52.0
+        },
+        "durian": {
+          "precision": 0.375,
+          "recall": 0.375,
+          "f1-score": 0.375,
+          "support": 24.0
+        },
+        "mango": {
+          "precision": 0.8846153846153846,
+          "recall": 0.8846153846153846,
+          "f1-score": 0.8846153846153846,
+          "support": 52.0
+        },
+        "rice": {
+          "precision": 0.9148936170212766,
+          "recall": 0.8269230769230769,
+          "f1-score": 0.8686868686868687,
+          "support": 52.0
+        },
+        "rubber": {
+          "precision": 0.4482758620689655,
+          "recall": 0.5416666666666666,
+          "f1-score": 0.49056603773584906,
+          "support": 24.0
+        },
+        "accuracy": 0.7670250896057348,
+        "macro avg": {
+          "precision": 0.6959822532566479,
+          "recall": 0.696528109571588,
+          "f1-score": 0.6951237187062905,
+          "support": 279.0
+        },
+        "weighted avg": {
+          "precision": 0.773425863969494,
+          "recall": 0.7670250896057348,
+          "f1-score": 0.7692165117373054,
+          "support": 279.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          50,
+          0,
+          0,
+          0,
+          1,
+          1,
+          0
+        ],
+        [
+          0,
+          11,
+          1,
+          3,
+          0,
+          1,
+          7
+        ],
+        [
+          0,
+          0,
+          42,
+          2,
+          3,
+          0,
+          5
+        ],
+        [
+          0,
+          8,
+          3,
+          9,
+          1,
+          0,
+          3
+        ],
+        [
+          0,
+          0,
+          2,
+          2,
+          46,
+          1,
+          1
+        ],
+        [
+          5,
+          1,
+          1,
+          1,
+          1,
+          43,
+          0
+        ],
+        [
+          0,
+          2,
+          1,
+          7,
+          0,
+          1,
+          13
+        ]
+      ]
+    },
+    "svm": {
+      "classification_report": {
+        "banana": {
+          "precision": 0.8928571428571429,
+          "recall": 0.9615384615384616,
+          "f1-score": 0.9259259259259259,
+          "support": 52.0
+        },
+        "cacao": {
+          "precision": 0.5769230769230769,
+          "recall": 0.6521739130434783,
+          "f1-score": 0.6122448979591837,
+          "support": 23.0
+        },
+        "coconut": {
+          "precision": 0.8703703703703703,
+          "recall": 0.9038461538461539,
+          "f1-score": 0.8867924528301887,
+          "support": 52.0
+        },
+        "durian": {
+          "precision": 0.4827586206896552,
+          "recall": 0.5833333333333334,
+          "f1-score": 0.5283018867924528,
+          "support": 24.0
+        },
+        "mango": {
+          "precision": 0.9607843137254902,
+          "recall": 0.9423076923076923,
+          "f1-score": 0.9514563106796117,
+          "support": 52.0
+        },
+        "rice": {
+          "precision": 0.9333333333333333,
+          "recall": 0.8076923076923077,
+          "f1-score": 0.865979381443299,
+          "support": 52.0
+        },
+        "rubber": {
+          "precision": 0.8333333333333334,
+          "recall": 0.625,
+          "f1-score": 0.7142857142857143,
+          "support": 24.0
+        },
+        "accuracy": 0.8315412186379928,
+        "macro avg": {
+          "precision": 0.792908598747486,
+          "recall": 0.7822702659659181,
+          "f1-score": 0.7835695099880536,
+          "support": 279.0
+        },
+        "weighted avg": {
+          "precision": 0.8424279068124444,
+          "recall": 0.8315412186379928,
+          "f1-score": 0.8339489131349338,
+          "support": 279.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          50,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0
+        ],
+        [
+          0,
+          15,
+          0,
+          6,
+          0,
+          0,
+          2
+        ],
+        [
+          0,
+          0,
+          47,
+          3,
+          2,
+          0,
+          0
+        ],
+        [
+          0,
+          5,
+          3,
+          14,
+          0,
+          1,
+          1
+        ],
+        [
+          0,
+          0,
+          2,
+          1,
+          49,
+          0,
+          0
+        ],
+        [
+          6,
+          2,
+          2,
+          0,
+          0,
+          42,
+          0
+        ],
+        [
+          0,
+          4,
+          0,
+          5,
+          0,
+          0,
+          15
+        ]
+      ]
+    },
+    "random_forest": {
+      "classification_report": {
+        "banana": {
+          "precision": 0.9272727272727272,
+          "recall": 0.9807692307692307,
+          "f1-score": 0.9532710280373832,
+          "support": 52.0
+        },
+        "cacao": {
+          "precision": 0.6842105263157895,
+          "recall": 0.5652173913043478,
+          "f1-score": 0.6190476190476191,
+          "support": 23.0
+        },
+        "coconut": {
+          "precision": 0.8947368421052632,
+          "recall": 0.9807692307692307,
+          "f1-score": 0.9357798165137615,
+          "support": 52.0
+        },
+        "durian": {
+          "precision": 0.5,
+          "recall": 0.5416666666666666,
+          "f1-score": 0.52,
+          "support": 24.0
+        },
+        "mango": {
+          "precision": 0.9433962264150944,
+          "recall": 0.9615384615384616,
+          "f1-score": 0.9523809523809523,
+          "support": 52.0
+        },
+        "rice": {
+          "precision": 0.94,
+          "recall": 0.9038461538461539,
+          "f1-score": 0.9215686274509803,
+          "support": 52.0
+        },
+        "rubber": {
+          "precision": 0.7894736842105263,
+          "recall": 0.625,
+          "f1-score": 0.6976744186046512,
+          "support": 24.0
+        },
+        "accuracy": 0.8602150537634409,
+        "macro avg": {
+          "precision": 0.8112985723313431,
+          "recall": 0.7941153049848702,
+          "f1-score": 0.7999603517193355,
+          "support": 279.0
+        },
+        "weighted avg": {
+          "precision": 0.8579401860485885,
+          "recall": 0.8602150537634409,
+          "f1-score": 0.8571265353137165,
+          "support": 279.0
+        }
+      },
+      "confusion_matrix": [
+        [
+          51,
+          0,
+          0,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          13,
+          0,
+          5,
+          0,
+          1,
+          4
+        ],
+        [
+          0,
+          0,
+          51,
+          0,
+          1,
+          0,
+          0
+        ],
+        [
+          0,
+          5,
+          4,
+          13,
+          1,
+          1,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          2,
+          50,
+          0,
+          0
+        ],
+        [
+          4,
+          0,
+          1,
+          0,
+          0,
+          47,
+          0
+        ],
+        [
+          0,
+          1,
+          1,
+          6,
+          0,
+          1,
+          15
+        ]
+      ]
+    }
+  }
+}

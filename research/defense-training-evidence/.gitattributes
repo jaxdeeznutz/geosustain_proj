@@ -3,3 +3,4 @@ data/*.json text eol=lf
 results/*.csv text eol=lf
 results/*.json text eol=lf
 *.ipynb text eol=lf
+manuscript-matching-10-feature/data/Crop_recommendation_with_gis.csv -text whitespace=cr-at-eol
