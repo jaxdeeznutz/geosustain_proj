@@ -76,6 +76,15 @@ Future<Uint8List> buildCompactAnalysisPdf(
       features is List && features.any((f) => ['N', 'P', 'K'].contains(f));
   final measures = _object(record['environmental_measurements']);
   final checks = savedReferenceFit(record, crop);
+  final explanation = blocked
+      ? <String, dynamic>{}
+      : recommendationSummary(record, crop);
+  final calendarSeason = _object(season['calendar_season']);
+  final farmer =
+      record['farmer_name'] ??
+      record['owner_display_name'] ??
+      record['owner_name'] ??
+      reviewCase?['farmer_name'];
   final allRanks = <Map<String, dynamic>>[
     if (!blocked)
       {
@@ -93,7 +102,7 @@ Future<Uint8List> buildCompactAnalysisPdf(
       .take(7)
       .toList();
   pw.Widget heading(String s) => pw.Padding(
-    padding: const pw.EdgeInsets.only(top: 10, bottom: 6),
+    padding: const pw.EdgeInsets.only(top: 7, bottom: 4),
     child: pw.Text(
       s,
       style: pw.TextStyle(
@@ -181,6 +190,7 @@ Future<Uint8List> buildCompactAnalysisPdf(
           style: const pw.TextStyle(fontSize: 8),
         ),
       line('Farm', _text(record['farm_name'] ?? record['title'], 110)),
+      line('Farmer', farmer),
       line('Location', _text(record['place_name'], 140)),
       line('Analyzed', record['analyzed_at'] ?? record['created_at']),
       line('Area', '${_number(record['area_hectares'], 3)} ha'),
@@ -230,16 +240,26 @@ Future<Uint8List> buildCompactAnalysisPdf(
         ),
         heading('Growing conditions for $crop'),
         box(_text(conciseCropFit(record, crop), 650)),
+        heading('Why this crop ranked first'),
+        box(
+          explanation['status'] == 'available'
+              ? '${_text(explanation['ranking'], 210)} ${_text(explanation['model_summary'], 190)} The model score and growing-condition checks answer different questions.'
+              : 'A matching saved model explanation is unavailable. The ranking above remains the recorded model output; no reasons are inferred.',
+        ),
       ],
       heading('Planting month'),
       box(
         season.isEmpty
             ? 'No seasonal assessment saved.'
             : [
+                if (calendarSeason['selected_month_label'] != null)
+                  'PAGASA calendar season: ${calendarSeason['selected_month_label']}.',
+                if (calendarSeason['current_label'] != null)
+                  'On ${calendarSeason['current_date']}: ${calendarSeason['current_label']}.',
                 '${season['selected_month_name'] ?? 'Selected month'}: ${seasonalMoistureLabel(record)}.',
                 if (seasonalCrop != null)
                   '$crop: ${_text(seasonalCrop['label'], 100)}.',
-                'Historical monthly pattern, not a forecast. Confirm irrigation and drainage before planting.',
+                'The calendar season is national; the moisture class is a historical local estimate, not a forecast. Confirm irrigation and drainage before planting.',
               ].join(' '),
       ),
     ]),
@@ -292,7 +312,7 @@ Future<Uint8List> buildCompactAnalysisPdf(
           fontSize: 9.5,
         ),
         cellStyle: const pw.TextStyle(fontSize: 9.5),
-        cellPadding: const pw.EdgeInsets.all(5),
+        cellPadding: const pw.EdgeInsets.all(3),
         border: null,
         cellAlignments: {
           0: pw.Alignment.centerLeft,
@@ -305,11 +325,21 @@ Future<Uint8List> buildCompactAnalysisPdf(
         'Not assessed means no compatible reading or cited crop-specific range is saved. Current humidity and NDVI are observations, not proof of crop fit.',
         style: const pw.TextStyle(fontSize: 9),
       ),
+      if (usesNpk)
+        pw.Text(
+          'Estimated model inputs (legacy scale): N ${_number(record['nitrogen'], 2)}; P ${_number(record['phosphorus'], 2)}; K ${_number(record['potassium'], 2)}. These are not laboratory units or fertilizer rates.',
+          style: const pw.TextStyle(fontSize: 9),
+        ),
+      pw.SizedBox(height: 4),
+      pw.Text(
+        'These are saved readings from one assessment. They do not establish whether nitrogen, rainfall, or other factors are stable or trending over time. ${usesNpk ? 'Model N/P/K values are estimates, not laboratory results.' : 'NPK is excluded from this model.'}',
+        style: const pw.TextStyle(fontSize: 9),
+      ),
       if (mapLayer != null &&
           spatialRows(record['selected_polygon']).length >= 3) ...[
         heading('Saved parcel evidence'),
         pw.SizedBox(
-          height: 85,
+          height: 65,
           child: pw.SvgImage(svg: spatialLayerSvg(record, mapLayer)),
         ),
         pw.Text(
@@ -356,7 +386,7 @@ Future<Uint8List> buildCompactAnalysisPdf(
       pw.SizedBox(height: 7),
       pw.Text(
         _text(
-          'Sources: Sentinel-2; CHIRPS; ERA5-Land; OpenLandMap; SRTM; NASA POWER (seasonal history). ${sources.take(3).join('; ')}.',
+          'Sources: Sentinel-2; CHIRPS; ERA5-Land; OpenLandMap; SRTM; NASA POWER (seasonal history); PAGASA (calendar season)${usesNpk ? '; SoilGrids nitrogen when available, with a labelled backup or default' : ''}${sources.isEmpty ? '' : '; ${sources.take(3).join('; ')}'}.',
           280,
         ),
         style: const pw.TextStyle(fontSize: 8.5),

@@ -11,6 +11,7 @@ from calendar import month_name, monthrange
 from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime, timezone
+from zoneinfo import ZoneInfo
 from math import isfinite
 from threading import Lock
 from time import monotonic
@@ -20,6 +21,13 @@ from seasonal_planting import eto_month, planting_assessment
 from current_seasonal_climate import parse_current_year, published_outlook
 
 VERSION = 'seasonal-context-v3'
+PAGASA_SEASON_SOURCE = 'https://www.pagasa.dost.gov.ph/information/climate-philippines'
+
+
+def calendar_season(month):
+    if isinstance(month, bool) or month not in range(1, 13):
+        raise ValueError('Season month must be 1 through 12.')
+    return 'Rainy season' if 6 <= month <= 11 else 'Dry season'
 START_YEAR, END_YEAR = 2005, 2024
 URL = 'https://power.larc.nasa.gov/api/temporal/monthly/point'
 DOCS = 'https://power.larc.nasa.gov/docs/services/api/temporal/monthly/'
@@ -179,6 +187,7 @@ def fetch_baseline(lat, lon, month):
 def attach_seasonal_assessment(result, baseline, month, enabled_crops=None):
     """Attach new evidence; do not mutate ranks, annual grades or model inputs."""
     name = month_name[month]
+    local_today = datetime.now(ZoneInfo('Asia/Manila')).date()
     monthly = deepcopy(baseline)
     # Old provider/cache shapes cannot establish this version's units/counts.
     valid = monthly.get('version') == VERSION and monthly.get('selected_month') == month
@@ -206,6 +215,14 @@ def attach_seasonal_assessment(result, baseline, month, enabled_crops=None):
     result['intended_planting_month_name'] = name
     result['seasonal_assessment'] = {
         'version': VERSION, 'status': status, 'selected_month': month, 'selected_month_name': name,
+        'calendar_season': {
+            'selected_month_label': calendar_season(month),
+            'current_label': calendar_season(local_today.month),
+            'current_date': local_today.isoformat(),
+            'scope': 'PAGASA Philippine calendar seasons; not a parcel rainfall observation or planting-readiness judgment',
+            'source_url': PAGASA_SEASON_SOURCE,
+            'used_for_model_ranking': False,
+        },
         'captured_at': utc_now(), 'year_interpretation': 'Calendar month selected; current-year estimates are retrospective and dated station outlooks are separate forecasts',
         'monthly_climate': monthly, 'separate_current_and_annual_observations': separate,
         'current_year_climate': deepcopy(monthly.get('current_year_climate') or {}),

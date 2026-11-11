@@ -74,6 +74,30 @@ Map<String, dynamic> seasonalPlantingFixture() => {
 };
 
 void main() {
+  testWidgets(
+    'saved PAGASA calendar season remains separate from local moisture',
+    (tester) async {
+      final record = seasonalPlantingFixture();
+      (record['seasonal_assessment']
+          as Map<String, dynamic>)['calendar_season'] = {
+        'selected_month_label': 'Rainy season',
+        'current_label': 'Rainy season',
+        'current_date': '2026-11-11',
+      };
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(body: SeasonalPlantingAdvice(record: record)),
+        ),
+      );
+      expect(find.text('June: Wet conditions'), findsOneWidget);
+      expect(find.text('PAGASA calendar season: Rainy season'), findsOneWidget);
+      expect(
+        seasonalAssessmentLines(record).join('\n'),
+        contains('national calendar label, not measured farm moisture'),
+      );
+    },
+  );
+
   test('wet and dry descriptions require saved selected-month evidence', () {
     final record = seasonalPlantingFixture();
     final snapshot = record['seasonal_assessment'] as Map;

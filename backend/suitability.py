@@ -122,18 +122,18 @@ def mark_preliminary(result, *, reason=None):
         predicted_crop=None, crop=None, crop_compatibility_pct=None,
         is_crop_recommended=False, suitability_level='Not fully assessed',
         recommendation_title='Preliminary environmental screening',
-        analysis_summary='Preliminary environmental comparisons only. CAGRO NPK is unavailable; inspect individual factors and obtain a reviewed soil assessment before a complete crop recommendation.',
-        preliminary_notice='Preliminary environmental comparison. CAGRO NPK unavailable; not a complete soil suitability assessment.')
+        analysis_summary='Preliminary environmental comparisons only. Inspect individual factors and obtain a reviewed soil assessment before a complete crop recommendation.',
+        preliminary_notice='Preliminary environmental comparison; not a complete soil suitability assessment.')
     if reason == 'annual_model_pending':
         result.update(reference_screening_reason=reason,
             assessment_scope='online_environmental_reference_screening',
             npk_assessment={'status': 'not_assessed', 'pending_source': 'PAGRO',
-                'note': 'Requested PAGRO NPK data is not yet available in this project.'},
+                'note': 'Compatible field soil measurements are not available in this project.'},
             model_ranking_status='unavailable',
             model_ranking_reason='The deployed model is not documented for five-year mean annual rainfall and the seven-crop catalog.',
             recommendation_title='Annual environmental condition checks',
-            analysis_summary='Available online environmental observations are compared with documented crop references. NPK is not assessed; requested PAGRO data is pending in this project.',
-            preliminary_notice='Environmental checks use online datasets and research references. PAGRO NPK data is pending.',
+            analysis_summary='Available online environmental observations are compared with documented crop references. NPK is not assessed in this mode.',
+            preliminary_notice='Environmental checks use online datasets and research references; NPK is not assessed in this mode.',
             nutrient_basis='No model nutrient inputs used in this environmental comparison.',
             local_model_explanation={'schema_version': 1, 'status': 'unavailable',
                 'reason': 'Model ranking was not run because its documented climate input periods do not match the annual analysis.'})

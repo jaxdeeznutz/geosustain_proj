@@ -368,6 +368,12 @@ Future<Uint8List> buildAnalysisPdf(
   final data = Map<String, dynamic>.from(raw);
   if (state != null) {
     data['place_name'] = await state.resolvePlaceForRecord(data);
+    if (data['farmer_name'] == null &&
+        data['owner_display_name'] == null &&
+        (data['user_id'] == null ||
+            data['user_id'] == state.currentUser?['id'])) {
+      data['farmer_name'] = state.currentUser?['username'];
+    }
   }
   return buildCompactAnalysisPdf(data);
 }
@@ -541,7 +547,7 @@ Future<Uint8List> buildDetailedAnalysisPdf(
         pw.Text('Recommendation: $recommendation'),
         if (preliminary)
           pw.Text(
-            'Preliminary environmental screening. CAGRO NPK unavailable; no complete crop recommendation or soil suitability score is assigned.',
+            'Preliminary environmental screening; no complete crop recommendation or soil suitability score is assigned.',
           )
         else ...[
           pw.Text('Crop Recommendation: $crop'),
@@ -764,7 +770,7 @@ Future<Uint8List> buildDetailedAnalysisPdf(
         pw.SizedBox(height: 18),
         pw.Divider(),
         pw.Text(
-          '${preliminary ? 'This preliminary report compares recorded environmental conditions. CAGRO NPK is unavailable. ' : 'This report is an AI-assisted agricultural estimate generated from satellite, weather, and soil-proxy data. '}'
+          '${preliminary ? 'This preliminary report compares recorded environmental conditions. ' : 'This report is an AI-assisted agricultural estimate generated from satellite, weather, and soil-proxy data. '}'
           'It is not a certified soil test, a cadastral or legal land survey, or a guarantee of crop performance. '
           'Farmers and planners should use it as a decision-support reference alongside on-site verification and local agricultural extension guidance.',
           style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),

@@ -1478,7 +1478,7 @@ class RecommendedCropDetailsSheet extends StatelessWidget {
             title: 'Preliminary environmental comparison',
             children: [
               Text(
-                'Compare the available conditions below. CAGRO NPK is unavailable; no complete soil suitability score or recommendation is assigned.',
+                'Compare the available conditions below. No complete soil suitability score or recommendation is assigned.',
               ),
             ],
           )
@@ -1599,7 +1599,7 @@ class SecondaryCropDetailsSheet extends StatelessWidget {
             title: 'Preliminary environmental comparison',
             children: [
               Text(
-                'Compare the available conditions below. CAGRO NPK is unavailable; no complete soil suitability score or recommendation is assigned.',
+                'Compare the available conditions below. No complete soil suitability score or recommendation is assigned.',
               ),
             ],
           )

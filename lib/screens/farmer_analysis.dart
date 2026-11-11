@@ -64,7 +64,7 @@ class FarmerAnalysisContent extends StatelessWidget {
               if (isNoNpkModelRecord(record)) ...[
                 const SizedBox(height: 8),
                 const Text(
-                  'NPK not used. PAGRO soil data pending.',
+                  'NPK is not used by this model.',
                   style: TextStyle(fontSize: 12),
                 ),
               ],

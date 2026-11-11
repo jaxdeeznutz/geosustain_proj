@@ -32,7 +32,7 @@ def soil_reference(polygon):
         return cagro.lookup_soil_observations(polygon)
     return {'version': cagro.VERSION, 'status': 'disabled', 'observations': [],
             'used_for_prediction': False,
-            'message': 'Historical local soil reference is temporarily disabled. Environmental model analysis remains available.'}
+            'message': 'Environmental model analysis is available with estimated soil inputs.'}
 
 
 def coverage_from_soil(soil):
@@ -45,7 +45,7 @@ def coverage_from_soil(soil):
         for row in rows]
     result = {'schema_version': VERSION, 'supported': bool(rows),
             'cagro_enabled': soil.get('status') != 'disabled',
-            'reason': 'CAGRO soil data available' if rows else 'No CAGRO soil data available for this farm location',
+            'reason': 'Historical soil observations available' if rows else 'No matching historical soil observations',
             'message': HISTORICAL_NOTE if rows else MESSAGE,
             'matches': matches, 'matching_policy': soil.get('matching_policy'),
             'locality_ids': sorted({r['locality_id'] for r in rows}),

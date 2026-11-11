@@ -58,7 +58,7 @@ List<String> analysisCoverageLines(Map<String, dynamic> record) {
     'Approximate area: ${analysisAreaText(record)}',
     'Farm center is not a soil sample coordinate.',
     if (noNpk)
-      'Analysis coverage: Seven environmental model inputs; NPK excluded. PAGRO data pending.'
+      'Analysis coverage: Seven environmental model inputs; NPK excluded.'
     else if (record['reference_screening_reason'] == 'annual_model_pending')
       'Analysis coverage: Annual environmental condition checks; crop model pending compatible training data'
     else if (cagroDisabled)
@@ -86,7 +86,7 @@ List<String> analysisCoverageLines(Map<String, dynamic> record) {
     lines.add(
       cagroDisabled
           ? 'Model nutrient source: SoilGrids nitrogen when available, with a labelled backup or default; phosphorus and potassium are calculated estimates.'
-          : 'Model nutrient source: SoilGrids nitrogen when available, with a labelled backup or default; phosphorus and potassium are calculated estimates. Historical CAGRO records are separate.',
+          : 'Model nutrient source: SoilGrids nitrogen when available, with a labelled backup or default; phosphorus and potassium are calculated estimates.',
     );
     final count = analysisNumber(
       analysisMapValue(record['model_nutrient_aggregation'])['sample_count'],

@@ -259,6 +259,7 @@ class SeasonalPlantingAdvice extends StatelessWidget {
   Widget build(BuildContext context) {
     final snapshot = analysisMapValue(record['seasonal_assessment']);
     final planting = analysisMapValue(snapshot['planting_assessment']);
+    final calendarSeason = analysisMapValue(snapshot['calendar_season']);
     if (planting.isEmpty) return const SizedBox.shrink();
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -276,6 +277,11 @@ class SeasonalPlantingAdvice extends StatelessWidget {
             '${snapshot['selected_month_name'] ?? 'Selected month'}: ${seasonalMoistureLabel(record)}',
             style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
           ),
+          if (calendarSeason['selected_month_label'] != null)
+            Text(
+              'PAGASA calendar season: ${calendarSeason['selected_month_label']}',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
           const Text(
             'Historical monthly pattern; not a forecast.',
             style: TextStyle(fontSize: 12),
@@ -293,6 +299,7 @@ class CurrentYearSeasonalEvidence extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final snapshot = analysisMapValue(record['seasonal_assessment']);
+    final calendarSeason = analysisMapValue(snapshot['calendar_season']);
     final current = analysisMapValue(snapshot['current_year_climate']);
     final outlook = analysisMapValue(snapshot['current_year_outlook']);
     final selected = analysisMapValue(current['selected']);
@@ -303,6 +310,17 @@ class CurrentYearSeasonalEvidence extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        if (calendarSeason['current_label'] != null) ...[
+          Text(
+            'Current PAGASA calendar season: ${calendarSeason['current_label']}',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+          ),
+          Text(
+            'As of ${calendarSeason['current_date']} in the Philippines. The local rainfall estimate is shown separately.',
+            style: TextStyle(fontSize: 12, color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: 10),
+        ],
         Text(
           '${current['year']} seasonal update',
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),

@@ -78,11 +78,11 @@ def mark_annual_prototype(result):
                   model_score_note=PROTOTYPE_NOTICE,
                   npk_assessment={'status': 'not_assessed', 'pending_source': 'farm_soil_test',
                       'used_for_prediction': not no_npk,
-                      'note': ('NPK is excluded from this model. PAGRO measurements are pending.' if no_npk else
-                               'The prototype uses estimated nitrogen from SoilGrids when available; phosphorus and potassium are calculated from NDVI, soil pH and elevation. These are not farm soil tests. Historical CAGRO records remain separate.')})
+                      'note': ('NPK is excluded from this model; compatible soil measurements are unavailable.' if no_npk else
+                               'The prototype uses estimated nitrogen from SoilGrids when available; phosphorus and potassium are calculated from NDVI, soil pH and elevation. These are not farm soil tests.')})
     if no_npk:
         result.update(model_npk_status='excluded', nutrient_display_basis='not_used_by_model',
-                      nutrient_basis='NPK excluded from model training and prediction; PAGRO data pending.')
+                      nutrient_basis='NPK excluded from model training and prediction; compatible soil measurements are unavailable.')
     warnings = result.setdefault('data_quality_warnings', [])
     if PROTOTYPE_NOTICE not in warnings:
         warnings.append(PROTOTYPE_NOTICE)

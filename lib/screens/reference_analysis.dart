@@ -368,7 +368,7 @@ class _ReferenceAnalysisContentState extends State<ReferenceAnalysisContent> {
                 Text(
                   annualCheck
                       ? 'These comparisons use available environmental evidence. NPK is not assessed.'
-                      : 'Compare individual conditions below. Missing CAGRO NPK prevents a complete soil suitability assessment.',
+                      : 'Compare individual conditions below. A complete soil suitability assessment requires compatible field soil measurements.',
                   style: TextStyle(fontSize: 12),
                 )
               else if (modern)

@@ -107,6 +107,10 @@ def test_seasonal_snapshot_is_separate_with_no_unsourced_calendar_claim():
         seasonal.attach_seasonal_assessment(result, baseline, month)
         assert {key: result[key] for key in original} == original
         snapshot = result['seasonal_assessment']
+        assert snapshot['calendar_season']['selected_month_label'] == (
+            'Rainy season' if month == 6 else 'Dry season')
+        assert snapshot['calendar_season']['source_url'] == seasonal.PAGASA_SEASON_SOURCE
+        assert snapshot['calendar_season']['used_for_model_ranking'] is False
         assert snapshot['calendar']['status'] == 'unavailable'
         assert snapshot['ranking_effect'] == 'none'
         assert 'separate forecasts' in snapshot['year_interpretation']
@@ -115,6 +119,14 @@ def test_seasonal_snapshot_is_separate_with_no_unsourced_calendar_claim():
         snapshots.append(snapshot)
     assert snapshots[0]['monthly_climate']['mean_temperature_c'] == 1
     assert snapshots[1]['monthly_climate']['mean_temperature_c'] == 6
+
+
+def test_calendar_season_uses_pagasa_month_boundaries():
+    assert [seasonal.calendar_season(month) for month in (5, 6, 11, 12)] == [
+        'Dry season', 'Rainy season', 'Rainy season', 'Dry season']
+    for month in (0, 13, True):
+        with pytest.raises(ValueError):
+            seasonal.calendar_season(month)
 
 
 @pytest.mark.parametrize('modern', [True, False])

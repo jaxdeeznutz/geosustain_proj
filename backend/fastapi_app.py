@@ -1010,20 +1010,19 @@ def build_analysis_result(body: Optional[Dict[str, Any]] = None, query_args: Opt
     if result.get('model_npk_status') == 'excluded':
         coverage = {**coverage, 'analysis_mode': 'environmental_model_no_npk',
                     'reason': 'Seven-input environmental model; NPK excluded',
-                    'message': 'Environmental model analysis within Panabo City. NPK is not used; PAGRO data pending.'}
+                    'message': 'Environmental model analysis within Panabo City. NPK is not used by this model.'}
     result['cagro_reference_enabled'] = coverage['cagro_enabled']
     result['analysis_mode'] = (result.get('analysis_mode')
         if result.get('reference_screening_reason') == 'annual_model_pending' else coverage['analysis_mode'])
     if preliminary:
-        result['preliminary_notice'] = 'Preliminary environmental screening. CAGRO NPK unavailable for this farm; no complete soil suitability claim is made.'
+        result['preliminary_notice'] = 'Preliminary environmental screening. No complete soil suitability claim is made.'
     result.update(analysis_schema_version=COVERAGE_VERSION, analysis_coverage=coverage,
-                  nutrient_basis=('Estimated model inputs: nitrogen from SoilGrids when available (otherwise a labelled backup or regional default); phosphorus and potassium calculated from NDVI, soil pH and elevation. Historical CAGRO observations are separate reference evidence.'
-                                  if coverage['cagro_enabled'] else 'Estimated model inputs: nitrogen from SoilGrids when available (otherwise a labelled backup or regional default); phosphorus and potassium calculated from NDVI, soil pH and elevation. Historical local soil reference disabled.'),
+                  nutrient_basis='Estimated model inputs: nitrogen from SoilGrids when available (otherwise a labelled backup or regional default); phosphorus and potassium calculated from NDVI, soil pH and elevation. These are not farm soil tests.',
                   historical_soil_notice=HISTORICAL_NOTE if coverage['cagro_enabled'] else None,
                   centroid_method=('Area-weighted polygon centroid; not a soil sample coordinate' if polygon
                                    else 'Selected point; not a farm centroid or soil sample coordinate'))
     if result.get('model_npk_status') == 'excluded':
-        result['nutrient_basis'] = 'NPK excluded from model training and prediction; PAGRO data pending.'
+        result['nutrient_basis'] = 'NPK excluded from model training and prediction.'
     elif result.get('reference_screening_reason') == 'annual_model_pending':
         result['nutrient_basis'] = 'No model nutrient inputs used in this environmental comparison.'
     attach_display_estimates(result)

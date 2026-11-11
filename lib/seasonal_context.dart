@@ -38,9 +38,14 @@ List<String> seasonalAssessmentLines(Map<String, dynamic> record) {
     ];
   }
   final climate = object(saved['monthly_climate']);
+  final calendarSeason = object(saved['calendar_season']);
   final metrics = object(climate['metrics']);
   final lines = <String>[
     'Selected planting month: ${saved['selected_month_name']}',
+    if (calendarSeason['selected_month_label'] != null)
+      'PAGASA calendar season for the selected month: ${calendarSeason['selected_month_label']}. This is a national calendar label, not measured farm moisture.',
+    if (calendarSeason['current_label'] != null)
+      'PAGASA calendar season on ${calendarSeason['current_date']}: ${calendarSeason['current_label']}.',
     '${seasonalMoistureLabel(record)} (historical moisture estimate, not a forecast or official season declaration)',
     '${saved['summary']}',
     'Saved seasonal context: ${saved['captured_at']}; version: ${saved['version']}',

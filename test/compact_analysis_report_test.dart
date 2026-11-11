@@ -33,6 +33,16 @@ void main() {
           'Land coverage unavailable.',
         ).join(' '),
         'verification_status': 'Needs information',
+        'farmer_name': 'Panel Test Farmer',
+        'analyzed_at': '2026-11-11T09:00:00Z',
+        'seasonal_assessment': {
+          'selected_month_name': 'November',
+          'calendar_season': {
+            'selected_month_label': 'Rainy season',
+            'current_label': 'Rainy season',
+            'current_date': '2026-11-11',
+          },
+        },
         'verified_at': '2026-11-08T08:00:00Z',
         'alternative_crops': [
           for (final crop in [
@@ -55,6 +65,27 @@ void main() {
       File('${out.path}/stress-report.pdf').writeAsBytesSync(bytes);
       final blocked = {...record, 'analysis_mode': 'preliminary_environmental'};
       expect(pages(await buildCompactAnalysisPdf(blocked)), 2);
+      final withEstimatedNutrients = {
+        ...record,
+        'model_input_features': [
+          'N',
+          'P',
+          'K',
+          'temperature',
+          'humidity',
+          'ph',
+          'rainfall',
+          'ndvi',
+          'elevation',
+          'slope',
+        ],
+        'nitrogen': 38.5,
+        'phosphorus': 27.1,
+        'potassium': 42.2,
+      };
+      final nutrientPdf = await buildCompactAnalysisPdf(withEstimatedNutrients);
+      expect(pages(nutrientPdf), 2);
+      File('${out.path}/stress-report-npk.pdf').writeAsBytesSync(nutrientPdf);
     },
   );
 
