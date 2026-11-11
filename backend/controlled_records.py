@@ -82,6 +82,11 @@ class ActivationBody(BaseModel):
     activate: StrictBool = True
 
 
+class DeleteBody(BaseModel):
+    model_config = ConfigDict(extra='forbid')
+    expected_generation: StrictInt = Field(ge=0)
+
+
 def public_url(value):
     parsed = urlsplit(value)
     if (parsed.scheme != 'https' or not parsed.hostname or '.' not in parsed.hostname
@@ -170,6 +175,7 @@ def migrate(cur):
         revision INTEGER NOT NULL CHECK (revision>0), document JSONB NOT NULL,
         content_sha256 TEXT NOT NULL, created_by INTEGER REFERENCES users(id) ON DELETE SET NULL,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), UNIQUE(kind,record_key,revision))''')
+    cur.execute('ALTER TABLE controlled_record_revisions ADD COLUMN IF NOT EXISTS archived_at TIMESTAMPTZ')
     cur.execute('''CREATE TABLE IF NOT EXISTS controlled_record_activations (
         kind TEXT NOT NULL, record_key TEXT NOT NULL, record_id BIGINT REFERENCES controlled_record_revisions(id),
         generation INTEGER NOT NULL CHECK(generation>0), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -192,7 +198,8 @@ def list_records(kind=None, limit=50, offset=0):
         cur.execute('''SELECT r.*, COALESCE(a.generation,0) AS generation,
             a.record_id AS active_record_id FROM controlled_record_revisions r
             LEFT JOIN controlled_record_activations a USING(kind,record_key)
-            WHERE (%s IS NULL OR r.kind=%s) ORDER BY r.created_at DESC,r.id DESC LIMIT %s OFFSET %s''',
+            WHERE r.archived_at IS NULL AND (%s IS NULL OR r.kind=%s)
+            ORDER BY r.created_at DESC,r.id DESC LIMIT %s OFFSET %s''',
             (kind, kind, limit, offset))
         return [dict(row) for row in cur.fetchall()]
 
@@ -207,9 +214,12 @@ def create_revision(body, actor):
             if not source or source['filename'] != body.source_file.filename or source['sha256'] != body.source_file.sha256:
                 raise ValueError('Uploaded source does not match a saved Excel file.')
         cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))', ('control:'+body.kind+':'+body.record_key,))
-        cur.execute('SELECT COALESCE(MAX(revision),0) AS revision FROM controlled_record_revisions WHERE kind=%s AND record_key=%s', (body.kind, body.record_key))
-        latest = cur.fetchone()['revision']
-        if latest != body.expected_revision:
+        cur.execute('''SELECT COALESCE(MAX(revision),0) AS revision,
+            COALESCE(MAX(revision) FILTER (WHERE archived_at IS NULL),0) AS visible_revision
+            FROM controlled_record_revisions WHERE kind=%s AND record_key=%s''', (body.kind, body.record_key))
+        versions = cur.fetchone()
+        latest = versions['revision']
+        if versions['visible_revision'] != body.expected_revision:
             raise Conflict('This record changed. Reload its latest revision before saving.')
         cur.execute('''INSERT INTO controlled_record_revisions(kind,record_key,revision,document,content_sha256,created_by)
             VALUES (%s,%s,%s,%s,%s,%s) RETURNING *''', (body.kind, body.record_key, latest+1, Json(doc), digest(doc), actor['id']))
@@ -223,12 +233,15 @@ def create_revision(body, actor):
 def set_activation(body, actor):
     import database as db
     with db.get_conn() as conn, conn.cursor() as cur:
-        cur.execute('SELECT * FROM controlled_record_revisions WHERE id=%s', (body.record_id,))
+        cur.execute('SELECT * FROM controlled_record_revisions WHERE id=%s AND archived_at IS NULL', (body.record_id,))
         row = cur.fetchone()
         if not row:
             raise ValueError('Record revision not found.')
         row = dict(row)
         cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))', ('control:'+row['kind']+':'+row['record_key'],))
+        cur.execute('SELECT archived_at FROM controlled_record_revisions WHERE id=%s FOR UPDATE', (row['id'],))
+        if cur.fetchone()['archived_at'] is not None:
+            raise Conflict('This revision was deleted. Reload the reference list.')
         cur.execute('SELECT * FROM controlled_record_activations WHERE kind=%s AND record_key=%s', (row['kind'], row['record_key']))
         before = cur.fetchone() or {}
         if before.get('generation', 0) != body.expected_generation:
@@ -239,8 +252,8 @@ def set_activation(body, actor):
         if row['content_sha256'] != digest(row['document']):
             raise ValueError('Record integrity check failed.')
         if body.activate:
-            if checked.review_status != 'reviewed' or not checked.valid_from <= date.today() <= checked.valid_until:
-                raise ValueError('Only reviewed records within their validity dates may be activated.')
+            if checked.review_status != 'reviewed':
+                raise ValueError('Only reviewed records may be activated.')
             if checked.kind == 'model_version' and checked.payload['sha256'] != installed_model()['sha256']:
                 raise ValueError('This record does not match the trusted artifact loaded by this process. Metadata cannot deploy a model.')
         target = body.record_id if body.activate else None
@@ -256,20 +269,50 @@ def set_activation(body, actor):
         return {'active_record_id': target, 'generation': generation}
 
 
+def delete_record(record_id, expected_generation, actor):
+    import database as db
+    with db.get_conn() as conn, conn.cursor() as cur:
+        cur.execute('SELECT * FROM controlled_record_revisions WHERE id=%s AND archived_at IS NULL', (record_id,))
+        row = cur.fetchone()
+        if not row:
+            raise ValueError('Record revision not found.')
+        row = dict(row)
+        cur.execute('SELECT pg_advisory_xact_lock(hashtextextended(%s,0))', ('control:'+row['kind']+':'+row['record_key'],))
+        cur.execute('SELECT archived_at FROM controlled_record_revisions WHERE id=%s FOR UPDATE', (record_id,))
+        if cur.fetchone()['archived_at'] is not None:
+            raise Conflict('This revision was already deleted. Reload the reference list.')
+        cur.execute('SELECT * FROM controlled_record_activations WHERE kind=%s AND record_key=%s FOR UPDATE',
+                    (row['kind'], row['record_key']))
+        before = cur.fetchone() or {}
+        if before.get('generation', 0) != expected_generation:
+            raise Conflict('Activation changed. Reload before deleting this revision.')
+        if before.get('record_id') == record_id:
+            cur.execute('''UPDATE controlled_record_activations
+                SET record_id=NULL,generation=generation+1,updated_at=NOW()
+                WHERE kind=%s AND record_key=%s''', (row['kind'], row['record_key']))
+        cur.execute('UPDATE controlled_record_revisions SET archived_at=NOW() WHERE id=%s', (record_id,))
+        db.audit_in_transaction(cur, actor['id'], actor.get('role'),
+            'controlled_record_deleted', 'controlled_record', record_id,
+            {'kind': row['kind'], 'record_key': row['record_key'], 'revision': row['revision'],
+             'before_record_id': before.get('record_id'), 'archived': True})
+        conn.commit()
+        return {'deleted': True, 'record_id': record_id}
+
+
 def load_active_records():
     import database as db
     # One SQL statement provides one consistent pointer/revision view per analysis.
     with db.get_conn() as conn, conn.cursor() as cur:
         cur.execute('''SELECT r.*, a.generation FROM controlled_record_activations a
-            JOIN controlled_record_revisions r ON r.id=a.record_id ORDER BY r.kind,r.record_key''')
+            JOIN controlled_record_revisions r ON r.id=a.record_id
+            WHERE r.archived_at IS NULL ORDER BY r.kind,r.record_key''')
         rows = [dict(row) for row in cur.fetchall()]
     active = []
     for row in rows:
         body = RecordBody(**row['document'], expected_revision=row['revision'])
         if digest(row['document']) != row['content_sha256'] or body.review_status != 'reviewed':
             raise RuntimeError('Active reference integrity is invalid; analysis cannot use unverified configuration.')
-        if body.valid_from <= date.today() <= body.valid_until:
-            active.append({key: deepcopy(row[key]) for key in ('id', 'kind', 'record_key', 'revision', 'document', 'content_sha256', 'generation')})
+        active.append({key: deepcopy(row[key]) for key in ('id', 'kind', 'record_key', 'revision', 'document', 'content_sha256', 'generation')})
     return active
 
 

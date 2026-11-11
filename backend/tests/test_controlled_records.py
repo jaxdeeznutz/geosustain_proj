@@ -114,3 +114,15 @@ def test_non_admin_roles_cannot_read_create_or_activate(client, role, monkeypatc
     assert client.get('/api/admin/controlled-records/catalog').status_code == 403
     assert client.post('/api/admin/controlled-records', json=body()).status_code == 403
     assert client.post('/api/admin/controlled-records/activation', json={'record_id':1,'expected_generation':0}).status_code == 403
+    assert client.delete('/api/admin/controlled-records/1?expected_generation=0').status_code == 403
+
+
+def test_admin_delete_route_passes_generation_and_record_id(client, monkeypatch):
+    import fastapi_app as api
+    api.app.dependency_overrides[api.get_api_user] = lambda: {'id': 4, 'role': 'super_admin'}
+    calls = []
+    monkeypatch.setattr(records, 'delete_record', lambda record_id, generation, actor:
+        calls.append((record_id, generation, actor['id'])) or {'deleted': True, 'record_id': record_id})
+    response = client.delete('/api/admin/controlled-records/17?expected_generation=3')
+    assert response.status_code == 200 and response.json() == {'deleted': True, 'record_id': 17}
+    assert calls == [(17, 3, 4)]

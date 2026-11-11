@@ -50,12 +50,20 @@ Future<ExcelUpload?> pickExcelFile() {
   return selected.future;
 }
 
-Future<void> saveExcelFile(Uint8List bytes, String name) async {
+Future<void> saveExcelFile(Uint8List bytes, String name) => saveBrowserFile(
+  bytes,
+  name,
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+);
+
+Future<void> saveBrowserFile(
+  Uint8List bytes,
+  String name,
+  String mimeType,
+) async {
   final blob = web.Blob(
     <JSAny>[bytes.toJS].toJS,
-    web.BlobPropertyBag(
-      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-    ),
+    web.BlobPropertyBag(type: mimeType),
   );
   final url = web.URL.createObjectURL(blob);
   final link = web.HTMLAnchorElement()

@@ -84,6 +84,22 @@ def run(write_fixtures=True):
         badmodel=client.post('/api/admin/controlled-records',headers=ah,json=mismatch).json()['record']
         assert client.post('/api/admin/controlled-records/activation',headers=ah,json={'record_id':badmodel['id'],'expected_generation':1}).status_code==422
         checks.append('Farmer/analyst read and mutation denied; unsafe source IDs, draft activation and model identity mismatch rejected')
+        expired=body('supporting_reference',record_key='demo_expired_reference',
+                     valid_from='2020-01-01',valid_until='2020-12-31')
+        expiredrow=client.post('/api/admin/controlled-records',headers=ah,json=expired).json()['record']
+        activated=client.post('/api/admin/controlled-records/activation',headers=ah,
+            json={'record_id':expiredrow['id'],'expected_generation':0})
+        assert activated.status_code==200,activated.text
+        assert expiredrow['id'] in [r['id'] for r in records.load_active_records()]
+        assert client.delete(f"/api/admin/controlled-records/{expiredrow['id']}?expected_generation=1",headers=fh).status_code==403
+        deleted=client.delete(f"/api/admin/controlled-records/{expiredrow['id']}?expected_generation=1",headers=ah)
+        assert deleted.status_code==200,deleted.text
+        assert expiredrow['id'] not in [r['id'] for r in records.load_active_records()]
+        assert expiredrow['id'] not in [r['id'] for r in records.list_records(limit=100)]
+        assert client.delete(f"/api/admin/controlled-records/{expiredrow['id']}?expected_generation=1",headers=ah).status_code==404
+        replacement=client.post('/api/admin/controlled-records',headers=ah,json=expired)
+        assert replacement.status_code==201 and replacement.json()['record']['revision']==2,replacement.text
+        checks.append('Reviewed demo record activates outside its dates; deletion archives and deactivates it, and a new revision can replace it')
         count=len(records.list_records(limit=100))
         with patch.object(db,'audit_in_transaction',side_effect=RuntimeError('Controlled audit failure')):
             try:records.create_revision(records.RecordBody(**body('supporting_reference',record_key='audit_failure')),admin)

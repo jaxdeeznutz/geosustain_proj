@@ -8,3 +8,5 @@ export 'excel_file_types.dart';
 Future<ExcelUpload?> pickExcelFile() => platform.pickExcelFile();
 Future<void> saveExcelFile(Uint8List bytes, String name) =>
     platform.saveExcelFile(bytes, name);
+Future<void> saveBrowserFile(Uint8List bytes, String name, String mimeType) =>
+    platform.saveBrowserFile(bytes, name, mimeType);

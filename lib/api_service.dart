@@ -1795,6 +1795,22 @@ class ApiService {
     return Map<String, dynamic>.from(data);
   }
 
+  Future<void> deleteControlledRecord(int id, int expectedGeneration) async {
+    final token = await getToken();
+    final uri = Uri.parse(
+      '$baseUrl/api/admin/controlled-records/$id',
+    ).replace(queryParameters: {'expected_generation': '$expectedGeneration'});
+    final response = await _client
+        .delete(uri, headers: {'Authorization': 'Bearer $token'})
+        .timeout(const Duration(seconds: 30));
+    if (response.statusCode >= 400) {
+      throw ApiException(
+        response.statusCode,
+        _errorMessage(_decodeJson(response), 'Could not delete reference'),
+      );
+    }
+  }
+
   Future<Uint8List> getControlledExcelFile(String suffix) async {
     final token = await getToken();
     final response = await _client

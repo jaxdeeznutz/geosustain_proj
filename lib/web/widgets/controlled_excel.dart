@@ -20,18 +20,6 @@ class _ControlledExcelDialogState extends State<_ControlledExcelDialog> {
       preview?['upload_id'] != null &&
       rows.isNotEmpty &&
       rows.every((row) => analysisListValue(row['errors']).isEmpty);
-  bool get validToday {
-    final now = DateTime.now(), today = DateTime(now.year, now.month, now.day);
-    return rows.every((row) {
-      final from = DateTime.tryParse('${row['valid_from']}'),
-          until = DateTime.tryParse('${row['valid_until']}');
-      return from != null &&
-          until != null &&
-          !from.isAfter(today) &&
-          !until.isBefore(today);
-    });
-  }
-
   @override
   void initState() {
     super.initState();
@@ -70,7 +58,7 @@ class _ControlledExcelDialogState extends State<_ControlledExcelDialog> {
   }
 
   Future<void> _apply(bool activate) async {
-    if (!ready || (activate && (!reviewed || !validToday))) return;
+    if (!ready || (activate && !reviewed)) return;
     setState(() {
       saving = true;
       error = null;
@@ -117,9 +105,7 @@ class _ControlledExcelDialogState extends State<_ControlledExcelDialog> {
           child: const Text('Save drafts'),
         ),
         FilledButton(
-          onPressed: ready && reviewed && validToday
-              ? () => _apply(true)
-              : null,
+          onPressed: ready && reviewed ? () => _apply(true) : null,
           child: const Text('Save and activate'),
         ),
       ],
@@ -207,10 +193,6 @@ class _ControlledExcelDialogState extends State<_ControlledExcelDialog> {
                       ),
                   ],
                 ),
-              ),
-            if (ready && !validToday)
-              const Text(
-                'Some rows are outside their validity dates. Save drafts or correct the dates before activation.',
               ),
             CheckboxListTile(
               key: const ValueKey('excel-import-reviewed'),

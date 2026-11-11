@@ -8,3 +8,9 @@ Future<void> saveExcelFile(Uint8List bytes, String name) async =>
     throw UnsupportedError(
       'Open the admin web dashboard to download Excel files.',
     );
+Future<void> saveBrowserFile(
+  Uint8List bytes,
+  String name,
+  String mimeType,
+) async =>
+    throw UnsupportedError('Open the admin web dashboard to download files.');

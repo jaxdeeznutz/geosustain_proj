@@ -266,8 +266,6 @@ def apply(body, actor):
             doc = records.RecordBody(**row['document'], expected_revision=latest)
             if body.activate:
                 doc.review_status = 'reviewed'; doc.review_note = body.review_note.strip()
-                if not doc.valid_from <= date.today() <= doc.valid_until:
-                    raise ValueError('An imported row is outside its validity dates. Save drafts or correct the dates.')
             document = records.document(doc)
             cur.execute('''INSERT INTO controlled_record_revisions(kind,record_key,revision,document,content_sha256,created_by)
                 VALUES('crop_requirement',%s,%s,%s,%s,%s) RETURNING id''',

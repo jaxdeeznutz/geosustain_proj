@@ -1634,6 +1634,17 @@ def api_activate_controlled_record(body: controlled_records.ActivationBody, user
         raise HTTPException(422, str(exc)) from exc
 
 
+@app.delete('/api/admin/controlled-records/{record_id}')
+def api_delete_controlled_record(record_id: int, expected_generation: int = Query(..., ge=0),
+                                 user=Depends(require_super_admin)):
+    try:
+        return controlled_records.delete_record(record_id, expected_generation, user)
+    except controlled_records.Conflict as exc:
+        raise HTTPException(409, str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(404, str(exc)) from exc
+
+
 @app.get('/api/admin/controlled-records/excel/template')
 def api_controlled_excel_template(user=Depends(require_super_admin)):
     return FileResponse(os.path.join(BASE_DIR, 'assets', 'crop_requirements_template.xlsx'),

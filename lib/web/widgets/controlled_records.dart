@@ -155,24 +155,80 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
   }
 
   Future<void> _activate(Map<String, dynamic> row, bool activate) async {
+    final changed = await showDialog<bool>(
+      context: context,
+      builder: (_) => _ControlledActivationDialog(
+        row: row,
+        activate: activate,
+        onConfirm: () async => widget.api.controlledRecordsRequest(
+          '/activation',
+          body: {
+            'record_id': row['id'],
+            'expected_generation': row['generation'] ?? 0,
+            'activate': activate,
+          },
+        ),
+      ),
+    );
+    if (changed == true && mounted) await _load();
+  }
+
+  void _details(Map<String, dynamic> row) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => _ControlledRecordDetailsDialog(
+        row: row,
+        history: rows
+            .where(
+              (item) =>
+                  item['kind'] == row['kind'] &&
+                  item['record_key'] == row['record_key'],
+            )
+            .toList(),
+        onDownloadSource: (source) => _excelDownload(
+          'files/${source['upload_id']}',
+          '${source['filename']}',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _delete(Map<String, dynamic> row) async {
     final doc = analysisMapValue(row['document']);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          '${activate ? 'Activate' : 'Deactivate'} revision ${row['revision']}?',
-        ),
-        content: Text(
-          '${doc['title']}\n${doc['reference']}\nValid: ${doc['valid_from']} to ${doc['valid_until']}\n\nThis affects new analyses only. Saved analyses keep their original records. ${row['kind'] == 'system_setting' ? 'Changing sample count can change new parcel model scores.' : ''}',
+      builder: (_) => _ControlledDialog(
+        title: 'Delete revision ${row['revision']}?',
+        subtitle: 'Remove this reference from the admin list.',
+        icon: Icons.delete_outline,
+        width: 600,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _ControlledInfoRow(Icons.eco_outlined, 'Record', '${doc['title']}'),
+            _ControlledInfoRow(
+              Icons.layers_outlined,
+              'Reference',
+              '${row['record_key']}',
+            ),
+            const SizedBox(height: 14),
+            const _ControlledNotice(
+              'Existing analyses and audit history keep their saved evidence. An active reference will be deactivated.',
+            ),
+          ],
         ),
         actions: [
-          TextButton(
+          OutlinedButton(
             onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
-          FilledButton(
+          FilledButton.icon(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFB93535),
+            ),
             onPressed: () => Navigator.pop(context, true),
-            child: Text(activate ? 'Activate revision' : 'Deactivate revision'),
+            icon: const Icon(Icons.delete_outline),
+            label: const Text('Delete revision'),
           ),
         ],
       ),
@@ -180,83 +236,22 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
     if (confirmed != true || !mounted) return;
     setState(() => busy = true);
     try {
-      await widget.api.controlledRecordsRequest(
-        '/activation',
-        body: {
-          'record_id': row['id'],
-          'expected_generation': row['generation'] ?? 0,
-          'activate': activate,
-        },
+      await widget.api.deleteControlledRecord(
+        row['id'] as int,
+        row['generation'] as int? ?? 0,
       );
       if (!mounted) return;
       await _load();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Reference revision deleted.')),
+        );
+      }
     } catch (e) {
       if (mounted) setState(() => error = friendlyErrorMessage(e));
     } finally {
       if (mounted) setState(() => busy = false);
     }
-  }
-
-  void _details(Map<String, dynamic> row) {
-    final doc = analysisMapValue(row['document']);
-    showDialog<void>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('${doc['title']} - revision ${row['revision']}'),
-        content: SizedBox(
-          width: 550,
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                for (final pair in {
-                  'Category': _controlledKindLabels[row['kind']],
-                  'Record key': row['record_key'],
-                  'Review': doc['review_status'],
-                  'Review note': doc['review_note'],
-                  'Scope': doc['scope'],
-                  'Evidence URL': doc['evidence_url'],
-                  'Reference': doc['reference'],
-                  'Method': doc['method'],
-                  'Valid from': doc['valid_from'],
-                  'Valid until': doc['valid_until'],
-                  ...analysisMapValue(doc['payload']),
-                  'Created by account': row['created_by'],
-                  'Created': row['created_at'],
-                  'Content checksum': row['content_sha256'],
-                }.entries)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: SelectableText('${pair.key}: ${pair.value}'),
-                  ),
-                if (doc['source_file'] != null) ...[
-                  Text(
-                    'Excel source: ${analysisMapValue(doc['source_file'])['filename']}',
-                  ),
-                  SelectableText(
-                    'File SHA-256: ${analysisMapValue(doc['source_file'])['sha256']}',
-                  ),
-                  TextButton.icon(
-                    onPressed: () => _excelDownload(
-                      'files/${analysisMapValue(doc['source_file'])['upload_id']}',
-                      '${analysisMapValue(doc['source_file'])['filename']}',
-                    ),
-                    icon: const Icon(Icons.download),
-                    label: const Text('Download source Excel'),
-                  ),
-                ],
-              ],
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
   }
 
   Widget _recordTable(List<Map<String, dynamic>> visible) => LayoutBuilder(
@@ -266,6 +261,8 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
         constraints: BoxConstraints(minWidth: bounds.maxWidth),
         child: DataTable(
           columnSpacing: 22,
+          dataRowMinHeight: 68,
+          dataRowMaxHeight: 76,
           columns: const [
             DataColumn(label: Text('Name / Description')),
             DataColumn(label: Text('Type')),
@@ -348,6 +345,14 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
                             row['active_record_id'] == row['id']
                                 ? Icons.pause_circle_outline
                                 : Icons.check_circle_outline,
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: 'Delete revision',
+                          onPressed: busy ? null : () => _delete(row),
+                          icon: const Icon(
+                            Icons.delete_outline,
+                            color: Color(0xFFC43D3D),
                           ),
                         ),
                       ],
@@ -536,6 +541,11 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
                                     : 'Activate',
                               ),
                             ),
+                            TextButton.icon(
+                              onPressed: busy ? null : () => _delete(row),
+                              icon: const Icon(Icons.delete_outline),
+                              label: const Text('Delete revision'),
+                            ),
                           ],
                         ),
                       ],
@@ -585,6 +595,574 @@ class _ControlledRecordsPanelState extends State<ControlledRecordsPanel> {
       ),
     ),
   );
+}
+
+class _ControlledDialog extends StatelessWidget {
+  final String title, subtitle;
+  final IconData icon;
+  final Widget body;
+  final List<Widget> actions;
+  final double width;
+  final bool busy;
+  const _ControlledDialog({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.body,
+    required this.actions,
+    this.width = 790,
+    this.busy = false,
+  });
+
+  @override
+  Widget build(BuildContext context) => Dialog(
+    insetPadding: const EdgeInsets.all(16),
+    clipBehavior: Clip.antiAlias,
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: width,
+        maxHeight: MediaQuery.sizeOf(context).height - 32,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [Color(0xFFFFFFFF), Color(0xFFE8F9EA)],
+                begin: Alignment.centerLeft,
+                end: Alignment.bottomRight,
+              ),
+            ),
+            child: Stack(
+              children: [
+                Positioned(
+                  right: 35,
+                  bottom: -55,
+                  child: Icon(
+                    Icons.spa_rounded,
+                    size: 170,
+                    color: const Color(0xFF9DDFB0).withValues(alpha: .48),
+                  ),
+                ),
+                Positioned(
+                  right: -22,
+                  bottom: -65,
+                  child: Icon(
+                    Icons.terrain_rounded,
+                    size: 260,
+                    color: const Color(0xFF9DDFB0).withValues(alpha: .36),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(22, 20, 14, 20),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE3F5E8),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Icon(
+                          icon,
+                          color: const Color(0xFF087D41),
+                          size: 30,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 23,
+                                fontWeight: FontWeight.w800,
+                                color: Color(0xFF192820),
+                              ),
+                            ),
+                            const SizedBox(height: 3),
+                            Text(
+                              subtitle,
+                              style: const TextStyle(
+                                color: Color(0xFF59675E),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: 'Close dialog',
+                        onPressed: busy ? null : () => Navigator.pop(context),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Flexible(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: body,
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Color(0xFFE3E9E4))),
+            ),
+            child: Align(
+              alignment: Alignment.centerRight,
+              child: Wrap(spacing: 10, runSpacing: 8, children: actions),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class _ControlledInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label, value;
+  const _ControlledInfoRow(this.icon, this.label, this.value);
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 7),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: 19, color: const Color(0xFF078245)),
+        const SizedBox(width: 12),
+        SizedBox(
+          width: 116,
+          child: Text(
+            label,
+            style: const TextStyle(color: Color(0xFF4D5F55), fontSize: 12),
+          ),
+        ),
+        Expanded(
+          child: SelectableText(
+            value.isEmpty ? '—' : value,
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _ControlledNotice extends StatelessWidget {
+  final String text;
+  const _ControlledNotice(this.text);
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: const Color(0xFFEDF6F1),
+      borderRadius: BorderRadius.circular(12),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.info_outline, color: Color(0xFF087D41)),
+        const SizedBox(width: 10),
+        Expanded(child: Text(text, style: const TextStyle(fontSize: 13))),
+      ],
+    ),
+  );
+}
+
+class _ControlledActivationDialog extends StatefulWidget {
+  final Map<String, dynamic> row;
+  final bool activate;
+  final Future<Map<String, dynamic>> Function() onConfirm;
+  const _ControlledActivationDialog({
+    required this.row,
+    required this.activate,
+    required this.onConfirm,
+  });
+  @override
+  State<_ControlledActivationDialog> createState() =>
+      _ControlledActivationDialogState();
+}
+
+class _ControlledActivationDialogState
+    extends State<_ControlledActivationDialog> {
+  bool busy = false;
+  String? error;
+  Future<void> _confirm() async {
+    setState(() {
+      busy = true;
+      error = null;
+    });
+    try {
+      await widget.onConfirm();
+      if (mounted) Navigator.pop(context, true);
+    } catch (e) {
+      if (mounted) setState(() => error = friendlyErrorMessage(e));
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final doc = analysisMapValue(widget.row['document']);
+    final action = widget.activate ? 'Activate' : 'Deactivate';
+    return _ControlledDialog(
+      title: '$action revision ${widget.row['revision']}?',
+      subtitle:
+          'Confirm ${action.toLowerCase()} of this reference revision. This affects new analyses only.',
+      icon: Icons.layers_outlined,
+      width: 650,
+      busy: busy,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFBFDCC9)),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              children: [
+                _ControlledInfoRow(
+                  Icons.eco_outlined,
+                  'Record',
+                  '${doc['title']}',
+                ),
+                _ControlledInfoRow(
+                  Icons.link,
+                  'Reference',
+                  '${doc['reference']}',
+                ),
+                _ControlledInfoRow(
+                  Icons.calendar_today_outlined,
+                  'Valid period',
+                  '${doc['valid_from']} – ${doc['valid_until']}',
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          const _ControlledNotice(
+            'This affects new analyses only. Saved analyses keep their original records.',
+          ),
+          if (error != null)
+            Padding(
+              padding: const EdgeInsets.only(top: 12),
+              child: Text(
+                error!,
+                style: const TextStyle(color: Color(0xFFB93535)),
+              ),
+            ),
+          if (busy)
+            const Padding(
+              padding: EdgeInsets.only(top: 12),
+              child: LinearProgressIndicator(),
+            ),
+        ],
+      ),
+      actions: [
+        OutlinedButton(
+          onPressed: busy ? null : () => Navigator.pop(context, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.icon(
+          onPressed: busy ? null : _confirm,
+          icon: const Icon(Icons.check),
+          label: Text('$action revision'),
+        ),
+      ],
+    );
+  }
+}
+
+class _ControlledRecordDetailsDialog extends StatefulWidget {
+  final Map<String, dynamic> row;
+  final List<Map<String, dynamic>> history;
+  final Future<void> Function(Map<String, dynamic>) onDownloadSource;
+  const _ControlledRecordDetailsDialog({
+    required this.row,
+    required this.history,
+    required this.onDownloadSource,
+  });
+  @override
+  State<_ControlledRecordDetailsDialog> createState() =>
+      _ControlledRecordDetailsDialogState();
+}
+
+class _ControlledRecordDetailsDialogState
+    extends State<_ControlledRecordDetailsDialog> {
+  int tab = 0;
+  @override
+  Widget build(BuildContext context) {
+    final row = widget.row, doc = analysisMapValue(row['document']);
+    final payload = analysisMapValue(doc['payload']);
+    final source = analysisMapValue(doc['source_file']);
+    Widget panel(Widget child) => Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFDCE6DF)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: child,
+    );
+    Widget tabButton(int index, IconData icon, String label) => TextButton.icon(
+      style: TextButton.styleFrom(
+        foregroundColor: tab == index
+            ? const Color(0xFF087D41)
+            : const Color(0xFF27352B),
+        backgroundColor: tab == index ? const Color(0xFFE4F5E9) : null,
+      ),
+      onPressed: () => setState(() => tab = index),
+      icon: Icon(icon, size: 19),
+      label: Text(label),
+    );
+    return _ControlledDialog(
+      title: '${doc['title']} – Revision ${row['revision']}',
+      subtitle: 'Reference record details and review information',
+      icon: Icons.description_outlined,
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              tabButton(0, Icons.list, 'Overview'),
+              tabButton(1, Icons.attach_file, 'Evidence & Files'),
+              tabButton(2, Icons.history, 'History'),
+            ],
+          ),
+          const Divider(height: 24),
+          if (tab == 0) ...[
+            _AdminFieldGrid(
+              minimumWidth: 190,
+              maximumColumns: 3,
+              children: [
+                panel(
+                  _ControlledInfoRow(
+                    Icons.track_changes,
+                    'Category',
+                    '${_controlledKindLabels[row['kind']] ?? row['kind']}',
+                  ),
+                ),
+                panel(
+                  _ControlledInfoRow(
+                    Icons.layers_outlined,
+                    'Record key',
+                    '${row['record_key']}',
+                  ),
+                ),
+                panel(
+                  _ControlledInfoRow(
+                    Icons.check_circle_outline,
+                    'Review status',
+                    '${doc['review_status']}',
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            panel(
+              _AdminFieldGrid(
+                minimumWidth: 285,
+                children: [
+                  Column(
+                    children: [
+                      _ControlledInfoRow(
+                        Icons.assignment_outlined,
+                        'Review draft',
+                        '${doc['review_status']}',
+                      ),
+                      _ControlledInfoRow(
+                        Icons.calendar_today_outlined,
+                        'Valid from',
+                        '${doc['valid_from']}',
+                      ),
+                      _ControlledInfoRow(
+                        Icons.event_outlined,
+                        'Valid until',
+                        '${doc['valid_until']}',
+                      ),
+                      _ControlledInfoRow(
+                        Icons.eco_outlined,
+                        'Crop',
+                        '${payload['crop'] ?? '—'}',
+                      ),
+                      _ControlledInfoRow(
+                        Icons.straighten,
+                        'Unit',
+                        '${payload['unit'] ?? '—'}',
+                      ),
+                      _ControlledInfoRow(
+                        Icons.bar_chart,
+                        'Factor',
+                        '${payload['factor'] ?? '—'}',
+                      ),
+                      _ControlledInfoRow(
+                        Icons.timeline,
+                        'Period',
+                        '${payload['period'] ?? '—'}',
+                      ),
+                    ],
+                  ),
+                  Column(
+                    children: [
+                      for (final key in [
+                        'absolute_max',
+                        'absolute_min',
+                        'preferred_max',
+                        'preferred_min',
+                      ])
+                        if (payload.containsKey(key))
+                          _ControlledInfoRow(
+                            Icons.tune,
+                            key.replaceAll('_', ' '),
+                            '${payload[key]}',
+                          ),
+                      _ControlledInfoRow(
+                        Icons.person_outline,
+                        'Created by',
+                        'Account ${row['created_by'] ?? 'unknown'}',
+                      ),
+                      _ControlledInfoRow(
+                        Icons.calendar_today_outlined,
+                        'Created on',
+                        analysisDateText(row['created_at']),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            panel(
+              _ControlledInfoRow(
+                Icons.notes_outlined,
+                'Review note',
+                '${doc['review_note'] ?? ''}',
+              ),
+            ),
+            const SizedBox(height: 10),
+            panel(
+              _ControlledInfoRow(
+                Icons.link,
+                'Evidence URL',
+                '${doc['evidence_url'] ?? ''}',
+              ),
+            ),
+            if (source.isNotEmpty) ...[
+              const SizedBox(height: 10),
+              panel(
+                Row(
+                  children: [
+                    const Icon(Icons.attach_file, color: Color(0xFF087D41)),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Excel source\n${source['filename']}',
+                        style: const TextStyle(fontSize: 13),
+                      ),
+                    ),
+                    IconButton(
+                      tooltip: 'Download source Excel',
+                      onPressed: () => widget.onDownloadSource(source),
+                      icon: const Icon(Icons.download),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ] else if (tab == 1) ...[
+            panel(
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _ControlledInfoRow(
+                    Icons.link,
+                    'Evidence URL',
+                    '${doc['evidence_url'] ?? ''}',
+                  ),
+                  _ControlledInfoRow(
+                    Icons.menu_book_outlined,
+                    'Reference',
+                    '${doc['reference'] ?? ''}',
+                  ),
+                  _ControlledInfoRow(
+                    Icons.notes_outlined,
+                    'Method',
+                    '${doc['method'] ?? ''}',
+                  ),
+                  if (source.isNotEmpty) ...[
+                    _ControlledInfoRow(
+                      Icons.attach_file,
+                      'Excel source',
+                      '${source['filename']}',
+                    ),
+                    _ControlledInfoRow(
+                      Icons.fingerprint,
+                      'File SHA-256',
+                      '${source['sha256']}',
+                    ),
+                    TextButton.icon(
+                      onPressed: () => widget.onDownloadSource(source),
+                      icon: const Icon(Icons.download),
+                      label: const Text('Download source Excel'),
+                    ),
+                  ],
+                  _ControlledInfoRow(
+                    Icons.fingerprint,
+                    'Record SHA-256',
+                    '${row['content_sha256']}',
+                  ),
+                ],
+              ),
+            ),
+          ] else ...[
+            for (final item in widget.history)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: panel(
+                  _ControlledInfoRow(
+                    Icons.history,
+                    'Revision ${item['revision']}',
+                    '${analysisMapValue(item['document'])['review_status']} • ${analysisDateText(item['created_at'])}${item['active_record_id'] == item['id'] ? ' • Active' : ''}',
+                  ),
+                ),
+              ),
+          ],
+        ],
+      ),
+      actions: [
+        OutlinedButton.icon(
+          onPressed: () => saveBrowserFile(
+            Uint8List.fromList(
+              utf8.encode(const JsonEncoder.withIndent('  ').convert(row)),
+            ),
+            '${row['record_key']}-revision-${row['revision']}.json',
+            'application/json',
+          ),
+          icon: const Icon(Icons.download),
+          label: const Text('Download record'),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Close'),
+        ),
+      ],
+    );
+  }
 }
 
 class _ControlledRecordEditor extends StatefulWidget {

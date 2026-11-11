@@ -98,10 +98,8 @@ void main() {
       await tester.ensureVisible(find.text('View revision').first);
       await tester.tap(find.text('View revision').first);
       await tester.pumpAndSettle();
-      expect(
-        find.textContaining('Evidence URL: https://example.org'),
-        findsOneWidget,
-      );
+      expect(find.text('Evidence URL'), findsOneWidget);
+      expect(find.textContaining('https://example.org'), findsWidgets);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
     });
@@ -306,6 +304,58 @@ void main() {
     await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
     expect(writes, isEmpty);
+    expect(tester.takeException(), isNull);
+  });
+  testWidgets('admin can delete a reference revision after confirmation', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(1920, 1100);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final rows =
+        (jsonDecode(
+                  File(
+                    'test/fixtures/controlled_records.json',
+                  ).readAsStringSync(),
+                )
+                as List)
+            .map((value) => Map<String, dynamic>.from(value as Map))
+            .toList();
+    final deleted = <String>[];
+    final api = ApiService(
+      client: MockClient((request) async {
+        if (request.method == 'DELETE') {
+          deleted.add('${request.url.path}?${request.url.query}');
+          rows.removeWhere((row) => row['id'] == 9);
+          return http.Response('{"deleted":true}', 200);
+        }
+        return http.Response(
+          jsonEncode(
+            request.url.path.endsWith('/catalog')
+                ? fixture('controlled_catalog')
+                : {'records': rows, 'has_more': false},
+          ),
+          200,
+        );
+      }),
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: ControlledRecordsPanel(api: api, adminDesign: true),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Delete revision').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Delete revision 2?'), findsOneWidget);
+    await tester.tap(find.text('Delete revision'));
+    await tester.pumpAndSettle();
+    expect(deleted, ['/api/admin/controlled-records/9?expected_generation=1']);
     expect(tester.takeException(), isNull);
   });
   test(
