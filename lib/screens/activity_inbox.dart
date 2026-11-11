@@ -65,9 +65,29 @@ class _NotificationsPageState extends State<NotificationsPage> {
       error = null;
     });
     try {
+      try {
+        final cached = OfflineFarmStore.rows(
+          (await OfflineFarmStore.read())['events'],
+        );
+        if (mounted && generation == request) {
+          setState(() {
+            local = cached
+                .where(
+                  (event) =>
+                      (!unreadOnly || event['read_at'] == null) &&
+                      (type.isEmpty || type == 'farm_synced'),
+                )
+                .toList();
+          });
+        }
+      } catch (_) {
+        // Online notifications remain available without device storage.
+      }
       final data = await api.getRecordPage(
         '/api/mobile/activity',
         offset: target,
+        requestTimeout: const Duration(seconds: 18),
+        recoveryAttempts: 1,
         parameters: {
           'unread_only': '$unreadOnly',
           if (type.isNotEmpty && type != 'farm_synced') 'event_type': type,
@@ -687,16 +707,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
-            if (widget.state != null && !widget.state!.isPlanner)
-              OutlinedButton(
-                onPressed: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => FarmerReviewCasesPage(state: widget.state!),
-                  ),
-                ),
-                child: const Text('My review cases and corrections'),
-              ),
             Row(
               children: [
                 Expanded(
@@ -749,7 +759,14 @@ class _NotificationsPageState extends State<NotificationsPage> {
                 '$unread unread',
                 style: Theme.of(context).textTheme.bodySmall,
               ),
-            if (loading) const LinearProgressIndicator(),
+            if (loading) ...[
+              const LinearProgressIndicator(),
+              if (rows.isEmpty && local.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 20),
+                  child: Text('Loading notifications...'),
+                ),
+            ],
             if (error != null)
               Card(
                 child: ListTile(
@@ -767,7 +784,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   'No notifications match this view. Analysis, submission, review and farm-sync activity appear here.',
                 ),
               ),
-            if (error == null) ...[..._mobileEvents()],
+            if (error == null || local.isNotEmpty) ...[..._mobileEvents()],
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [

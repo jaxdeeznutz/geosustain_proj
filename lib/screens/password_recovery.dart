@@ -15,6 +15,7 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
   final _token = TextEditingController();
   final _password = TextEditingController();
   bool _busy = false;
+  bool _showPassword = false;
   String? _message;
   String? _tokenError, _passwordError;
   String? _emailError, _codeError, _confirmError, _ticket;
@@ -118,122 +119,206 @@ class _PasswordRecoveryPageState extends State<PasswordRecoveryPage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    appBar: AppBar(title: const Text('Recover your account')),
-    body: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 520),
-        child: ListView(
-          shrinkWrap: true,
-          padding: const EdgeInsets.all(24),
-          children: [
-            Text(
-              _admin
-                  ? 'Use the private recovery handoff your administrator provided after verifying your identity. It is valid for 15 minutes.'
-                  : 'Request a recovery code at your account email. After verification, choose a new password. Your previous sessions will be signed out.',
-            ),
-            const SizedBox(height: 20),
-            if (!_admin) ...[
-              TextField(
-                controller: _email,
-                enabled: !_busy && _ticket == null,
-                keyboardType: TextInputType.emailAddress,
-                decoration: InputDecoration(
-                  labelText: 'Account email',
-                  errorText: _emailError,
+  Widget build(BuildContext context) {
+    final settingPassword = _admin || _ticket != null;
+    final colors = Theme.of(context).colorScheme;
+    return Scaffold(
+      appBar: AppBar(title: const Text('Recover your account')),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 520),
+            child: ListView(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              children: [
+                Image.asset(
+                  settingPassword
+                      ? 'assets/images/dashboard/recovery_envelope.png'
+                      : 'assets/images/dashboard/recovery_shield.png',
+                  height: settingPassword ? 142 : 172,
+                  fit: BoxFit.contain,
                 ),
-                onChanged: (_) => setState(() => _emailError = null),
-              ),
-              TextButton(
-                onPressed: _busy ? null : _request,
-                child: Text(
-                  _ticket == null
-                      ? 'Send recovery code'
-                      : 'Request another code',
-                ),
-              ),
-              if (_ticket != null)
-                TextField(
-                  controller: _code,
-                  enabled: !_busy,
-                  maxLength: 6,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  keyboardType: TextInputType.number,
-                  decoration: InputDecoration(
-                    labelText: 'Email recovery code',
-                    errorText: _codeError,
+                const SizedBox(height: 14),
+                Text(
+                  settingPassword
+                      ? 'Set a new password'
+                      : 'Recover your account',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: darkGreen,
                   ),
                 ),
-            ],
-            if (_admin)
-              TextField(
-                controller: _token,
-                enabled: !_busy,
-                autocorrect: false,
-                decoration: InputDecoration(
-                  labelText: 'Private recovery handoff',
-                  errorText: _tokenError,
+                const SizedBox(height: 10),
+                Text(
+                  _admin
+                      ? 'Enter the private recovery handoff provided by your administrator, then choose a new password.'
+                      : settingPassword
+                      ? 'Enter the recovery code sent to your email, then choose a new password.'
+                      : 'Request a recovery code at your account email. After verification, choose a new password. Your previous sessions will be signed out.',
+                  textAlign: TextAlign.center,
                 ),
-              ),
-            if (_admin || _ticket != null) ...[
-              const SizedBox(height: 16),
-              TextField(
-                controller: _password,
-                enabled: !_busy,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'New password',
-                  errorText: _passwordError,
-                  helperText:
-                      'At least 8 characters with a special character; no spaces.',
+                const SizedBox(height: 28),
+                if (!_admin) ...[
+                  if (settingPassword)
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: softGreen,
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.mail_outline, color: green),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              'A recovery code was requested for ${_email.text.trim()}.',
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  if (settingPassword) const SizedBox(height: 14),
+                  TextField(
+                    controller: _email,
+                    enabled: !_busy && !settingPassword,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Account email',
+                      hintText: 'Enter your account email',
+                      prefixIcon: const Icon(Icons.mail_outline),
+                      errorText: _emailError,
+                    ),
+                    onChanged: (_) => setState(() => _emailError = null),
+                  ),
+                  const SizedBox(height: 16),
+                  if (!settingPassword)
+                    FilledButton.icon(
+                      onPressed: _busy ? null : _request,
+                      icon: const Icon(Icons.send_outlined),
+                      label: Text(
+                        _busy ? 'Sending code...' : 'Send recovery code',
+                      ),
+                    )
+                  else ...[
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: _busy ? null : _request,
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Request another code'),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                    key: const ValueKey('recovery-code'),
+                      controller: _code,
+                      enabled: !_busy,
+                      maxLength: 6,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(
+                        labelText: 'Email recovery code',
+                        hintText: 'Enter 6-digit code',
+                        prefixIcon: const Icon(Icons.verified_user_outlined),
+                        errorText: _codeError,
+                      ),
+                    ),
+                  ],
+                ],
+                if (_admin)
+                  TextField(
+                    controller: _token,
+                    enabled: !_busy,
+                    autocorrect: false,
+                    decoration: InputDecoration(
+                      labelText: 'Private recovery handoff',
+                      prefixIcon: const Icon(Icons.key_outlined),
+                      errorText: _tokenError,
+                    ),
+                  ),
+                if (settingPassword) ...[
+                  const SizedBox(height: 14),
+                  TextField(
+                    key: const ValueKey('recovery-password'),
+                    controller: _password,
+                    enabled: !_busy,
+                    obscureText: !_showPassword,
+                    decoration: InputDecoration(
+                      labelText: 'New password',
+                      hintText: 'Enter new password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      suffixIcon: IconButton(
+                        onPressed: () =>
+                            setState(() => _showPassword = !_showPassword),
+                        icon: Icon(
+                          _showPassword
+                              ? Icons.visibility_outlined
+                              : Icons.visibility_off_outlined,
+                        ),
+                      ),
+                      errorText: _passwordError,
+                      helperText:
+                          'At least 8 characters, a special character, and no spaces.',
+                    ),
+                    onChanged: (_) => setState(() => _passwordError = null),
+                  ),
+                  PasswordStrengthIndicator(password: _password.text),
+                  const SizedBox(height: 14),
+                  TextField(
+                    key: const ValueKey('recovery-confirm-password'),
+                    controller: _confirm,
+                    enabled: !_busy,
+                    obscureText: !_showPassword,
+                    decoration: InputDecoration(
+                      labelText: 'Confirm new password',
+                      hintText: 'Confirm new password',
+                      prefixIcon: const Icon(Icons.lock_outline),
+                      errorText: _confirmError,
+                    ),
+                    onSubmitted: (_) => _recover(),
+                    onChanged: (_) => setState(() => _confirmError = null),
+                  ),
+                  const SizedBox(height: 18),
+                  FilledButton.icon(
+                    onPressed: _busy ? null : _recover,
+                    icon: const Icon(Icons.check_circle_outline),
+                    label: Text(
+                      _busy ? 'Changing password...' : 'Set new password',
+                    ),
+                  ),
+                ],
+                if (_message != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    child: Text(
+                      _message!,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: colors.primary),
+                    ),
+                  ),
+                const SizedBox(height: 12),
+                TextButton(
+                  onPressed: _busy
+                      ? null
+                      : () => setState(() {
+                          _admin = !_admin;
+                          _ticket = null;
+                          _message = null;
+                          _code.clear();
+                          _token.clear();
+                        }),
+                  child: Text(
+                    _admin
+                        ? 'Recover by email instead'
+                        : 'Use an administrator recovery handoff',
+                  ),
                 ),
-                onSubmitted: (_) => _recover(),
-                onChanged: (_) => setState(() => _passwordError = null),
-              ),
-              PasswordStrengthIndicator(password: _password.text),
-              TextField(
-                controller: _confirm,
-                enabled: !_busy,
-                obscureText: true,
-                decoration: InputDecoration(
-                  labelText: 'Confirm new password',
-                  errorText: _confirmError,
-                ),
-                onChanged: (_) => setState(() => _confirmError = null),
-              ),
-            ],
-            if (_message != null)
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                child: Text(_message!),
-              ),
-            const SizedBox(height: 16),
-            if (_admin || _ticket != null)
-              FilledButton(
-                onPressed: _busy ? null : _recover,
-                child: Text(
-                  _busy ? 'Changing password...' : 'Set new password',
-                ),
-              ),
-            TextButton(
-              onPressed: _busy
-                  ? null
-                  : () => setState(() {
-                      _admin = !_admin;
-                      _ticket = null;
-                      _message = null;
-                      _code.clear();
-                      _token.clear();
-                    }),
-              child: Text(
-                _admin
-                    ? 'Recover by email instead'
-                    : 'Use an administrator recovery handoff',
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
-  );
+    );
+  }
 }

@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta, timezone
 import json
 import time
-from unittest.mock import Mock
+from unittest.mock import Mock, MagicMock
 import pytest
 from fastapi import HTTPException
 from cryptography import x509
@@ -74,7 +74,7 @@ def test_new_google_user_has_server_owned_lowest_role(proof, monkeypatch):
     monkeypatch.setattr(identity.db, 'create_user', create)
     assert identity.google_login(proof())['role'] == 'farmer'
     assert create.call_args.kwargs == {'role': 'farmer', 'email_verified': True,
-        'auth_provider': 'google', 'google_sub': 'immutable-fixture-subject', 'password_setup_required': True}
+        'auth_provider': 'google', 'google_sub': 'immutable-fixture-subject', 'password_setup_required': False}
 
 
 def test_disabled_identity_cannot_get_an_app_session(proof, monkeypatch):
@@ -84,14 +84,35 @@ def test_disabled_identity_cannot_get_an_app_session(proof, monkeypatch):
     assert failure.value.status_code == 403
 
 
-def test_link_needs_existing_password_and_same_email(proof):
+def test_existing_google_user_skips_old_password_setup(proof, monkeypatch):
+    user = {'id': 5, 'is_active': True, 'password_setup_required': True}
+    monkeypatch.setattr(identity.db, 'get_user_by_google_sub', lambda subject: user)
+    connection = MagicMock()
+    cursor = connection.cursor.return_value.__enter__.return_value
+    cursor.fetchone.return_value = {**user, 'password_setup_required': False}
+    monkeypatch.setattr(identity.db, 'get_conn', lambda: connection)
+    assert identity.google_login(proof())['password_setup_required'] is False
+    assert 'password_setup_required=FALSE' in cursor.execute.call_args.args[0]
+
+
+def test_link_needs_same_verified_email(proof):
     user = {'id': 5, 'email': 'fixture@example.com', 'password_hash': None}
     with pytest.raises(HTTPException) as failure:
-        identity.link_google(user, proof(), 'wrong-password')
-    assert failure.value.status_code == 401
-    with pytest.raises(HTTPException) as failure:
-        identity.link_google({**user, 'email': 'different@example.com'}, proof(), 'anything')
+        identity.link_google({**user, 'email': 'different@example.com'}, proof())
     assert failure.value.status_code == 400
+
+
+def test_link_uses_signed_same_email_google_proof_without_password(proof, monkeypatch):
+    user = {'id': 5, 'email': 'fixture@example.com', 'password_version': 1,
+            'role': 'farmer', 'google_sub': None}
+    connection = MagicMock()
+    cursor = connection.cursor.return_value.__enter__.return_value
+    cursor.fetchone.return_value = {**user, 'google_sub': 'immutable-fixture-subject'}
+    monkeypatch.setattr(identity.db, 'get_conn', lambda: connection)
+    monkeypatch.setattr(identity.db, 'audit_in_transaction', lambda *args: None)
+    linked = identity.link_google(user, proof())
+    assert linked['google_sub'] == 'immutable-fixture-subject'
+    assert 'password_version=%s' in cursor.execute.call_args.args[0]
 
 
 def test_missing_provider_fails_closed_without_database(client, monkeypatch):

@@ -563,7 +563,13 @@ class _LoginPageState extends State<LoginPage> {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const SessionGate()),
+        MaterialPageRoute(
+          builder: (_) =>
+              analysisMapValue(signedIn['user'])['password_setup_required'] ==
+                  true
+              ? const SessionGate()
+              : const ShellPage(),
+        ),
       );
     } catch (error) {
       if (mounted && error is ApiException && error.statusCode == 409) {

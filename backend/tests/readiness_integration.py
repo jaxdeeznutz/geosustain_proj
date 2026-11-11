@@ -72,7 +72,7 @@ def run():
         with patch.dict('os.environ',{'FIREBASE_AUTH_PROJECT_ID':'synthetic-project'}):
             proof={'sub':'synthetic-google-sub','email':current['email'],'email_verified':True,'auth_time':time.time()}
             with patch.object(identity,'google_identity',return_value=(proof,current['email'])):
-                linked=identity.link_google(current,'synthetic-proof','ChangedSynthetic!2026')
+                linked=identity.link_google(current,'synthetic-proof')
                 assert linked['google_sub']==proof['sub'] and linked['role']=='farmer'
                 assert identity.google_login('synthetic-proof')['id']==uid
             ticket=identity.start_phone(linked,'+639171234567')['ticket']

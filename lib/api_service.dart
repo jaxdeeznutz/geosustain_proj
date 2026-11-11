@@ -289,13 +289,9 @@ class ApiService {
           'id_token': idToken,
         }, authenticated: false),
       );
-  Future<Map<String, dynamic>> linkGoogle(
-    String idToken,
-    String password,
-  ) async =>
+  Future<Map<String, dynamic>> linkGoogle(String idToken) async =>
       (await _identityPost('/api/mobile/auth/link-google', {
             'id_token': idToken,
-            'current_password': password,
           }))['user']
           as Map<String, dynamic>;
 

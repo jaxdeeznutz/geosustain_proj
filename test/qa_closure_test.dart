@@ -82,13 +82,13 @@ void main() {
       addTearDown(api.close);
       await tester.pumpWidget(GeoSustainApp(home: NotificationsPage(api: api)));
       await tester.pumpAndSettle();
-      expect(find.text('1 unread notifications'), findsOneWidget);
+      expect(find.text('1 unread'), findsOneWidget);
       await tester.tap(find.text('Analysis review: verified'));
       await tester.pumpAndSettle();
       expect(find.text('Synthetic accepted review'), findsOneWidget);
       await tester.tap(find.text('Close'));
       await tester.pumpAndSettle();
-      expect(find.text('0 unread notifications'), findsOneWidget);
+      expect(find.text('1 unread'), findsNothing);
       await tester.tap(find.text('Next'));
       await tester.pumpAndSettle();
       expect(requests.last.queryParameters['offset'], '50');

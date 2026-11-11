@@ -1442,7 +1442,7 @@ def password_reset_complete(body: PasswordResetCompleteBody):
 
 
 class LinkGoogleBody(ProviderTokenBody):
-    current_password: str = Field(max_length=1024)
+    current_password: Optional[str] = Field(None, max_length=1024)
 
 
 class PhoneStartBody(BaseModel):
@@ -1491,7 +1491,7 @@ def google_password_setup(body: GooglePasswordSetupBody, user=Depends(get_api_us
 @app.post('/api/mobile/auth/link-google')
 def google_link(body: LinkGoogleBody, user=Depends(get_api_user)):
     from federated_identity import link_google
-    return {'user': user_public_dict(link_google(user, body.id_token, body.current_password))}
+    return {'user': user_public_dict(link_google(user, body.id_token))}
 
 
 @app.post('/api/mobile/phone-verification/start')

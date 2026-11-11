@@ -11,7 +11,6 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
   late final phone = TextEditingController(
     text: '${widget.state.currentUser?['phone_number'] ?? ''}',
   );
-  final password = TextEditingController();
   String? message, phoneError;
   bool busy = false;
   String get owner => '${widget.state.currentUser?['id']}';
@@ -19,7 +18,6 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
   @override
   void dispose() {
     phone.dispose();
-    password.dispose();
     super.dispose();
   }
 
@@ -84,13 +82,6 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
   }
 
   Future<void> linkGoogle() async {
-    if (password.text.isEmpty) {
-      setState(
-        () => message =
-            'Enter your current account password before linking Google.',
-      );
-      return;
-    }
     await action((expectedOwner) async {
       final proof = await FirebaseIdentity.googleProof();
       if (owner != expectedOwner) {
@@ -99,11 +90,7 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
           'Account changed. Open your profile again.',
         );
       }
-      update(
-        await widget.state.api.linkGoogle(proof, password.text),
-        expectedOwner,
-      );
-      password.clear();
+      update(await widget.state.api.linkGoogle(proof), expectedOwner);
       if (mounted) {
         setState(
           () => message = 'Google sign-in linked to your existing account.',
@@ -153,16 +140,6 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
         if (linked)
           const Text('Google sign-in is linked')
         else ...[
-          TextField(
-            controller: password,
-            enabled: !busy,
-            obscureText: true,
-            enableSuggestions: false,
-            autocorrect: false,
-            decoration: const InputDecoration(
-              labelText: 'Current password to link Google',
-            ),
-          ),
           TextButton.icon(
             onPressed: busy || !FirebaseIdentity.googleConfigured
                 ? null

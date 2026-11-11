@@ -68,6 +68,13 @@ def google_login(token):
     if user:
         if not user.get('is_active', True):
             raise HTTPException(403, 'This account is deactivated.')
+        if user.get('password_setup_required'):
+            with closing(db.get_conn()) as conn, conn:
+                with conn.cursor() as cur:
+                    cur.execute('''UPDATE users SET password_setup_required=FALSE, updated_at=NOW()
+                        WHERE id=%s AND google_sub=%s AND password_setup_required=TRUE
+                        RETURNING *''', (user['id'], claims['sub']))
+                    user = dict(cur.fetchone() or db.get_user_by_google_sub(claims['sub']))
         return user
     # Do not seize an existing password account based on an email claim.
     if db.get_user_by_email(email):
@@ -77,7 +84,7 @@ def google_login(token):
         name = 'Google Farmer'
     password_hash = bcrypt.hashpw(secrets.token_urlsafe(32).encode(), bcrypt.gensalt()).decode()
     user = db.create_user(name, email, password_hash,
-        role='farmer', email_verified=True, auth_provider='google', google_sub=claims['sub'], password_setup_required=True)
+        role='farmer', email_verified=True, auth_provider='google', google_sub=claims['sub'], password_setup_required=False)
     if not user:
         raise HTTPException(409, 'An account already exists. Sign in and link Google from your profile.')
     return user
@@ -109,15 +116,14 @@ def setup_google_password(user, password_hash):
             return dict(updated)
 
 
-def link_google(user, token, current_password):
-    from password_auth import verify_password
+def link_google(user, token):
     claims, email = google_identity(token)
     if email != user['email'].strip().lower():
         raise HTTPException(400, 'Use the Google account with the same verified email as this profile.')
     if user.get('google_sub') == claims['sub']:
         return user
-    if user.get('google_sub') or not verify_password(current_password, user.get('password_hash') or ''):
-        raise HTTPException(401, 'Confirm your current account password before linking Google.')
+    if user.get('google_sub'):
+        raise HTTPException(409, 'A Google account is already linked to this profile.')
     # Conditional update and unique subject prevent concurrent identity replacement.
     try:
         with closing(db.get_conn()) as conn, conn:

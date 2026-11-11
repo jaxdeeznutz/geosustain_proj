@@ -145,9 +145,25 @@ void main() {
       await t.enterText(find.byType(TextField).first, 'fixture@example.com');
       await t.tap(find.text('Send recovery code'));
       await t.pumpAndSettle();
-      await t.enterText(find.byType(TextField).at(1), '123456');
-      await t.enterText(find.byType(TextField).at(2), 'NewPassword!234');
-      await t.enterText(find.byType(TextField).at(3), 'NewPassword!234');
+      await t.enterText(find.byKey(const ValueKey('recovery-code')), '123456');
+      await t.scrollUntilVisible(
+        find.byKey(const ValueKey('recovery-password')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await t.enterText(
+        find.byKey(const ValueKey('recovery-password')),
+        'NewPassword!234',
+      );
+      await t.scrollUntilVisible(
+        find.byKey(const ValueKey('recovery-confirm-password')),
+        160,
+        scrollable: find.byType(Scrollable).first,
+      );
+      await t.enterText(
+        find.byKey(const ValueKey('recovery-confirm-password')),
+        'NewPassword!234',
+      );
       FocusManager.instance.primaryFocus?.unfocus();
       await t.pumpAndSettle();
       await t.scrollUntilVisible(

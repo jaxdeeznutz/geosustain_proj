@@ -501,34 +501,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         prefixIcon: Icon(Icons.mail_outline),
                       ),
                     ),
-                    const SizedBox(height: 12),
-                    TextFormField(
-                      initialValue: role,
-                      readOnly: true,
-                      decoration: const InputDecoration(
-                        labelText: 'Role',
-                        helperText: 'Assigned by your administrator',
-                        prefixIcon: Icon(Icons.badge_outlined),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: softGreen,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Text(
-                        role == 'Analyst'
-                            ? 'Analyst: view reports, saved analyses, and planning insights for independent environmental monitoring.'
-                            : 'Farmer: analyze land, get crop recommendations, save reports, and view weather advisories and review decisions.',
-                        style: const TextStyle(
-                          color: darkGreen,
-                          fontWeight: FontWeight.w700,
-                          height: 1.3,
+                    if (role == 'Analyst') ...[
+                      const SizedBox(height: 12),
+                      TextFormField(
+                        initialValue: role,
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                          labelText: 'Role',
+                          helperText: 'Assigned by your administrator',
+                          prefixIcon: Icon(Icons.badge_outlined),
                         ),
                       ),
-                    ),
+                    ],
                     const SizedBox(height: 12),
                     TextField(
                       controller: locationController,
