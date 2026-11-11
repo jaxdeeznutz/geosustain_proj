@@ -325,6 +325,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
         pickedPhotoBytes = bytes;
         pickedPhotoBase64 = encoded;
       });
+      showTopFeedback(
+        context,
+        'Photo selected. Tap Save Changes to upload it.',
+      );
     } catch (error) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -350,6 +354,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
     setState(() => saving = true);
     try {
+      final changedName =
+          nameController.text.trim() !=
+          '${widget.state.currentUser?['username'] ?? ''}';
+      final changedPhoto = pickedPhotoBytes != null;
       final updated = await widget.state.api.updateProfile(
         username: nameController.text.trim().isEmpty
             ? 'User'
@@ -358,18 +366,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
       );
       widget.state.updateCurrentProfile(updated, photo: pickedPhotoBytes);
       if (mounted) {
-        ScaffoldMessenger.of(
+        setState(() {
+          pickedPhotoBytes = null;
+          pickedPhotoBase64 = null;
+        });
+        showTopFeedback(
           context,
-        ).showSnackBar(const SnackBar(content: Text('Profile updated.')));
+          changedName && changedPhoto
+              ? 'Name and profile photo saved.'
+              : changedPhoto
+              ? 'Profile photo uploaded successfully.'
+              : changedName
+              ? 'Name changed successfully.'
+              : 'Profile saved successfully.',
+        );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Profile update failed: ${e.toString().replaceFirst('Exception: ', '')}',
-            ),
-          ),
+        showTopFeedback(
+          context,
+          'Profile update failed: ${e.toString().replaceFirst('Exception: ', '')}',
+          success: false,
         );
       }
     } finally {

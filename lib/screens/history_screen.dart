@@ -27,18 +27,22 @@ class _HistoryPageState extends State<HistoryPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) refresh();
+      if (mounted) refresh(force: false);
     });
   }
 
-  Future<void> refresh() async {
+  Future<void> refresh({bool force = true}) async {
     if (loading) return;
     setState(() {
       loading = true;
       error = null;
     });
     try {
-      await widget.state.refreshHistoryData();
+      if (force) {
+        await widget.state.refreshHistoryData();
+      } else {
+        await widget.state.refreshHistoryIfStale();
+      }
       if (mounted) error = widget.state.historyError;
     } catch (e) {
       error = friendlyErrorMessage(e);

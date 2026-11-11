@@ -77,6 +77,7 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
         setState(() {
           message = 'Phone number saved.';
         });
+        showTopFeedback(context, 'Phone number saved successfully.');
       }
     });
   }
@@ -95,6 +96,7 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
         setState(
           () => message = 'Google sign-in linked to your existing account.',
         );
+        showTopFeedback(context, 'Google sign-in linked successfully.');
       }
     });
   }

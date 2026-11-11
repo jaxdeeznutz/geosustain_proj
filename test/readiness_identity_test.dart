@@ -109,8 +109,10 @@ void main() {
     expect(stored?['phone_number'], '+639171234567');
     expect(state.currentUser?['phone_verified'], false);
     expect(find.text('Phone number saved.'), findsOneWidget);
+    expect(find.text('Phone number saved successfully.'), findsOneWidget);
     expect(find.text('Send SMS code'), findsNothing);
     expect(t.takeException(), isNull);
+    await t.pump(const Duration(seconds: 3));
   });
 
   testWidgets(

@@ -778,6 +778,17 @@ class GeoFarmCard extends StatelessWidget {
                   ],
                 ],
               ),
+              if (count > 0) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: busy ? null : onOpen,
+                    icon: const Icon(Icons.calendar_month_outlined),
+                    label: const Text('Analyze again with another month'),
+                  ),
+                ),
+              ],
             ],
           ),
         ),

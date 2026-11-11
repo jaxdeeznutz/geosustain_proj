@@ -859,7 +859,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   String _mode = 'draw';
   int? _selectedVertex;
   String? _notice, _saveKey, _saveFingerprint;
-  bool _busy = false, _saveAsFarm = true;
+  bool _busy = false, _analyzing = false, _saveAsFarm = true;
   Map<String, dynamic>? _saved;
   @override
   void initState() {
@@ -1034,6 +1034,9 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
       }
       await _persistDraft();
       if (analyze) {
+        // The server can take minutes. Keep the request alive while letting the
+        // farmer leave this page after minimizing the progress dialog.
+        if (mounted) setState(() => _analyzing = true);
         String? analysisError;
         if (_saved != null) {
           analysisError = await widget.state.analyzeSavedFarm(_saved!);
@@ -1070,13 +1073,18 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
     } catch (error) {
       if (mounted) setState(() => _notice = friendlyErrorMessage(error));
     } finally {
-      if (mounted) setState(() => _busy = false);
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _analyzing = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) => PopScope<bool>(
-    canPop: !_busy,
+    canPop: !_busy || _analyzing,
     child: Scaffold(
       appBar: _mappingHeader(context, state: widget.state),
       body: SafeArea(

@@ -490,6 +490,55 @@ void showAuthFeedback(
   );
 }
 
+void showTopFeedback(
+  BuildContext context,
+  String message, {
+  bool success = true,
+}) {
+  final overlay = Overlay.of(context, rootOverlay: true);
+  late final OverlayEntry entry;
+  entry = OverlayEntry(
+    builder: (_) => Positioned(
+      top: 12,
+      left: 16,
+      right: 16,
+      child: SafeArea(
+        child: Material(
+          elevation: 12,
+          borderRadius: BorderRadius.circular(16),
+          color: success ? const Color(0xFF087D42) : const Color(0xFFB3261E),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Icon(
+                  success ? Icons.check_circle : Icons.error_outline,
+                  color: Colors.white,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    message,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  overlay.insert(entry);
+  Timer(const Duration(seconds: 3), () {
+    entry.remove();
+    entry.dispose();
+  });
+}
+
 class _LoginPageState extends State<LoginPage> {
   final api = ApiService();
   final emailController = TextEditingController();
@@ -1255,6 +1304,7 @@ class AnalysisState extends ChangeNotifier {
   bool _disposed = false;
   int _sessionEpoch = 0, _selectionEpoch = 0;
   bool historyLoading = false, historyLoaded = false;
+  DateTime? _historyFetchedAt, _farmsFetchedAt;
   int unreadNotifications = 0;
   Future<void>? _historyRefresh;
   Future<void>? _farmsRefresh;
@@ -1363,6 +1413,8 @@ class AnalysisState extends ChangeNotifier {
     _selectionEpoch++;
     _historyRefresh = null;
     _farmsRefresh = null;
+    _historyFetchedAt = null;
+    _farmsFetchedAt = null;
     selectedFarm = null;
     analysisError = null;
     analysisPending = false;
@@ -1746,6 +1798,15 @@ class AnalysisState extends ChangeNotifier {
     });
   }
 
+  Future<void> refreshHistoryIfStale() {
+    final fetched = _historyFetchedAt;
+    if (fetched != null &&
+        DateTime.now().difference(fetched) < const Duration(minutes: 1)) {
+      return Future.value();
+    }
+    return refreshHistoryData();
+  }
+
   Future<void> refreshCurrentModelSummary() {
     final epoch = _sessionEpoch;
     return _patternsRefresh ??= _refreshCurrentModelSummary().whenComplete(() {
@@ -1801,6 +1862,7 @@ class AnalysisState extends ChangeNotifier {
               .where(_ownsRecord),
         );
       historyLoaded = true;
+      _historyFetchedAt = DateTime.now();
       recentAnalyses
         ..clear()
         ..addAll(
@@ -1926,6 +1988,15 @@ class AnalysisState extends ChangeNotifier {
     });
   }
 
+  Future<void> refreshFarmsIfStale() {
+    final fetched = _farmsFetchedAt;
+    if (fetched != null &&
+        DateTime.now().difference(fetched) < const Duration(minutes: 1)) {
+      return Future.value();
+    }
+    return refreshFarms();
+  }
+
   Future<void> _refreshFarms() async {
     final epoch = _sessionEpoch, owner = currentUser?['id'];
     farmsLoading = true;
@@ -1941,6 +2012,7 @@ class AnalysisState extends ChangeNotifier {
             (r) => r['farmer_id'] == null || '${r['farmer_id']}' == '$owner',
           ),
         );
+      _farmsFetchedAt = DateTime.now();
       offlineWorkspace = false;
       await OfflineFarmStore.cacheFarms(List<Map<String, dynamic>>.from(farms));
       var stored = await OfflineFarmStore.read();
@@ -2547,6 +2619,8 @@ class AnalysisState extends ChangeNotifier {
         return 'The server has not returned a completed analysis for this account.';
       }
       if (selection != _selectionEpoch) {
+        unawaited(Future.wait([refreshHistoryData(), refreshFarms()]));
+        unawaited(refreshUnreadNotifications());
         return 'Analysis saved. Open its result from History.';
       }
       final compatibility =
@@ -2904,8 +2978,8 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
 
   void selectTab(int i) {
     setState(() => index = i);
-    if (i == 1) state.refreshFarms();
-    if (i == 2 || i == 3) state.refreshHistoryData();
+    if (i == 1) unawaited(state.refreshFarmsIfStale());
+    if (i == 2 || i == 3) unawaited(state.refreshHistoryIfStale());
   }
 
   Future<void> openAnalysis(Map<String, dynamic> record) async {

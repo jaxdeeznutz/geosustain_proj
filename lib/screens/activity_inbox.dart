@@ -18,6 +18,7 @@ class NotificationsPage extends StatefulWidget {
 
 class _NotificationsPageState extends State<NotificationsPage> {
   static final Map<String, List<Map<String, dynamic>>> _recentByAccount = {};
+  static final Map<String, DateTime> _recentAt = {};
   late final ApiService api = widget.api ?? widget.state?.api ?? ApiService();
   List<Map<String, dynamic>> rows = [], local = [];
   int offset = 0, unread = 0, generation = 0;
@@ -47,7 +48,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
     if (account.isNotEmpty && _recentByAccount.containsKey(account)) {
       rows = List<Map<String, dynamic>>.from(_recentByAccount[account]!);
     }
-    _load();
+    final recent = _recentAt[account];
+    if (widget.initialSessionId == null &&
+        recent != null &&
+        DateTime.now().difference(recent) < const Duration(seconds: 30)) {
+      loading = false;
+      unread = widget.state?.unreadNotifications ?? 0;
+    } else {
+      _load();
+    }
     if (widget.initialSessionId != null) {
       WidgetsBinding.instance.addPostFrameCallback(
         (_) => _openReview(widget.initialSessionId!, null),
@@ -114,6 +123,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
         final account = '${widget.state?.currentUser?['id'] ?? ''}';
         if (account.isNotEmpty && target == 0 && type.isEmpty && !unreadOnly) {
           _recentByAccount[account] = List<Map<String, dynamic>>.from(rows);
+          _recentAt[account] = DateTime.now();
         }
         local = events
             .where(

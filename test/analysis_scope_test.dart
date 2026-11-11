@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:geosustain_clean_arranged/main.dart';
 import 'package:geosustain_clean_arranged/api_service.dart';
+import 'package:geosustain_clean_arranged/boundary_draft_store.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -96,6 +97,33 @@ class ScopeApi extends ApiService {
   }
 }
 
+class DelayedFarmApi extends ScopeApi {
+  final farmRequest = Completer<Map<String, dynamic>>();
+  final historyRequest = Completer<List<dynamic>>();
+
+  @override
+  Future<Map<String, dynamic>> getFarm(int id) => farmRequest.future;
+
+  @override
+  Future<List<dynamic>> getFarmHistory(int farmId) => historyRequest.future;
+}
+
+class ProfileApi extends ScopeApi {
+  @override
+  Future<Map<String, dynamic>> updateProfile({
+    required String username,
+    String? role,
+    String? location,
+    String? profilePhotoBase64,
+    String? phoneNumber,
+  }) async => {
+    'id': 10,
+    'username': username,
+    'role': 'farmer',
+    'email': 'farmer@example.com',
+  };
+}
+
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
   setUp(() {
@@ -111,6 +139,118 @@ void main() {
   );
   AnalysisState stateWith(ScopeApi api) =>
       AnalysisState(api: api)..currentUser = {'id': 10, 'role': 'farmer'};
+
+  testWidgets(
+    'farm month and new analysis stay available while details refresh',
+    (tester) async {
+      final api = DelayedFarmApi();
+      final state = stateWith(api);
+      addTearDown(state.dispose);
+      await tester.pumpWidget(
+        GeoSustainApp(
+          home: FarmDetailsPage(state: state, farm: farm(1)),
+        ),
+      );
+      await tester.pump();
+      final list = find
+          .descendant(
+            of: find.byType(FarmDetailsPage),
+            matching: find.byType(ListView),
+          )
+          .first;
+      final scrollable = find
+          .descendant(of: list, matching: find.byType(Scrollable))
+          .first;
+      tester.state<ScrollableState>(scrollable).position.jumpTo(600);
+      await tester.pump();
+      final button = find.widgetWithText(FilledButton, 'Analyze This Farm');
+      expect(tester.widget<FilledButton>(button).onPressed, isNotNull);
+      final month = find.byType(DropdownButtonFormField<int>);
+      expect(
+        tester.widget<DropdownButtonFormField<int>>(month).onChanged,
+        isNotNull,
+      );
+      api.farmRequest.complete(farm(1));
+      api.historyRequest.complete([]);
+      await tester.pumpAndSettle();
+    },
+  );
+
+  testWidgets('Analyze Land can close while the saved farm request continues', (
+    tester,
+  ) async {
+    await BoundaryDraftStore.write('polygon', {
+      'name': 'Farm 1',
+      'points': boundary,
+      'saved_farm_id': 1,
+      'save_as_farm': true,
+    });
+    final api = ScopeApi()..calculation = Completer<Map<String, dynamic>>();
+    final state = stateWith(api);
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Builder(
+            builder: (context) => TextButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PolygonDrawingPage(state: state),
+                ),
+              ),
+              child: const Text('Open map'),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('Open map'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Resume'));
+    await tester.pumpAndSettle();
+    final list = find
+        .descendant(
+          of: find.byType(PolygonDrawingPage),
+          matching: find.byType(ListView),
+        )
+        .first;
+    await revealInList(tester, find.text('Analyze Area'), list: list);
+    await tester.tap(find.text('Analyze Area'));
+    await tester.pump();
+    expect(state.loading, isTrue);
+    expect(
+      tester.widget<PopScope<bool>>(find.byType(PopScope<bool>)).canPop,
+      isTrue,
+    );
+    final pageContext = tester.element(find.byType(PolygonDrawingPage));
+    expect(Navigator.of(pageContext).canPop(), isTrue);
+    expect(ModalRoute.of(pageContext)!.popDisposition, RoutePopDisposition.pop);
+    await tester.tap(find.byTooltip('Back'));
+    await tester.pump();
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pump();
+    expect(find.byType(PolygonDrawingPage), findsNothing);
+    expect(state.loading, isTrue);
+    api.calculation!.complete(analysis(9, 1));
+    await tester.pumpAndSettle();
+  });
+
+  testWidgets('saving a changed name shows a visible confirmation', (
+    tester,
+  ) async {
+    final state = stateWith(ProfileApi());
+    addTearDown(state.dispose);
+    await tester.pumpWidget(GeoSustainApp(home: EditProfilePage(state: state)));
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Full Name'),
+      'New Farmer Name',
+    );
+    await tester.tap(find.text('Save Changes'));
+    await tester.pump();
+    expect(find.text('Name changed successfully.'), findsOneWidget);
+    await tester.pump(const Duration(seconds: 3));
+  });
 
   test(
     'profile load preserves history without globally selecting a result',

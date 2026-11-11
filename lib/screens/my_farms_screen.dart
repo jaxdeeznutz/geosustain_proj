@@ -72,7 +72,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
     super.initState();
     widget.state.addListener(_refresh);
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) _load();
+      if (mounted) _load(force: false);
     });
   }
 
@@ -95,7 +95,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
     }
   }
 
-  Future<void> _load() async {
+  Future<void> _load({bool force = true}) async {
     if (mounted) {
       setState(() {
         _loading = true;
@@ -103,7 +103,11 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
       });
     }
     try {
-      await widget.state.refreshFarms();
+      if (force) {
+        await widget.state.refreshFarms();
+      } else {
+        await widget.state.refreshFarmsIfStale();
+      }
       if (mounted) setState(() => _error = widget.state.farmsError);
     } catch (error) {
       if (mounted) setState(() => _error = friendlyErrorMessage(error));
@@ -433,7 +437,7 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
   Future<void> _load() async {
     if (mounted) {
       setState(() {
-        _loading = true;
+        _loading = !_recordsLoaded;
         _notice = null;
       });
     }
@@ -785,7 +789,7 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
               if (_loading || _busy) const LinearProgressIndicator(),
               PlantingMonthPicker(
                 state: widget.state,
-                enabled: !_busy && !_loading,
+                enabled: !_busy && !widget.state.loading,
               ),
               if (_busy && widget.state.loading)
                 Padding(
@@ -795,7 +799,7 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
               FilledButton.icon(
                 onPressed:
                     _busy ||
-                        _loading ||
+                        widget.state.loading ||
                         points.isEmpty ||
                         !farmCanAnalyze(_farm)
                     ? null

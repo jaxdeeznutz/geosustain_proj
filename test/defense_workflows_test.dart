@@ -114,6 +114,38 @@ void main() {
     },
   );
 
+  testWidgets(
+    'an analyzed farm offers another month without opening old results',
+    (tester) async {
+      var opened = 0, oldResults = 0;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: GeoFarmCard(
+                farm: const {
+                  'id': 1,
+                  'farm_name': 'Zello Farm',
+                  'analysis_count': 1,
+                },
+                busy: false,
+                onOpen: () => opened++,
+                onAnalyze: () {},
+                onResults: () => oldResults++,
+                onEdit: () {},
+                onArchive: () {},
+                onDelete: () {},
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.tap(find.text('Analyze again with another month'));
+      expect(opened, 1);
+      expect(oldResults, 0);
+    },
+  );
+
   for (final dark in [false, true]) {
     testWidgets(
       'farm text follows ${dark ? 'dark' : 'light'} theme with readable contrast',
