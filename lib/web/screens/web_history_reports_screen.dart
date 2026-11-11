@@ -1012,31 +1012,9 @@ class _WebReportsScreenState extends State<WebReportsScreen> {
             'Assessment and review reports',
             icon: Icons.description_outlined,
             subtitle:
-                'Your generated assessment reports appear below. Export a review case from its workspace, or a planning summary from the Dashboard.',
+                'Reports saved from a review case appear here. Download a PDF from each saved report.',
           ),
           const SizedBox(height: 14),
-          if (state.isPlanner)
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                TextButton.icon(
-                  onPressed: () => PortalRoutes.go('/operator/queue'),
-                  icon: const Icon(Icons.fact_check_outlined, size: 18),
-                  label: const Text('Open review cases'),
-                ),
-                TextButton.icon(
-                  onPressed: () => PortalRoutes.go('/operator/dashboard'),
-                  icon: const Icon(Icons.map_outlined, size: 18),
-                  label: const Text('Open planning summary'),
-                ),
-                TextButton.icon(
-                  onPressed: () => PortalRoutes.go('/operator/trends'),
-                  icon: const Icon(Icons.show_chart, size: 18),
-                  label: const Text('Recommendation Patterns'),
-                ),
-              ],
-            ),
           const SizedBox(height: 16),
           LayoutBuilder(
             builder: (_, box) {
@@ -1108,7 +1086,7 @@ class _WebReportsScreenState extends State<WebReportsScreen> {
               message: filtered
                   ? 'Change or clear the filters to see other reports.'
                   : widget.state.isPlanner
-                  ? 'Open a submitted case in the Review Inbox to inspect its evidence and export a report.'
+                  ? 'Open a submitted case in the Review Inbox and select Save to Reports.'
                   : 'Your assessment reports will appear here once you export them. Open the Analysis Workspace to generate a report.',
               icon: Icons.description_outlined,
               asset: 'assets/images/dashboard/report_illustration.png',
@@ -1124,7 +1102,7 @@ class _WebReportsScreenState extends State<WebReportsScreen> {
                             : '/operator/analyze',
                       ),
                       icon: const Icon(Icons.description_outlined, size: 18),
-                      label: const Text('Generate a report'),
+                      label: const Text('Open Review Inbox'),
                     ),
             ),
           for (final row in rows) _reportTile(context, row),

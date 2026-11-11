@@ -370,7 +370,7 @@ void main() {
     Rect metric(String name) =>
         tester.getRect(find.byKey(ValueKey('metric-$name')));
     for (final label in [
-      'Planning Analysts',
+      'Analysts',
       'Pending Submissions',
       'Registered Parcels',
     ]) {
@@ -412,7 +412,7 @@ void main() {
       await _pumpAdmin(tester, fixture, 'users', size: const Size(1920, 1200));
       await tester.tap(find.byKey(const ValueKey('admin-role-2')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('Planning Analyst').last);
+      await tester.tap(find.text('Analyst').last);
       await tester.pumpAndSettle();
       final rolePatch = fixture.requests.lastWhere((r) => r.method == 'PATCH');
       expect(rolePatch.url.path, endsWith('/users/2'));

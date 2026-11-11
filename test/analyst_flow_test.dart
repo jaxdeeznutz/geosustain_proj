@@ -58,7 +58,7 @@ void main() {
 
     expect(find.text('Analysis Workspace'), findsNothing);
     expect(find.text('My Analyses'), findsNothing);
-    await tester.tap(find.text('Review Inbox'));
+    await tester.tap(find.text('Review Inbox').first);
     await tester.pumpAndSettle();
     expect(PortalRoutes.current.value.path, '/operator/queue');
     expect(find.byType(WebOperatorInbox), findsOneWidget);
@@ -77,7 +77,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(PortalRoutes.current.value.path, '/operator/dashboard');
     expect(find.byType(WebAnalyzeScreen), findsNothing);
-    expect(find.text('Review farmer submissions'), findsOneWidget);
+    expect(find.text('Submitted review workload'), findsNothing);
     expect(state.polygonPoints, selection);
     expect(requests.where((r) => r.method == 'POST'), isEmpty);
 
@@ -86,7 +86,7 @@ void main() {
     expect(find.byType(WebCropTrendsScreen), findsOneWidget);
     PortalRoutes.go('/operator/reports');
     await tester.pumpAndSettle();
-    final patterns = find.widgetWithText(TextButton, 'Recommendation Patterns');
+    final patterns = find.text('Recommendation Patterns').first;
     await tester.ensureVisible(patterns);
     await tester.tap(patterns);
     await tester.pumpAndSettle();

@@ -121,18 +121,6 @@ class ProfilePage extends StatelessWidget {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.white,
-                            ),
-                            onPressed: () =>
-                                _open(context, const LocationGuidancePage()),
-                            icon: const Icon(
-                              Icons.location_on_outlined,
-                              size: 17,
-                            ),
-                            label: Text(state.userLocation()),
-                          ),
                         ],
                       ),
                     ),
@@ -190,12 +178,6 @@ class ProfilePage extends StatelessWidget {
                 'Security',
                 'Change your password',
                 () => _open(context, ChangePasswordPage(api: state.api)),
-              ),
-              tile(
-                Icons.location_on_outlined,
-                'Location',
-                'Manage GPS location access',
-                () => _open(context, const LocationGuidancePage()),
               ),
               tile(
                 Icons.notifications_none,
@@ -262,7 +244,28 @@ class ProfilePage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           TextButton.icon(
-            onPressed: logout,
+            onPressed: () async {
+              final confirmed = await showDialog<bool>(
+                context: context,
+                builder: (dialogContext) => AlertDialog(
+                  title: const Text('Sign out?'),
+                  content: const Text(
+                    'You can sign in again to access your farms and reports.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(dialogContext, false),
+                      child: const Text('Cancel'),
+                    ),
+                    FilledButton(
+                      onPressed: () => Navigator.pop(dialogContext, true),
+                      child: const Text('Sign Out'),
+                    ),
+                  ],
+                ),
+              );
+              if (confirmed == true) logout();
+            },
             icon: const Icon(Icons.logout),
             label: const Text('Sign Out'),
           ),
@@ -283,8 +286,6 @@ class EditProfilePage extends StatefulWidget {
 class _EditProfilePageState extends State<EditProfilePage> {
   late final TextEditingController nameController;
   late final TextEditingController emailController;
-  late final TextEditingController locationController;
-  late String role;
   Uint8List? pickedPhotoBytes;
   String? pickedPhotoBase64;
   bool saving = false;
@@ -298,17 +299,12 @@ class _EditProfilePageState extends State<EditProfilePage> {
     emailController = TextEditingController(
       text: widget.state.currentUser?['email']?.toString() ?? '',
     );
-    locationController = TextEditingController(
-      text: '${widget.state.currentUser?['location'] ?? ''}',
-    );
-    role = widget.state.userRole();
   }
 
   @override
   void dispose() {
     nameController.dispose();
     emailController.dispose();
-    locationController.dispose();
     super.dispose();
   }
 
@@ -358,7 +354,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
         username: nameController.text.trim().isEmpty
             ? 'User'
             : nameController.text.trim(),
-        location: locationController.text.trim(),
         profilePhotoBase64: pickedPhotoBase64,
       );
       widget.state.updateCurrentProfile(updated, photo: pickedPhotoBytes);
@@ -435,7 +430,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
           children: [
             GeoSustainHeader(
-              title: 'Account Settings',
+              title: 'Personal Information',
               state: widget.state,
               back: () => Navigator.pop(context),
             ),
@@ -484,6 +479,17 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       icon: const Icon(Icons.photo_library_outlined),
                       label: const Text('Upload profile photo'),
                     ),
+                    const Text(
+                      'Edit Profile',
+                      style: TextStyle(
+                        fontSize: 23,
+                        fontWeight: FontWeight.w800,
+                        color: darkGreen,
+                      ),
+                    ),
+                    const Text(
+                      'Update your personal information and account details.',
+                    ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: nameController,
@@ -499,26 +505,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       decoration: const InputDecoration(
                         labelText: 'Email',
                         prefixIcon: Icon(Icons.mail_outline),
-                      ),
-                    ),
-                    if (role == 'Analyst') ...[
-                      const SizedBox(height: 12),
-                      TextFormField(
-                        initialValue: role,
-                        readOnly: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Role',
-                          helperText: 'Assigned by your administrator',
-                          prefixIcon: Icon(Icons.badge_outlined),
-                        ),
-                      ),
-                    ],
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: locationController,
-                      decoration: const InputDecoration(
-                        labelText: 'Location',
-                        prefixIcon: Icon(Icons.location_on_outlined),
                       ),
                     ),
                     const SizedBox(height: 18),
@@ -542,6 +528,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
               ),
             ),
             const SizedBox(height: 12),
+            const Padding(
+              padding: EdgeInsets.fromLTRB(8, 8, 8, 8),
+              child: Row(
+                children: [
+                  Icon(Icons.shield_outlined, color: green),
+                  SizedBox(width: 8),
+                  Text(
+                    'Account actions',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800),
+                  ),
+                ],
+              ),
+            ),
             Card(
               child: Column(
                 children: [

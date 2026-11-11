@@ -1758,9 +1758,12 @@ class AnalysisState extends ChangeNotifier {
     final owner = currentUser?['id'];
     if (owner == null) return;
     try {
-      final summary = await api.getRecommendationPatterns(submitted: isPlanner);
+      final summary = await api.getRecommendationPatterns(
+        submitted: isPlanner,
+        modelScope: isPlanner ? 'all' : 'current',
+      );
       if (summary['current_model_version'] == null ||
-          summary['model_scope'] != 'current') {
+          summary['model_scope'] != (isPlanner ? 'all' : 'current')) {
         throw Exception(
           'Current-model summary is unavailable. Deploy the matching backend and refresh.',
         );

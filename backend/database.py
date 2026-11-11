@@ -1204,6 +1204,41 @@ def create_report_for_user(user_id: int, session_id: int, title: str = None):
         conn.close()
 
 
+def create_report_for_reviewer(reviewer_id: int, case_id: int):
+    """Save the current submitted case analysis to the reviewer's Reports."""
+    conn = get_conn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO reports (user_id, session_id, report_title)
+                SELECT %s, c.current_session_id,
+                       'GeoSustain Review Report - Case #' || c.id
+                FROM review_cases c
+                WHERE c.id = %s AND c.current_session_id IS NOT NULL
+                ON CONFLICT (user_id, session_id) DO NOTHING
+                RETURNING id, user_id, session_id, report_title, created_at
+                """,
+                (reviewer_id, case_id),
+            )
+            row = cur.fetchone()
+            if not row:
+                cur.execute(
+                    """
+                    SELECT rp.id, rp.user_id, rp.session_id, rp.report_title,
+                           rp.created_at FROM reports rp
+                    JOIN review_cases c ON c.current_session_id = rp.session_id
+                    WHERE rp.user_id = %s AND c.id = %s
+                    """,
+                    (reviewer_id, case_id),
+                )
+                row = cur.fetchone()
+        conn.commit()
+        return dict(row) if row else None
+    finally:
+        conn.close()
+
+
 def get_saved_analyses(user_id: int, limit: int = 50, offset: int = 0, q: str = ""):
     """Return saved/bookmarked analyses for a user."""
     conn = get_conn()
@@ -1231,8 +1266,8 @@ def get_reports(user_id: int, limit: int = 50, offset: int = 0, q: str = ""):
             cur.execute(
                 _history_select_sql(
                     extra_select=", rp.id AS report_id, rp.report_title, rp.created_at AS report_created_at",
-                    extra_join="INNER JOIN reports rp ON rp.session_id = s.id AND rp.user_id = s.user_id",
-                    where_prefix="s.user_id = %s AND (%s = '' OR concat_ws(' ', s.id, s.place_name, s.farm_name_snapshot) ILIKE %s)",
+                    extra_join="INNER JOIN reports rp ON rp.session_id = s.id",
+                    where_prefix="rp.user_id = %s AND (%s = '' OR concat_ws(' ', s.id, s.place_name, s.farm_name_snapshot) ILIKE %s)",
                 ) + " LIMIT %s OFFSET %s",
                 (user_id, q, "%"+q+"%", limit, offset),
             )

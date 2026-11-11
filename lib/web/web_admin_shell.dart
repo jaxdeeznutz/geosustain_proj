@@ -513,7 +513,28 @@ class _WebAdminDashboardState extends State<WebAdminDashboard> {
                   'Logout',
                   style: TextStyle(color: Colors.white, fontSize: 11),
                 ),
-                onTap: widget.logout,
+                onTap: () async {
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (dialogContext) => AlertDialog(
+                      title: const Text('Log out?'),
+                      content: const Text(
+                        'You can sign in again to manage GeoSustain.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(dialogContext, false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(dialogContext, true),
+                          child: const Text('Log out'),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirmed == true) widget.logout();
+                },
               ),
             ],
           ),

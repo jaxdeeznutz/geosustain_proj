@@ -540,6 +540,7 @@ class WebReviewWorkbench extends StatefulWidget {
 class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
   Map<String, dynamic>? data;
   String? error;
+  String? advisoryError;
   bool loading = true, busy = false;
   int generation = 0;
   final notes = TextEditingController(),
@@ -800,6 +801,24 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
         const SizedBox(height: 16),
         _ReviewDecisionSummary(
           data: data!,
+          saveReport: loading || busy || error != null
+              ? null
+              : () async {
+                  try {
+                    await widget.state.api.operatorPost('$base/report', {});
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Saved to Reports.')),
+                      );
+                    }
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text(friendlyErrorMessage(e))),
+                      );
+                    }
+                  }
+                },
           exportCase: loading || busy || error != null
               ? null
               : () => _exportOperatorReport(context, data!),
@@ -843,12 +862,16 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
             TextField(
               key: const ValueKey('review-advisory-note'),
               controller: advisory,
+              onChanged: (_) {
+                if (advisoryError != null) setState(() => advisoryError = null);
+              },
               enabled: !busy && !loading,
               maxLength: 500,
               minLines: 2,
               maxLines: 5,
-              decoration: const InputDecoration(
+              decoration: InputDecoration(
                 labelText: 'Advice for the farmer',
+                errorText: advisoryError,
               ),
             ),
             Align(
@@ -859,45 +882,26 @@ class _WebReviewWorkbenchState extends State<WebReviewWorkbench> {
                     : () async {
                         if (advisory.text.trim().isEmpty) {
                           setState(
-                            () => error = 'Enter an advisory note first.',
+                            () =>
+                                advisoryError = 'Enter an advisory note first.',
                           );
                           return;
                         }
                         await action('notes', {'notes': advisory.text.trim()});
-                        if (mounted && error == null) advisory.clear();
+                        if (context.mounted && error == null) {
+                          advisory.clear();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Advisory note sent to the farmer.',
+                              ),
+                            ),
+                          );
+                        }
                       },
                 child: const Text('Send advisory note'),
               ),
             ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _ReviewOptionalSection(
-          storageId: '${c['id']}-${c['current_session_id']}-history',
-          title: 'Review history',
-          icon: Icons.history,
-          children: [
-            Wrap(
-              spacing: 12,
-              runSpacing: 8,
-              children: [
-                for (final r in analysisListValue(
-                  data!['revisions'],
-                ).map(analysisMapValue))
-                  OutlinedButton(
-                    onPressed: busy || loading ? null : () => revision(r),
-                    child: Text(
-                      'Revision ${r['revision']} ? #${r['session_id']}',
-                    ),
-                  ),
-              ],
-            ),
-            for (final e in analysisListValue(
-              data!['events'],
-            ).map(analysisMapValue))
-              _ReviewEventTile(event: e),
-            if (analysisListValue(data!['events']).isEmpty)
-              const Text('No earlier review activity.'),
           ],
         ),
         const SizedBox(height: 12),

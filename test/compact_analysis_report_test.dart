@@ -90,15 +90,15 @@ void main() {
   );
 
   test(
-    'reformat supplied report without changing its readings or ranks',
+    'reformat the current report fixture without changing its readings or ranks',
     () async {
-      final input = File('output/compact-report-review/imported-report.json');
+      final input = File('test/fixtures/no_npk_model_explanation.json');
       final record = fixture(input.path);
       final before = jsonEncode(record);
       final explanation = conciseCropFit(record, 'Mango');
       expect(
         explanation,
-        contains('Outside the reference range: Annual rainfall'),
+        contains('No compatible growing-condition checks were saved'),
       );
       expect(explanation, isNot(contains('model')));
       final bytes = await buildCompactAnalysisPdf(record);
@@ -109,8 +109,5 @@ void main() {
         'output/pdf/geosustain-analysis-summary.pdf',
       ).writeAsBytesSync(bytes);
     },
-    skip: !File(
-      'output/compact-report-review/imported-report.json',
-    ).existsSync(),
   );
 }

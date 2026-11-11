@@ -107,12 +107,38 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Divider(height: 28),
-        Text('Account details', style: Theme.of(context).textTheme.titleMedium),
+        Row(
+          children: [
+            const Icon(Icons.settings_outlined, color: green),
+            const SizedBox(width: 8),
+            Text(
+              'Account details',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
+          ],
+        ),
         const SizedBox(height: 8),
-        Text(
-          user['email_verified'] == true
-              ? 'Email verified'
-              : 'Email not yet verified',
+        Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: softGreen,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              const Icon(Icons.mail_outline, color: green),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  user['email_verified'] == true
+                      ? 'Email verified'
+                      : 'Email not yet verified',
+                ),
+              ),
+              if (user['email_verified'] == true)
+                const Icon(Icons.check_circle, color: green, size: 20),
+            ],
+          ),
         ),
         const SizedBox(height: 12),
         TextField(
@@ -138,7 +164,21 @@ class _IdentityProfileSectionState extends State<IdentityProfileSection> {
         ),
         const SizedBox(height: 12),
         if (linked)
-          const Text('Google sign-in is linked')
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: softGreen,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Row(
+              children: [
+                Icon(Icons.account_circle_outlined, color: green),
+                SizedBox(width: 10),
+                Expanded(child: Text('Google sign-in is linked')),
+                Icon(Icons.check_circle, color: green, size: 20),
+              ],
+            ),
+          )
         else ...[
           TextButton.icon(
             onPressed: busy || !FirebaseIdentity.googleConfigured

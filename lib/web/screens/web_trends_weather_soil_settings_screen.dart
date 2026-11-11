@@ -16,6 +16,7 @@ class _WebCropTrendsScreenState extends State<WebCropTrendsScreen> {
   @override
   void initState() {
     super.initState();
+    if (widget.state.isPlanner) scope = 'all';
     // A new submission may arrive while another page is open. Cached totals
     // are not evidence that the server still has the same set of cases.
     unawaited(load());
@@ -999,7 +1000,6 @@ class WebSettingsScreen extends StatefulWidget {
 
 class _WebSettingsScreenState extends State<WebSettingsScreen> {
   late final TextEditingController _nameController;
-  late final TextEditingController _locationController;
   bool _saving = false;
   bool _pushEnabled = false;
   bool _pushBusy = false;
@@ -1014,9 +1014,6 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
     _nameController = TextEditingController(
       text: '${state.currentUser?['username'] ?? 'User'}',
     );
-    _locationController = TextEditingController(
-      text: '${state.currentUser?['location'] ?? state.selectedPlaceName}',
-    );
     PushNotifications.enabled().then((value) {
       if (mounted) setState(() => _pushEnabled = value);
     });
@@ -1025,7 +1022,6 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _locationController.dispose();
     super.dispose();
   }
 
@@ -1039,7 +1035,6 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
             ? 'User'
             : _nameController.text.trim(),
         role: currentRole,
-        location: _locationController.text.trim(),
       );
       state.updateCurrentProfile(updated);
       if (mounted) {
@@ -1146,9 +1141,31 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Settings',
+          state.isPlanner ? 'Analyst Settings' : 'Settings',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
         ),
+        if (state.isPlanner) ...[
+          const SizedBox(height: 8),
+          const Text(
+            'Manage your review account and alerts for farmer submissions.',
+          ),
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 10,
+            children: [
+              OutlinedButton.icon(
+                onPressed: () => PortalRoutes.go('/operator/queue'),
+                icon: const Icon(Icons.fact_check_outlined),
+                label: const Text('Review Inbox'),
+              ),
+              OutlinedButton.icon(
+                onPressed: () => PortalRoutes.go('/operator/activity'),
+                icon: const Icon(Icons.notifications_outlined),
+                label: const Text('Review Activity'),
+              ),
+            ],
+          ),
+        ],
         SizedBox(height: 12),
         Text(
           'Signed in as ${state.currentUser?['email'] ?? '--'}',
@@ -1156,7 +1173,7 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
         ),
         SizedBox(height: 18),
         Text(
-          'Edit Profile',
+          state.isPlanner ? 'Analyst profile' : 'Edit Profile',
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
         ),
         SizedBox(height: 10),
@@ -1168,13 +1185,6 @@ class _WebSettingsScreenState extends State<WebSettingsScreen> {
           ),
         ),
         SizedBox(height: 10),
-        TextField(
-          controller: _locationController,
-          decoration: InputDecoration(
-            labelText: 'Location',
-            prefixIcon: Icon(Icons.location_on_outlined),
-          ),
-        ),
         SizedBox(height: 14),
         SizedBox(
           width: 210,

@@ -67,7 +67,7 @@ void main() {
       await tester.binding.handlePopRoute();
       await tester.pump();
       expect(find.text('Analyzing your farm'), findsOneWidget);
-      await tester.tap(find.text('Continue in background'));
+      await tester.tap(find.text('Minimize'));
       await tester.pump();
       expect(state.loading, isTrue);
       expect(find.text('Farm details'), findsOneWidget);
@@ -224,6 +224,8 @@ void main() {
         const Offset(0, -200),
       );
       await tester.tap(find.text('Sign Out'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.widgetWithText(FilledButton, 'Sign Out'));
       await tester.pumpAndSettle();
       expect(find.text('Welcome, Farmer!'), findsOneWidget);
       expect(

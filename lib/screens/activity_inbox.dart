@@ -350,22 +350,6 @@ class _NotificationsPageState extends State<NotificationsPage> {
     'followup_due' => 'Follow-up due',
     _ => 'Farm synced',
   };
-  Widget tile(Map<String, dynamic> row, {bool device = false}) => Card(
-    child: ListTile(
-      leading: Icon(
-        row['read_at'] == null
-            ? Icons.mark_email_unread_outlined
-            : Icons.drafts_outlined,
-      ),
-      title: Text(device ? 'Farm synced: ${row['farm_name']}' : title(row)),
-      subtitle: Text(
-        '${device ? 'Device activity · Ready for online analysis.' : row['message'] ?? ''}\n${analysisDateText(row['created_at'])} · ${row['read_at'] == null ? 'Unread' : 'Read'}',
-      ),
-      enabled: !opening,
-      onTap: () => _open(row, device: device),
-    ),
-  );
-
   DateTime? _eventTime(Map<String, dynamic> row) =>
       DateTime.tryParse('${row['created_at'] ?? ''}')?.toLocal();
 
@@ -592,6 +576,16 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         _load(page: 0);
                       },
               ),
+              FilterChip(
+                label: const Text('All activity'),
+                selected: !unreadOnly,
+                onSelected: loading
+                    ? null
+                    : (_) {
+                        setState(() => unreadOnly = false);
+                        _load(page: 0);
+                      },
+              ),
               TextButton(
                 onPressed: loading || opening || unread == 0 ? null : _markAll,
                 child: const Text('Mark all as read'),
@@ -636,13 +630,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   )
                 : Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (error == null) ...[
-                        for (final row in rows) tile(row),
-                        if (offset == 0)
-                          for (final row in local) tile(row, device: true),
-                      ],
-                    ],
+                    children: error == null ? _mobileEvents() : [],
                   ),
           ),
           const SizedBox(height: 14),

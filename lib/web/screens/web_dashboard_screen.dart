@@ -67,7 +67,7 @@ class WebDashboardScreen extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 12),
             child: Text(
               state.isPlanner
-                  ? 'Current-version summary is loading or unavailable. Refresh to retry.'
+                  ? 'Submitted-case summary is loading or unavailable. Refresh to retry.'
                   : 'Summary of currently loaded records only. Whole-account statistics are not available yet.',
             ),
           ),
@@ -83,7 +83,7 @@ class WebDashboardScreen extends StatelessWidget {
               value: '${summary?['analysis_count'] ?? records.length}',
               subtitle: summaryReady
                   ? (state.isPlanner
-                        ? 'Submitted cases \u00b7 current AI version'
+                        ? 'All submitted cases'
                         : 'Across all saved areas')
                   : 'Currently loaded records',
               warning:
@@ -162,86 +162,7 @@ class WebDashboardScreen extends StatelessWidget {
             _AnalystAreaSummary(records),
           ],
         ),
-        if (state.isPlanner) ...[
-          const SizedBox(height: 24),
-          Text(
-            'Submitted review workload',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 12),
-          WebAdaptiveRow(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: _AnalystWorkflowCard(
-                  icon: Icons.fact_check_rounded,
-                  title: 'Review farmer submissions',
-                  description:
-                      'Open a submitted case, inspect its saved boundary and evidence, then record your review decision.',
-                  steps:
-                      'Review Inbox → Inspect evidence → Verify, request information, or reject',
-                  action: 'Open Review Inbox',
-                  onPressed: () => PortalRoutes.go('/operator/queue'),
-                ),
-              ),
-              const SizedBox(width: 18),
-              Expanded(
-                child: _AnalystWorkflowCard(
-                  icon: Icons.map_rounded,
-                  title: 'Map of submitted cases',
-                  description:
-                      'Locate farmer-submitted cases and open their saved evidence for review.',
-                  steps: 'Open map → Select submitted case → Inspect evidence',
-                  action: 'Open submitted case map',
-                  onPressed: onOpenMapAnalysis,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-          WebOperatorOverview(state: state),
-          const SizedBox(height: 24),
-          const SizedBox(height: 12),
-        ],
       ],
-    );
-  }
-}
-
-class _AnalystWorkflowCard extends StatelessWidget {
-  final IconData icon;
-  final String title, description, steps, action;
-  final VoidCallback onPressed;
-  const _AnalystWorkflowCard({
-    required this.icon,
-    required this.title,
-    required this.description,
-    required this.steps,
-    required this.action,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    Theme.of(context);
-    return _WebCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Icon(icon, color: WebPortalColors.accent, size: 30),
-          const SizedBox(height: 12),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
-          ),
-          const SizedBox(height: 8),
-          Text(description),
-          const SizedBox(height: 12),
-          Text(steps, style: TextStyle(color: WebPortalColors.muted)),
-          const SizedBox(height: 16),
-          FilledButton(onPressed: onPressed, child: Text(action)),
-        ],
-      ),
     );
   }
 }

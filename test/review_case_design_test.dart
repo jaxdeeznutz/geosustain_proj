@@ -181,28 +181,14 @@ void main() {
       );
       expect(find.text('Boundary & Measurements'), findsOneWidget);
       final locationCard = find.byKey(const ValueKey('review-location-card'));
-      expect(locationCard, findsOneWidget);
-      expect(
-        find.descendant(
-          of: locationCard,
-          matching: find.text('Analyzed Farm Location'),
-        ),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: locationCard, matching: find.text('7.3168')),
-        findsOneWidget,
-      );
-      expect(
-        find.descendant(of: locationCard, matching: find.text('125.6733')),
-        findsOneWidget,
-      );
+      expect(locationCard, findsNothing);
       expect(tester.takeException(), isNull);
       await savePreview(tester, key, 'review-${size.width.toInt()}');
       await tester.ensureVisible(find.text('2. Complete the review checks'));
       await tester.pumpAndSettle();
       expect(find.text('Export analysis report'), findsOneWidget);
       expect(find.text('Export case report'), findsOneWidget);
+      expect(find.text('Save to Reports'), findsOneWidget);
       expect(tester.takeException(), isNull);
       if (size.width >= 1440) {
         await savePreview(tester, key, 'review-actions-${size.width.toInt()}');
@@ -273,6 +259,25 @@ void main() {
     },
   );
 
+  testWidgets('saving a reviewed case creates a Reports entry', (tester) async {
+    final requests = <http.Request>[];
+    await pumpReview(
+      tester,
+      reviewFixture(status: 'verified'),
+      const Size(1440, 1000),
+      requests: requests,
+    );
+    final save = find.widgetWithText(OutlinedButton, 'Save to Reports');
+    await tester.ensureVisible(save);
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+    expect(
+      requests.where((request) => request.method == 'POST').single.url.path,
+      '/api/operator/cases/5/report',
+    );
+    expect(find.text('Saved to Reports.'), findsOneWidget);
+  });
+
   testWidgets(
     'verification keeps the four-check gate and cancellation sends no write',
     (tester) async {
@@ -295,7 +300,10 @@ void main() {
       await tester.ensureVisible(verify);
       await tester.tap(verify);
       await tester.pumpAndSettle();
-      expect(find.text('Confirm decision'), findsOneWidget);
+      expect(
+        find.widgetWithText(FilledButton, 'Verify Assessment'),
+        findsOneWidget,
+      );
       await tester.tap(find.text('Cancel'));
       await tester.pumpAndSettle();
       expect(requests.where((request) => request.method == 'POST'), isEmpty);
@@ -348,10 +356,7 @@ void main() {
       await tester.ensureVisible(find.text('2. Complete the review checks'));
       await tester.pumpAndSettle();
       await savePreview(tester, key, 'simple-review-decisions');
-      await tester.ensureVisible(find.text('Review history'));
-      await tester.tap(find.text('Review history'));
-      await tester.pumpAndSettle();
-      expect(find.text('Synthetic decision history'), findsOneWidget);
+      expect(find.text('Review history'), findsNothing);
       expect(requests.where((request) => request.method == 'POST'), isEmpty);
       expect(tester.takeException(), isNull);
     },
@@ -436,7 +441,7 @@ void main() {
         find.byKey(const ValueKey('review-decision-reason')),
         findsNothing,
       );
-      await tester.tap(find.text('Confirm decision'));
+      await tester.tap(find.widgetWithText(FilledButton, 'Verify Assessment'));
       await tester.pumpAndSettle();
       final body =
           jsonDecode(

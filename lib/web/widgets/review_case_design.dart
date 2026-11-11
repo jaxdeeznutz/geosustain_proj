@@ -123,13 +123,29 @@ class _ReviewDecisionDialogState extends State<_ReviewDecisionDialog> {
   Widget build(BuildContext context) {
     final verifying = widget.status == 'verified';
     final asking = widget.status == 'needs_information';
+    final accent = verifying
+        ? green
+        : asking
+        ? green
+        : Colors.red.shade700;
     return AlertDialog(
+      backgroundColor: const Color(0xFFFBFFFB),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(26)),
+      titlePadding: const EdgeInsets.fromLTRB(24, 20, 24, 0),
+      contentPadding: const EdgeInsets.fromLTRB(24, 10, 24, 10),
+      actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
       title: Text(
         verifying
-            ? 'Verify assessment?'
+            ? 'Verify Assessment'
             : asking
-            ? 'Request information'
-            : 'Reject submission',
+            ? 'Request Information'
+            : 'Reject Submission',
+        textAlign: TextAlign.center,
+        style: const TextStyle(
+          color: Color(0xFF003B2B),
+          fontSize: 25,
+          fontWeight: FontWeight.w800,
+        ),
       ),
       content: SizedBox(
         width: 520,
@@ -140,6 +156,39 @@ class _ReviewDecisionDialogState extends State<_ReviewDecisionDialog> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                Container(
+                  height: 112,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(20),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFE8F8EC), Color(0xFFBDECC8)],
+                    ),
+                  ),
+                  child: Stack(
+                    alignment: Alignment.center,
+                    children: [
+                      const Positioned(
+                        left: 20,
+                        bottom: 8,
+                        child: Icon(
+                          Icons.spa_rounded,
+                          color: Color(0xFF56BB75),
+                          size: 56,
+                        ),
+                      ),
+                      Icon(
+                        verifying
+                            ? Icons.fact_check_rounded
+                            : asking
+                            ? Icons.quiz_rounded
+                            : Icons.cancel_presentation_rounded,
+                        color: accent,
+                        size: 70,
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 14),
                 Text(
                   verifying
                       ? 'Confirm that you reviewed the saved farm results. Verification does not guarantee crop success.'
@@ -214,10 +263,11 @@ class _ReviewDecisionDialogState extends State<_ReviewDecisionDialog> {
           child: const Text('Cancel'),
         ),
         FilledButton(
+          style: FilledButton.styleFrom(backgroundColor: accent),
           onPressed: () {
             if (form.currentState!.validate()) Navigator.pop(context, true);
           },
-          child: const Text('Confirm decision'),
+          child: Text(verifying ? 'Verify Assessment' : 'Confirm decision'),
         ),
       ],
     );
@@ -494,7 +544,6 @@ class _ReviewEvidenceLayoutState extends State<_ReviewEvidenceLayout> {
                   ),
                   const SizedBox(height: 12),
                   AnalysisCoverageCard(record: record),
-                  CagroSoilObservationsCard(record: record),
                 ],
               ),
             ),
@@ -511,8 +560,6 @@ class _ReviewEvidenceLayoutState extends State<_ReviewEvidenceLayout> {
           side: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _ReviewLocationCard(record: record),
-              const SizedBox(height: 12),
               _WebCard(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -571,84 +618,14 @@ class _ReviewEvidenceLayoutState extends State<_ReviewEvidenceLayout> {
   }
 }
 
-class _ReviewLocationCard extends StatelessWidget {
-  final Map<String, dynamic> record;
-  const _ReviewLocationCard({required this.record});
-  @override
-  Widget build(BuildContext context) {
-    final lines = analysisCoverageLines(record);
-    final coverage = lines
-        .where(
-          (line) =>
-              line.startsWith('CAGRO coverage:') ||
-              line.startsWith('Analysis coverage:'),
-        )
-        .firstOrNull;
-    final rows = [
-      (
-        'Farm center latitude',
-        '${record['center_lat'] ?? record['lat'] ?? 'Not recorded'}',
-      ),
-      (
-        'Farm center longitude',
-        '${record['center_lon'] ?? record['lon'] ?? 'Not recorded'}',
-      ),
-      ('Approximate area', analysisAreaText(record)),
-      ('Sample coordinates', 'Farm center is not a soil sample coordinate.'),
-      if (coverage != null) ('Coverage', coverage),
-    ];
-    return _WebCard(
-      key: const ValueKey('review-location-card'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const _AnalystSectionTitle(
-            'Analyzed Farm Location',
-            icon: Icons.location_on_outlined,
-          ),
-          const SizedBox(height: 12),
-          for (final row in rows)
-            Container(
-              padding: const EdgeInsets.symmetric(vertical: 7),
-              decoration: BoxDecoration(
-                border: Border(
-                  bottom: BorderSide(
-                    color: WebPortalColors.muted.withValues(alpha: .12),
-                  ),
-                ),
-              ),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Text(
-                      row.$1,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: WebPortalColors.muted,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(row.$2, style: const TextStyle(fontSize: 11)),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ReviewDecisionSummary extends StatelessWidget {
   final Map<String, dynamic> data;
-  final VoidCallback? exportCase, exportAnalysis;
+  final VoidCallback? exportCase, exportAnalysis, saveReport;
   const _ReviewDecisionSummary({
     required this.data,
     this.exportCase,
     this.exportAnalysis,
+    this.saveReport,
   });
   @override
   Widget build(BuildContext context) {
@@ -728,6 +705,11 @@ class _ReviewDecisionSummary extends StatelessWidget {
             runSpacing: 10,
             children: [
               OutlinedButton.icon(
+                onPressed: saveReport,
+                icon: const Icon(Icons.save_outlined),
+                label: const Text('Save to Reports'),
+              ),
+              OutlinedButton.icon(
                 onPressed: exportAnalysis,
                 icon: const Icon(Icons.download_outlined),
                 label: const Text('Export analysis report'),
@@ -743,53 +725,4 @@ class _ReviewDecisionSummary extends StatelessWidget {
       ),
     );
   }
-}
-
-class _ReviewEventTile extends StatelessWidget {
-  final Map<String, dynamic> event;
-  const _ReviewEventTile({required this.event});
-  @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.symmetric(vertical: 6),
-    child: Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: WebPortalColors.tint.withValues(alpha: .65),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: WebPortalColors.accent.withValues(alpha: .22),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.history, size: 20, color: WebPortalColors.accent),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  reviewLabel(event['kind']),
-                  style: const TextStyle(fontWeight: FontWeight.w700),
-                ),
-                Text(
-                  '${event['actor_name'] ?? 'Recorded system event'} · analysis #${event['session_id']}',
-                  style: TextStyle(fontSize: 12, color: WebPortalColors.muted),
-                ),
-                Text(
-                  analysisDateText(event['created_at']),
-                  style: TextStyle(fontSize: 11, color: WebPortalColors.muted),
-                ),
-                if ('${event['notes'] ?? ''}'.isNotEmpty)
-                  Text('${event['notes']}'),
-                if (event['reason'] != null)
-                  Text('Reason: ${reviewLabel(event['reason'])}'),
-              ],
-            ),
-          ),
-        ],
-      ),
-    ),
-  );
 }

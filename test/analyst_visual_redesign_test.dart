@@ -64,7 +64,7 @@ final _cases = <Map<String, dynamic>>[
 ];
 
 final _patternSummary = <String, dynamic>{
-  'model_scope': 'current',
+  'model_scope': 'all',
   'current_model_version': 'synthetic-current-model',
   'classes': [
     'banana',
@@ -442,8 +442,8 @@ void main() {
         'crop',
       );
       expect(find.text('No reports match this view'), findsOneWidget);
-      expect(find.text('Open review cases'), findsOneWidget);
-      expect(find.text('Open planning summary'), findsOneWidget);
+      expect(find.text('Open review cases'), findsNothing);
+      expect(find.text('Open planning summary'), findsNothing);
       expect(requests.where((r) => r.method != 'GET'), isEmpty);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
@@ -459,7 +459,7 @@ void main() {
       final requests = <http.Request>[];
       final state = await _fixture(requests);
       await _pumpPortal(tester, state, 'reports', const Size(1440, 1100));
-      final action = find.text('Generate a report');
+      final action = find.text('Open Review Inbox');
       await tester.ensureVisible(action);
       await tester.tap(action);
       await tester.pumpAndSettle();
@@ -503,9 +503,7 @@ void main() {
           }
 
           if (page == 'dashboard') {
-            expect(find.text('Review farmer submissions'), findsOneWidget);
-            expect(find.text('Map of submitted cases'), findsOneWidget);
-            expect(find.text('Review workload'), findsOneWidget);
+            expect(find.text('Submitted review workload'), findsNothing);
             expect(find.text('Start Analysis'), findsNothing);
             expect(find.text('Analysis Workspace'), findsNothing);
             expect(find.text('My Analyses'), findsNothing);

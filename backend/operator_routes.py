@@ -78,6 +78,13 @@ def install(app,get_user,require_planner):
     def detail(case_id:int,planner=Depends(require_planner)):
         return workflow.detail(case_id)
 
+    @app.post('/api/operator/cases/{case_id}/report')
+    def save_review_report(case_id:int,planner=Depends(require_planner)):
+        workflow.detail(case_id)
+        report=db.create_report_for_reviewer(planner['id'],case_id)
+        if report is None:raise HTTPException(404,'Submitted analysis not found.')
+        return report
+
     @app.get('/api/operator/cases/{case_id}/revisions/{session_id}')
     def revision(case_id:int,session_id:int,planner=Depends(require_planner)):
         data=workflow.detail(case_id)

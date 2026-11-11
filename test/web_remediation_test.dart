@@ -121,7 +121,7 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('Edit Profile'), findsOneWidget);
+      expect(find.text('Analyst profile'), findsOneWidget);
       expect(find.byTooltip('Toggle dark mode'), findsOneWidget);
       await tester.tap(find.byTooltip('Toggle dark mode'));
       await tester.pumpAndSettle();
@@ -193,11 +193,10 @@ void main() {
         find.text('Inspect saved results and sources'),
       );
       expect(caption.style?.color, WebPortalColors.muted);
-      expect(find.text('Review farmer submissions'), findsOneWidget);
-      expect(find.text('Review workload'), findsOneWidget);
+      expect(find.text('Submitted review workload'), findsNothing);
       expect(find.text('Choose a point or draw a polygon'), findsNothing);
       expect(find.text('Start New Analysis'), findsNothing);
-      expect(find.text('Open Review Inbox'), findsNWidgets(2));
+      expect(find.text('Open Review Inbox'), findsWidgets);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       state.dispose();

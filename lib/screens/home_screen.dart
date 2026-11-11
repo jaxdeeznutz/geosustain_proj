@@ -405,13 +405,25 @@ class CurrentWeatherCard extends StatelessWidget {
                   children: [
                     Text(
                       'Humidity ${_number(weather?['live_humidity'], decimals: 0)}%',
-                      style: const TextStyle(fontSize: 11),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF183126),
+                      ),
                     ),
                     Text(
                       'Wind ${_number(weather?['wind_speed_kmh'])} km/h',
-                      style: const TextStyle(fontSize: 11),
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF183126),
+                      ),
                     ),
-                    Text('Updated $time', style: const TextStyle(fontSize: 11)),
+                    Text(
+                      'Updated $time',
+                      style: const TextStyle(
+                        fontSize: 11,
+                        color: Color(0xFF183126),
+                      ),
+                    ),
                   ],
                 ),
               ),

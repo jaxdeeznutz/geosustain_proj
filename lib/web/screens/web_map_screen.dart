@@ -119,7 +119,8 @@ class _WebMapScreenState extends State<WebMapScreen> {
   List<Map<String, dynamic>> get _allMapRecords {
     final merged = <Map<String, dynamic>>[];
     final seen = <String>{};
-    for (final raw in [...state.historyRecords, ...state.plannerQueue]) {
+    final sources = state.isPlanner ? state.plannerQueue : state.historyRecords;
+    for (final raw in sources) {
       final record = state.normalizeRecord(Map<String, dynamic>.from(raw));
       final key = '${record['session_id'] ?? record['id'] ?? ''}';
       final fallback =
@@ -144,8 +145,8 @@ class _WebMapScreenState extends State<WebMapScreen> {
   @override
   void initState() {
     super.initState();
-    if (state.historyRecords.isNotEmpty) {
-      _selected = Map<String, dynamic>.from(state.historyRecords.first);
+    if (_allMapRecords.isNotEmpty) {
+      _selected = Map<String, dynamic>.from(_allMapRecords.first);
     }
     WidgetsBinding.instance.addPostFrameCallback(
       (_) => _loadFarmerSubmissionsForMap(),

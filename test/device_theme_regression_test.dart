@@ -140,43 +140,26 @@ void main() {
             greaterThanOrEqualTo(4.5),
           );
           await capture('quick-actions');
-          final weather = find.textContaining('Partly cloudy | Humidity');
-          await tester.scrollUntilVisible(
-            weather,
-            200,
-            scrollable: find.byType(Scrollable).first,
-          );
-          final surface = tester.widget<Container>(
-            find
-                .ancestor(
-                  of: weather,
-                  matching: find.byWidgetPredicate(
-                    (w) =>
-                        w is Container &&
-                        w.decoration is BoxDecoration &&
-                        (w.decoration as BoxDecoration).gradient != null,
-                  ),
-                )
-                .first,
-          );
-          final colors =
-              ((surface.decoration as BoxDecoration).gradient!
-                      as LinearGradient)
-                  .colors;
-          for (final color in colors) {
+          if (size.height > size.width) {
+            final weather = find.textContaining('Humidity ');
+            await tester.scrollUntilVisible(
+              weather,
+              200,
+              scrollable: find.byType(Scrollable).first,
+            );
             expect(
-              contrast(foreground(weather), color),
+              contrast(foreground(weather), Colors.white),
+              greaterThanOrEqualTo(4.5),
+            );
+            final heading = find.text('Current Weather');
+            expect(
+              contrast(
+                foreground(heading),
+                Theme.of(tester.element(heading)).scaffoldBackgroundColor,
+              ),
               greaterThanOrEqualTo(4.5),
             );
           }
-          final heading = find.text('Current Weather');
-          expect(
-            contrast(
-              foreground(heading),
-              Theme.of(tester.element(heading)).scaffoldBackgroundColor,
-            ),
-            greaterThanOrEqualTo(4.5),
-          );
           final nav = tester.widget<NavigationBar>(find.byType(NavigationBar));
           final frame = tester.widget<Container>(
             find

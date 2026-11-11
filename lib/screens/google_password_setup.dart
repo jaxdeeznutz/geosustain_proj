@@ -83,6 +83,8 @@ class _GooglePasswordSetupPageState extends State<GooglePasswordSetupPage> {
     child: Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: false,
+        backgroundColor: const Color(0xFFFAFFF9),
+        foregroundColor: green,
         title: const Text('GeoSustain'),
         actions: [
           TextButton(
@@ -103,10 +105,12 @@ class _GooglePasswordSetupPageState extends State<GooglePasswordSetupPage> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      const Icon(
-                        Icons.lock_person_outlined,
-                        size: 48,
-                        color: green,
+                      SizedBox(
+                        height: 158,
+                        child: Image.asset(
+                          'assets/images/dashboard/recovery_shield.png',
+                          fit: BoxFit.contain,
+                        ),
                       ),
                       const SizedBox(height: 18),
                       const Text(
@@ -121,9 +125,35 @@ class _GooglePasswordSetupPageState extends State<GooglePasswordSetupPage> {
                         'Next time, sign in with Google or your email and this password.',
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        '${widget.user['email'] ?? ''}',
-                        style: const TextStyle(fontWeight: FontWeight.w700),
+                      Container(
+                        alignment: Alignment.centerLeft,
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                        decoration: BoxDecoration(
+                          color: softGreen,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.mail_outline,
+                              color: green,
+                              size: 19,
+                            ),
+                            const SizedBox(width: 10),
+                            Flexible(
+                              child: Text(
+                                '${widget.user['email'] ?? ''}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 22),
                       TextFormField(

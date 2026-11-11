@@ -98,10 +98,7 @@ void main() {
       );
       await tester.pumpAndSettle();
       expect(find.text('Experimental model'), findsNothing);
-      expect(
-        find.text('NPK not used. PAGRO soil data pending.'),
-        findsOneWidget,
-      );
+      expect(find.text('NPK not used. PAGRO soil data pending.'), findsNothing);
       expect(
         find.text('Estimated soil data — not a field soil test.'),
         findsNothing,

@@ -165,7 +165,7 @@ void main() {
   }
 
   testWidgets(
-    'patterns default to current model, allow explicit history and use full chart width',
+    'analyst patterns default to all submitted cases and allow a current-model filter',
     (tester) async {
       tester.view.physicalSize = const Size(1440, 1100);
       tester.view.devicePixelRatio = 1;
@@ -205,11 +205,10 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      expect(find.text('45.0%'), findsOneWidget);
-      expect(find.text('84.3%'), findsNothing);
-      expect(find.text('Banana (Cavendish/Lakatan)'), findsNothing);
-      expect(find.text('Rubber'), findsOneWidget);
-      expect(find.textContaining('3 older or unversioned'), findsOneWidget);
+      expect(find.text('84.3%'), findsOneWidget);
+      expect(find.text('45.0%'), findsNothing);
+      expect(find.text('Banana (Cavendish/Lakatan)'), findsWidgets);
+      expect(find.textContaining('not directly comparable'), findsOneWidget);
       final chart = find.descendant(
         of: find.byKey(const ValueKey('patterns-trend-panel')),
         matching: find.byType(CustomPaint),
@@ -217,12 +216,13 @@ void main() {
       expect(tester.getSize(chart).width, greaterThan(500));
       await tester.tap(find.byKey(const ValueKey('patterns-model-scope')));
       await tester.pumpAndSettle();
-      await tester.tap(find.text('All AI versions (historical)').last);
+      await tester.tap(find.text('Current seven-crop version').last);
       await tester.pumpAndSettle();
       expect(requests.last.url.path, '/api/operator/recommendation-patterns');
-      expect(requests.last.url.queryParameters['model_scope'], 'all');
-      expect(find.text('84.3%'), findsOneWidget);
-      expect(find.textContaining('not directly comparable'), findsOneWidget);
+      expect(requests.last.url.queryParameters['model_scope'], 'current');
+      expect(find.text('45.0%'), findsOneWidget);
+      expect(find.text('Rubber'), findsOneWidget);
+      expect(find.textContaining('3 older or unversioned'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox());
       state.dispose();
@@ -239,6 +239,7 @@ void main() {
           return http.Response(
             jsonEncode({
               ...current,
+              'model_scope': 'all',
               'average_model_score': 47.8,
               'high_count': 0,
               'medium_count': 1,

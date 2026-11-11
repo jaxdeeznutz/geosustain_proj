@@ -431,7 +431,28 @@ class _WebSidebar extends StatelessWidget {
               ),
             ],
             TextButton.icon(
-              onPressed: logout,
+              onPressed: () async {
+                final confirmed = await showDialog<bool>(
+                  context: context,
+                  builder: (dialogContext) => AlertDialog(
+                    title: const Text('Log out?'),
+                    content: const Text(
+                      'You can sign in again to continue reviewing submissions.',
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(dialogContext, false),
+                        child: const Text('Cancel'),
+                      ),
+                      FilledButton(
+                        onPressed: () => Navigator.pop(dialogContext, true),
+                        child: const Text('Log out'),
+                      ),
+                    ],
+                  ),
+                );
+                if (confirmed == true) logout();
+              },
               icon: const Icon(Icons.logout_rounded, size: 20),
               label: const Align(
                 alignment: Alignment.centerLeft,
