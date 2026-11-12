@@ -176,9 +176,9 @@ void main() {
       final time = DateTime.now().subtract(const Duration(seconds: 12));
       final points = [
         [7.3, 125.6],
-        [7.3001, 125.6],
-        [7.3001, 125.6001],
-        [7.3, 125.6001],
+        [7.30015, 125.6],
+        [7.30015, 125.60015],
+        [7.3, 125.60015],
       ];
       for (var i = 0; i < points.length; i++) {
         gps.fixes.add(
@@ -197,6 +197,11 @@ void main() {
         );
         await tester.pumpAndSettle();
       }
+      expect(find.text('4 points'), findsOneWidget);
+      expect(
+        tester.widget<MarkerLayer>(find.byType(MarkerLayer)).markers.length,
+        3,
+      );
       await revealControls(tester);
       await tester.ensureVisible(find.text('Finish'));
       await tester.tap(find.text('Finish'));
@@ -286,24 +291,24 @@ void main() {
       await tester.pumpAndSettle();
       expect(find.text('Accuracy unknown'), findsOneWidget);
       expect(marker().point, const LatLng(7.30006, 125.6));
-      gps.fixes.add(fix(7.3001, 5, 9));
+      gps.fixes.add(fix(7.30015, 5, 9));
       await tester.pumpAndSettle();
       expect(find.text('2 points'), findsOneWidget);
       gps.fixes.add(fix(double.nan, 5, 10));
       await tester.pumpAndSettle();
-      expect(marker().point, const LatLng(7.3001, 125.6));
+      expect(marker().point, const LatLng(7.30015, 125.6));
       expect(find.text('2 points'), findsOneWidget);
       expect(tester.takeException(), isNull);
       gps.fixes.add(fix(7.3002, 5, -40));
       await tester.pumpAndSettle();
-      expect(marker().point, const LatLng(7.3001, 125.6));
+      expect(marker().point, const LatLng(7.30015, 125.6));
       await tester.ensureVisible(find.byTooltip('Recenter on my position'));
       await tester.pumpAndSettle();
       await tester.tap(find.byTooltip('Recenter on my position'));
       await tester.pumpAndSettle();
       expect(
         map.mapController!.camera.center.latitude,
-        closeTo(7.3001, .000001),
+        closeTo(7.30015, .000001),
       );
       await revealControls(tester);
       await tester.ensureVisible(find.text('Pause'));

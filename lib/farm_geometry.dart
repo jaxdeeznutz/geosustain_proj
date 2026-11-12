@@ -183,6 +183,7 @@ class FarmGeometry {
 /// returned to the UI, so weak fixes and jumps are never silently recorded.
 class FarmGpsFilter {
   static const maxAccuracyMetres = 20.0;
+  static const minSpacingMetres = 12.0;
   static String? rejection({
     required LatLng point,
     required double accuracy,
@@ -207,11 +208,11 @@ class FarmGpsFilter {
     }
     if (previous == null) return null;
     final gap = FarmGeometry.distance(previous, point);
-    // Keep the 4 m floor, but do not treat displacement inside either fix's
+    // Keep the 12 m floor, but do not treat displacement inside either fix's
     // reported uncertainty as evidence of walking. This is a conservative
     // sampling rule, not a survey accuracy guarantee.
     final spacing = math.max(
-      4.0,
+      minSpacingMetres,
       math.max(
         accuracy,
         previousAccuracy != null &&

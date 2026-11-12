@@ -592,6 +592,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                 _BoundaryMap(
                   controller: _controller,
                   points: _points,
+                  showAllVertices: false,
                   current: _current,
                   currentActive: _recording && _fresh,
                   onGesture: () => _followPosition = false,
@@ -826,7 +827,7 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
                     ),
                     SizedBox(height: 8),
                     Text(
-                      'Boundary points require reported accuracy within ±20 m, a fresh reading, and at least 4 m of movement. Large or unusually fast jumps are rejected. The live marker can move while a boundary point is rejected.',
+                      'Boundary points require reported accuracy within ±20 m, a fresh reading, and at least 12 m of movement. Large or unusually fast jumps are rejected. The live marker can move while a boundary point is rejected.',
                     ),
                     SizedBox(height: 8),
                     Text(
@@ -1592,6 +1593,7 @@ class _BoundaryMap extends StatefulWidget {
   final List<LatLng> points;
   final LatLng? current;
   final bool closed, currentActive;
+  final bool showAllVertices;
   final VoidCallback? onRecenter, onGesture;
   final ValueChanged<LatLng>? onTap;
   final ValueChanged<int>? onVertex;
@@ -1603,6 +1605,7 @@ class _BoundaryMap extends StatefulWidget {
     this.current,
     this.closed = true,
     this.currentActive = true,
+    this.showAllVertices = true,
     this.onRecenter,
     this.onGesture,
     this.onTap,
@@ -1737,38 +1740,41 @@ class _BoundaryMapState extends State<_BoundaryMap> {
                     MarkerLayer(
                       markers: [
                         for (final entry in points.asMap().entries)
-                          Marker(
-                            point: entry.value,
-                            width: 32,
-                            height: 32,
-                            child: GestureDetector(
-                              onTap: widget.onVertex == null
-                                  ? null
-                                  : () => widget.onVertex!(entry.key),
-                              child: Container(
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  border: Border.all(
-                                    color: Colors.white,
-                                    width: 2.5,
-                                  ),
-                                ),
-                                child: CircleAvatar(
-                                  backgroundColor:
-                                      widget.selectedVertex == entry.key
-                                      ? Colors.orange.shade800
-                                      : green,
-                                  child: Text(
-                                    '${entry.key + 1}',
-                                    style: const TextStyle(
+                          if (widget.showAllVertices ||
+                              entry.key == 0 ||
+                              entry.key == points.length - 1)
+                            Marker(
+                              point: entry.value,
+                              width: 32,
+                              height: 32,
+                              child: GestureDetector(
+                                onTap: widget.onVertex == null
+                                    ? null
+                                    : () => widget.onVertex!(entry.key),
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
                                       color: Colors.white,
-                                      fontSize: 13,
+                                      width: 2.5,
+                                    ),
+                                  ),
+                                  child: CircleAvatar(
+                                    backgroundColor:
+                                        widget.selectedVertex == entry.key
+                                        ? Colors.orange.shade800
+                                        : green,
+                                    child: Text(
+                                      '${entry.key + 1}',
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                      ),
                                     ),
                                   ),
                                 ),
                               ),
                             ),
-                          ),
                         if (widget.current != null)
                           Marker(
                             point: widget.current!,
