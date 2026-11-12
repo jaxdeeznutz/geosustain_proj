@@ -1307,6 +1307,7 @@ class AnalysisState extends ChangeNotifier {
   DateTime? _historyFetchedAt, _farmsFetchedAt;
   int unreadNotifications = 0;
   Future<void>? _historyRefresh;
+  Future<void>? _accountResourcesRefresh;
   Future<void>? _farmsRefresh;
   Map<String, dynamic>? selectedFarm;
   String? analysisError;
@@ -1412,6 +1413,7 @@ class AnalysisState extends ChangeNotifier {
     _sessionEpoch++;
     _selectionEpoch++;
     _historyRefresh = null;
+    _accountResourcesRefresh = null;
     _farmsRefresh = null;
     _historyFetchedAt = null;
     _farmsFetchedAt = null;
@@ -1788,7 +1790,7 @@ class AnalysisState extends ChangeNotifier {
     if (hasWorkspaceAccess) {
       unawaited(PushNotifications.restore(api));
       if (!webOperator) unawaited(refreshFarms());
-      await refreshHistoryData();
+      unawaited(refreshHistoryData());
     }
     // Selection is explicit. Account-wide history must not become a farm result.
   }
@@ -1849,9 +1851,9 @@ class AnalysisState extends ChangeNotifier {
     final owner = currentUser?['id'];
     historyLoading = true;
     historyError = null;
-    resourceErrors.clear();
+    if (_accountResourcesRefresh == null) resourceErrors.clear();
     notifyListeners();
-    final webSummaryRequest = webOperator
+    final webSummaryRequest = webOperator && _accountResourcesRefresh == null
         ? () async {
             try {
               final summary = await api.getWebSummary();
@@ -1914,85 +1916,105 @@ class AnalysisState extends ChangeNotifier {
     }
     if (!_active(epoch, owner)) return;
     // Coalesce simultaneous tab refreshes and fetch each account resource once.
-    await Future.wait([
-      webSummaryRequest,
-      if (webOperator) refreshCurrentModelSummary(),
-      () async {
-        try {
-          final rows = webOperator
-              ? analysisListValue(
-                  (await api.getRecordPage('/api/mobile/saved'))['saved'],
-                )
-              : await api.getSavedAnalyses();
-          if (_active(epoch, owner)) {
-            savedAnalyses
-              ..clear()
-              ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
-            notifyListeners();
-          }
-        } catch (error) {
-          if (_active(epoch, owner)) {
-            resourceErrors['saved'] = friendlyErrorMessage(error);
-          }
-        }
-      }(),
-      () async {
-        try {
-          final rows = webOperator
-              ? analysisListValue(
-                  (await api.getRecordPage('/api/mobile/reports'))['reports'],
-                )
-              : await api.getReports();
-          if (_active(epoch, owner)) {
-            generatedReports
-              ..clear()
-              ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
-            notifyListeners();
-          }
-        } catch (error) {
-          if (_active(epoch, owner)) {
-            resourceErrors['reports'] = friendlyErrorMessage(error);
-          }
-        }
-      }(),
-      () async {
-        try {
-          final counts = await api.getCounts();
-          if (_active(epoch, owner)) {
-            profileCounts = counts;
-            notifyListeners();
-          }
-        } catch (error) {
-          if (_active(epoch, owner)) {
-            resourceErrors['counts'] = friendlyErrorMessage(error);
-          }
-        }
-      }(),
-      if (isPlanner)
-        () async {
-          try {
-            final rows = webOperator
-                ? analysisListValue(
-                    (await api.getRecordPage(
-                      '/api/planner/queue',
-                      parameters: {'status': 'verified'},
-                    ))['queue'],
-                  )
-                : await api.getPlannerQueue(status: 'verified');
-            if (_active(epoch, owner)) {
-              verifiedTrendRecords
-                ..clear()
-                ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
-              notifyListeners();
-            }
-          } catch (error) {
-            if (_active(epoch, owner)) {
-              resourceErrors['verified_trends'] = friendlyErrorMessage(error);
-            }
-          }
-        }(),
-    ]);
-    if (_active(epoch, owner)) notifyListeners();
+    if (_accountResourcesRefresh != null) return;
+    _accountResourcesRefresh =
+        Future.wait([
+              webSummaryRequest,
+              if (webOperator) refreshCurrentModelSummary(),
+              () async {
+                try {
+                  final rows = webOperator
+                      ? analysisListValue(
+                          (await api.getRecordPage(
+                            '/api/mobile/saved',
+                          ))['saved'],
+                        )
+                      : await api.getSavedAnalyses();
+                  if (_active(epoch, owner)) {
+                    savedAnalyses
+                      ..clear()
+                      ..addAll(
+                        rows.map((r) => Map<String, dynamic>.from(r as Map)),
+                      );
+                    notifyListeners();
+                  }
+                } catch (error) {
+                  if (_active(epoch, owner)) {
+                    resourceErrors['saved'] = friendlyErrorMessage(error);
+                  }
+                }
+              }(),
+              () async {
+                try {
+                  final rows = webOperator
+                      ? analysisListValue(
+                          (await api.getRecordPage(
+                            '/api/mobile/reports',
+                          ))['reports'],
+                        )
+                      : await api.getReports();
+                  if (_active(epoch, owner)) {
+                    generatedReports
+                      ..clear()
+                      ..addAll(
+                        rows.map((r) => Map<String, dynamic>.from(r as Map)),
+                      );
+                    notifyListeners();
+                  }
+                } catch (error) {
+                  if (_active(epoch, owner)) {
+                    resourceErrors['reports'] = friendlyErrorMessage(error);
+                  }
+                }
+              }(),
+              () async {
+                try {
+                  final counts = await api.getCounts();
+                  if (_active(epoch, owner)) {
+                    profileCounts = counts;
+                    notifyListeners();
+                  }
+                } catch (error) {
+                  if (_active(epoch, owner)) {
+                    resourceErrors['counts'] = friendlyErrorMessage(error);
+                  }
+                }
+              }(),
+              if (isPlanner)
+                () async {
+                  try {
+                    final rows = webOperator
+                        ? analysisListValue(
+                            (await api.getRecordPage(
+                              '/api/planner/queue',
+                              parameters: {'status': 'verified'},
+                            ))['queue'],
+                          )
+                        : await api.getPlannerQueue(status: 'verified');
+                    if (_active(epoch, owner)) {
+                      verifiedTrendRecords
+                        ..clear()
+                        ..addAll(
+                          rows.map((r) => Map<String, dynamic>.from(r as Map)),
+                        );
+                      notifyListeners();
+                    }
+                  } catch (error) {
+                    if (_active(epoch, owner)) {
+                      resourceErrors['verified_trends'] = friendlyErrorMessage(
+                        error,
+                      );
+                    }
+                  }
+                }(),
+            ])
+            .then((_) {
+              if (_active(epoch, owner)) notifyListeners();
+            })
+            .whenComplete(() {
+              if (epoch == _sessionEpoch) _accountResourcesRefresh = null;
+            });
+    unawaited(_accountResourcesRefresh);
   }
 
   Future<void> refreshFarms() {
@@ -2075,22 +2097,31 @@ class AnalysisState extends ChangeNotifier {
 
   Future<String?> loadPlannerQueue({String? status}) async {
     if (status != null) plannerQueueStatus = status;
+    final epoch = _sessionEpoch, owner = currentUser?['id'];
     plannerQueueLoading = true;
     notifyListeners();
     String? error;
+    final countsRequest = () async {
+      try {
+        final counts = await api.getPlannerCounts();
+        if (!_active(epoch, owner)) return;
+        plannerCounts = counts;
+        notifyListeners();
+      } catch (_) {}
+    }();
     try {
       final rows = await api.getPlannerQueue(status: plannerQueueStatus);
+      if (!_active(epoch, owner)) return null;
       plannerQueue
         ..clear()
         ..addAll(rows.map((e) => Map<String, dynamic>.from(e as Map)));
     } catch (e) {
       error = friendlyErrorMessage(e);
     }
-    try {
-      plannerCounts = await api.getPlannerCounts();
-    } catch (_) {}
+    if (!_active(epoch, owner)) return error;
     plannerQueueLoading = false;
     notifyListeners();
+    unawaited(countsRequest);
     return error;
   }
 

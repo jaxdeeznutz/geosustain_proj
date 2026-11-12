@@ -115,6 +115,12 @@ class DelayedHomeApi extends ScopeApi {
       farmsRequest.future;
 }
 
+class DelayedCountsApi extends ScopeApi {
+  final countsRequest = Completer<Map<String, dynamic>>();
+  @override
+  Future<Map<String, dynamic>> getCounts() => countsRequest.future;
+}
+
 class ProfileApi extends ScopeApi {
   @override
   Future<Map<String, dynamic>> updateProfile({
@@ -177,8 +183,13 @@ void main() {
         tester.widget<DropdownButtonFormField<int>>(month).onChanged,
         isNotNull,
       );
+      api.historyRequest.complete([analysis(8, 1)]);
+      await tester.pump();
+      expect(
+        find.text('Previous analyses', skipOffstage: false),
+        findsOneWidget,
+      );
       api.farmRequest.complete(farm(1));
-      api.historyRequest.complete([]);
       await tester.pumpAndSettle();
     },
   );
@@ -266,6 +277,7 @@ void main() {
       final state = stateWith(api);
       addTearDown(state.dispose);
       await state.loadUserData();
+      await state.refreshHistoryData();
       expect(state.result, isNull);
       expect(state.historyRecords.length, 2);
       expect(analysisRecordName(state.historyRecords.last), 'Unnamed area');
@@ -300,7 +312,9 @@ void main() {
     final login = state.loadUserData();
     await tester.pump();
     await tester.pump();
+    await login;
     expect(state.farmsLoaded, isFalse);
+    expect(state.historyLoaded, isFalse);
     expect(find.text('…'), findsWidgets);
     expect(tester.takeException(), isNull);
     api.farmsRequest.complete([farm(1), farm(2)]);
@@ -311,7 +325,7 @@ void main() {
     api.history!.complete([
       analysis(8, 1)..['verification_status'] = 'pending',
     ]);
-    await login;
+    await state.refreshHistoryData();
     await tester.pumpAndSettle();
     expect(find.text('1'), findsWidgets);
     expect(tester.takeException(), isNull);
@@ -340,6 +354,19 @@ void main() {
     });
     expect(find.textContaining('Updated '), findsOneWidget);
     expect(tester.takeException(), isNull);
+  });
+
+  test('history finishes before unrelated account counts', () async {
+    final api = DelayedCountsApi()..rows = [analysis(8, 1)];
+    final state = stateWith(api);
+    addTearDown(state.dispose);
+    await state.refreshHistoryData().timeout(const Duration(seconds: 1));
+    expect(state.historyLoaded, isTrue);
+    expect(state.historyRecords.single['session_id'], 8);
+    expect(state.profileCounts['farms'], isNull);
+    api.countsRequest.complete({'farms': 2});
+    await Future<void>.delayed(Duration.zero);
+    expect(state.profileCounts['farms'], 2);
   });
 
   test('late history after logout cannot populate the next account', () async {

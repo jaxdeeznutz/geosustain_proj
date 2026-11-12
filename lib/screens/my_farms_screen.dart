@@ -84,7 +84,11 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
   }
 
   void _refresh() {
-    if (mounted) setState(() {});
+    if (mounted) {
+      setState(() {
+        if (widget.state.farmsLoaded) _loading = false;
+      });
+    }
   }
 
   void _onAnalyzed() {
@@ -98,7 +102,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
   Future<void> _load({bool force = true}) async {
     if (mounted) {
       setState(() {
-        _loading = true;
+        _loading = !widget.state.farmsLoaded;
         _error = null;
       });
     }
@@ -441,34 +445,46 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
         _notice = null;
       });
     }
-    try {
-      final epoch = widget.state._sessionEpoch;
-      final values = await Future.wait<dynamic>([
-        widget.state.api.getFarm(int.parse('${_farm['id']}')),
-        widget.state.api.getFarmHistory(int.parse('${_farm['id']}')),
-      ]);
-      if (!mounted || epoch != widget.state._sessionEpoch) return;
-      final freshFarm = Map<String, dynamic>.from(values[0] as Map);
-      if ('${freshFarm['id']}' != '${_farm['id']}') {
-        throw const FormatException(
-          'The farm could not be verified. Refresh and try again.',
-        );
+    final epoch = widget.state._sessionEpoch;
+    final farmId = int.parse('${_farm['id']}');
+    final farmRequest = () async {
+      try {
+        final freshFarm = await widget.state.api.getFarm(farmId);
+        if (!mounted || epoch != widget.state._sessionEpoch) return;
+        if ('${freshFarm['id']}' != '${_farm['id']}') {
+          throw const FormatException(
+            'The farm could not be verified. Refresh and try again.',
+          );
+        }
+        setState(() => _farm = Map<String, dynamic>.from(freshFarm));
+      } catch (error) {
+        if (mounted && epoch == widget.state._sessionEpoch) {
+          setState(() => _notice = friendlyErrorMessage(error));
+        }
       }
-      setState(() {
-        _farm = freshFarm;
-        _records = (values[1] as List)
-            .map((r) => Map<String, dynamic>.from(r as Map))
-            .where((r) => widget.state._ownsRecord(r))
-            .toList();
-        _recordsLoaded = true;
-      });
-    } catch (error) {
-      if (mounted) {
-        setState(() => _notice = friendlyErrorMessage(error));
+    }();
+    final historyRequest = () async {
+      try {
+        final records = await widget.state.api.getFarmHistory(farmId);
+        if (!mounted || epoch != widget.state._sessionEpoch) return;
+        setState(() {
+          _records = records
+              .map((r) => Map<String, dynamic>.from(r as Map))
+              .where((r) => widget.state._ownsRecord(r))
+              .toList();
+          _recordsLoaded = true;
+        });
+      } catch (error) {
+        if (mounted && epoch == widget.state._sessionEpoch) {
+          setState(() => _notice = friendlyErrorMessage(error));
+        }
+      } finally {
+        if (mounted && epoch == widget.state._sessionEpoch) {
+          setState(() => _loading = false);
+        }
       }
-    } finally {
-      if (mounted) setState(() => _loading = false);
-    }
+    }();
+    await Future.wait([farmRequest, historyRequest]);
   }
 
   List<Map<String, dynamic>> get _analyses => newestAnalysisRecords(

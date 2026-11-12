@@ -47,6 +47,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
     final account = '${widget.state?.currentUser?['id'] ?? ''}';
     if (account.isNotEmpty && _recentByAccount.containsKey(account)) {
       rows = List<Map<String, dynamic>>.from(_recentByAccount[account]!);
+      loading = rows.isEmpty;
     }
     final recent = _recentAt[account];
     if (widget.initialSessionId == null &&
@@ -55,7 +56,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       loading = false;
       unread = widget.state?.unreadNotifications ?? 0;
     } else {
-      _load();
+      _load(background: rows.isNotEmpty);
     }
     if (widget.initialSessionId != null) {
       WidgetsBinding.instance.addPostFrameCallback(
@@ -71,11 +72,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
     super.dispose();
   }
 
-  Future<void> _load({int? page}) async {
+  Future<void> _load({int? page, bool background = false}) async {
     if (!mounted) return;
     final request = ++generation, target = page ?? offset;
     setState(() {
-      loading = true;
+      loading = !background;
       error = null;
     });
     try {
