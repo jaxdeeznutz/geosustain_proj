@@ -4,6 +4,7 @@ import 'qa_support.dart';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:geosustain_clean_arranged/main.dart';
 import 'package:geosustain_clean_arranged/api_service.dart';
 import 'package:geosustain_clean_arranged/boundary_draft_store.dart';
@@ -121,6 +122,29 @@ class DelayedCountsApi extends ScopeApi {
   Future<Map<String, dynamic>> getCounts() => countsRequest.future;
 }
 
+class BoundaryEditApi extends ScopeApi {
+  Map<String, dynamic>? updatePayload;
+  @override
+  Future<Map<String, dynamic>> getFarm(int id) async => {
+    ...farm(id),
+    'boundary_version': 1,
+  };
+
+  @override
+  Future<Map<String, dynamic>> updateFarm(
+    int farmId,
+    Map<String, dynamic> changes,
+  ) async {
+    updatePayload = changes;
+    return {
+      ...farm(farmId),
+      'polygon': changes['polygon'],
+      'mapping_method': 'manual_draw',
+      'boundary_version': 2,
+    };
+  }
+}
+
 class ProfileApi extends ScopeApi {
   @override
   Future<Map<String, dynamic>> updateProfile({
@@ -193,6 +217,61 @@ void main() {
       await tester.pumpAndSettle();
     },
   );
+
+  testWidgets('saved farm boundary can be corrected from farm actions', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final api = BoundaryEditApi();
+    final original = {...farm(1), 'boundary_version': 1};
+    final state = stateWith(api)..focusFarm(original);
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      GeoSustainApp(
+        home: FarmDetailsPage(state: state, farm: original),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Farm actions'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Edit boundary'));
+    await tester.pumpAndSettle();
+    expect(find.text('Edit Farm Boundary'), findsOneWidget);
+    final editorList = find.byType(ListView).last;
+    await revealInList(tester, find.text('Save Boundary'), list: editorList);
+    expect(find.text('Save Boundary'), findsOneWidget);
+    await tester.tap(find.text('Save Boundary'));
+    await tester.pump();
+    expect(
+      find.text('Move a point or redraw the boundary first.'),
+      findsOneWidget,
+    );
+    expect(api.updatePayload, isNull);
+    tester
+        .state<ScrollableState>(
+          find
+              .descendant(of: editorList, matching: find.byType(Scrollable))
+              .first,
+        )
+        .position
+        .jumpTo(0);
+    await tester.pump();
+    await tester.tap(find.text('1').last);
+    await tester.pump();
+    final map = find.byType(FlutterMap).last;
+    await tester.tapAt(tester.getCenter(map) + const Offset(-18, -18));
+    await tester.pump();
+    await revealInList(tester, find.text('Save Boundary'), list: editorList);
+    await tester.tap(find.text('Save Boundary'));
+    await tester.pumpAndSettle();
+    expect(api.updatePayload?['expected_boundary_version'], 1);
+    expect(api.updatePayload?['mapping_method'], 'manual_draw');
+    expect(state.selectedFarm?['boundary_version'], 2);
+    expect(find.textContaining('Boundary saved'), findsOneWidget);
+  });
 
   testWidgets('Analyze Land can close while the saved farm request continues', (
     tester,

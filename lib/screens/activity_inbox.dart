@@ -23,6 +23,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
   List<Map<String, dynamic>> rows = [], local = [];
   int offset = 0, unread = 0, generation = 0;
   bool more = false, loading = true, opening = false, unreadOnly = false;
+  bool _serverLoaded = false;
   String type = '';
   String? error;
   static const labels = {
@@ -48,7 +49,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
     if (account.isNotEmpty && _recentByAccount.containsKey(account)) {
       rows = List<Map<String, dynamic>>.from(_recentByAccount[account]!);
       loading = rows.isEmpty;
+    } else if (widget.state?.activityPreviewLoaded == true) {
+      rows = List<Map<String, dynamic>>.from(widget.state!.activityPreview);
+      loading = false;
     }
+    widget.state?.addListener(_showPreview);
     final recent = _recentAt[account];
     if (widget.initialSessionId == null &&
         recent != null &&
@@ -56,7 +61,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
       loading = false;
       unread = widget.state?.unreadNotifications ?? 0;
     } else {
-      _load(background: rows.isNotEmpty);
+      _load(
+        background:
+            rows.isNotEmpty || widget.state?.activityPreviewLoaded == true,
+      );
     }
     if (widget.initialSessionId != null) {
       WidgetsBinding.instance.addPostFrameCallback(
@@ -68,8 +76,28 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   void dispose() {
     generation++;
+    widget.state?.removeListener(_showPreview);
     if (widget.api == null && widget.state == null) api.close();
     super.dispose();
+  }
+
+  void _showPreview() {
+    final state = widget.state;
+    if (!mounted ||
+        state == null ||
+        _serverLoaded ||
+        !state.activityPreviewLoaded ||
+        rows.isNotEmpty ||
+        offset != 0 ||
+        type.isNotEmpty ||
+        unreadOnly) {
+      return;
+    }
+    setState(() {
+      rows = List<Map<String, dynamic>>.from(state.activityPreview);
+      loading = false;
+      unread = state.unreadNotifications;
+    });
   }
 
   Future<void> _load({int? page, bool background = false}) async {
@@ -118,6 +146,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       }
       if (!mounted || generation != request) return;
       setState(() {
+        _serverLoaded = true;
         rows = type == 'farm_synced'
             ? []
             : OfflineFarmStore.rows(data['notifications']);

@@ -285,3 +285,14 @@ def test_boundary_edit_never_mutates_history(monkeypatch):
     assert all("UPDATE analysis_sessions" not in sql for sql, _ in cur.queries)
     assert "boundary_version=boundary_version+1" in cur.queries[0][0]
     assert cur.queries[0][1][-3:] == [5, 10, 1]
+
+
+def test_manually_corrected_gps_boundary_clears_old_accuracy(monkeypatch):
+    conn, cur = connection(monkeypatch, [{"id": 5, "boundary_version": 2}])
+    db.update_farm_parcel(
+        10, 5, polygon=RING, mapping_method='manual_draw',
+        expected_boundary_version=1,
+    )
+    sql, params = cur.queries[0]
+    assert 'gps_accuracy_m=%s' in sql
+    assert params[-4] is None

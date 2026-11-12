@@ -371,6 +371,7 @@ class _MyFarmsPageState extends State<MyFarmsPage> {
                 onAnalyze: () => _analyzeFarm(farm),
                 onResults: () => _open(farm, action: 'results'),
                 onEdit: () => _open(farm, action: 'edit'),
+                onEditBoundary: () => _open(farm, action: 'boundary'),
                 onArchive: () => _open(farm, action: 'archive'),
                 onDelete: () => _deleteFarm(farm),
               ),
@@ -397,6 +398,7 @@ class FarmDetailsPage extends StatefulWidget {
 
 class FarmDetailsPageState extends State<FarmDetailsPage> {
   bool _busy = false, _loading = true;
+  int _loadGeneration = 0;
   String? _notice;
   late Map<String, dynamic> _farm;
   List<Map<String, dynamic>> _records = [];
@@ -415,6 +417,12 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
         .toList();
     _recordsLoaded = widget.state.historyLoaded;
     widget.state.addListener(_refresh);
+    if (widget.initialAction == 'boundary') {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _editBoundary();
+      });
+      return;
+    }
     _load().then((_) {
       if (!mounted || _notice != null) return;
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -439,6 +447,7 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
   }
 
   Future<void> _load() async {
+    final request = ++_loadGeneration;
     if (mounted) {
       setState(() {
         _loading = !_recordsLoaded;
@@ -450,7 +459,11 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
     final farmRequest = () async {
       try {
         final freshFarm = await widget.state.api.getFarm(farmId);
-        if (!mounted || epoch != widget.state._sessionEpoch) return;
+        if (!mounted ||
+            epoch != widget.state._sessionEpoch ||
+            request != _loadGeneration) {
+          return;
+        }
         if ('${freshFarm['id']}' != '${_farm['id']}') {
           throw const FormatException(
             'The farm could not be verified. Refresh and try again.',
@@ -458,7 +471,9 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
         }
         setState(() => _farm = Map<String, dynamic>.from(freshFarm));
       } catch (error) {
-        if (mounted && epoch == widget.state._sessionEpoch) {
+        if (mounted &&
+            epoch == widget.state._sessionEpoch &&
+            request == _loadGeneration) {
           setState(() => _notice = friendlyErrorMessage(error));
         }
       }
@@ -466,7 +481,11 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
     final historyRequest = () async {
       try {
         final records = await widget.state.api.getFarmHistory(farmId);
-        if (!mounted || epoch != widget.state._sessionEpoch) return;
+        if (!mounted ||
+            epoch != widget.state._sessionEpoch ||
+            request != _loadGeneration) {
+          return;
+        }
         setState(() {
           _records = records
               .map((r) => Map<String, dynamic>.from(r as Map))
@@ -475,11 +494,15 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
           _recordsLoaded = true;
         });
       } catch (error) {
-        if (mounted && epoch == widget.state._sessionEpoch) {
+        if (mounted &&
+            epoch == widget.state._sessionEpoch &&
+            request == _loadGeneration) {
           setState(() => _notice = friendlyErrorMessage(error));
         }
       } finally {
-        if (mounted && epoch == widget.state._sessionEpoch) {
+        if (mounted &&
+            epoch == widget.state._sessionEpoch &&
+            request == _loadGeneration) {
           setState(() => _loading = false);
         }
       }
@@ -624,6 +647,35 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
     }
   }
 
+  Future<void> _editBoundary() async {
+    if (_busy) return;
+    _loadGeneration++;
+    final saved = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PolygonDrawingPage(
+          state: widget.state,
+          farmToEdit: Map<String, dynamic>.from(_farm),
+        ),
+      ),
+    );
+    if (!mounted) return;
+    if (saved != true) {
+      unawaited(_load());
+      return;
+    }
+    final updated = widget.state.selectedFarm;
+    if (updated == null || '${updated['id']}' != '${_farm['id']}') {
+      unawaited(_load());
+      return;
+    }
+    setState(() {
+      _farm = Map<String, dynamic>.from(updated);
+      _loading = false;
+      _notice = 'Boundary saved. Run a new analysis for the corrected area.';
+    });
+  }
+
   Future<void> _archive() async {
     final ok = await showDialog<bool>(
       context: context,
@@ -708,12 +760,14 @@ class FarmDetailsPageState extends State<FarmDetailsPage> {
             onSelected: (action) {
               if (action == 'refresh') _load();
               if (action == 'edit') _editDetails();
+              if (action == 'boundary') _editBoundary();
               if (action == 'archive') _archive();
               if (action == 'delete') _delete();
             },
             itemBuilder: (_) => const [
               PopupMenuItem(value: 'refresh', child: Text('Refresh')),
               PopupMenuItem(value: 'edit', child: Text('Edit farm details')),
+              PopupMenuItem(value: 'boundary', child: Text('Edit boundary')),
               PopupMenuItem(value: 'archive', child: Text('Archive farm')),
               PopupMenuItem(value: 'delete', child: Text('Delete farm')),
             ],

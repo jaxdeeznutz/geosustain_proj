@@ -43,3 +43,15 @@ def test_failure_activity_uses_safe_reason_and_owned_target():
     assert 'f.farmer_id=u.id' in sql and 'ON CONFLICT' in sql
     assert params[0]=='failed:request-key' and 'retained' in params[1]
     assert params[-2:]==(55,10)
+
+
+def test_inbox_skips_push_scan_without_new_due_followups(monkeypatch):
+    push = Mock()
+    monkeypatch.setattr(activity, 'queue_activity_push', push)
+    cur = Mock()
+    cur.rowcount = 0
+    activity.due_followups(cur, 10)
+    push.assert_not_called()
+    cur.rowcount = 1
+    activity.due_followups(cur, 10)
+    push.assert_called_once_with(cur)

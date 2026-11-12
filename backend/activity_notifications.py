@@ -144,4 +144,5 @@ def due_followups(cur,user_id):
           'A review follow-up is due. Open the case to complete it.' FROM review_followups f
         JOIN review_cases c ON c.id=f.case_id WHERE f.assigned_to=%s AND f.completed_at IS NULL
         AND f.due_on<=CURRENT_DATE ON CONFLICT(user_id,event_key) DO NOTHING""",(user_id,))
-    queue_activity_push(cur)
+    if cur.rowcount:
+        queue_activity_push(cur)

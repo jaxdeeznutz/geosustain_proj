@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -96,6 +97,48 @@ void main() {
       expect(tester.takeException(), isNull);
     },
   );
+  testWidgets('notification preview appears while inbox refresh is pending', (
+    tester,
+  ) async {
+    final response = Completer<http.Response>();
+    addTearDown(() {
+      if (!response.isCompleted) {
+        response.complete(
+          http.Response(
+            '{"notifications":[],"unread_count":0,"has_more":false}',
+            200,
+          ),
+        );
+      }
+    });
+    final api = ApiService(client: MockClient((_) => response.future));
+    final state = AnalysisState(api: api)
+      ..currentUser = {'id': 10, 'role': 'farmer'}
+      ..activityPreviewLoaded = true
+      ..activityPreview.add({
+        'id': 1,
+        'event_type': 'submitted',
+        'created_at': '2026-11-12T08:00:00',
+        'message': 'Assessment submitted for review.',
+      });
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      GeoSustainApp(
+        home: NotificationsPage(state: state, api: api),
+      ),
+    );
+    await tester.pump();
+    expect(find.text('Submitted for review'), findsOneWidget);
+    expect(find.text('Loading notifications...'), findsNothing);
+    response.complete(
+      http.Response(
+        '{"notifications":[],"unread_count":0,"has_more":false}',
+        200,
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+  });
   testWidgets('notification failure explains retry instead of empty success', (
     tester,
   ) async {

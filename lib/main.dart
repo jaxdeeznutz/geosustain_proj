@@ -1306,6 +1306,8 @@ class AnalysisState extends ChangeNotifier {
   bool historyLoading = false, historyLoaded = false;
   DateTime? _historyFetchedAt, _farmsFetchedAt;
   int unreadNotifications = 0;
+  final List<Map<String, dynamic>> activityPreview = [];
+  bool activityPreviewLoaded = false;
   Future<void>? _historyRefresh;
   Future<void>? _accountResourcesRefresh;
   Future<void>? _farmsRefresh;
@@ -1320,7 +1322,9 @@ class AnalysisState extends ChangeNotifier {
       '${row['owner_id']}' == '${currentUser?['id']}';
 
   void focusFarm(Map<String, dynamic> farm) {
-    if (selectedFarmId != int.tryParse('${farm['id']}')) {
+    if (selectedFarmId != int.tryParse('${farm['id']}') ||
+        '${selectedFarm?['boundary_version']}' !=
+            '${farm['boundary_version']}') {
       _selectionEpoch++;
       result = null;
       analysisError = null;
@@ -1352,10 +1356,15 @@ class AnalysisState extends ChangeNotifier {
         (await OfflineFarmStore.read())['events'],
       );
       if (_active(epoch, owner)) {
+        activityPreview
+          ..clear()
+          ..addAll(OfflineFarmStore.rows(data['notifications']));
+        activityPreviewLoaded = true;
         setUnreadNotifications(
           (data['unread_count'] as num? ?? 0).toInt() +
               local.where((event) => event['read_at'] == null).length,
         );
+        notifyListeners();
       }
     } catch (_) {
       // Keep the last known count when the activity service is unreachable.
@@ -1426,6 +1435,8 @@ class AnalysisState extends ChangeNotifier {
     historyLoading = false;
     farmsLoaded = false;
     unreadNotifications = 0;
+    activityPreview.clear();
+    activityPreviewLoaded = false;
     webSummary = null;
     currentModelSummary = null;
     _patternsRefresh = null;
@@ -2890,17 +2901,35 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
       if (!state.loading) {
         _removeAnalysisBubble();
         if (_wasAnalyzing && _analysisDialogHidden) {
+          final completed = state.result != null;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                state.result != null
-                    ? 'Land analysis completed. Your results are ready.'
-                    : 'Land analysis finished. Check the result or try again.',
+              behavior: SnackBarBehavior.floating,
+              backgroundColor: completed ? const Color(0xFF087D43) : null,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
               ),
-              action: state.result == null
+              duration: const Duration(seconds: 6),
+              content: Row(
+                children: [
+                  if (completed) ...[
+                    const Icon(Icons.check_circle, color: Colors.white),
+                    const SizedBox(width: 12),
+                  ],
+                  Expanded(
+                    child: Text(
+                      completed
+                          ? 'Analysis done. Your results are ready.'
+                          : 'Land analysis finished. Check the result or try again.',
+                    ),
+                  ),
+                ],
+              ),
+              action: !completed
                   ? null
                   : SnackBarAction(
                       label: 'View results',
+                      textColor: Colors.white,
                       onPressed: () {
                         Navigator.of(
                           context,

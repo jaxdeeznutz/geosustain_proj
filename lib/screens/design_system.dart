@@ -580,6 +580,7 @@ class GeoFarmCard extends StatelessWidget {
   final Map<String, dynamic> farm;
   final bool busy;
   final VoidCallback onOpen, onAnalyze, onResults, onEdit, onArchive, onDelete;
+  final VoidCallback? onEditBoundary;
   const GeoFarmCard({
     super.key,
     required this.farm,
@@ -588,6 +589,7 @@ class GeoFarmCard extends StatelessWidget {
     required this.onAnalyze,
     required this.onResults,
     required this.onEdit,
+    this.onEditBoundary,
     required this.onArchive,
     required this.onDelete,
   });
@@ -675,17 +677,29 @@ class GeoFarmCard extends StatelessWidget {
                       onSelected: (value) {
                         if (value == 'open') onOpen();
                         if (value == 'edit') onEdit();
+                        if (value == 'boundary') onEditBoundary?.call();
                         if (value == 'archive') onArchive();
                         if (value == 'delete') onDelete();
                       },
-                      itemBuilder: (_) => const [
-                        PopupMenuItem(
+                      itemBuilder: (_) => [
+                        const PopupMenuItem(
                           value: 'open',
                           child: Text('Farm details'),
                         ),
-                        PopupMenuItem(value: 'edit', child: Text('Edit')),
-                        PopupMenuItem(value: 'archive', child: Text('Archive')),
-                        PopupMenuItem(
+                        const PopupMenuItem(
+                          value: 'edit',
+                          child: Text('Edit details'),
+                        ),
+                        if (onEditBoundary != null)
+                          const PopupMenuItem(
+                            value: 'boundary',
+                            child: Text('Edit boundary'),
+                          ),
+                        const PopupMenuItem(
+                          value: 'archive',
+                          child: Text('Archive'),
+                        ),
+                        const PopupMenuItem(
                           value: 'delete',
                           child: Text('Delete farm'),
                         ),

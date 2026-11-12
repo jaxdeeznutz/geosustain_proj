@@ -845,12 +845,14 @@ class _FarmBoundaryPageState extends State<FarmBoundaryPage>
 
 class PolygonDrawingPage extends StatefulWidget {
   final AnalysisState state;
-  const PolygonDrawingPage({super.key, required this.state});
+  final Map<String, dynamic>? farmToEdit;
+  const PolygonDrawingPage({super.key, required this.state, this.farmToEdit});
   @override
   State<PolygonDrawingPage> createState() => _PolygonDrawingPageState();
 }
 
 class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
+  bool get _editing => widget.farmToEdit != null;
   final _controller = MapController();
   final _name = TextEditingController();
   final _location = TextEditingController();
@@ -864,6 +866,12 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   @override
   void initState() {
     super.initState();
+    if (_editing) {
+      _points.addAll(FarmGeometry.fromPayload(widget.farmToEdit!['polygon']));
+      _mode = 'edit';
+      _draftLoading = false;
+      return;
+    }
     _name.addListener(_persistDraft);
     _location.addListener(_persistDraft);
     WidgetsBinding.instance.addPostFrameCallback((_) => _restoreDraft());
@@ -873,7 +881,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   bool _draftFinished = false;
 
   Future<void> _persistDraft() async {
-    if (_draftLoading || _draftFinished) return;
+    if (_editing || _draftLoading || _draftFinished) return;
     try {
       await BoundaryDraftStore.write(
         'polygon',
@@ -950,7 +958,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   @override
   void setState(VoidCallback fn) {
     super.setState(fn);
-    if (!_draftLoading) unawaited(_persistDraft());
+    if (!_editing && !_draftLoading) unawaited(_persistDraft());
   }
 
   @override
@@ -995,6 +1003,50 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
     final error = FarmGeometry.validate(_points);
     if (error != null) {
       setState(() => _notice = error);
+      return;
+    }
+    if (_editing) {
+      final polygon = FarmGeometry.payload(_points);
+      final original = FarmGeometry.payload(
+        FarmGeometry.fromPayload(widget.farmToEdit!['polygon']),
+      );
+      if (jsonEncode(polygon) == jsonEncode(original)) {
+        setState(() => _notice = 'Move a point or redraw the boundary first.');
+        return;
+      }
+      setState(() {
+        _busy = true;
+        _notice = null;
+      });
+      bool savedBoundary = false;
+      try {
+        final farm = widget.farmToEdit!;
+        final updated = await widget.state.api
+            .updateFarm(int.parse('${farm['id']}'), {
+              'polygon': polygon,
+              'mapping_method': 'manual_draw',
+              'expected_boundary_version': farm['boundary_version'],
+            });
+        widget.state.replaceFarms([
+          updated,
+          ...widget.state.farms.where(
+            (row) => '${row['id']}' != '${updated['id']}',
+          ),
+        ]);
+        widget.state.focusFarm(updated);
+        savedBoundary = true;
+      } catch (error) {
+        if (mounted) {
+          setState(
+            () => _notice = error is ApiException && error.statusCode == 409
+                ? 'This farm changed elsewhere. Go back, reopen it, then edit the latest boundary.'
+                : friendlyErrorMessage(error),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _busy = false);
+      }
+      if (mounted && savedBoundary) Navigator.pop(context, true);
       return;
     }
     if ((_saveAsFarm || !analyze) && _name.text.trim().isEmpty) {
@@ -1086,7 +1138,11 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
   Widget build(BuildContext context) => PopScope<bool>(
     canPop: !_busy || _analyzing,
     child: Scaffold(
-      appBar: _mappingHeader(context, state: widget.state),
+      appBar: _mappingHeader(
+        context,
+        state: widget.state,
+        title: _editing ? 'Edit Farm Boundary' : null,
+      ),
       body: SafeArea(
         child: Theme(
           data: _mappingTheme(context),
@@ -1094,7 +1150,7 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
             cacheExtent: 2000,
             padding: const EdgeInsets.all(16),
             children: [
-              const _BoundaryBanner(),
+              _BoundaryBanner(editing: _editing),
               const SizedBox(height: 12),
               _BoundaryMap(
                 controller: _controller,
@@ -1164,57 +1220,75 @@ class _PolygonDrawingPageState extends State<PolygonDrawingPage> {
                     ),
                   ],
                 ),
-                Card(
-                  margin: const EdgeInsets.only(top: 12),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      children: [
-                        CheckboxListTile(
-                          controlAffinity: ListTileControlAffinity.leading,
-                          contentPadding: EdgeInsets.zero,
-                          value: _saveAsFarm,
-                          onChanged: _busy
-                              ? null
-                              : (value) =>
-                                    setState(() => _saveAsFarm = value ?? true),
-                          title: const Text('Save this area as a farm'),
-                          subtitle: const Text(
-                            'Reuse its boundary for later analyses.',
-                          ),
-                        ),
-                        if (_saveAsFarm) ...[
-                          TextField(
-                            controller: _name,
-                            enabled: !_busy,
-                            maxLength: 120,
-                            decoration: const InputDecoration(
-                              labelText: 'Farm name',
+                if (!_editing)
+                  Card(
+                    margin: const EdgeInsets.only(top: 12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        children: [
+                          CheckboxListTile(
+                            controlAffinity: ListTileControlAffinity.leading,
+                            contentPadding: EdgeInsets.zero,
+                            value: _saveAsFarm,
+                            onChanged: _busy
+                                ? null
+                                : (value) => setState(
+                                    () => _saveAsFarm = value ?? true,
+                                  ),
+                            title: const Text('Save this area as a farm'),
+                            subtitle: const Text(
+                              'Reuse its boundary for later analyses.',
                             ),
                           ),
-                          TextField(
-                            controller: _location,
-                            enabled: !_busy,
-                            maxLength: 240,
-                            decoration: const InputDecoration(
-                              labelText: 'Location description (optional)',
+                          if (_saveAsFarm) ...[
+                            TextField(
+                              controller: _name,
+                              enabled: !_busy,
+                              maxLength: 120,
+                              decoration: const InputDecoration(
+                                labelText: 'Farm name',
+                              ),
                             ),
-                          ),
+                            TextField(
+                              controller: _location,
+                              enabled: !_busy,
+                              maxLength: 240,
+                              decoration: const InputDecoration(
+                                labelText: 'Location description (optional)',
+                              ),
+                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
-                ),
               ],
               const SizedBox(height: 12),
               if (_notice != null) _MappingNotice(_notice!),
+              if (_editing)
+                const Padding(
+                  padding: EdgeInsets.only(bottom: 12),
+                  child: Text(
+                    'Saving creates a new boundary version. Earlier analyses stay in History; run a new analysis for the corrected area.',
+                  ),
+                ),
               if (_saved != null) Text('Saved: ${_saved!['farm_name']}'),
-              PlantingMonthPicker(state: widget.state, enabled: !_busy),
+              if (!_editing)
+                PlantingMonthPicker(state: widget.state, enabled: !_busy),
               if (_busy) const LinearProgressIndicator(),
               FilledButton.icon(
-                onPressed: _busy ? null : () => _run(analyze: true),
-                icon: const Icon(Icons.analytics_outlined),
-                label: Text(_busy ? 'Please wait…' : 'Analyze Area'),
+                onPressed: _busy ? null : () => _run(analyze: !_editing),
+                icon: Icon(
+                  _editing ? Icons.save_outlined : Icons.analytics_outlined,
+                ),
+                label: Text(
+                  _busy
+                      ? 'Please wait…'
+                      : _editing
+                      ? 'Save Boundary'
+                      : 'Analyze Area',
+                ),
               ),
               const SizedBox(height: 12),
             ],
@@ -1229,8 +1303,9 @@ GeoSustainHeader _mappingHeader(
   BuildContext context, {
   required AnalysisState state,
   bool gps = false,
+  String? title,
 }) => GeoSustainHeader(
-  title: gps ? 'Create a Farm Boundary' : 'Analyze Land',
+  title: title ?? (gps ? 'Create a Farm Boundary' : 'Analyze Land'),
   embedded: false,
   nested: true,
   state: state,
@@ -1261,7 +1336,8 @@ ThemeData _mappingTheme(BuildContext context) => Theme.of(context);
 
 class _BoundaryBanner extends StatelessWidget {
   final bool gps;
-  const _BoundaryBanner({this.gps = false});
+  final bool editing;
+  const _BoundaryBanner({this.gps = false, this.editing = false});
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(16),
@@ -1278,7 +1354,11 @@ class _BoundaryBanner extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  gps ? 'Walk the perimeter' : 'Draw Your Farm Boundary',
+                  gps
+                      ? 'Walk the perimeter'
+                      : editing
+                      ? 'Correct Your Farm Boundary'
+                      : 'Draw Your Farm Boundary',
                   style: TextStyle(
                     fontSize: 19,
                     fontWeight: FontWeight.w800,
@@ -1289,6 +1369,8 @@ class _BoundaryBanner extends StatelessWidget {
                 Text(
                   gps
                       ? 'and return to your starting point.'
+                      : editing
+                      ? 'Select Edit to move a numbered point. Use Draw to add points, or Clear to redraw the area.'
                       : 'Tap around your farm to draw its boundary. Edit or move points anytime. Device location is optional.',
                   style: TextStyle(
                     fontSize: 12,

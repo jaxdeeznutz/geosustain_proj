@@ -1814,6 +1814,8 @@ def update_farm_parcel(farmer_id: int, farm_id: int, **changes):
         data['area_m2']=area
         data['area_hectares']=area/10000.0 if area else None
         data['polygon']=Json(data['polygon'] or [])
+        if data.get('mapping_method') == 'manual_draw':
+            data['gps_accuracy_m']=None
         allowed |= {'area_m2','area_hectares'}
     if not data:
         return get_farm_parcel(farmer_id, farm_id)
