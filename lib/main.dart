@@ -1422,6 +1422,7 @@ class AnalysisState extends ChangeNotifier {
     farmsError = null;
     historyLoaded = false;
     historyLoading = false;
+    farmsLoaded = false;
     unreadNotifications = 0;
     webSummary = null;
     currentModelSummary = null;
@@ -1545,6 +1546,7 @@ class AnalysisState extends ChangeNotifier {
   final List<Map<String, dynamic>> verifiedTrendRecords = [];
   final List<Map<String, dynamic>> farms = [];
   bool farmsLoading = false;
+  bool farmsLoaded = false;
   int mapEpoch = 0;
   final Map<String, String> _placeCache = {};
   double _lastMapZoom = 12.5;
@@ -1785,6 +1787,7 @@ class AnalysisState extends ChangeNotifier {
     notifyListeners();
     if (hasWorkspaceAccess) {
       unawaited(PushNotifications.restore(api));
+      if (!webOperator) unawaited(refreshFarms());
       await refreshHistoryData();
     }
     // Selection is explicit. Account-wide history must not become a farm result.
@@ -1846,7 +1849,24 @@ class AnalysisState extends ChangeNotifier {
     final owner = currentUser?['id'];
     historyLoading = true;
     historyError = null;
+    resourceErrors.clear();
     notifyListeners();
+    final webSummaryRequest = webOperator
+        ? () async {
+            try {
+              final summary = await api.getWebSummary();
+              if (_active(epoch, owner)) {
+                webSummary = summary;
+                notifyListeners();
+              }
+            } catch (error) {
+              if (_active(epoch, owner)) {
+                resourceErrors['summary'] = friendlyErrorMessage(error);
+                notifyListeners();
+              }
+            }
+          }()
+        : Future<void>.value();
     try {
       final rows = webOperator
           ? analysisListValue(
@@ -1894,20 +1914,9 @@ class AnalysisState extends ChangeNotifier {
     }
     if (!_active(epoch, owner)) return;
     // Coalesce simultaneous tab refreshes and fetch each account resource once.
-    resourceErrors.clear();
     await Future.wait([
+      webSummaryRequest,
       if (webOperator) refreshCurrentModelSummary(),
-      if (webOperator)
-        () async {
-          try {
-            final summary = await api.getWebSummary();
-            if (_active(epoch, owner)) webSummary = summary;
-          } catch (error) {
-            if (_active(epoch, owner)) {
-              resourceErrors['summary'] = friendlyErrorMessage(error);
-            }
-          }
-        }(),
       () async {
         try {
           final rows = webOperator
@@ -1919,6 +1928,7 @@ class AnalysisState extends ChangeNotifier {
             savedAnalyses
               ..clear()
               ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
+            notifyListeners();
           }
         } catch (error) {
           if (_active(epoch, owner)) {
@@ -1937,6 +1947,7 @@ class AnalysisState extends ChangeNotifier {
             generatedReports
               ..clear()
               ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
+            notifyListeners();
           }
         } catch (error) {
           if (_active(epoch, owner)) {
@@ -1947,7 +1958,10 @@ class AnalysisState extends ChangeNotifier {
       () async {
         try {
           final counts = await api.getCounts();
-          if (_active(epoch, owner)) profileCounts = counts;
+          if (_active(epoch, owner)) {
+            profileCounts = counts;
+            notifyListeners();
+          }
         } catch (error) {
           if (_active(epoch, owner)) {
             resourceErrors['counts'] = friendlyErrorMessage(error);
@@ -1969,6 +1983,7 @@ class AnalysisState extends ChangeNotifier {
               verifiedTrendRecords
                 ..clear()
                 ..addAll(rows.map((r) => Map<String, dynamic>.from(r as Map)));
+              notifyListeners();
             }
           } catch (error) {
             if (_active(epoch, owner)) {
@@ -2013,7 +2028,9 @@ class AnalysisState extends ChangeNotifier {
           ),
         );
       _farmsFetchedAt = DateTime.now();
+      farmsLoaded = true;
       offlineWorkspace = false;
+      notifyListeners();
       await OfflineFarmStore.cacheFarms(List<Map<String, dynamic>>.from(farms));
       var stored = await OfflineFarmStore.read();
       if (OfflineFarmStore.rows(stored['pending']).isNotEmpty) {
@@ -2041,6 +2058,7 @@ class AnalysisState extends ChangeNotifier {
                 ...OfflineFarmStore.rows(stored['pending']),
                 ...OfflineFarmStore.rows(stored['farms']),
               ]);
+            farmsLoaded = true;
           }
         } catch (_) {
           farmsError =
@@ -2922,9 +2940,10 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
             ? int.tryParse(Uri.base.queryParameters['review'] ?? '')
             : null;
         if (linkedReview != null && linkedReview > 0) _openReview(linkedReview);
+        unawaited(state.refreshHistoryIfStale());
         state.refreshLiveWeather();
         state.startWeatherAutoRefresh();
-        state.refreshFarms();
+        unawaited(state.refreshFarmsIfStale());
         unawaited(state.refreshUnreadNotifications());
         _unreadRefreshTimer ??= Timer.periodic(
           const Duration(minutes: 1),
@@ -2978,6 +2997,10 @@ class _ShellPageState extends State<ShellPage> with WidgetsBindingObserver {
 
   void selectTab(int i) {
     setState(() => index = i);
+    if (i == 0) {
+      unawaited(state.refreshFarmsIfStale());
+      unawaited(state.refreshHistoryIfStale());
+    }
     if (i == 1) unawaited(state.refreshFarmsIfStale());
     if (i == 2 || i == 3) unawaited(state.refreshHistoryIfStale());
   }

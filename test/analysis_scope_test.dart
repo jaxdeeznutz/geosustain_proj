@@ -108,6 +108,13 @@ class DelayedFarmApi extends ScopeApi {
   Future<List<dynamic>> getFarmHistory(int farmId) => historyRequest.future;
 }
 
+class DelayedHomeApi extends ScopeApi {
+  final farmsRequest = Completer<List<Map<String, dynamic>>>();
+  @override
+  Future<List<Map<String, dynamic>>> getFarms({bool includeArchived = false}) =>
+      farmsRequest.future;
+}
+
 class ProfileApi extends ScopeApi {
   @override
   Future<Map<String, dynamic>> updateProfile({
@@ -264,6 +271,76 @@ void main() {
       expect(analysisRecordName(state.historyRecords.last), 'Unnamed area');
     },
   );
+
+  testWidgets('home counts populate after login without leaving the page', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final api = DelayedHomeApi()..history = Completer<List<dynamic>>();
+    final state = stateWith(api);
+    addTearDown(state.dispose);
+    await tester.pumpWidget(
+      GeoSustainApp(
+        home: Scaffold(
+          body: ListenableBuilder(
+            listenable: state,
+            builder: (context, _) => HomePage(
+              state: state,
+              go: (_) {},
+              logout: () {},
+              message: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    final login = state.loadUserData();
+    await tester.pump();
+    await tester.pump();
+    expect(state.farmsLoaded, isFalse);
+    expect(find.text('…'), findsWidgets);
+    expect(tester.takeException(), isNull);
+    api.farmsRequest.complete([farm(1), farm(2)]);
+    await tester.pumpAndSettle();
+    expect(state.farmsLoaded, isTrue);
+    expect(find.text('2'), findsWidgets);
+    expect(tester.takeException(), isNull);
+    api.history!.complete([
+      analysis(8, 1)..['verification_status'] = 'pending',
+    ]);
+    await login;
+    await tester.pumpAndSettle();
+    expect(find.text('1'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('weather card shows provider time only when available', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(390, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    Future<void> show(Map<String, dynamic> weather) => tester.pumpWidget(
+      GeoSustainApp(
+        home: Scaffold(
+          body: CurrentWeatherCard(weather: weather, onRefresh: () {}),
+        ),
+      ),
+    );
+    await show({'temperature_c': 27.2, 'weather_description': 'Clear sky'});
+    expect(find.textContaining('Updated '), findsNothing);
+    await show({
+      'temperature_c': 27.2,
+      'weather_description': 'Clear sky',
+      'weather_updated_at': '2026-11-12T20:15:00',
+    });
+    expect(find.textContaining('Updated '), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
 
   test('late history after logout cannot populate the next account', () async {
     final api = ScopeApi()..history = Completer<List<dynamic>>();

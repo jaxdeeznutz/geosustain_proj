@@ -141,7 +141,11 @@ class HomePage extends StatelessWidget {
               children: [
                 Expanded(
                   child: ReferenceStat(
-                    '${state.farms.length}',
+                    state.farmsError != null && !state.farmsLoaded
+                        ? '—'
+                        : state.farmsLoaded
+                        ? '${state.farms.length}'
+                        : '…',
                     'Saved Farms',
                     Icons.agriculture_outlined,
                     () => go(1),
@@ -150,7 +154,11 @@ class HomePage extends StatelessWidget {
                 const SizedBox(width: 7),
                 Expanded(
                   child: ReferenceStat(
-                    '$pending',
+                    state.historyError != null && !state.historyLoaded
+                        ? '—'
+                        : state.historyLoaded
+                        ? '$pending'
+                        : '…',
                     'Pending Reviews',
                     Icons.description_outlined,
                     () => go(3),
@@ -232,7 +240,14 @@ class HomePage extends StatelessWidget {
               ),
             ),
             _heading(context, 'Recent Activity', () => go(3)),
-            if (state.historyRecords.isEmpty)
+            if (!state.historyLoaded && state.historyError == null)
+              const Card(
+                child: Padding(
+                  padding: EdgeInsets.all(20),
+                  child: Text('Loading recent activity…'),
+                ),
+              )
+            else if (state.historyRecords.isEmpty)
               const Card(
                 child: Padding(
                   padding: EdgeInsets.all(20),
@@ -306,10 +321,10 @@ class CurrentWeatherCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final updated = DateTime.tryParse(
-      '${weather?['updated_at'] ?? weather?['observed_at'] ?? ''}',
+      '${weather?['weather_updated_at'] ?? weather?['updated_at'] ?? weather?['observed_at'] ?? ''}',
     );
     final time = updated == null
-        ? 'Update time unavailable'
+        ? null
         : MaterialLocalizations.of(
             context,
           ).formatTimeOfDay(TimeOfDay.fromDateTime(updated.toLocal()));
@@ -394,37 +409,40 @@ class CurrentWeatherCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              Container(
-                padding: const EdgeInsets.all(9),
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.85),
-                  borderRadius: BorderRadius.circular(13),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Humidity ${_number(weather?['live_humidity'], decimals: 0)}%',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF183126),
+              Flexible(
+                child: Container(
+                  padding: const EdgeInsets.all(9),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.85),
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Humidity ${_number(weather?['live_humidity'], decimals: 0)}%',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF183126),
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Wind ${_number(weather?['wind_speed_kmh'])} km/h',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF183126),
+                      Text(
+                        'Wind ${_number(weather?['wind_speed_kmh'])} km/h',
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Color(0xFF183126),
+                        ),
                       ),
-                    ),
-                    Text(
-                      'Updated $time',
-                      style: const TextStyle(
-                        fontSize: 11,
-                        color: Color(0xFF183126),
-                      ),
-                    ),
-                  ],
+                      if (time != null)
+                        Text(
+                          'Updated $time',
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF183126),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
               ),
             ],

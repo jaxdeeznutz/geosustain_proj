@@ -84,6 +84,54 @@ void main() {
     appThemeMode.value = ThemeMode.light;
   });
 
+  testWidgets(
+    'analyst dashboard replaces loading values when live summary arrives',
+    (tester) async {
+      tester.view.physicalSize = const Size(1440, 1100);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      final api = ApiService(
+        client: MockClient((_) async => http.Response('{}', 200)),
+      );
+      final state = AnalysisState(api: api)
+        ..currentUser = {'id': 1, 'role': 'analyst', 'username': 'Synthetic'};
+      addTearDown(state.dispose);
+      await tester.pumpWidget(
+        GeoSustainApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: ListenableBuilder(
+                listenable: state,
+                builder: (_, _) => WebDashboardScreen(
+                  state: state,
+                  onStartAnalyze: () {},
+                  onOpenMapAnalysis: () {},
+                  onOpenHistory: () {},
+                  onOpenReports: () {},
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      final submitted = find.byKey(const ValueKey('metric-Submitted Analyses'));
+      expect(
+        find.descendant(of: submitted, matching: find.text('…')),
+        findsOneWidget,
+      );
+      state.currentModelSummary = current;
+      state.notifyListeners();
+      await tester.pumpAndSettle();
+      expect(
+        find.descendant(of: submitted, matching: find.text('2')),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
+
   for (final variant in [
     (const Size(1440, 1100), 1.0, false),
     (const Size(1440, 1100), 1.0, true),

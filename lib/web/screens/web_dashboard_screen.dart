@@ -42,6 +42,12 @@ class WebDashboardScreen extends StatelessWidget {
         ? state.currentModelSummary
         : state.webSummary;
     final summaryReady = summary != null;
+    final metricsReady =
+        summaryReady || (!state.isPlanner && state.historyLoaded);
+    final summaryError = state.isPlanner
+        ? state.resourceErrors['patterns']
+        : state.resourceErrors['summary'] ?? state.historyError;
+    final waitingValue = summaryError == null ? '…' : '—';
     final avg = summaryReady
         ? analysisNumber(summary['average_model_score'])
         : metrics.average;
@@ -67,8 +73,12 @@ class WebDashboardScreen extends StatelessWidget {
             padding: EdgeInsets.only(bottom: 12),
             child: Text(
               state.isPlanner
-                  ? 'Submitted-case summary is loading or unavailable. Refresh to retry.'
-                  : 'Summary of currently loaded records only. Whole-account statistics are not available yet.',
+                  ? summaryError == null
+                        ? 'Loading submitted-case summary…'
+                        : 'Submitted-case summary is unavailable. Refresh to retry.'
+                  : state.historyLoaded
+                  ? 'Summary of currently loaded records only. Whole-account statistics are not available yet.'
+                  : 'Loading your analysis summary…',
             ),
           ),
         if (state.historyError != null || state.resourceErrors.isNotEmpty)
@@ -80,21 +90,30 @@ class WebDashboardScreen extends StatelessWidget {
             _DashboardKpi(
               icon: Icons.assignment_rounded,
               title: state.isPlanner ? 'Submitted Analyses' : 'Total Analyses',
-              value: '${summary?['analysis_count'] ?? records.length}',
+              value: summaryReady
+                  ? '${summary['analysis_count'] ?? 0}'
+                  : metricsReady
+                  ? '${records.length}'
+                  : waitingValue,
               subtitle: summaryReady
                   ? (state.isPlanner
                         ? 'All submitted cases'
                         : 'Across all saved areas')
                   : 'Currently loaded records',
               warning:
+                  metricsReady &&
                   (analysisNumber(summary?['analysis_count']) ??
-                      records.length) ==
-                  0,
+                          records.length) ==
+                      0,
             ),
             _DashboardKpi(
               icon: Icons.eco_rounded,
               title: 'Average Ranking Score',
-              value: avg == null ? '—' : '${avg.toStringAsFixed(1)}%',
+              value: !metricsReady
+                  ? waitingValue
+                  : avg == null
+                  ? '—'
+                  : '${avg.toStringAsFixed(1)}%',
               subtitle: avg == null
                   ? (state.isPlanner
                         ? 'No recorded ranking scores yet'
@@ -104,7 +123,7 @@ class WebDashboardScreen extends StatelessWidget {
             _DashboardKpi(
               icon: Icons.spa_rounded,
               title: 'Most Frequent Recommendation',
-              value: topCrop ?? '—',
+              value: metricsReady ? topCrop ?? '—' : waitingValue,
               subtitle: topCrop == null
                   ? 'Not available yet'
                   : 'Most frequently recommended',
@@ -112,7 +131,9 @@ class WebDashboardScreen extends StatelessWidget {
             _DashboardKpi(
               icon: Icons.map_rounded,
               title: 'Cumulative Analysis Area',
-              value: totalArea > 0
+              value: !metricsReady
+                  ? waitingValue
+                  : totalArea > 0
                   ? '${totalArea.toStringAsFixed(2)} ha'
                   : '0.00 ha',
               subtitle: totalArea > 0

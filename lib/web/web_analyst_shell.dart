@@ -102,6 +102,7 @@ class _WebAnalystDashboardState extends State<WebAnalystDashboard> {
     setState(() => page = PortalRoutes.pageFor(routePages, 'operator'));
     if (page != previousPage && page == routePages.indexOf('dashboard')) {
       unawaited(state.refreshCurrentModelSummary());
+      unawaited(state.refreshHistoryIfStale());
     }
     if (state.isPlanner) _loadInboxRoute();
     _openLinkedRecord();
